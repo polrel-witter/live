@@ -1,7 +1,8 @@
 ::  %live: event coordination
 ::
-/-  *live, live-records, groups, chat
+/-  *live, live-records, hark
 /+  *sss, *mip, verb, dbug, default-agent
+/+  server, schooner, live-view
 ::
 |%
 ::
@@ -9,18 +10,19 @@
 ::
 +$  state-0
   $:  %0
-      timezone=(pair ? @ud)
-      events=(map id event)
-      records=(mip id ship record)
-      flyers=(map path flyer)
-      sub-records=_(mk-subs live-records ,[%records %guest @ ~])
-      pub-records=_(mk-pubs live-records ,[%records %guest @ ~])
+      events=(map id event)                                 :: our events
+      records=(mip id ship record)                          :: guests & passes
+      result=$@(@t (map id info))                           :: search result
+      sub-records=_(mk-subs live-records ,[%record @ @ ~])  :: record subs
+      pub-records=_(mk-pubs live-records ,[%record @ @ ~])  :: record pubs
   ==
 ::
+::
 +$  card  card:agent:gall
+::
 --
 ::
-%+  verb  &
+%+  verb  |
 %-  agent:dbug
 =|  state-0
 =*  state  -
@@ -35,8 +37,7 @@
   ::
   ++  on-init
     ^-  (quip card _this)
-    =^  cards  state
-      abet:init:cor
+    =^  cards  state  abet:init:cor
     [cards this]
   ::
   ++  on-save  !>(state)
@@ -44,39 +45,37 @@
   ++  on-load
     |=  old=vase
     ^-  (quip card _this)
-    =^  cards  state
-      abet:(load:cor old)
+    =^  cards  state  abet:(load:cor old)
     [cards this]
   ::
   ++  on-poke
     |=  [=mark =vase]
     ^-  (quip card _this)
-    =^  cards  state
-      abet:(poke:cor mark vase)
+    =^  cards  state  abet:(poke:cor mark vase)
     [cards this]
   ::
   ++  on-peek
     |=  =path
     ^-  (unit (unit cage))
-    [~ ~]
+    (peek:cor path)
   ::
   ++  on-agent
     |=  [=wire =sign:agent:gall]
     ^-  (quip card _this)
-    =^  cards  state
-      abet:(agent:cor wire sign)
+    =^  cards  state  abet:(agent:cor wire sign)
     [cards this]
-
   ::
   ++  on-arvo
     |=  [=wire =sign-arvo]
     ^-  (quip card _this)
-    `this
+    =^  cards  state  abet:(arvo:cor wire sign-arvo)
+    [cards this]
   ::
   ++  on-watch
     |=  =path
     ^-  (quip card _this)
-    `this
+    =^  cards  state  abet:(watch:cor path)
+    [cards this]
   ::
   ++  on-fail  on-fail:def
   ++  on-leave  on-leave:def
@@ -84,13 +83,13 @@
 =|  cards=(list card)
 |_  =bowl:gall
 +*  cor  .
-    du-records  =/  du  (du live-records ,[%records %guest @ ~])
-                (du pub-records bowl -:!>(*result:du))
-    da-records  =/  da  (da live-records ,[%records %guest @ ~])
-                (da sub-records bowl -:!>(*result:da) -:!>(*from:da) -:!>(*fail:da))
+    du-records    =/  du  (du live-records ,[%record @ @ ~])
+                  (du pub-records bowl -:!>(*result:du))
+    da-records    =/  da  (da live-records ,[%record @ @ ~])
+                  (da sub-records bowl -:!>(*result:da) -:!>(*from:da) -:!>(*fail:da))
 ::
 ++  emit  |=(=card cor(cards [card cards]))
-++  emil  |=(caz=(list card) cor(cards (weld caz cards)))
+++  emil  |=(caz=(list card) cor(cards (weld (flop caz) cards)))
 ++  abet  ^-((quip card _state) [(flop cards) state])
 ::  +sss-pub-records: update +cor cards and pub-records state
 ::
@@ -110,9 +109,10 @@
   =.  sub-records  s
   (emil c)
 ::
-++  init   :: TODO import flyer template
+++  init
   ^+  cor
-  cor
+  %-  emit
+  [%pass /eyre/connect %arvo %e %connect [~ /apps/live] %live]
 ::
 ++  load
   |=  =vase
@@ -120,43 +120,154 @@
   ?>  ?=([%0 *] q.vase)
   cor(state !<(state-0 vase))
 ::
+++  watch
+  |=  pol=(pole knot)
+  ^+  cor
+  ?+  pol  ~|(bad-watch-path+pol !!)
+    [%http-response *]  cor
+  ==
+::
 ++  agent
   |=  [=wire =sign:agent:gall]
   ^+  cor
   ?+    wire  cor
-      [~ %sss %on-rock @ @ @ %records %guest @ ~]
+      [%case %request @ @ ~]
+    =/  =ship  (slav %p i.t.t.wire)
+    =/  name=@t  i.t.t.t.wire
+    ?>  ?=(%poke-ack -.sign)
+    ?~  p.sign  cor
+    =;  msg=tape
+      cor(result (crip msg))
+    ?:  =('all' name)
+      "No events found"
+    (join ' ' `tape`~[name 'does not exist under' (scot %p ship)])
+  ::
+      [~ %sss %on-rock @ @ @ %record @ @ ~]
     =.  sub-records
       (chit:da-records |3:wire sign)
     cor
   ::
-      [~ %sss %scry-request @ @ @ %records %guest @ ~]
+      [~ %sss %scry-request @ @ @ %record @ @ ~]
     (sss-sub-records (tell:da-records |3:wire sign))
   ::
-      [~ %sss %scry-response @ @ @ %records %guest @ ~]
+      [~ %sss %scry-response @ @ @ %record @ @ ~]
     (sss-pub-records (tell:du-records |3:wire sign))
+  ==
+::
+++  arvo
+  |=  [=wire =sign-arvo]
+  ^+  cor
+  ?+    wire  ~|(bad-arvo-wire+wire !!)  :: TODO handle this the standard way
+      [%eyre %connect ~]
+    ?.  ?=([%eyre %bound *] sign-arvo)
+      ~|(unexpected-system-response+sign-arvo !!)
+    ~?  !accepted.sign-arvo
+      [dap.bowl 'eyre bind rejected!' binding.sign-arvo]
+    cor
+  ::
+      [%case %response @ ~]
+    =/  =ship  (slav %p i.t.t.wire)
+    ~|(failed-to-send-remote-scry-case+ship !!)
+  ::
+      [%case %request @ *]
+    =/  =ship  (slav %p i.t.t.wire)
+    ~|(failed-to-request-case+ship !!)
+  ::
+      [%remote %scry *]
+    ?+    t.t.wire    ~|(bad-arvo-wire+wire !!)
+        [%delete ~]     ~|(unexpected-system-response+sign-arvo !!)
+        [%cancel ~]   ~|(cannot-cancel-scry-request+sign-arvo !!)
+        [%publish ~]  ~|(unexpected-system-response+sign-arvo !!)
+        ?([%all ~] [%event @ ~])
+      ?.  ?=([%ames %tune *] sign-arvo)
+        ~|(unexpected-system-response+sign-arvo !!)
+      =/  msg  'No events found'
+      =;  update=_result
+        =?  update  ?~(update & |)  msg
+        cor(result update)
+      ?~  roar.sign-arvo  msg
+      =/  =roar:ames      u.roar.sign-arvo
+      ?~  q.dat.roar      msg
+      ;;((map id info) +.u.q.dat.roar)
+    ::
+        [%timer @ @ *]
+      =/  end=path
+        ?+  t.t.t.t.t.wire  ~|(unexpected-system-response+sign-arvo !!)
+          [%all ~]         //all
+          [%event @ ~]     //event/(scot %tas `term`i.t.t.t.t.t.wire)
+        ==
+      =/  =ship     (slav %p i.t.t.t.wire)
+      =/  case=@ud  (slav %ud i.t.t.t.t.wire)
+      =/  =spur     (weld /g/x/(scot %ud case)/live end)
+      (emit [%pass /remote/scry/cancel %arvo %a %yawn ship spur])
+    ==
+  ==
+::
+++  peek
+  |=  pol=(pole knot)
+  ^-  (unit (unit cage))
+  =;  =demand
+    ``[%live-demand !>(demand)]
+  ?+    pol  ~|(invalid-scry-path+pol !!)
+      [%x %events %all ~]   [%all-events events]
+      [%x %records %all ~]  [%all-records records]
+  ::
+      [%u %event %exists host=@ name=@ ~]
+    :-  %event-exists
+    (~(has by events) (slav %p host:pol) (slav %tas name:pol))
+  ::
+      [%u %record %exists host=@ name=@ ship=@ ~]
+    :-  %record-exists
+    %+  ~(has bi records)
+      [(slav %p host:pol) (slav %tas name:pol)]
+    (slav %p ship:pol)
+  ::
+      [%x %records host=@ name=@ ~]
+    :-  %event-records
+    ?~  r=(~(get by records) (slav %p host:pol) (slav %tas name:pol))  ~
+    u.r
+  ::
+      [%x %event host=@ name=@ ~]
+    :-  %event
+    (~(get by events) (slav %p host:pol) (slav %tas name:pol))
+  ::
+      [%x %record host=@ name=@ ship=@ ~]
+    :-  %record
+    %+  ~(get bi records)
+      [(slav %p host:pol) (slav %tas name:pol)]
+    (slav %p ship:pol)
+  ::
+      [%x %counts host=@ name=@ ~]
+    ?~  rec=(~(get by records) (slav %p host:pol) (slav %tas name:pol))
+      [%counts ~]
+    =/  cnt=(map _-.status @ud)
+      %-  malt
+      %-  limo
+      :~  invited+0
+          requested+0
+          registered+0
+          unregistered+0
+          attended+0
+      ==
+    =/  r=(list [ship =record])
+      ~(tap by u.rec)
+    |-  ?~  r  [%counts cnt]
+    $(cnt (~(jab by cnt) p.status.record.i.r |=(a=@ud +(a))), r t.r)
   ==
 ::
 ++  poke
   |=  [=mark =vase]
-  |^  ^+  cor
+  ^+  cor
   ?+    mark  ~|(bad-poke+mark !!)
-      %live-event-operation
-    =+  !<(op=event-operation vase)
-    (~(route ev id.op) event-action.op)
+      %live-operation
+    =+  !<(op=operation vase)
+    (~(route ev id.op) action.op)
   ::
-      %live-settings-action
-    ?>  =(our src):bowl
-    =+  !<(act=settings-action vase)
-    ?>  ?=(%timezone -.act)
-    cor(timezone [p.act q.act])
-  ::
-      %live-flyer-action
-    ?>  =(our src):bowl
-    =+  !<(act=flyer-action vase)
-    ?-   -.act
-        %delete-flyer  cor(flyers (~(del by flyers) path.act))
-        %save-flyer
-      cor(flyers (~(put by flyers) [path flyer]:act))
+      %live-dial
+    =+  !<(=dial vase)
+    ?-  -.dial
+      %find  (find +.dial)
+      %case  (case +.dial)
     ==
   ::
       %sss-to-pub
@@ -166,463 +277,70 @@
       %sss-live-records
     =/  msg  !<(into:da-records (fled vase))
     (sss-sub-records (apply:da-records msg))
-  ==
-::  +ev: event operations
-::
-++  ev
-  |_  =id
-  ::  +update-event: write to event state
   ::
-  ++  update-event
-    |=  =event
-    ^+  cor
-    cor(events (~(put by events) id event))
-  ::  +id-to-path: transform id into a path
+      %sss-fake-on-rock
+    =/  msg  !<(from:da-records (fled vase))
+    ?>  ?=([[%record @ @ ~] *] msg)
+    (emil (handle-fake-on-rock:da-records msg))
   ::
-  ++  id-to-path
-    ^-  path
-    /(scot %p ship.id)/(scot %tas name.id)
-  ::  +host-call: verify that a host is performing the action
-  ::
-  ++  host-call
-    ^-  ?
-    ?&  =(src our):bowl
-        =(our.bowl ship.id)
+      %handle-http-request
+    ?>  =(src.bowl our.bowl)
+    =+  !<(req=[eyre-id=@ta =inbound-request:eyre] vase)
+    =/  drop=(list card)
+      (response:schooner eyre-id.req 404 ~ [%none ~])
+    ?.  authenticated.inbound-request.req
+      (emil drop)
+    ?+  method.request.inbound-request.req  (emil drop)
+      %'GET'     ~(get handle-http req)
+      %'POST'    ~(post handle-http req)
     ==
-  ::  +guest-call: verify that a guest is performing the action
   ::
-  ++  guest-call
-    ^-  ?
-    ?&  ?!(=(src our):bowl)
-        =(our.bowl ship.id)
-    ==
-  ::  +route: send an event-action to the appropriate arm
-  ::
-  ++  route
-    |=  act=event-action
-    ^+  cor
-    ?-  -.act
-      %create-event      (create-event +.act)
-      %delete-event      delete-event
-      %require-app       (require-app +.act)
-      %set-info          (set-info +.act)
-      %set-secret        (set-secret +.act)
-      %set-limit         (set-limit +.act)
-      %add-chat          (add-chat +.act)
-      %remove-chat       remove-chat
-    ::
-      %subscribe         subscribe
-      %apply             (apply +.act)
-      %register          (register +.act)
-      %unregister        (unregister +.act)
-      %punch             (punch +.act)
-      %delete-record     (delete-record +.act)
-    ==
-  ::  +create-event: save a new event to state
-  ::
-  ++  create-event
-    |=  =event
-    ^+  cor
-    ?>  host-call
-    =?  id  (~(has by events) id)
-      [ship.id (append-entropy name.id)]
-    cor(events (~(put by events) id event))
-  ::  +delete-event: permanently delete an event
-  ::
-  ++  delete-event
-    ^+  cor
-    ?>  host-call
-    cor(events (~(del by events) id))
-  ::  +require-app: toggle on/off application requirement
-  ::
-  ++  require-app
-    |=  toggle=?
-    ^+  cor
-    ?>  host-call
-    =/  =event  get-event
-    =.  require-application.event  toggle
-    (update-event event)
-  ::  +set-info: update an event's metadata and publish to all
-  ::  event guests
-  ::
-  ++  set-info
-    |=  update=info
-    ^+  cor
-    ?>  host-call
-    =/  =event  get-event
-    =.  info.event  update
-    =.  cor  (update-event event)
-    :: TODO if event title changes, update chat titles
-    =+  guests=get-guests
-    |-
-    ?~  guests  cor
+      %sss-on-rock
+    =/  msg  !<(from:da-records (fled vase))
+    ?>  ?=([[%record @ @ ~] *] msg)
+    ?>  =(our.bowl `ship`+>-:path.msg)
+    =/  name=term  +<:path.msg
     =/  =record
-      (~(got bi records) id i.guests)
-    =.  info.record  update
-    =.  cor
-      (~(publish re i.guests) record)
-    $(guests t.guests)
-  ::  +set-secret: set and send an event's secret
-  ::
-  ++  set-secret
-    |=  new-secret=(unit cord)
-    ^+  cor
-    ?>  host-call
-    =/  =event  get-event
-    =.  secret.event
-      new-secret
-    =.  cor  (update-event event)
-    =,  event
-    (update-guests secret chat get-guests)
-  ::  +set-limit: restrict number of registered guests
-  ::
-  ++  set-limit
-    |=  new-limit=limit
-    ^+  cor
-    ?>  host-call
-    =;  write=?
-      ?.  write
-        ~|(limit-lower-than-registered-count+id !!)
-      =/  =event  get-event
-      =.  limit.event
-        new-limit
-      (update-event event)
-    ?~  new-limit  &
-    (gte u.new-limit registered-count)
-  ::  +add-chat: connect an existing chat or create a new one
-  ::
-  ++  add-chat
-    |=  chat-id=(unit club-id)
-    |^  ^+  cor
-    ?>  host-call
-    :: if nothing is passed in, create a new chat id
-    =/  gab=(unit club-id)
-      ?~(chat-id create-id chat-id)
-    :: add the chat to event state
-    =/  =event  get-event
-    =.  chat.event  gab
-    =.  cor
-      (update-event event)
-    =.  cor
-      :: create a new chat, if none was passed in
-      ?~  chat-id
-        (create-chat gab)
-      :: check for existence
-      =/  =crew:club:chat
-        %^  scry-for  crew:club:chat
-          %chat
-        /club/(scot %uv p.u.chat-id)/crew
-      ?.  &(=(~ team.crew) =(~ hive.crew))
-        invite-registered
-      ~|(no-chat-exists+[id p.u.chat-id] !!)
-    =,  event
-    (update-guests secret chat get-guests)
-    ::  +invite-registered: send group chat invite to %registered guests
-    ::
-    ++  invite-registered
-      ^+  cor
-      =/  guests=(list ship)
-        get-registered-guests
-      |-
-      ?~  guests  cor
-      =.  cor  (invite-to-chat i.guests)
-      $(guests t.guests)
-    ::  +create-id: make a group chat id
-    ::
-    ++  create-id
-      ^-  (unit club-id)
-      =;  club=id:club:chat
-        (some `club-id`[%club club])
-      %+  slav  %uv
-      %-  crip
-      :: we match %chat's club id pattern; not entirely sure why it's
-      :: like this
-      (weld "0v4.00000." (swag [12 23] (scow %uv eny.bowl)))
-    ::  +create-chat: generate chat and invite %registered guests
-    ::
-    ++  create-chat
-      |=  chat-id=(unit club-id)
-      ^+  cor
-      ?~  chat-id  cor
-      =/  =wire  (weld /chat id-to-path)
-      =/  guests=(set ship)
-        (silt get-registered-guests)
-      %-  emil
-      :~  %:  act
-            wire
-            our.bowl
-            %chat
-            :-  %club-action
-            !>  ^-  action:club:chat
-            :+  p.u.chat-id
-              *uid:club:chat
-            [%meta [title.info:get-event *cord *cord *cord]]
-          ==
-          %:  act
-            wire
-            our.bowl
-            %chat
-            club-create+!>(`create:club:chat`[p.u.chat-id guests])
-          ==
-      ==
-    --
-  ::  +remove-chat: unlink a chat channel from an event
-  ::
-  ++  remove-chat
-    ^+  cor
-    ?>  host-call
-    =/  =event  get-event
-    =.  chat.event  ~
-    =.  cor
-      (update-event event)
-    =,  event
-    (update-guests secret chat get-guests)
-  ::  +subscribe: a request from a host ship to subscribe to record updates
-  ::
-  ++  subscribe
-    ^+  cor
-    ::  must come from host
-    ?>  =(src.bowl ship.id)
-    ::  must be foreign, and a host cannot sub to their own event
-    ?<  |(=(our.bowl src.bowl) =(our.bowl ship.id))
-    %-  sss-sub-records
-    (surf:da-records src.bowl dap.bowl [%records %guest our.bowl ~])
-  ::  +apply: application to a restricted event
-  ::
-  ++  apply
-    |=  application=cord
-    ^+  cor
-    ?>  guest-call
-    =/  =event  get-event
-    ?>  ?=(%open status.info.event)
-    ?.  require-application.event
-      ~|(application-not-required+id !!)
-    :: applications must come before any other record status
-    ?:  (~(has bi records) id src.bowl)  cor
-    =.  cor
-      (ask-to-sub src.bowl)
-    (~(new-record re src.bowl) [%applied now.bowl] `application)
-  ::  +register: permit event access
-  ::
-  ::    a guest can register themselves or the host ship can do so on their
-  ::    behalf
-  ::
-  ++  register
-    |=  who=(unit ship)
-    ^+  cor
-    =/  =event  get-event
-    ?>  ?=(%open status.info.event)
-    ?<  ?~  limit.event  |
-        =(u.limit.event registered-count)
-    =/  =ship
-      ?:  host-call
-        ?~(who !! u.who)
-      ?>(guest-call src.bowl)
-    ?>  ?.  require-application.event  &
-        (~(status-exists re ship) %applied)
-    =.  cor
-      (invite-to-chat ship)
-    ?.  (~(has bi records) id ship)
-      :: ask to subscribe and create a new record for the ship
-      =.  cor
-        (ask-to-sub ship)
-      (~(new-record re ship) [%registered now.bowl] ~)
-    :: add %registered status, if not already there
-    ?:  ?|  ?=(%attended ~(current-status re ship))
-            ?=(%registered ~(current-status re ship))
+      ?~(wave.msg rock.msg u.wave.msg)
+    :: clear secret if we're not %registered or %attended since it
+    :: might diverge otherwise
+    =?  secret.record  ?=  ?(%invited %requested %unregistered)
+                       p.status.record
+      ~
+    :: push notification to Landscape, if we've been %invited
+    =?  cor  ?=(%invited p.status.record)
+      =;  act=action:hark
+        %-  emit
+        %:  make-act
+          /hark/invited
+          our.bowl
+          %hark
+          hark-action+!>(act)
         ==
-      cor
-    (~(add-history re ship) [%registered now.bowl])
-
-  ::  +unregister: revoke event access
-  ::
-  ++  unregister
-    |=  who=(unit ship)
-    ^+  cor
-    =/  =event  get-event
-    =/  =ship
-      ?:  host-call
-        ?~(who !! u.who)
-      ?>(guest-call src.bowl)
-    ?.  (~(has bi records) id ship)
-      ~|(no-record+[id ship] !!)
-    ?.  ?=(%registered ~(current-status re ship))
-      ~|(not-registered+[id ship] !!)
-    :: TODO %chat doesn't provide an option to remove a ship from a club
-    (~(add-history re ship) [%unregistered now.bowl])
-  ::  +punch: validate a guest's attendance
-  ::
-  ++  punch
-    |=  =ship
-    ^+  cor
-    ?>  host-call
-    ?.  ?=(%registered ~(current-status re ship))
-      cor
-    (~(add-history re ship) [%attended now.bowl])
-  ::  +delete-record: permanently delete a guest's record
-  ::
-  ++  delete-record
-    |=  =ship
-    ^+  cor
-    ?>  host-call
-    =.  records  (~(del bi records) id ship)
-    (sss-pub-records (kill:du-records [%records %guest ship ~]~))
-  ::  +update-guests: publish an update to a specified set of guests
-  ::
-  ++  update-guests
-    |=  $:  new-secret=(unit cord)
-            new-chat=(unit club-id)
-            guests=(list ship)
-        ==
-    |-  ^+  cor
-    ?~  guests  cor
-    ?.  ?=(%registered ~(current-status re i.guests))
-      $(guests t.guests)
-    =/  =record  (~(got bi records) id i.guests)
-    =:  chat.record    new-chat
-        secret.record  new-secret
-      ==
-    =.  cor  (~(publish re i.guests) record)
-    $(guests t.guests)
-  ::  +invite-to-chat: invite a guest to the event's chat
-  ::
-  ++  invite-to-chat
-    |=  =ship
-    ^+  cor
-    =/  =event  get-event
-    ?~  chat.event  cor
-      :: TODO also make sure chat exists in %chat agent
-    =/  =wire
-      :(weld /chat id-to-path /(scot %p ship))
-    =.  cor
-      %-  emit
-      %:  act
-        wire
-        ship
-        %chat
-        :-  %club-action
-        !>  ^-  action:club:chat
-        [p.u.chat.event *uid:club:chat [%hive our.bowl ship &]]
-      ==
-    cor
-  ::  +ask-to-sub: send a subscribe poke to a ship
-  ::
-  ++  ask-to-sub
-    |=  =ship
-    ^+  cor
-    =/  =wire  (weld /subscribe id-to-path)
-    %-  emit
-    (act wire ship %live (make-event-operation id [%subscribe ~]))
-  ::  +get-event: retreive an event
-  ::
-  ++  get-event
-    ^-  event
-    ~|(no-event-found+id (~(got by events) id))
-  ::  +get-guests: retreive guests for an event
-  ::
-  ++  get-guests
-    ^-  (list ship)
-    ~(tap in (~(key bi records) id))
-  ::  $get-registered-guests: produce set of all registered guests
-  ::
-  ++  get-registered-guests
-    ^-  (list ship)
-    %+  murn  get-guests
-    |=  =ship
-    ?.(?=(%registered ~(current-status re ship)) ~ `ship)
-  ::  +registered-count: produce number of registered guests
-  ::
-  ++  registered-count
-    ^-  @ud
-    =/  guests=(list ship)
-      get-guests
-    =|  count=@ud
-    |-
-    ?~  guests  count
-    ?.  ?=(%registered ~(current-status re i.guests))
-      $(guests t.guests)
-    $(count +(count), guests t.guests)
-  ::  +re: record handling
-  ::
-  ++  re
-    |_  guest=ship
-    ::  $publish: update local records map and publish for guest
-    ::
-    ++  publish
-      |=  =record
-      ^+  cor
-      =.  records
-        (~(put bi records) id guest record)
-      =+  path=[%records %guest guest ~]
-      %-  sss-pub-records
-      (give:du-records path id record)
-    ::  +new-record: create a guest record and publish it
-    ::
-    ++  new-record
-      |=  $:  status=[record-status time]
-              application=(unit cord)
+      =;  =yarn:hark  [%add-yarn & & yarn]
+      :*  `@uvH`eny.bowl
+          [~ ~ %live /invites]
+          now.bowl
+          :~  [%ship src.msg]
+              [%emph (crip ~['invited you to their event: ' title.info.record])]
           ==
-      ^+  cor
-      =+  path=[%records %guest guest ~]
-      =/  =record
-        :: if applicaiton is not empty, we don't pass secret or chat
-        ::
-        =,  get-event
-        ?^  application
-          [info application [status]~ ~ ~]
-        [info application [status]~ secret chat]
-      :: make path secret
-      =.  cor
-        (sss-pub-records (secret:du-records [path]~))
-      :: permission the guest for access
-      =.  cor
-        (sss-pub-records (allow:du-records [guest]~ [path]~))
-      :: give the guest the record
-      (~(publish re guest) record)
-    ::  +add-history: add to record history
-    ::
-    ++  add-history
-      |=  new-status=[record-status time]
-      ^+  cor
-      =/  =record
-        ~|  no-record+[id guest]
-        (~(got bi records) id guest)
-      =.  history.record
-        [new-status history.record]
-      (~(publish re guest) record)
-    ::  +status-exists: confirm status existence
-    ::
-    ++  status-exists
-      |=  =record-status
-      ^-  ?
-      =+  ~|  no-record+[id guest]
-          history=history:(~(got bi records) id guest)
-      |-
-      ?~  history  |
-      ?:  =(record-status p.i.history)  &
-      $(history t.history)
-    :: +current-status: determine a guest's current status
-    ::
-    ++  current-status
-      ^-  record-status
-      ~|  no-record+[id guest]
-      =+  history:(~(got bi records) id guest)
-      ?~(- !! p.i.-)
-    --
-  --
---
+          /
+          ~
+      ==
+    cor(records (~(put bi records) [src.msg name] our.bowl record))
+  ==
 ::  +act: build poke card
 ::
-++  act
+++  make-act
   |=  [=wire who=ship app=term =cage]
   ^-  card
   [%pass wire %agent [who app] %poke cage]
-::  +make-event-operation: produce an event-operation cage
+::  +make-operation: produce an $operation:live cage
 ::
-++  make-event-operation
-  |=  [=id =event-action]
+++  make-operation
+  |=  [=id =action]
   ^-  cage
-  live-event-operation+!>(`event-operation`[id event-action])
+  live-operation+!>(`operation`[id action])
 ::  +append-entropy: add random chars to event name for uniqueness
 ::
 ++  append-entropy
@@ -631,12 +349,838 @@
   %+  slav  %tas
   %-  crip
   :(weld (scow %tas name) "-" (swag [6 5] (scow %uv eny.bowl)))
+::  +get-revision-number: get a remote scry path's revision number
 ::
-++  scry-for-marked
-  |*  [=mold app=term =path]
-  .^(mold %gx (scot %p our.bowl) app (scot %da now.bowl) path)
+++  get-revision-number
+  |=  name=(unit term)
+  .^  [%ud @ud]
+    %gw
+    %+  weld  /(scot %p our.bowl)/live/(scot %da now.bowl)
+    ?~  name  //all
+    //event/(scot %tas u.name)
+  ==
+::  +find: search for a ship's discoverable events (i.e. %public and %private)
 ::
-++  scry-for
-  |*  [=mold app=term =path]
-  (scry-for-marked mold app (snoc `^path`path %noun))
+::    this just sends a %case poke, requesting a ship's latest revision number
+::    for a remote scry path; +case performs the scry upon receiving it
+::
+++  find
+  |=  [=ship name=(unit term)]
+  ^+  cor
+  :: reset result state before sending the poke
+  =.  result  *@t
+  =/  =wire
+    %+  weld  /case/request/(scot %p ship)
+    ?~  name  /all
+    /(scot %tas u.name)
+  %-  emit
+  (make-act wire ship dap.bowl live-dial+!>(`dial`[%case ~ name]))
+::  +case: remote scry revision number request/response
+::
+::    atm, remote scry doesn't support "latest" revision number scrying
+::    so we request the case to scry for the latest data
+::      - w/o a case: some ship is trying to find our latest
+::        scry path revision number for either all our discoverable events
+::        or a single one
+::      - with a case: some ship is giving us their latest revision number
+::        so we can scry for their event(s)
+::      - w/o name: means all discoverable events are sent/requested
+::      - with name: means a specific event is sent/requested
+::
+++  case
+  |=  [case=(unit @ud) name=(unit term)]
+  ^+  cor
+  ?>  ?!(=(our src):bowl)
+  ?~  case
+    %-  emit
+    %:  make-act
+      /case/response/(scot %p src.bowl)
+      src.bowl
+      dap.bowl
+      live-dial+!>(`dial`[%case `+:(get-revision-number name) name])
+    ==
+  %-  emil
+  :~  :*  %pass
+          %+  weld  /remote/scry/timer/(scot %p src.bowl)/(scot %ud u.case)
+          ?~  name  /all
+          /event/(scot %tas u.name)
+          %arvo  %b
+          %wait  (add ~m1 now.bowl)
+      ==
+      :*  %pass
+          %+  weld  /remote/scry/event
+          ?~  name  /all
+          /(scot %tas u.name)
+          %arvo  %a
+          %keen  src.bowl
+          %+  weld   /g/x/(scot %ud u.case)/live
+          ?~  name  //all
+          //event/(scot %tas u.name)
+      ==
+  ==
+::  +ev: event handling
+::
+++  ev
+  |_  =id
+  ::  +get-event: retreive an event
+  ::
+  ++  get-event
+    ^-  event
+    ~|(no-event-found+id (~(got by events) id))
+  ::  +get-all-guests: retreive guests for an event
+  ::
+  ++  get-all-guests
+    ^-  (list ship)
+    ~(tap in (~(key bi records) id))
+  ::  +id-to-path: transform id into a path
+  ::
+  ++  id-to-path
+    ^-  path
+    /(scot %p ship.id)/(scot %tas name.id)
+  ::  +over: is an event %over?
+  ::
+  ++  over
+    ^-  ?
+    =/  =event  get-event
+    ?=(%over latch.info.event)
+  ::  +host-call: verify that a host is performing the action
+  ::
+  ++  host-call
+    ^-  ?
+    ?&  =(src our):bowl
+        =(our.bowl ship.id)
+    ==
+  ::  +guest-call: verify that some other ship is performing the action
+  ::  and that we are the host
+  ::
+  ++  guest-call
+    ^-  ?
+    ?&  ?!(=(src our):bowl)
+        =(our.bowl ship.id)
+    ==
+  ::  +delete-remote-path: delete all instances of an event's remote scry
+  ::  path
+  ::
+  ++  delete-remote-path
+    |=  =path
+    =/  name=(unit term)
+      ?+  path  ~|(invalid-remote-path+path !!)
+        [%all ~]  ~
+        [%event @ ~]  `(slav %tas i.t.path)
+      ==
+    %-  emit
+    [%pass /remote/scry/delete %cull [%ud +:(get-revision-number name)] path]
+  ::  +permitted-count: total number of guests with status of
+  ::  %registered or %attended
+  ::
+  ++  permitted-count
+    ^-  @ud
+    =|  count=@ud
+    =+  guests=get-all-guests
+    |-
+    ?~  guests  count
+    =+  status=(need ~(current-status re i.guests))
+    ?.  ?|  ?=(%registered p.status)
+            ?=(%attended p.status)
+        ==
+      $(guests t.guests)
+    $(count +(count), guests t.guests)
+  ::  +update-guests: update a subset of ships with records
+  ::
+  ++  update-guests
+    |=  guests=(list ship)
+    ^+  cor
+    =/  =event  get-event
+    |-
+    ?~  guests  cor
+    =/  =record
+      (~(got bi records) id i.guests)
+    =:  info.record  info.event
+        secret.record  secret.event
+      ==
+    =.  cor
+      (~(publish re i.guests) record)
+    $(guests t.guests)
+  ::  +update-event: write a local event update to state
+  ::
+  ++  update-event
+    |=  update=event
+    ^+  cor
+    =.  events  (~(put by events) id update)
+    =.  cor  (update-remote-event update)
+    update-all-remote-events
+  ::  +update-remote-event: update an event discoverable over remote scry
+  ::
+  ++  update-remote-event
+    |=  =event
+    ^+  cor
+    =,  event
+    ?:  |(?=(%secret kind.info) ?=(%over latch.info))
+      cor
+    %-  emit
+    :*  %pass  /remote/scry/publish
+        %grow  /event/(scot %tas name.id)
+        [%remote-events (malt [id info]~)]
+    ==
+  ::  +update-all-remote-events: update all events discoverable over remote scry
+  ::  (i.e. all %public and %private ones that are not %over)
+  ::
+  ++  update-all-remote-events
+    ^+  cor
+    =;  discoverable=(map _id info)
+      %-  emit
+      [%pass /remote/scry/publish %grow /all [%remote-events discoverable]]
+    %-  malt
+    %+  murn  ~(tap by events)
+    |=  [=_id =event]
+    =,  event
+    ?:  |(?=(%secret kind.info) ?=(%over latch.info))
+      ~
+    `[id info]
+  ::  +route: send an action to the appropriate arm
+  ::
+  ++  route
+    |=  act=action
+    |^  ^+  cor
+    ?-  -.act
+      %create      (create +.act)
+      %delete      delete
+      %info        (change-info +.act)
+      %secret      (change-secret +.act)
+      %limit       (change-limit +.act)
+    ::
+      %subscribe   subscribe
+      %invite      (invite +.act)
+      %register    (register +.act)
+      %unregister  (unregister +.act)
+      %punch       (punch +.act)
+    ==
+    ::  +create: write an event to state
+    ::
+    ++  create
+      |=  =event
+      ^+  cor
+      ?>  host-call
+      =?  id  (~(has by events) id)
+        [ship.id (append-entropy name.id)]
+      =.  events  (~(put by events) id event)
+      =.  cor  (update-remote-event event)
+      update-all-remote-events
+    ::  +delete: permanently delete an event or unsubscribe from a record
+    ::
+    ++  delete
+      |^  ^+  cor
+      ?.  host-call
+        :: as a guest, delete our local record and unsubscribe
+        ?>  &(=(our src):bowl ?!(=(our.bowl ship.id)))
+        =.  sub-records
+          (quit:da-records ship.id dap.bowl [%record name.id our.bowl ~])
+        cor(records (~(del bi records) id our.bowl))
+      =/  =event  get-event
+      :: delete an event and notify all guests that it's so %over
+      =?  cor  ?!(?=(%over latch.info.event))
+        (delete-remote-path /event/(scot %tas name.id))
+      =.  cor  (update-event event(latch.info %over))
+      =.  cor  (update-guests get-all-guests)
+      =.  cor  update-all-remote-events
+      =.  events  (~(del by events) id)
+      =?  cor  ?~(events & |)
+        :: if no events, also cull the /all path so others get a nack
+        :: when they search for our discoverable events
+        (delete-remote-path /all)
+      =.  cor  delete-records
+      cor
+      ::  +delete-records: deletes all records associated with an event
+      ::  and kills their associated pub paths
+      ::
+      ++  delete-records
+        ^+  cor
+        =/  guests=(list ship)
+          ~(tap in (~(key bi records) id))
+        |-
+        ?~  guests  cor
+        =.  cor
+          %-  sss-pub-records
+          (kill:du-records [%record name.id i.guests ~]~)
+        =.  records  (~(del bi records) id i.guests)
+        $(guests t.guests)
+      --
+    ::  +change-info: update an event's metadata and publish to guests
+    ::
+    ++  change-info
+      |=  =sub-info
+      ^+  cor
+      ?>  host-call
+      :: if event is %over, only allow a %latch modification
+      ?:  &(?!(?=(%latch -.sub-info)) over)
+        cor
+      =/  =event  get-event
+      =;  =_event
+        =.  cor  (update-event event)
+        =?  cor  ?=(?([%kind %secret] [%latch %over]) sub-info)
+          (delete-remote-path /event/(scot %tas name.id))
+        (update-guests get-all-guests)
+      ?-    -.sub-info
+          %title   event(title.info +.sub-info)
+          %about   event(about.info +.sub-info)
+          %moment  event(moment.info +.sub-info)
+          %kind    event(kind.info +.sub-info)
+          %latch
+        :: if limit is reached, prevent host from opening
+        ?:  ?&  ?=(%open +.sub-info)
+                ?~(limit.event | =(u.limit.event permitted-count))
+            ==
+          ~|(event-limit-is-reached+id !!)
+        event(latch.info +.sub-info)
+      ==
+    ::  +change-limit: update guest limit
+    ::
+    ++  change-limit
+      |=  new-limit=limit
+      ^+  cor
+      ?>  host-call
+      ?:  over  cor
+      =;  write=?
+        ?.  write  ~|(limit-lower-than-registered-count+id !!)
+        =/  =event  get-event
+        =.  limit.event
+          new-limit
+        (update-event event)
+      ?~  new-limit  &
+      (gte u.new-limit permitted-count)
+    ::  +change-secret: update the event secret and publish to
+    ::  %registered guests
+    ::
+    ++  change-secret
+      |=  new-secret=secret
+      ^+  cor
+      ?>  host-call
+      ?:  over  cor
+      =/  =event  get-event
+      =.  secret.event  new-secret
+      =.  cor  (update-event event)
+      =+  guests=get-all-guests
+      =|  permitted=(list ship)
+      |-
+      ?~  guests
+        (update-guests permitted)
+      =+  status=(need ~(current-status re i.guests))
+      ?.  ?|  ?=(%registered p.status)
+              ?=(%attended p.status)
+          ==
+        $(guests t.guests)
+      $(permitted [i.guests permitted], guests t.guests)
+    ::  +subscribe: either a request from a host or an action we send as
+    ::  a guest to subscribe to record updates
+    ::
+    ++  subscribe
+      ^+  cor
+      =;  =ship
+        %-  sss-sub-records
+        (surf:da-records ship dap.bowl [%record name.id our.bowl ~])
+      :: if we're are the source and not the host, sub to the host
+      ?:  &(=(our src):bowl ?!(=(our.bowl ship.id)))
+        ship.id
+      :: if the source is the host and we are not the host, sub to the source
+      ?>  &(=(src.bowl ship.id) ?!(=(our.bowl ship.id)))
+      src.bowl
+    ::  +invite: send an event invite to a list of ships
+    ::
+    ++  invite
+      |=  ships=(list ship)
+      ^+  cor
+      ?>  host-call
+      ?:  over  cor
+      |-
+      ?~  ships  cor
+      =.  cor
+        =/  =wire
+          (weld /subscribe id-to-path)
+        =/  =cage
+          (make-operation id [%subscribe ~])
+        (emit (make-act wire i.ships dap.bowl cage))
+      =.  cor
+        ?.  (~(has bi records) id i.ships)
+          :: if we don't have a record for them, add it
+          (~(new-record re i.ships) [%invited now.bowl])
+        =+  status=(need ~(current-status re i.ships))
+        ?:  ?=(?(%registered %attended) p.status)
+          :: if they're already %registered or %attended, don't invite
+          cor
+        ?:  ?=(%requested p.status)
+          :: if they're %requested, %register them
+          %-  emit
+          %:  make-act
+            (weld /register id-to-path)
+            our.bowl
+            dap.bowl
+            live-operation+!>(`operation`[id [%register `i.ships]])
+          ==
+        (~(update-status re i.ships) [%invited now.bowl])
+      $(ships t.ships)
+    ::  +register: permit event access
+    ::
+    ++  register
+      |=  who=(unit ship)
+      |^  ^+  cor
+      ?:  &(=(src our):bowl ?!(=(our.bowl ship.id)))
+        :: send a register poke to a host
+        =/  =wire  (weld /register id-to-path)
+        =/  =cage  (make-operation id [%register ~])
+        (emit (make-act wire ship.id dap.bowl cage))
+      :: poke from host or some foreign ship
+      ?:  over  cor
+      =/  =event  get-event
+      =/  =ship  ?~(who src.bowl u.who)
+      :: ask the ship to subscribe to their record
+      ::
+      =.  cor
+        =/  =wire  (weld /subscribe id-to-path)
+        =/  =cage  (make-operation id [%subscribe ~])
+        (emit (make-act wire ship dap.bowl cage))
+      :: possibly process status change
+      ::
+      =/  process=(unit status)
+        =;  already-registered=?
+          ?:  already-registered  ~
+          ?~  who
+            (guest-request src.bowl)
+          (host-request u.who)
+        ?~  status=~(current-status re ship)  %|
+        ?:(?=(%registered p.u.status) %& %|)
+      ?~  process  cor
+      =/  =status  u.process
+      :: if a ship is being %registered and the limit is reached,
+      :: close the latch
+      ::
+      =/  capped=?
+        ?~  limit.event  |
+        ?.  ?=(%registered p.status)  |
+        ?|  =(0 u.limit.event)
+            =(u.limit.event +(permitted-count))
+        ==
+      =?  cor  capped
+        =.  cor
+          (update-event event(latch.info %closed))
+        (update-guests get-all-guests)
+      :: add or update record
+      ::
+      ?.  (~(has bi records) id ship)
+        (~(new-record re ship) status)
+      (~(update-status re ship) status)
+      ::  +host-request: host is registering someone
+      ::
+      ++  host-request
+        |=  =ship
+        ^-  (unit status)
+        ?>  host-call
+        =+  status=~(current-status re ship)
+        ?~  status  ~
+        :: a ship must have requested access before the host
+        :: can register them; obviously the guest should just register
+        :: themselves for public events
+        ::
+        ?.  ?=(%requested p.u.status)  ~
+        `[%registered now.bowl]
+      ::  +guest-request: someone is requesting access; change their
+      ::  status according to the event $kind and $latch
+      ::
+      ++  guest-request
+        |=  =ship
+        ^-  (unit status)
+        ?>  guest-call
+        =/  =event  get-event
+        :: if event is closed, or has a limit of 0, make the guest
+        :: status %requested
+        ?:  ?|  ?=(%closed latch.info.event)
+                ?~(limit.event | =(0 u.limit.event))
+            ==
+          `[%requested now.bowl]
+        =+  status=~(current-status re ship)
+        ?-    kind.info.event
+            %public  `[%registered now.bowl]
+        ::
+            %secret
+          ?~  status  ~
+          ?.  ?=(%invited p.u.status)  ~
+          `[%registered now.bowl]
+        ::
+            %private
+          ?:  ?|  =(~ status)
+                  ?=([%unregistered *] (need status))
+                  ?!(?=([%invited *] (need status)))
+              ==
+            `[%requested now.bowl]
+          `[%registered now.bowl]
+        ==
+      --
+    ::  +unregister: revoke event access
+    ::
+    ++  unregister
+      |=  who=(unit ship)
+      |^  ^+  cor
+      ?:  &(=(src our):bowl ?!(=(our.bowl ship.id)))
+        :: send register poke to host
+        =/  =wire  (weld /unregister id-to-path)
+        =/  =cage
+          (make-operation id [%unregister ~])
+        (emit (make-act wire ship.id %live cage))
+      :: received register poke
+      ?:  over  cor
+      =?  who  ?~(who & ?>(host-call |))
+        ?>(guest-call `src.bowl)
+      ?.  (is-registered (need who))  cor
+      (~(update-status re (need who)) [%unregistered now.bowl])
+      ::  +is-registered: check if registered
+      ::
+      ++  is-registered
+        |=  =ship
+        ^-  ?
+        =+  status=~(current-status re ship)
+        ?~  status  |
+        ?:(?=(%registered p.u.status) & |)
+      --
+    ::  +punch: verify or revoke a guest's attendance status
+    ::
+    ++  punch
+      |=  [job=?(%verify %revoke) =ship]
+      ^+  cor
+      ?>  host-call
+      ?:  over  cor
+      ?~  sts=~(current-status re ship)  cor
+      =;  upd=(unit status)
+        ?~  upd  cor
+        (~(update-status re ship) u.upd)
+      ?-  job
+        %revoke  ?:(?=(%attended p.u.sts) `[%registered now.bowl] ~)
+        %verify  ?:(?=(%registered p.u.sts) `[%attended now.bowl] ~)
+      ==
+    --
+  ::  +re: record handling
+  ::
+  ++  re
+    |_  =ship
+    :: +current-status: get a guest's current record status
+    ::
+    ++  current-status
+      ^-  (unit status)
+      =+  (~(get bi records) id ship)
+      ?~(- ~ `status.u.-)
+    ::  +update-status: publish a record status update
+    ::
+    ++  update-status
+      |=  new-status=status
+      ^+  cor
+      =;  =record
+        (~(publish re ship) record)
+      =/  =record
+        ~|  no-record+[id ship]
+        (~(got bi records) id ship)
+      :: if %registered or %attended, also publish secret
+      ?.  ?|  ?=(%registered p.new-status)
+              ?=(%attended p.new-status)
+          ==
+        record(status new-status)
+      =+  event=get-event
+      record(secret secret.event, status new-status)
+    ::  $publish: update local records mip and publish the record to guest
+    ::
+    ++  publish
+      |=  =record
+      ^+  cor
+      =.  records
+        (~(put bi records) id ship record)
+      =+  path=[%record name.id ship ~]
+      %-  sss-pub-records
+      (give:du-records path record)
+    ::  +new-record: create a new record, set path permissions, and publish
+    ::  to guest
+    ::
+    ++  new-record
+      |=  =status
+      ^+  cor
+      =+  path=[%record name.id ship ~]
+      =/  =record
+        =+  event=get-event
+        ?.  ?=(%registered p.status)
+          [info.event ~ status]
+        [info.event secret.event status]
+      :: make path secret
+      =.  cor
+        (sss-pub-records (secret:du-records [path]~))
+      :: permission the guest for access
+      =.  cor
+        (sss-pub-records (allow:du-records [ship]~ [path]~))
+      :: give the guest the record
+      (~(publish re ship) record)
+    --
+  --
+::  +handle-http: incoming from eyre
+::
+++  handle-http
+  |_  [eyre-id=@ta =inbound-request:eyre]
+  +*  req   (parse-request-line:server url.request.inbound-request)
+      send  (cury response:schooner eyre-id)
+      drop  (emil (send 404 ~ [%none ~]))
+      stan  (emil (send 500 ~ [%stock ~]))
+      view  ~(. live-view [bowl events records result])
+  ::  +pull-id: extract id from site
+  ::
+  ++  pull-id
+    ^-  id
+    =+  site=site.req
+    ?.  ?=([@ @ @ @ @ *] site)  drop
+    :-  (slav %p i.t.t.t.site)
+    ?~  i.t.t.t.t.site  %$
+    (slav %tas i.t.t.t.t.site)
+  ::  +get: http get method handling
+  ::
+  ++  get
+    ^+  cor
+    ?>  =(src our):bowl
+    =+  site=site.req
+    =;  =manx
+      (emil (send 200 ~ [%manx manx]))
+    =/  =id  pull-id
+    ?.  ?=([@ %live *] site)  drop
+    ?+    t.t.site  drop
+        ~                    active:view
+        [%archive ~]         archive:view
+        [%help ~]            help:view
+        [%find ~]            find:view
+        [%create ~]          create:view
+        [%results ~]         results:view
+        [%event @ @ ~]       (details:view id)
+        [%manage @ @ ~]      (manage:view id)
+        [%event-link @ @ ~]  (link:view id)
+        [%contact @ @ *]
+      ?+  t.t.t.t.t.site  drop
+        [%register ~]    ~(reg contact:view id)
+        [%unregister ~]  ~(unreg contact:view id)
+      ==
+        [%delete @ @ ~]      ~(delete edit:view id)
+        [%title @ @ ~]       ~(title edit:view id)
+        [%about @ @ ~]       ~(about edit:view id)
+        [%moment @ @ ~]      ~(moment edit:view id)
+        [%kind @ @ ~]        ~(kind edit:view id)
+        [%latch @ @ ~]       ~(latch edit:view id)
+        [%secret @ @ ~]      ~(secret edit:view id)
+        [%limit @ @ ~]       ~(limit edit:view id)
+    ==
+  ::  +post: http post method handling
+  ::
+  ++  post
+    |^  ^+  cor
+    ?>  =(src our):bowl
+    =/  args=(map @t @t)
+      ?~  body=body.request.inbound-request  ~
+      %-  ~(gas by *(map @t @t))
+      (fall (rush q.u.body yquy:de-purl:html) ~)
+    ?~  args  drop
+    =/  =cage  (compose args)
+    =/  success=(unit _cor)
+      %-  mole
+      |.  (poke cage)
+    ?~  success  drop
+    =.  cor  u.success
+    (redirect cage)
+    ::  +compose: build $operation or $dial cage
+    ::
+    ++  compose
+      |=  args=(map @t @t)
+      |^  ^-  cage
+      =;  (each operation dial)
+        ?-  -.-
+          %|  live-dial+!>(`dial`p.-)
+          %&  live-operation+!>(`operation`p.-)
+        ==
+      ?~  head=(~(get by args) 'head')
+        drop
+      =/  as-host=?
+        =(our.bowl ship:pull-id)
+      ?+    u.head  drop
+          %delete  [%& [pull-id %delete ~]]
+          %invite
+        ?>  as-host
+        ?~  who=(~(get by args) 'ship')  drop
+        [%& [pull-id %invite [(slav %p u.who)]~]]
+      ::
+          %limit
+        ?>  as-host
+        ?~  num=(~(get by args) 'num')  drop
+        [%& [pull-id %limit (rush u.num dem)]]
+      ::
+          %punch
+        ?>  as-host
+        ?~  who=(~(get by args) 'ship')  drop
+        =/  job=?(%verify %revoke)
+          ?~  j=(~(get by args) 'job')  drop
+          ;;(?(%verify %revoke) (slav %tas u.j))
+        [%& [pull-id %punch job (slav %p u.who)]]
+      ::
+          %secret
+        ?>  as-host
+        ?~  txt=(~(get by args) 'txt')  drop
+        [%& [pull-id %secret ?~(u.txt ~ `u.txt)]]
+      ::
+          %find
+        ?~  qur=(~(get by args) 'ship-name')  drop
+        =;  [=ship name=(unit term)]
+          [%| [%find ship name]]
+        %+  scan  (trip u.qur)
+        ;~(plug ;~(pfix sig fed:ag) (punt ;~(pfix fas urs:ab)))
+      ::
+          ?(%register %unregister)
+        =/  =id  pull-id
+        ?~  them=(~(get by args) 'ship')  drop
+        =/  who=(unit ship)
+          ?.  as-host  ?~(u.them ~ !!)
+          ?~  u.them  !!
+          `(slav %p u.them)
+         [%& id ;;(action [(slav %tas u.head) who])]
+      ::
+          %info
+        ?>  as-host
+        =;  =sub-info
+          [%& [pull-id %info sub-info]]
+        ?~  sub=(~(get by args) 'sub')  drop
+        ?+    u.sub  ~|(bad-input-argument+sub !!)
+            %title   [%title ~(line co (~(got by args) 'title'))]
+            %about   [%about ?~(a=(~(got by args) 'about') ~ `a)]
+            %kind    [%kind ;;(kind (slav %tas (~(got by args) 'kind')))]
+            %latch   [%latch ;;(latch (slav %tas (~(got by args) 'latch')))]
+            %moment
+          :*  %moment
+              ?~(val=(~(got by args) 'start') ~ `~(date co val))
+              ?~(val=(~(got by args) 'end') ~ `~(date co val))
+              ~(timezone co (~(got by args) 'timezone'))
+          ==
+        ==
+      ::
+          %create
+        ?>  as-host
+        =;  =event
+          =,  pull-id
+          ?>  ?=(%$ name)
+          :-  %&
+          :_  [%create event]
+          [ship ~(name co title.info.event)]
+        =/  vals=(list [key=@t val=@t])
+          ~(tap by (~(del by args) 'head'))
+        =|  =event
+        |-
+        ?~  vals  event
+        =;  update=_event
+          $(event update, vals t.vals)
+        =+  val=val.i.vals
+        ?+  key.i.vals  ~|(bad-input-argument+i.vals !!)
+          %title   event(title.info ~(line co val))
+          %about   event(about.info ?~(val ~ `val))
+          %kind    event(kind.info ;;(kind (slav %tas val)))
+          %latch   event(latch.info ;;(latch (slav %tas val)))
+          %secret  event(secret ?~(val ~ `val))
+          %limit   event(limit ?~(val ~ `(rash val dem)))
+          %timezone  event(timezone.moment.info ~(timezone co val))
+          %moment-start  event(start.moment.info ?~(val ~ `~(date co val)))
+          %moment-end  event(end.moment.info ?~(val ~ `~(date co val)))
+        ==
+      ==
+      ::  +co: compose some cord to a structure
+      ::
+      ++  co
+        |_  val=@t
+        ::  +line: compose a cord with linebreaks into a single line
+        ::
+        ++  line
+          ^-  @t
+          (crip (join ' ' `tape`(to-wain:format val)))
+        ::  +name: convert cord to $name:id
+        ::
+        ++  name
+          ^-  @tas
+          %+  slav  %tas
+          %-  crip
+          %+  turn  (cass (trip val))
+          |=  a=@t
+          ?:(=(' ' a) '-' a)
+        ::  +timezone: parse timezone input to $timezone
+        ::
+        ++  timezone
+          ^-  [? @ud]
+          %+  scan  (trip val)
+          ;~  plug
+            ;~  pose
+              (cold %| (just '-'))
+              (cold %& (just '+'))
+            ==
+            dem:ag
+          ==
+        ::  +date: convert UTC date format to @da
+        ::
+        ++  date
+          ^-  @da
+          %-  year
+          =;  [y=@ud mo=@ud d=@ud h=@ud min=@ud]
+            =/  hx=@ux
+              %+  slav  %ux
+              (crip (swag [0 6] (scow %ux eny.bowl)))
+            [[%& y] mo [d h min 0 ~[hx]]]
+          %+  scan  (trip val)
+          ;~  plug
+            ;~(sfix dim:ag hep)
+            ;~  pose
+              ;~(pfix (just '0') ;~(sfix dem:ag hep))
+              ;~(sfix dem:ag hep)
+            ==
+            ;~  pose
+              ;~(pfix (just '0') ;~(sfix dem:ag (just 'T')))
+              ;~(sfix dem:ag (just 'T'))
+            ==
+            ;~  pose
+              ;~(pfix (just '0') ;~(sfix dem:ag col))
+              ;~(sfix dem:ag col)
+            ==
+            ;~(pose ;~(pfix (just '0') dem:ag) dem:ag)
+          ==
+        --
+      --
+    ::  +redirect: redirect to url from poke that was passed in
+    ::
+    ++  redirect
+      |=  [=mark =vase]
+      ^+  cor
+      =;  url=path
+        (emil (send [303 ~ [%redirect (spat url)]]))
+      ?+    mark  ~|(bad-mark+mark !!)
+          %live-dial
+        =+  !<(=dial vase)
+        ?-  -.dial
+          %case  !!
+          %find  /apps/live/results
+        ==
+      ::
+          %live-operation
+        =+  !<(op=operation vase)
+        =/  id=path
+          =+  id=pull-id
+          /(scot %p ship.id)/(scot %tas name.id)
+        =/  we-host=?
+          =(our.bowl ship:pull-id)
+        =/  site=path
+          :(weld /apps/live ?:(we-host /manage /contact) id)
+        ?-  -.action.op
+          %subscribe   !!
+          %create      /apps/live
+          %delete      /apps/live
+          %info        (weld /apps/live/event id)
+          %secret      (weld /apps/live/event id)
+          %limit       (weld /apps/live/event id)
+          %invite      (weld /apps/live/manage id)
+          %register    ?:(we-host site (weld site /register))
+          %unregister  ?:(we-host site (weld site /unregister))
+          %punch       (weld /apps/live/manage id)
+        ==
+      ==
+    --
+  --
 --

@@ -1,101 +1,111 @@
-::  %live: event management
+::  %live: event coordination
+::    version ~2023.12.1
+::    ~polrel-witter
 ::
-/-  chat
+/+  *mip
+::
 |%
 ::  $id: event identifier
 ::
 +$  id  [=ship name=term]
+::  +timezone: GMT zone
+::
++$  timezone  (pair ? @ud)
 ::  $moment: event duration
 ::
-+$  moment  [start=(unit time) end=(unit time)]
-::  +club-id: chat identifier, pulled from whom:chat
++$  moment  [start=(unit time) end=(unit time) =timezone]
+::  $kind: event type
 ::
-+$  club-id  [%club p=id:club:chat]
-::  $limit: number of ships that can register per event
+::    %public: discoverable and open to anyone
+::    %private: discoverable but restricted to approval and invite-only
+::    %secret: non-discoverable and restricted to invite-only
 ::
-+$  limit  (unit @ud)
-::  $info: metadata for an event
++$  kind  ?(%public %private %secret)
+::  $latch: status of an event
+::
+::    %open: actively accepting registrants
+::    %closed: not accepting registrants; still receive requests
+::    %over: inactive, non-discoverable
+::
++$  latch  ?(%open %closed %over)
+::  $info: metadata for an event, sharable with all guests
 ::
 +$  info
   $:  title=cord
-      about=cord
+      about=(unit cord)
       =moment
-      status=?(%open %closed)
+      =kind
+      =latch
   ==
-::  $event: main event info controlled by host ship
+::  $limit: number of ships that can register per event
 ::
-::   a secret is some data the host only sends to %registered guests
++$  limit  (unit @ud)
+::  $secret: some data reserved for %registered and %attended guests
 ::
-+$  event
-  $:  =info
-      require-application=?
-      =limit
-      secret=(unit cord)
-      chat=(unit club-id)
-  ==
-::  $record-status: ship participation status
++$  secret  (unit cord)
+::  $event: event info controlled by host ship
 ::
-::    %applied: requested to register
-::    %registered: permitted access to the event
-::    %unregistered: previously registered, but is no longer
-::    %attended: showed up to the event
++$  event  [=info =secret =limit]
+::  $status: state of a guest
 ::
-+$  record-status
-  $?  %applied
-      %registered
-      %unregistered
-      %attended
-  ==
++$  status
+  %+  pair
+    $?  %invited
+        %requested
+        %registered
+        %unregistered
+        %attended
+    ==
+  time
 ::  $record: guest information
 ::
-+$  record
-  $:  =info
-      application=(unit cord)
-      history=(list (pair record-status time))
-      secret=(unit cord)
-      chat=(unit club-id)
++$  record  [=info =secret =status]
+::  $dial: non-event-specific actions
+::
++$  dial
+  $%  [%find =ship name=(unit term)]            :: search for external events
+      :: TODO %case is a workaround until a path's "latest" revision number
+      :: can be remote scried (i.e. /=/some/path)
+      [%case case=(unit @ud) name=(unit term)]  :: scry path request/response
   ==
-::  $flyer: event webpage
+::  $sub-info: modify event info; slotted into an %info action
 ::
-::    a host can include application or registration links to one or
-::    more events
-::
-+$  flyer
-  $:  events=(set id)
-      html=cord
-      md=cord
-      bg-color=@ux
-      text-color=@ux
++$  sub-info
+  $%  [%title title=cord]
+      [%about about=(unit cord)]
+      [%moment =moment]
+      [%kind =kind]
+      [%latch =latch]
   ==
-::  $settings-action: local settings toggle
+::  $action: event api
 ::
-+$  settings-action  $%([%timezone (pair ? @ud)])
-::  $flyer-action: event page api
-::
-+$  flyer-action
-  $%  [%save-flyer =path =flyer]
-      [%delete-flyer =path]
-  ==
-::  $event-action: event api
-::
-+$  event-action
-  $%  [%create-event =event]
-      [%delete-event ~]
-      [%require-app ?]
-      [%set-info =info]
-      [%set-secret (unit cord)]
-      [%set-limit =limit]
-      [%add-chat (unit club-id)]
-      [%remove-chat ~]
++$  action
+  $%  [%create =event]                          :: create an event
+      [%delete ~]                               :: delete an event
+      [%info =sub-info]                         :: change event info
+      [%secret =secret]                         :: change event secret
+      [%limit =limit]                           :: change event limit
     ::
-      [%subscribe ~]
-      [%apply =cord]
-      [%register who=(unit ship)]
-      [%unregister who=(unit ship)]
-      [%punch =ship]
-      [%delete-record =ship]
+      [%subscribe ~]                            :: subscribe to record updates
+      [%invite ships=(list ship)]               :: invite ships to an event
+      [%register who=(unit ship)]               :: register to an event
+      [%unregister who=(unit ship)]             :: unregister from an event
+      [%punch ?(%verify %revoke) =ship]         :: validate or revoke attendance
   ==
-::  $event-operation: send an event action
+::  $operation: act on an event
 ::
-+$  event-operation  [=id =event-action]
++$  operation  [=id =action]
+::  $demand: scry api
+::
++$  demand
+  $%  [%event-exists p=?]
+      [%record-exists p=?]
+      [%event p=(unit event)]
+      [%record p=(unit record)]
+      [%counts p=(map _-.status @ud)]
+      [%all-events p=(map id event)]
+      [%all-records p=(mip id ship record)]
+      [%event-records p=(map ship record)]
+      [%remote-events p=(map id info)]
+  ==
 --

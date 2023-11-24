@@ -3,9 +3,9 @@
 /-  *live
 |%
 ++  name  %live-records
-+$  rock  records=(map id record)
-+$  wave  [=id =record]
++$  rock  =record
++$  wave  =record
 ++  wash
   |=  [=rock =wave]
-  rock(records (~(put by records.rock) id.wave record.wave))
+  rock(record record.wave)
 --
