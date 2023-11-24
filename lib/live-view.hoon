@@ -108,8 +108,7 @@
             ;button(type "submit"): find
           ==
         ==
-        :: initial page load shows results of previous search, if it was
-        :: retreived
+        :: initial page load shows results of previous search, if retreived
         ;div
           ;*  ?~  result  begin
               ?@  result  begin
@@ -196,7 +195,8 @@
       ;h3.center:  contacting host ...
     ==
   --
-::  +details: render event details as an isolated page
+::  +details: event page, rendered based on whether we're the host, a
+::  guest, or the event was searched for
 ::
 ++  details
   |=  =id
@@ -676,7 +676,7 @@
       --
     --
   --
-::  +link: render event link; id as ~ship/event-name
+::  +link: render event link; i.e. id as ~ship/event-name
 ::
 ++  link
   |=  =id
@@ -684,7 +684,7 @@
   ;code(title "event link")
     ;+  ;/  :(weld "{<ship.id>}" "/" (scow %tas name.id))
   ==
-::  +edit: html elements to change an event
+::  +edit: elements to change an event
 ::
 ++  edit
   |_  =id
@@ -990,7 +990,7 @@
     ;+  ;/  "  |  "
     ;code.tip(title (kind-tip kind)): {<kind>}
   ==
-::  +count: status quantities as tapes
+::  +count: record status quantities
 ::
 ++  count
   |_  =id
@@ -1060,6 +1060,8 @@
       :(weld " - " ?:(render-once (slag 11 e) e) zone)
   ::  +make-legible: render @da more legible
   ::
+  ::    e.g. ~2023.11.24..22.09.48..43b3  to  2023.11.24  22:09
+  ::
   ++  make-legible
     |=  da=@da
     ^-  tape
@@ -1067,7 +1069,7 @@
     =,  date
     =/  yr=tape
       (oust [1 1] (scow %ud y))
-    :(weld yr "." (lzr m) "." (lzr d.t) " " (lzr h.t) ":" (lzr m.t))
+    :(weld yr "." (lzr m) "." (lzr d.t) "  " (lzr h.t) ":" (lzr m.t))
   ::  lzr: lead zero, if single digit
   ::
   ++  lzr
@@ -1095,8 +1097,7 @@
         %active  ?:(?=(%over latch.info) ~ `(render-tile id info))
         %over    ?.(?=(%over latch.info) ~ `(render-tile id info))
       ==
-  ::  +get-our-records: pull records for which we're an event
-  ::  participant
+  ::  +get-our-records: pull records for which we're a guest
   ::
   ++  get-our-records
     ^-  (list [id info])

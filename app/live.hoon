@@ -10,7 +10,7 @@
 ::
 +$  state-0
   $:  %0
-      events=(map id event)                                 :: our events
+      events=(map id event)                                 :: events we host
       records=(mip id ship record)                          :: guests & passes
       result=$@(@t (map id info))                           :: search result
       sub-records=_(mk-subs live-records ,[%record @ @ ~])  :: record subs
@@ -193,8 +193,8 @@
         [%timer @ @ *]
       =/  end=path
         ?+  t.t.t.t.t.wire  ~|(unexpected-system-response+sign-arvo !!)
-          [%all ~]         //all
-          [%event @ ~]     //event/(scot %tas `term`i.t.t.t.t.t.wire)
+          [%all ~]      //all
+          [%event @ ~]  //event/(scot %tas `term`i.t.t.t.t.t.wire)
         ==
       =/  =ship     (slav %p i.t.t.t.wire)
       =/  case=@ud  (slav %ud i.t.t.t.t.wire)
@@ -335,13 +335,13 @@
   |=  [=wire who=ship app=term =cage]
   ^-  card
   [%pass wire %agent [who app] %poke cage]
-::  +make-operation: produce an $operation:live cage
+::  +make-operation: produce an $operation cage
 ::
 ++  make-operation
   |=  [=id =action]
   ^-  cage
   live-operation+!>(`operation`[id action])
-::  +append-entropy: add random chars to event name for uniqueness
+::  +append-entropy: add random characters to event name for uniqueness
 ::
 ++  append-entropy
   |=  name=term
@@ -380,12 +380,11 @@
 ::    atm, remote scry doesn't support "latest" revision number scrying
 ::    so we request the case to scry for the latest data
 ::      - w/o a case: some ship is trying to find our latest
-::        scry path revision number for either all our discoverable events
-::        or a single one
+::        scry path revision number for our events
 ::      - with a case: some ship is giving us their latest revision number
 ::        so we can scry for their event(s)
-::      - w/o name: means all discoverable events are sent/requested
-::      - with name: means a specific event is sent/requested
+::      - w/o name: all discoverable events are sent/requested
+::      - with name: a specific event is sent/requested
 ::
 ++  case
   |=  [case=(unit @ud) name=(unit term)]
@@ -427,7 +426,7 @@
   ++  get-event
     ^-  event
     ~|(no-event-found+id (~(got by events) id))
-  ::  +get-all-guests: retreive guests for an event
+  ::  +get-all-guests: retreive guest ships for an event
   ::
   ++  get-all-guests
     ^-  (list ship)
@@ -501,7 +500,7 @@
     =.  cor
       (~(publish re i.guests) record)
     $(guests t.guests)
-  ::  +update-event: write a local event update to state
+  ::  +update-event: write an event update to state
   ::
   ++  update-event
     |=  update=event
@@ -555,7 +554,7 @@
       %unregister  (unregister +.act)
       %punch       (punch +.act)
     ==
-    ::  +create: write an event to state
+    ::  +create: write a new event to state
     ::
     ++  create
       |=  =event
@@ -566,7 +565,8 @@
       =.  events  (~(put by events) id event)
       =.  cor  (update-remote-event event)
       update-all-remote-events
-    ::  +delete: permanently delete an event or unsubscribe from a record
+    ::  +delete: as host, permanently delete an event; as a guest,
+    ::  delete a record and unsubscribe from its updates
     ::
     ++  delete
       |^  ^+  cor
@@ -649,7 +649,7 @@
       ?~  new-limit  &
       (gte u.new-limit permitted-count)
     ::  +change-secret: update the event secret and publish to
-    ::  %registered guests
+    ::  %registered and %attended guests
     ::
     ++  change-secret
       |=  new-secret=secret
@@ -670,7 +670,7 @@
           ==
         $(guests t.guests)
       $(permitted [i.guests permitted], guests t.guests)
-    ::  +subscribe: either a request from a host or an action we send as
+    ::  +subscribe: this is either a request from a host or an action we send as
     ::  a guest to subscribe to record updates
     ::
     ++  subscribe
@@ -718,7 +718,7 @@
           ==
         (~(update-status re i.ships) [%invited now.bowl])
       $(ships t.ships)
-    ::  +register: permit event access
+    ::  +register: request/permit event access
     ::
     ++  register
       |=  who=(unit ship)
@@ -820,12 +820,12 @@
       |=  who=(unit ship)
       |^  ^+  cor
       ?:  &(=(src our):bowl ?!(=(our.bowl ship.id)))
-        :: send register poke to host
+        :: send unregister poke to host
         =/  =wire  (weld /unregister id-to-path)
         =/  =cage
           (make-operation id [%unregister ~])
         (emit (make-act wire ship.id %live cage))
-      :: received register poke
+      :: unregister poke from some guest or us as the host
       ?:  over  cor
       =?  who  ?~(who & ?>(host-call |))
         ?>(guest-call `src.bowl)
@@ -866,7 +866,7 @@
       ^-  (unit status)
       =+  (~(get bi records) id ship)
       ?~(- ~ `status.u.-)
-    ::  +update-status: publish a record status update
+    ::  +update-status: write a new status to state
     ::
     ++  update-status
       |=  new-status=status
@@ -893,7 +893,7 @@
       =+  path=[%record name.id ship ~]
       %-  sss-pub-records
       (give:du-records path record)
-    ::  +new-record: create a new record, set path permissions, and publish
+    ::  +new-record: create a new record, set sss path permissions, and publish
     ::  to guest
     ::
     ++  new-record
@@ -924,7 +924,7 @@
       drop  (emil (send 404 ~ [%none ~]))
       stan  (emil (send 500 ~ [%stock ~]))
       view  ~(. live-view [bowl events records result])
-  ::  +pull-id: extract id from site
+  ::  +pull-id: extract id from site:req
   ::
   ++  pull-id
     ^-  id
@@ -1144,7 +1144,7 @@
           ==
         --
       --
-    ::  +redirect: redirect to url from poke that was passed in
+    ::  +redirect: redirect to url based on poke
     ::
     ++  redirect
       |=  [=mark =vase]

@@ -82,7 +82,7 @@
         The repo can be found here
       ==
     ==
-    ;p: Developer docs coming soon :)
+    ;p: Developer docs coming soon.
     ;br;
     ;p: Please send feedback or questions to ~polrel-witter
     ;br;
