@@ -77,14 +77,14 @@
       ; Develop with %live
     ==
     ;p
-      ;a.link
-        =href  "https://github.com/polrel-witter/live"
-        The repo can be found here
-      ==
+      ; The repo can be found
+      ;a.link(href "https://github.com/polrel-witter/live"): here
     ==
-    ;p: Developer docs coming soon.
     ;br;
-    ;p: Please send feedback or questions to ~polrel-witter
+    ;p
+      ; Please send feedback or questions to ~polrel-witter, and log bugs
+      ;a.link(href "http://github.com/polrel-witter/live/issues"): here
+    ==
     ;br;
   ==
 --
