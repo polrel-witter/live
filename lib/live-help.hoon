@@ -13,10 +13,7 @@
     ;h2
       ; Attend an event
     ==
-    ;p
-      ; To find events, enter a ship or event link (~hoster/event-name)
-      ; on the Find page.
-    ==
+    ;p: To find events, enter a ship or event link on the Find page
     ;br;
     ;p
       ; A record (your entry status to an event) will appear in your
@@ -36,6 +33,7 @@
        ; After creating an event, you can edit its info and invite guests
        ; either directly, or by sharing your event link.
     ==
+    ;br;
     ;p
       ; When an update to the title, description, or date is saved
       ; it is published to all subscribers - i.e. ships with a record.
@@ -46,7 +44,7 @@
     ;br;
     ;h3: Manage
     ;p
-      ; Your guest list appears under the manage tab within the event.
+      ; Your guest list appears under the Manage tab within the event.
       ; Record statuses include:
     ==
     ;p: - %registered: planning to attend; has access to your secret (if set)
@@ -66,7 +64,7 @@
     ;p: - %private: host must approve access; discoverable
     ;p: - %secret: invite-only; not discoverable
     ;br;
-    ;p: Finally, an event can have one of the following statuses:
+    ;p: Finally, an event can have one of the following latches:
     ;p: - %open: accepting registrants; considered active
     ;p: - %closed: not accepting registrants, but still considered active
     ;p: - %over: inactive; archived
