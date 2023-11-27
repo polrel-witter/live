@@ -54,7 +54,7 @@
             (page-button "archive" (make-path %archive ~))
         ;+  (reload-button (make-path %active ~))
       ==
-      ;div
+      ;div.timeline
         ;+  ?~  timeline
               ;h3.center
                 No active events; find or create your own above
@@ -76,7 +76,7 @@
         ;+  (page-button "active" /apps/live)
         ;+  (reload-button (make-path %archive ~))
       ==
-      ;div.over
+      ;div.timeline.over
         ;ul
           ;*  (render-timeline %over ~)
         ==
@@ -93,15 +93,15 @@
     ;=  ;div
           ;h3.center: Enter a ship or event link above
     ==  ==
-  ;=  ;div#results.ghost
+  ;=  ;div#results
         ;nav
           ;+  (page-button "home" /apps/live)
-          ;form
+          ;form.nav-input
             =hx-target    "#results"
             =hx-swap      "outerHTML"
             =hx-post      (spud (make-path %dial ~))
             ;input(type "hidden", name "head", value "find");
-            ;input.find
+            ;input
               =name         "ship-name"
               =placeholder  "~hoster or ~hoster/event-name";
             ;+  ;/  " "
@@ -112,7 +112,7 @@
         ;div
           ;*  ?~  result  begin
               ?@  result  begin
-              ;+  ;div
+              ;+  ;div.timeline
                     ;p: previous search:
                     ;ul
                       ;*  (render-timeline %active ;;((map id info) result))
@@ -127,7 +127,7 @@
 ++  results
   ^-  manx
   ?~  result
-    ;div.ghost
+    ;div
       =hx-trigger  "every 1s"
       =hx-get      (spud (make-path %results ~))
       =hx-target   "this"
@@ -138,7 +138,7 @@
       ;h3.center:  searching ...
     ==
   ?^  result
-    ;div.ghost
+    ;div.timeline
       ;nav
         ;+  (page-button "new search" (make-path %find ~))
       ==
@@ -146,7 +146,7 @@
         ;*  (render-timeline %active ;;((map id info) result))
       ==
     ==
-  ;div.ghost
+  ;div
     ;nav
       ;+  (page-button "new search" (make-path %find ~))
     ==
@@ -179,7 +179,7 @@
   ::
   ++  stop
     ^-  manx
-    ;div.ghost(hx-get (spud (make-path %event `id)), hx-trigger "load");
+    ;div(hx-get (spud (make-path %event `id)), hx-trigger "load");
   ::
   ++  poll
     |=  typ=?(%register %unregister)
@@ -404,7 +404,7 @@
           ;+  ;/  (trip title.info)
         ==
         ;div
-          ;button
+          ;button.ship
             =hx-get   (spud (make-path %event-link `id))
             =hx-swap  "outerHTML"
             =title    "click to see event link"
@@ -425,58 +425,44 @@
   ;=  ;nav
         ;+  (page-button "cancel" /apps/live)
       ==
-      ;div.center
-        ;form
-          =method  "post"
-          =action  (spud /apps/live/operation/(scot %p our.bowl)/$)
-          ;input(type "hidden", name "head", value "create");
-          ;input(type "hidden", name "latch", value "closed");
-          ;div
-            ;input.title(name "title", placeholder "Title", required "");
-          ==
-          ;div
-            ;p: start:
-            ;input.moment(type "datetime-local", name "moment-start");
-            ;br;
-            ;p: end:
-            ;input.moment(type "datetime-local", name "moment-end");
-            ;br;
-            ;p: GMT zone:
-            ;select(name "timezone")
-              ;*  generate-zones
-            ==
-          ==
-          ;div
-            ;p: registrant limit:
-            ;input(type "number", name "limit", min "0");
-          ==
-          ;div
-            ;textarea
-              =name         "about"
-              =placeholder  "Description..."
-              =rows         "10"
-              =cols         "40";
-          ==
-          ;div
-            ;textarea
-              =name         "secret"
-              =placeholder  "Secret; a message sent to registered guests..."
-              =rows         "10"
-              =cols         "40";
-          ==
-          ;div
-            ;+  kind-select
-          ==
-          ;div
-            ;select(name "latch")
-              ;option(name "open"): open
-              ;option(name "closed"): closed
-            ==
-          ==
-          ;div.align-right
-            ;button(type "submit"): create
+      ;form.create
+        =method  "post"
+        =action  (spud /apps/live/operation/(scot %p our.bowl)/$)
+        ;input(type "hidden", name "head", value "create");
+        ;input(type "hidden", name "latch", value "closed");
+        ;input.title(name "title", placeholder "Title", required "");
+        ;div
+          ;p: start:
+          ;input.moment(type "datetime-local", name "moment-start");
+          ;p: end:
+          ;input.moment(type "datetime-local", name "moment-end");
+          ;p: GMT zone:
+          ;select(name "timezone")
+            ;*  generate-zones
           ==
         ==
+        ;div
+          ;p: registrant limit:
+          ;input(type "number", name "limit", min "0");
+        ==
+        ;textarea
+          =name         "about"
+          =placeholder  "Description..."
+          =rows         "10";
+        ;textarea
+          =name         "secret"
+          =placeholder  "Secret; a message sent to registered guests..."
+          =rows         "10";
+        ;div
+          ;+  kind-select
+        ==
+        ;div
+          ;select(name "latch")
+            ;option(name "open"): open
+            ;option(name "closed"): closed
+          ==
+        ==
+        ;button(type "submit"): create
       ==
   ==
 ::  +manage: records management page
@@ -493,7 +479,9 @@
         :: cannot invite ships if event is %over
         ;+  ?:  ?=(%over latch.info.event)
               ;/  ""
-            ;form(method "post", action (spud (make-path %operation `id)))
+            ;form.nav-input
+              =method  "post"
+              =action  (spud (make-path %operation `id))
               ;input(type "hidden", name "head", value "invite");
               ;input
                 =name         "ship"
@@ -503,43 +491,45 @@
               ;button(type "submit"): invite
             ==
       ==
-      ;div.reload
-        ;+  (reload-button (make-path %manage `id))
-      ==
-      ;div.white-border
-        ;div.title
-          ;+  ;/  (trip title.info.event)
+      ;div.content
+        ;div.reload
+          ;+  (reload-button (make-path %manage `id))
         ==
-        ::
-        ;+  (render-latch-and-kind latch.info.event kind.info.event)
-        ::
-        ;div
-          ;+  ;/  ~(registered count id)
-          ;br;
-          ;+  ;/  ~(attended count id)
-          ;br;
-          ;+  ;/  ~(invited count id)
-          ;br;
-          ;+  ;/  ~(requested count id)
-          ;br;
-          ;+  ;/  ~(unregistered count id)
+        ;div.white-border
+          ;div.title
+            ;+  ;/  (trip title.info.event)
+          ==
+          ::
+          ;+  (render-latch-and-kind latch.info.event kind.info.event)
+          ::
+          ;div
+            ;+  ;/  ~(registered count id)
+            ;br;
+            ;+  ;/  ~(attended count id)
+            ;br;
+            ;+  ;/  ~(invited count id)
+            ;br;
+            ;+  ;/  ~(requested count id)
+            ;br;
+            ;+  ;/  ~(unregistered count id)
+          ==
         ==
-      ==
-      ;div.records
-        ;*  ?.  (is-empty id)  ~(build tb id)
-            ;+  ;div
-                  ;h3.center
-                    ;+  ;/  ?:  ?=(%over latch.info.event)
-                              "No records"
-                            %+  weld
-                              "No records; invite ships above"
-                            ?:  ?=(%secret kind.info.event)  ~
-                            " or share your event link with others:"
+        ;div.records
+          ;*  ?.  (is-empty id)  ~(build tb id)
+              ;+  ;div
+                    ;h3.center
+                      ;+  ;/  ?:  ?=(%over latch.info.event)
+                                "No records"
+                              %+  weld
+                                "No records; invite ships above"
+                              ?:  ?=(%secret kind.info.event)  ~
+                              " or share your event link with others:"
+                    ==
+                    ;div.center
+                      ;+  (link id)
+                    ==
                   ==
-                  ;div.center
-                    ;+  (link id)
-                  ==
-                ==
+        ==
       ==
   ==
   ::  +is-empty: check if we have any records for our event
@@ -620,7 +610,9 @@
               ;div.record-entry
                 ;code: {<ship>}
                 ;br;
-                ;code: {<p.status>} {<q.status>}
+                ;code: {<p.status>}
+                ;br;
+                ;code: {<q.status>}
               ==
             ==
             :: don't add controls if event is %over
@@ -666,7 +658,7 @@
                 ;button
                   ;+  ;/  act-1
                 ==
-              ;div.ghost
+              ;div
                 ;input(type "hidden", name "job", value act-2);
                 ;button
                   ;+  ;/  act-2
@@ -694,13 +686,15 @@
   ++  delete
     ^-  manx
     ;div.center
-      ;h3.delete: are you sure you want to delete {<title.info:event>}?
-      ;form(method "post", action (spud (make-path %operation `id)))
-        ;input(type "hidden", name "head", value "delete");
-        ;button(type "submit"): yes
-      ==
-      ;form(method "get", action (spud (make-path %event `id)))
-        ;button(type "submit"): no
+      ;h3.delete: Are you sure you want to delete {<title.info:event>}?
+      ;span.center
+        ;form(method "post", action (spud (make-path %operation `id)))
+          ;input(type "hidden", name "head", value "delete");
+          ;button(type "submit"): yes
+        ==
+        ;form(method "get", action (spud (make-path %event `id)))
+          ;button(type "submit"): no
+        ==
       ==
     ==
   ::
@@ -746,10 +740,8 @@
         ;input(type "hidden", name "sub", value "moment");
         ;p: start:
         ;input.moment(type "datetime-local", name "start");
-        ;br;
         ;p: end:
         ;input.moment(type "datetime-local", name "end");
-        ;br;
         ;p: GMT zone:
         ;select(name "timezone")
           ;option(value current-zone, selected "selected")
@@ -833,6 +825,12 @@
       ==
     ==
   --
+::  +footer: render footer
+::
+++  footer
+  ;footer
+    ;a.link(href "/apps/live/help", target "_self"): help
+  ==
 ::  +make-path: form an http get/post path
 ::
 ++  make-path
@@ -869,13 +867,6 @@
       %event-link
       %delete
   ==
-::  +footer: render the footer
-::
-++  footer
-  ^-  manx
-  ;footer
-    ;a.link(href "/apps/live/help", target "_self"): help
-  ==
 ::  +delete-event-button: render a button to delete an event
 ::
 ++  delete-event-button
@@ -895,7 +886,9 @@
   |=  =path
   ^-  manx
   ;div
-    ;code.reload: {<now.bowl>}
+    ;code.stamp
+      ;+  ;/  (slag 23 (scow %da now.bowl))
+    ==
     ;
     ;a(href (spud path), target "_self")
       ;button.reload
@@ -1146,30 +1139,27 @@
   ++  render-tile
     |=  [=id =info]
     ^-  manx
-    =;  content=marl
-      ;li
-        ;a(target "_self", href (spud (make-path %event `id)))
-          ;+  ?:  =(our.bowl ship.id)
-                ;button.tile.host
-                  ;*  content
-                ==
-              ;button.tile.guest
-                ;*  content
-              ==
+    =;  content=manx
+      ?:  =(our.bowl ship.id)
+        ;li.host
+          ;+  content
         ==
+      ;li.guest
+        ;+  content
       ==
-    ;=  ;div.tile-title
-          ;+  ;/  (trip title.info)
-        ==
-        ;div
-          ;+  (render-moment moment.info)
-        ==
-        ;div.tile-latch
-          ;+  ;/  "{<latch.info>}"
-        ==
-        ;div
-          ;code(style "font-size:0.95rem;"): hosted by {<ship.id>}
-        ==
+    ;a(target "_self", href (spud (make-path %event `id)))
+      ;div.tile-text.tile-title
+        ;+  ;/  (trip title.info)
+      ==
+      ;div.tile-text
+        ;+  (render-moment moment.info)
+      ==
+      ;div.tile-latch
+        ;+  ;/  "{<latch.info>}"
+      ==
+      ;div.tile-text
+        ;code(style "font-size:0.95rem;"): hosted by {<ship.id>}
+      ==
     ==
   --
 ::
@@ -1203,48 +1193,41 @@
   }
   footer {
     font-size: .85rem;
-    padding-top: 50px;
+    padding: 2em;
     display: flex;
     flex-direction: row;
     justify-content: center;
   }
   a {
-    padding: 3px 0px 3px 0px;
+    text-decoration: none;
+    color: inherit;
   }
   .link {
+    text-decoration: underline;
     color: var(--white);
+  }
+  span {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.2em;
   }
 
   /* button styling */
   button {
     padding: 3;
-    padding-inline: 2;
-    padding-block: 4;
     border: 1px solid var(--white);
     border-radius: var(--radius);
     background-color: var(--white);
     font-family: Urbit Sans, Arial;
+    color: black;
     font-size: .9rem;
+    font-weight: 700;
     cursor: pointer;
-    transition: filter 80ms ease;
+    transition: filter 100ms ease;
   }
-  .tile {
-    position: relative;
-    width: 465px;
-    padding: 5px;
-    font-size: 1rem;
-    font-weight: 600;
+  .ship {
     text-align: left;
-  }
-  .host {
-    color: var(--white);
-    background: var(--black);
-    border-width: 1px;
-    border-color: var(--white);
-  }
-  .guest {
-    color: var(--black);
-    background: var(--white);
   }
   .delete {
     color: red;
@@ -1255,9 +1238,16 @@
     display: block;
     gap: 10px;
     margin-block-end: 0;
-    padding: 3px;
+  }
+  .create {
+    display: flex;
+    flex-direction: column;
+    padding: 1em;
   }
   input {
+    display: block;
+    position: relative;
+    width: 100%;
     font-family: Urbit Sans, Arial;
     font-size: 1.05rem;
     color: var(--white);
@@ -1266,17 +1256,16 @@
     border-color: var(--white);
     border-style: solid;
     border-width: 2px;
-  }
-  input.title {
     resize: none;
-    width: 455px;
   }
   input.moment {
     color: var(--black);
     background: var(--white);
   }
-  input.find {
-    width: 325px;
+  .nav-input {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
   }
   select {
     font-family: Urbit Sans, Arial;
@@ -1289,6 +1278,8 @@
     border-width: 2px;
   }
   textarea {
+    display: block;
+    width: 100%;
     font-family: Urbit Sans, Arial;
     font-size: 1.15rem;
     color: var(--white);
@@ -1304,16 +1295,34 @@
     font-family: Urbit Sans Mono, Arial;
     font-size: 1.05rem;
   }
-  code.reload {
+  code.stamp {
     font-size: .65rem;
   }
   li {
+    display: block;
+    position: relative;
+    border: 1px solid var(--white);
+    border-radius: var(--radius);
     list-style-type: none;
-    padding: 10px;
+    margin: 1em 0;
+    padding: 0.25em;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: left;
+    z-index: 2;
+    cursor: pointer;
+  }
+  .host {
+    color: var(--white);
+    background: var(--black);
+  }
+  .guest {
+    color: var(--black);
+    background: var(--white);
   }
   td {
-    padding-top: 7px;
-    padding-bottom: 7px;
+    padding-top: .5em;
+    padding-bottom: .5em;
   }
   .tip {
     cursor: help;
@@ -1332,11 +1341,7 @@
   /* div formatting */
   div {
     display: block;
-    padding: 5px;
-  }
-  .ghost {
-    margin: 0px;
-    padding: 0px;
+    padding: 0.2em;
   }
   .align-right {
     display: flex;
@@ -1348,6 +1353,10 @@
     flex-direction: row;
     justify-content: right;
     padding: 2px 25px 2px 0px;
+  }
+  .timeline {
+    position: relative;
+    padding: 0 1em 1em;
   }
   .horizontal {
     display: inline-block;
@@ -1377,16 +1386,21 @@
   .center {
     text-align: center;
   }
+  .tile-text {
+    padding: 0.15em;
+  }
   .tile-title {
     font-size: 1.30rem;
-    font-weight: 600;
-    padding: 5px 75px 0px 5px;
+    max-width: 15em;
   }
   .tile-latch {
     position: absolute;
-    top: 0.2em;
+    top: 0.4em;
     right: 0.4em;
     padding: 5px;
+    color: var(--black);
+    background: var(--white);
+    border-radius: var(--radius);
   }
   .records {
     padding-top: 10px;
