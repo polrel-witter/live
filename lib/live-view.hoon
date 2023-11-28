@@ -590,7 +590,9 @@
       ?~  guests
         ;+  ;h3.center: No records
       ;=
-        ;h2:  {<p.status.i.guests>}
+        ;h2
+          ;+  ;/  (scow %tas p.status.i.guests)
+        ==
         ;table
           ;tbody
             ;*  (~(make-rows tb id) guests)
