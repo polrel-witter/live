@@ -1100,9 +1100,11 @@
           ^-  @tas
           %+  slav  %tas
           %-  crip
-          %+  turn  (cass (trip val))
+          %+  murn  (cass (trip val))
           |=  a=@t
-          ?:(=(' ' a) '-' a)
+          =/  special
+            (silt " ~`!@#$%^&*()-=_+[]\{}'\\:\",.<>?")
+          ?:((~(has in special) a) ~ `a)
         ::  +timezone: parse timezone input to $timezone
         ::
         ++  timezone
