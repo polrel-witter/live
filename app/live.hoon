@@ -633,7 +633,7 @@
           ~|(event-limit-is-reached+id !!)
         event(latch.info +.sub-info)
       ==
-    ::  +change-limit: update guest limit
+    ::  +change-limit: update register limit
     ::
     ++  change-limit
       |=  new-limit=limit
