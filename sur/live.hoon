@@ -1,5 +1,5 @@
 ::  %live: event coordination
-::    version ~2023.12.1
+::    version ~2023.12.2
 ::    ~polrel-witter
 ::
 /+  *mip
