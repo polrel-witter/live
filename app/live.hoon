@@ -296,21 +296,38 @@
     ==
   ::
       %sss-on-rock
+    |^
     =/  msg  !<(from:da-records (fled vase))
     ?>  ?=([[%record @ @ ~] *] msg)
     ?>  =(our.bowl `ship`+>-:path.msg)
     =/  name=term  +<:path.msg
-    =/  =record
+    =/  update=record
       ?~(wave.msg rock.msg u.wave.msg)
     :: clear secret if we're not %registered or %attended since it
     :: might diverge otherwise
-    =?  secret.record  ?=  ?(%invited %requested %unregistered)
-                       p.status.record
+    ::
+    =?  secret.update  ?=  ?(%invited %requested %unregistered)
+                       p.status.update
       ~
-    :: push notification to Landscape, if we've been %invited
-    =?  cor  ?=(%invited p.status.record)
+    =/  current=(unit record)
+      (~(get bi records) [src.msg name] our.bowl)
+    :: push notification to Landscape, if we've been %invited or our
+    :: status goes from %requested to %registered
+    ::
+    =?  cor  ?|  ?=(%invited p.status.update)
+                 ?~  current  |
+                 ?&  ?=(%requested p.status.u.current)
+                     ?=(%registered p.status.update)
+                 ==
+             ==
+      (emit (notify src.msg title.info.update status.update))
+    cor(records (~(put bi records) [src.msg name] our.bowl update))
+    ::  +notify: build hark notification card
+    ::
+    ++  notify
+      |=  [host=ship title=cord =status]
+      ^-  card
       =;  act=action:hark
-        %-  emit
         %:  make-act
           /hark/invited
           our.bowl
@@ -321,13 +338,20 @@
       :*  `@uvH`eny.bowl
           [~ ~ %live /invites]
           now.bowl
-          :~  [%ship src.msg]
-              [%emph (crip ~['invited you to their event: ' title.info.record])]
+          %+  welp
+            ^-  (list content:hark)
+            [%ship host]~
+          :~  %-  crip
+              %+  weld
+                ?:  ?=(%invited p.status)
+                  " invited you to "
+                " accepted your entry request to "
+              (trip title)
           ==
           /
           ~
       ==
-    cor(records (~(put bi records) [src.msg name] our.bowl record))
+    --
   ==
 ::  +act: build poke card
 ::
