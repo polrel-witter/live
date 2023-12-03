@@ -692,7 +692,7 @@
   ++  delete
     ^-  manx
     ;div.center
-      ;h3.delete: Are you sure you want to delete {<title.info:event>}?
+      ;h3.red: Are you sure you want to delete {<title.info:event>}?
       ;span.center
         ;form(method "post", action (spud (make-path %operation `id)))
           ;input(type "hidden", name "head", value "delete");
@@ -880,11 +880,11 @@
   ^-  manx
   ?.  =(~ (~(get by events) id))
     ;form(method "get", action (spud (make-path %delete `id)))
-      ;button.delete(type "submit"): delete
+      ;button.red(type "submit"): delete
     ==
   ;form(method "post", action (spud (make-path %operation `id)))
     ;input(type "hidden", name "head", value "delete");
-    ;button.delete(type "submit"): delete
+    ;button.red(type "submit"): delete
   ==
 ::  +reload-button: generate button that reloads a page
 ::
@@ -1226,6 +1226,12 @@
     justify-content: center;
     gap: 0.2em;
   }
+  .red {
+    color: red;
+  }
+  .green {
+    color: green;
+  }
 
   /* button styling */
   button {
@@ -1239,12 +1245,6 @@
     font-weight: 700;
     cursor: pointer;
     transition: filter 100ms ease;
-  }
-  .ship {
-    text-align: left;
-  }
-  .delete {
-    color: red;
   }
 
   /* form and input styling */
