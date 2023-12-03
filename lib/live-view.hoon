@@ -310,41 +310,38 @@
           ;+  (reload-button (make-path %event `id))
         ==
         ;div
-          ;div.title(hx-target "this", hx-swap "outerHTML")
-            ;+  ;/  (trip title.info.event)
-            ;+  (edit-button id %title ~)
-          ==
-        ::
-          ;div
-            ;button.ship
-              =hx-get   (spud (make-path %event-link `id))
-              =hx-swap  "outerHTML"
-              =title    "click to see event link"
+          ;div.white-border
+            ;div.title(hx-target "this", hx-swap "outerHTML")
+              ;+  ;/  (trip title.info.event)
+              ;+  (edit-button id %title ~)
+            ==
+          ::
+            ;div
               ;code: hosted by {<ship.id>}
             ==
-          ==
-        ::
-          ;div.moment(hx-target "this", hx-swap "outerHTML")
-            ;+  (render-moment moment.info.event)
-            ;+  (edit-button id %moment ~)
-          ==
-        ::
-          ;div.horizontal(hx-target "this", hx-swap "outerHTML")
-            ;code.tip(title (latch-tip latch.info.event)): {<latch.info.event>}
-            ;+  (edit-button id %latch ~)
-            ;+  ;/  " | "
-          ==
-        ::
-          ;div.horizontal(hx-target "this", hx-swap "outerHTML")
-            ;code.tip(title (kind-tip kind.info.event)): {<kind.info.event>}
-            ;+  (edit-button id %kind ~)
-          ==
-        ::
-          ;div(hx-target "this", hx-swap "outerHTML")
-            ;+  ;/  %+  weld
-                      "registrant limit: "
-                    ?~(limit.event "∞" "{<u.limit.event>}")
-            ;+  (edit-button id %limit ~)
+          ::
+            ;div.moment(hx-target "this", hx-swap "outerHTML")
+              ;+  (render-moment moment.info.event)
+              ;+  (edit-button id %moment ~)
+            ==
+          ::
+            ;div.horizontal(hx-target "this", hx-swap "outerHTML")
+              ;code.tip(title (latch-tip latch.info.event)): {<latch.info.event>}
+              ;+  (edit-button id %latch ~)
+              ;+  ;/  " | "
+            ==
+          ::
+            ;div.horizontal(hx-target "this", hx-swap "outerHTML")
+              ;code.tip(title (kind-tip kind.info.event)): {<kind.info.event>}
+              ;+  (edit-button id %kind ~)
+            ==
+          ::
+            ;div(hx-target "this", hx-swap "outerHTML")
+              ;+  ;/  %+  weld
+                        "registration limit: "
+                      ?~(limit.event "∞" "{<u.limit.event>}")
+              ;+  (edit-button id %limit ~)
+            ==
           ==
         ::
           ;+  ?~  about.info.event
@@ -395,22 +392,25 @@
   ::
   ++  event-header
     |=  [=_id =info]
-    ^-  marl
-    ;=  ;div.title
-          ;+  ;/  (trip title.info)
+    ^-  manx
+    ;div.white-border
+      ;div.title
+        ;+  ;/  (trip title.info)
+      ==
+      ;div
+        ;code: hosted by {<ship.id>}
+      ==
+      ;div.moment
+        ;+  (render-moment moment.info)
+      ==
+      ;+  (render-latch-and-kind latch.info kind.info)
+      ;div.align-right
+        ;button
+          =hx-get  (spud (make-path %event-link `id))
+          =hx-swap  "outerHTML"
+          event link
         ==
-        ;div
-          ;button.ship
-            =hx-get   (spud (make-path %event-link `id))
-            =hx-swap  "outerHTML"
-            =title    "click to see event link"
-            ;code: hosted by {<ship.id>}
-          ==
-        ==
-        ;div.moment
-          ;+  (render-moment moment.info)
-        ==
-        ;+  (render-latch-and-kind latch.info kind.info)
+      ==
     ==
   --
 ::  +create: event creation page
@@ -438,7 +438,7 @@
           ==
         ==
         ;div
-          ;p: registrant limit:
+          ;p: registration limit:
           ;input(type "number", name "limit", min "0");
         ==
         ;textarea
@@ -503,15 +503,22 @@
           ;+  (render-latch-and-kind latch.info.event kind.info.event)
           ::
           ;div
-            ;+  ;/  ~(registered count id)
+            ;+  ;/  (weld "registered: " ~(registered count id))
             ;br;
-            ;+  ;/  ~(attended count id)
+            ;+  ;/  (weld "attended: " ~(attended count id))
             ;br;
-            ;+  ;/  ~(invited count id)
+            ;+  ;/  (weld "invited: " ~(invited count id))
             ;br;
-            ;+  ;/  ~(requested count id)
+            ;+  ;/  (weld "requesting entry: " ~(requested count id))
             ;br;
-            ;+  ;/  ~(unregistered count id)
+            ;+  ;/  (weld "unregistered: " ~(unregistered count id))
+          ==
+          ;div.align-right
+            ;button
+              =hx-get  (spud (make-path %event-link `id))
+              =hx-swap  "outerHTML"
+              event link
+            ==
           ==
         ==
         ;div.records
@@ -523,10 +530,7 @@
                               %+  weld
                                 "No records; invite ships above"
                               ?:  ?=(%secret kind.info.event)  ~
-                              " or share your event link with others:"
-                    ==
-                    ;div.center
-                      ;+  (link id)
+                              " or share your event link so others can find it"
                     ==
                   ==
         ==
@@ -990,14 +994,14 @@
 ++  count
   |_  =id
   ::
-  ++  invited       "invited: {<(sum %invited)>}"
-  ++  requested     "requesting entry: {<(sum %requested)>}"
-  ++  unregistered  "unregistered: {<(sum %unregistered)>}"
-  ++  attended      "attended: {<(sum %attended)>}"
+  ++  invited       "{<(sum %invited)>}"
+  ++  requested     "{<(sum %requested)>}"
+  ++  unregistered  "{<(sum %unregistered)>}"
+  ++  attended      "{<(sum %attended)>}"
   ++  registered
     =/  =limit
       limit:(~(got by events) id)
-    %+  weld  "registered: {<total-permitted>} / "
+    %+  weld  "{<total-permitted>} / "
     ?~(limit "∞" "{<u.limit>}")
   ++  total-permitted
     ^-  @ud
@@ -1386,8 +1390,8 @@
     padding: 5px;
   }
   .status {
-    padding-bottom: 5px;
-    padding-right: 5px;
+    padding: 5px;
+    padding-top: 10px;
     text-align: right;
   }
   .about {
