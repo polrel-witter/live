@@ -408,7 +408,7 @@
         ;button
           =hx-get  (spud (make-path %event-link `id))
           =hx-swap  "outerHTML"
-          event link
+          show event link
         ==
       ==
     ==
@@ -517,7 +517,7 @@
             ;button
               =hx-get  (spud (make-path %event-link `id))
               =hx-swap  "outerHTML"
-              event link
+              show event link
             ==
           ==
         ==
