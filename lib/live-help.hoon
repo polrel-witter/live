@@ -13,7 +13,7 @@
     ;h2
       ; Attend an event
     ==
-    ;p: To find events, enter a ship or event link on the Find page
+    ;p: To find events, enter a ship or event link on the Find page.
     ;br;
     ;p
       ; A record (your entry status to an event) will appear in your
