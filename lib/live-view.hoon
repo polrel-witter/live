@@ -305,11 +305,7 @@
       (not-found "event")
     =/  =event  u.e
     ;=  ;nav
-          ;+  ?.  ?=(%over latch.info.event)
-                (page-button "home" /apps/live)
-              (page-button "home" (make-path %archive ~))
-        ::
-          ;+  (page-button "manage" (make-path %manage `id))
+          ;+  (page-button "back" (make-path %manage `id))
           ;+  (delete-event-button id)
           ;+  (reload-button (make-path %event `id))
         ==
@@ -475,7 +471,11 @@
     (not-found "event")
   =/  =event  (~(got by events) id)
   ;=  ;nav
-        ;+  (page-button "back" (make-path %event `id))
+        ;+  ?.  ?=(%over latch.info.event)
+              (page-button "home" /apps/live)
+            (page-button "home" (make-path %archive ~))
+        ::
+        ;+  (page-button "edit" (make-path %event `id))
         :: cannot invite ships if event is %over
         ;+  ?:  ?=(%over latch.info.event)
               ;/  ""
@@ -1149,7 +1149,11 @@
       ;li.guest
         ;+  content
       ==
-    ;a(target "_self", href (spud (make-path %event `id)))
+    =/  get-path=tape
+      ?:  =(our.bowl ship.id)
+        (spud (make-path %manage `id))
+      (spud (make-path %event `id))
+    ;a(target "_self", href get-path)
       ;div.tile-text.tile-title
         ;+  ;/  (trip title.info)
       ==
