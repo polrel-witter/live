@@ -233,7 +233,7 @@
           ;+  (reload-button (make-path %event `id))
         ==
         ;div
-          ;*  (event-header id u.info)
+          ;+  (event-header id u.info)
           ;+  ?~  about.u.info  ;/  ""
               ;div.about
                 ;*  (render-text u.about.u.info)
@@ -283,7 +283,7 @@
           ;+  (reload-button (make-path %event `id))
         ==
         ;div
-          ;*  (event-header id info.u.record)
+          ;+  (event-header id info.u.record)
           ;+  render-status
           ;+  ?~  about.info.u.record  ;/  ""
               ;div.about
@@ -1166,6 +1166,10 @@
       ;div.tile-text
         ;code(style "font-size:0.95rem;"): hosted by {<ship.id>}
       ==
+      ;+  ?.  =(our.bowl ship.id)  ;p:""
+          ;div.tile-text.align-right
+            ;+  ;/  ~(registered count id)
+          ==
     ==
   --
 ::
