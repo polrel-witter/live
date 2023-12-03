@@ -2,8 +2,8 @@
   title+'live'
   info+'event coordination'
   color+0x1a.1a1a
-  version+[1 0 0]
+  version+[1 0 1]
   website+'https://x.com/polrel_witter'
   license+'MIT'
   site+/apps/live
-==
+=
