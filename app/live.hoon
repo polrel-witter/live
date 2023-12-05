@@ -601,8 +601,13 @@
           (quit:da-records ship.id dap.bowl [%record name.id our.bowl ~])
         cor(records (~(del bi records) id our.bowl))
       =/  =event  get-event
-      :: delete an event and notify all guests that it's so %over
-      =?  cor  ?!(?=(%over latch.info.event))
+      :: if %open or %closed and not %secret, also delete the remote
+      :: path; in all other cases, we've already deleted it so this
+      :: would crash
+      ::
+      =?  cor  ?&  ?=(?(%open %closed) latch.info.event)
+                   ?!(?=(%secret kind.info.event))
+               ==
         (delete-remote-path /event/(scot %tas name.id))
       =.  cor  (update-event event(latch.info %over))
       =.  cor  (update-guests get-all-guests)
