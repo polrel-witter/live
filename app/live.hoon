@@ -383,6 +383,18 @@
     ?~  name  //all
     //event/(scot %tas u.name)
   ==
+::  +get-discoverable-events: produce a map of id and event info of
+::  all %public and %private events that are not %over
+::
+++  get-discoverable-events
+  ^-  (map id info)
+  %-  malt
+  %+  murn  ~(tap by events)
+  |=  [=id =event]
+  =,  event
+  ?:  |(?=(%secret kind.info) ?=(%over latch.info))
+    ~
+  `[id info]
 ::  +find: search for a ship's discoverable events (i.e. %public and %private)
 ::
 ::    this just sends a %case poke, requesting a ship's latest revision number
@@ -390,15 +402,37 @@
 ::
 ++  find
   |=  [=ship name=(unit term)]
-  ^+  cor
+  |^  ^+  cor
   :: reset result state before sending the poke
   =.  result  *@t
+  ?:  =(our.bowl ship)
+    :: produce our events
+    %_  cor
+      result  =/  events=(map id info)
+                (local-search name)
+              ?^  events  events
+              ?^  name  'Not found'
+              'We don\'t have any events'
+    ==
   =/  =wire
     %+  weld  /case/request/(scot %p ship)
     ?~  name  /all
     /(scot %tas u.name)
   %-  emit
   (make-act wire ship dap.bowl live-dial+!>(`dial`[%case ~ name]))
+  ::  +local-search: write one or more of our events to our $result
+  ::
+  ++  local-search
+    |=  name=(unit term)
+    ^-  (map id info)
+    %-  malt
+    %+  murn  ~(tap by events)
+    |=  [=id =event]
+    ?~  name
+      `[id info.event]
+    ?.  =(name.id u.name)  ~
+    `[id info.event]
+  --
 ::  +case: remote scry revision number request/response
 ::
 ::    atm, remote scry doesn't support "latest" revision number scrying
@@ -486,6 +520,7 @@
   ::
   ++  delete-remote-path
     |=  =path
+    ^+  cor
     =/  name=(unit term)
       ?+  path  ~|(invalid-remote-path+path !!)
         [%all ~]  ~
@@ -550,16 +585,9 @@
   ::
   ++  update-all-remote-events
     ^+  cor
-    =;  discoverable=(map _id info)
-      %-  emit
-      [%pass /remote/scry/publish %grow /all [%remote-events discoverable]]
-    %-  malt
-    %+  murn  ~(tap by events)
-    |=  [=_id =event]
-    =,  event
-    ?:  |(?=(%secret kind.info) ?=(%over latch.info))
-      ~
-    `[id info]
+    %-  emit
+    :-  %pass
+    [/remote/scry/publish %grow /all [%remote-events get-discoverable-events]]
   ::  +route: send an action to the appropriate arm
   ::
   ++  route
@@ -609,13 +637,20 @@
                    ?!(?=(%secret kind.info.event))
                ==
         (delete-remote-path /event/(scot %tas name.id))
+      :: delete an event and notify all guests that it's so %over
+      ::
       =.  cor  (update-event event(latch.info %over))
       =.  cor  (update-guests get-all-guests)
       =.  cor  update-all-remote-events
       =.  events  (~(del by events) id)
+      :: if $result contains a map of our events, overwrite it
+      ::
+      =?  result  ?^(result & |)
+        *@t
+      :: if no events, also cull the /all path so others get a nack
+      :: when they search for our discoverable events
+      ::
       =?  cor  ?~(events & |)
-        :: if no events, also cull the /all path so others get a nack
-        :: when they search for our discoverable events
         (delete-remote-path /all)
       =.  cor  delete-records
       cor
