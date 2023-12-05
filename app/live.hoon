@@ -402,37 +402,17 @@
 ::
 ++  find
   |=  [=ship name=(unit term)]
-  |^  ^+  cor
+  ^+  cor
   :: reset result state before sending the poke
   =.  result  *@t
   ?:  =(our.bowl ship)
-    :: produce our events
-    %_  cor
-      result  =/  events=(map id info)
-                (local-search name)
-              ?^  events  events
-              ?^  name  'Not found'
-              'We don\'t have any events'
-    ==
+    cor(result 'See home page for our events')
   =/  =wire
     %+  weld  /case/request/(scot %p ship)
     ?~  name  /all
     /(scot %tas u.name)
   %-  emit
   (make-act wire ship dap.bowl live-dial+!>(`dial`[%case ~ name]))
-  ::  +local-search: write one or more of our events to our $result
-  ::
-  ++  local-search
-    |=  name=(unit term)
-    ^-  (map id info)
-    %-  malt
-    %+  murn  ~(tap by events)
-    |=  [=id =event]
-    ?~  name
-      `[id info.event]
-    ?.  =(name.id u.name)  ~
-    `[id info.event]
-  --
 ::  +case: remote scry revision number request/response
 ::
 ::    atm, remote scry doesn't support "latest" revision number scrying
@@ -643,10 +623,6 @@
       =.  cor  (update-guests get-all-guests)
       =.  cor  update-all-remote-events
       =.  events  (~(del by events) id)
-      :: if $result contains a map of our events, overwrite it
-      ::
-      =?  result  (~(has by ;;((map _id _info) result)) id)
-        *@t
       :: if no events, also cull the /all path so others get a nack
       :: when they search for our discoverable events
       ::
