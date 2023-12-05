@@ -645,7 +645,7 @@
       =.  events  (~(del by events) id)
       :: if $result contains a map of our events, overwrite it
       ::
-      =?  result  ?^(result & |)
+      =?  result  (~(has by ;;((map _id _info) result)) id)
         *@t
       :: if no events, also cull the /all path so others get a nack
       :: when they search for our discoverable events
