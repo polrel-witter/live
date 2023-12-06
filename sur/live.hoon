@@ -1,5 +1,5 @@
 ::  %live: event coordination
-::    version ~2023.12.2
+::    version ~2023.12.5
 ::    ~polrel-witter
 ::
 /+  *mip
@@ -80,17 +80,17 @@
 ::  $action: event api
 ::
 +$  action
-  $%  [%create =event]                          :: create an event
-      [%delete ~]                               :: delete an event
-      [%info =sub-info]                         :: change event info
-      [%secret =secret]                         :: change event secret
-      [%limit =limit]                           :: change event limit
+  $%  [%create =event]                       :: create an event
+      [%delete ~]                            :: delete an event
+      [%info =sub-info]                      :: change event info
+      [%secret =secret]                      :: change event secret
+      [%limit =limit]                        :: change event limit
     ::
-      [%subscribe ~]                            :: subscribe to record updates
-      [%invite ships=(list ship)]               :: invite ships to an event
-      [%register who=(unit ship)]               :: register to an event
-      [%unregister who=(unit ship)]             :: unregister from an event
-      [%punch ?(%verify %revoke) =ship]         :: validate or revoke attendance
+      [%subscribe ~]                         :: subscribe to record updates
+      [%invite ships=(list ship)]            :: invite ships to an event
+      [%register who=(unit ship)]            :: register to an event
+      [%unregister who=(unit ship)]          :: unregister from an event
+      [%punch ?(%verify %revoke) =ship]      :: validate or revoke attendance
   ==
 ::  $operation: act on an event
 ::
@@ -98,14 +98,14 @@
 ::  $demand: scry api
 ::
 +$  demand
-  $%  [%event-exists p=?]
-      [%record-exists p=?]
-      [%event p=(unit event)]
-      [%record p=(unit record)]
-      [%counts p=(map _-.status @ud)]
-      [%all-events p=(map id event)]
-      [%all-records p=(mip id ship record)]
-      [%event-records p=(map ship record)]
-      [%remote-events p=(map id info)]
+  $%  [%event-exists p=?]                    :: does an event exist?
+      [%record-exists p=?]                   :: does a record exist?
+      [%event p=(unit event)]                :: an event
+      [%record p=(unit record)]              :: a record
+      [%counts p=(map _-.status @ud)]        :: record status counts
+      [%all-events p=(map id event)]         :: all events
+      [%all-records p=(mip id ship record)]  :: all records
+      [%event-records p=(map ship record)]   :: all records for an event
+      [%remote-events p=(map id info)]       :: remote scry discoverable events
   ==
 --
