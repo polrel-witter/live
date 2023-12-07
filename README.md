@@ -101,3 +101,13 @@ which are imported into `live-view`.
 The "glue" that handles the get/post requests is in the `%live` agent
 under the `+handle-http` arm.
 
+# Install
+### On Urbit
+`|install ~mocbel %live`
+
+### From source
+1. create a blank %live desk: `|new-desk %live`
+2. `|mount %live`
+3. sync this repo with mounted desk: `rsync -avL <this repo> <mounted desk in pier>`
+4. `|commit %live`
+5. `|install our %live`
