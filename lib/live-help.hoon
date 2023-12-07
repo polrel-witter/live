@@ -17,7 +17,8 @@
     ;br;
     ;p
       ; A record (your entry status to an event) will appear in your
-      ; timeline when you either register or a host sends you an invite.
+      ; timeline when you either request access, register, or a host
+      ; sends you an invite.
     ==
     ;br;
     ;h2
@@ -31,31 +32,29 @@
     ;br;
     ;p
        ; After creating an event, you can edit its info and invite guests
-       ; either directly, or by sharing your event link.
+       ; either directly or by sharing your event link.
     ==
     ;br;
     ;p
       ; When an update to the title, description, or date is saved
       ; it is published to all subscribers - i.e. ships with a record.
       ; The secret is also published when saved, but only sent to ships
-      ; with a %registered or %attended status. Lastly, the registration limit
-      ; is only seen by the host.
+      ; with a %registered or %attended status.
     ==
     ;br;
+    ;p: Lastly, the registration limit is only seen by the host.
+    ;br;
     ;h3: Manage
-    ;p
-      ; Your guest list appears under the Manage tab within the event.
-      ; Record statuses include:
-    ==
+    ;p: Guests will have one of the following statuses:
     ;p: - %registered: planning to attend; has access to your secret (if set)
-    ;p: - %attended: showed up to the event
+    ;p: - %attended: showed up to the event; validated by you, the host
     ;p
-      ; - %invited: the record was created by you, the host; the invited ship
-      ;  still needs to register themselves
+      ; - %invited: the ship was sent an invite, but still needs to register
+      ; themselves
     ==
     ;p: - %requested: requesting entry to a %private or %closed event
     ;p
-      ; - %unregistered: %registered status was revoked, either by the host
+      ; - %unregistered: %registered status was revoked, either by you
       ; or the guest
     ==
     ;br;
