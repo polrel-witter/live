@@ -1085,7 +1085,7 @@
           [%& [pull-id %info sub-info]]
         ?~  sub=(~(get by args) 'sub')  drop
         ?+    u.sub  ~|(bad-input-argument+sub !!)
-            %title   [%title ~(line co (~(got by args) 'title'))]
+            %title   [%title (~(got by args) 'title')]
             %about   [%about ?~(a=(~(got by args) 'about') ~ `a)]
             %kind    [%kind ;;(kind (slav %tas (~(got by args) 'kind')))]
             %latch   [%latch ;;(latch (slav %tas (~(got by args) 'latch')))]
@@ -1105,6 +1105,7 @@
           :-  %&
           :_  [%create event]
           [ship ~(name co title.info.event)]
+        ::
         =/  vals=(list [key=@t val=@t])
           ~(tap by (~(del by args) 'head'))
         =|  =event
@@ -1114,7 +1115,7 @@
           $(event update, vals t.vals)
         =+  val=val.i.vals
         ?+  key.i.vals  ~|(bad-input-argument+i.vals !!)
-          %title   event(title.info ~(line co val))
+          %title   event(title.info val)
           %about   event(about.info ?~(val ~ `val))
           %kind    event(kind.info ;;(kind (slav %tas val)))
           %latch   event(latch.info ;;(latch (slav %tas val)))
@@ -1129,11 +1130,6 @@
       ::
       ++  co
         |_  val=@t
-        ::  +line: compose a cord with linebreaks into a single line
-        ::
-        ++  line
-          ^-  @t
-          (crip (join ' ' `tape`(to-wain:format val)))
         ::  +name: convert cord to $name:id
         ::
         ++  name
