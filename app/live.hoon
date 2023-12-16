@@ -1142,9 +1142,8 @@
             (weld "n" tape)
           %+  murn  (cass (trip val))
           |=  a=@t
-          ?:  =(' ' a)  `'-'
           =/  special
-            (silt "~`!@#$%^&*()-=_+[]\{}'\\:;\",.<>?")
+            (silt " ~`!@#$%^&*()-=_+[]\{}'\\:;\",.<>?")
           ?:((~(has in special) a) ~ `a)
         ::  +timezone: parse timezone input to $timezone
         ::
