@@ -1136,10 +1136,15 @@
           ^-  @tas
           %+  slav  %tas
           %-  crip
+          =;  =tape
+            ?.  (~(has in (silt "0123456789")) (snag 0 tape))
+              tape
+            (weld "n" tape)
           %+  murn  (cass (trip val))
           |=  a=@t
+          ?:  =(' ' a)  `'-'
           =/  special
-            (silt " ~`!@#$%^&*()-=_+[]\{}'\\:\",.<>?")
+            (silt "~`!@#$%^&*()-=_+[]\{}'\\:;\",.<>?")
           ?:((~(has in special) a) ~ `a)
         ::  +timezone: parse timezone input to $timezone
         ::
