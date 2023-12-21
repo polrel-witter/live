@@ -973,6 +973,14 @@
     :-  (slav %p i.t.t.t.site)
     ?~  i.t.t.t.t.site  %$
     (slav %tas i.t.t.t.t.site)
+  ::  +handle-error: build page with error code
+  ::
+  ++  handle-error
+    |=  [act=_-.action msg=@t]
+    =;  =manx
+      (emil (send 200 ~ [%manx manx]))
+    ?:  ?=(%find act)    (find:view `msg)
+    ?>  ?=(%invite act)  (manage:view pull-id `msg)
   ::  +get: http get method handling
   ::
   ++  get
@@ -987,11 +995,11 @@
         ~                    active:view
         [%archive ~]         archive:view
         [%help ~]            help:view
-        [%find ~]            find:view
+        [%find ~]            (find:view ~)
         [%create ~]          create:view
         [%results ~]         results:view
         [%event @ @ ~]       (details:view id)
-        [%manage @ @ ~]      (manage:view id)
+        [%manage @ @ ~]      (manage:view id ~)
         [%event-link @ @ ~]  (link:view id)
         [%contact @ @ *]
       ?+  t.t.t.t.t.site  drop
@@ -1006,6 +1014,46 @@
         [%latch @ @ ~]       ~(latch edit:view id)
         [%secret @ @ ~]      ~(secret edit:view id)
         [%limit @ @ ~]       ~(limit edit:view id)
+        :: TODO better way to handle this; essentially user should not
+        :: call this site, but it may happen with the way errors are
+        :: passed to the frontend. only happens on manage page atm
+        [%operation @ @ ~]   (manage:view id ~)
+    ==
+  ::  +redirect: redirect to url
+  ::
+  ++  redirect
+    |=  [=mark =vase]
+    ^+  cor
+    =;  url=path
+      (emil (send [303 ~ [%redirect (spat url)]]))
+    ?+    mark  ~|(bad-mark+mark !!)
+        %live-dial
+      =+  !<(=dial vase)
+      ?-  -.dial
+        %case  !!
+        %find  /apps/live/results
+      ==
+    ::
+        %live-operation
+      =+  !<(op=operation vase)
+      =/  id=path
+        ~(id-to-path ev pull-id)
+      =/  we-host=?
+        =(our.bowl ship:pull-id)
+      =/  site=path
+        :(weld /apps/live ?:(we-host /manage /contact) id)
+      ?-  -.action.op
+        %subscribe   !!
+        %create      /apps/live
+        %delete      /apps/live
+        %info        (weld /apps/live/event id)
+        %secret      (weld /apps/live/event id)
+        %limit       (weld /apps/live/event id)
+        %invite      (weld /apps/live/manage id)
+        %register    ?:(we-host site (weld site /register))
+        %unregister  ?:(we-host site (weld site /unregister))
+        %punch       (weld /apps/live/manage id)
+      ==
     ==
   ::  +post: http post method handling
   ::
@@ -1017,22 +1065,31 @@
       %-  ~(gas by *(map @t @t))
       (fall (rush q.u.body yquy:de-purl:html) ~)
     ?~  args  drop
-    =/  =cage  (compose args)
-    =/  success=(unit _cor)
-      %-  mole
-      |.  (poke cage)
-    ?~  success  drop
-    =.  cor  u.success
-    (redirect cage)
+    =/  op=(each =cage error=[_-.action @t])
+      (compose args)
+    ?-    -.op
+        %|  (handle-error error.p.op)
+        %&
+      =/  update=(unit _cor)
+        %-  mole
+        |.  (poke cage.p.op)
+      ?~  update  drop
+      =.  cor  u.update
+      (redirect cage.p.op)
+    ==
     ::  +compose: build $operation or $dial cage
     ::
     ++  compose
       |=  args=(map @t @t)
-      |^  ^-  cage
-      =;  (each operation dial)
-        ?-  -.-
-          %|  live-dial+!>(`dial`p.-)
-          %&  live-operation+!>(`operation`p.-)
+      |^  ^-  (each cage [_-.action @t])
+      =;  out=(each * error=[_-.action @t])
+        ?-  -.out
+            %|  [%| error.p.out]
+            %&
+          :-  %&
+          ?:  ?=(%find -.p.out)
+            live-dial+!>(;;(dial p.out))
+          live-operation+!>(;;(operation p.out))
         ==
       ?~  head=(~(get by args) 'head')
         drop
@@ -1040,11 +1097,6 @@
         =(our.bowl ship:pull-id)
       ?+    u.head  drop
           %delete  [%& [pull-id %delete ~]]
-          %invite
-        ?>  as-host
-        ?~  who=(~(get by args) 'ship')  drop
-        [%& [pull-id %invite [(slav %p u.who)]~]]
-      ::
           %limit
         ?>  as-host
         ?~  num=(~(get by args) 'num')  drop
@@ -1065,19 +1117,43 @@
       ::
           %find
         ?~  qur=(~(get by args) 'ship-name')  drop
-        =;  [=ship name=(unit term)]
-          [%| [%find ship name]]
-        %+  scan  (trip u.qur)
-        ;~(plug ;~(pfix sig fed:ag) (punt ;~(pfix fas urs:ab)))
+        =;  (unit [=ship name=(unit term)])
+          ?~  -  [%| [%find 'invalid ship name']]
+          [%& [%find ship.u.- name.u.-]]
+        %+  rust  (trip u.qur)
+        ;~  plug
+          ;~(pose ;~(pfix sig fed:ag) fed:ag)
+          (punt ;~(pfix fas urs:ab))
+        ==
       ::
           ?(%register %unregister)
-        =/  =id  pull-id
         ?~  them=(~(get by args) 'ship')  drop
         =/  who=(unit ship)
           ?.  as-host  ?~(u.them ~ !!)
           ?~  u.them  !!
           `(slav %p u.them)
-         [%& id ;;(action [(slav %tas u.head) who])]
+         [%& pull-id ;;(action [(slav %tas u.head) who])]
+      ::
+          %invite
+        ?>  as-host
+        ?~  who=(~(get by args) 'ship')  drop
+        =/  hit=(unit ship)
+          %+  rust  (trip u.who)
+          ;~(pose ;~(pfix sig fed:ag) fed:ag)
+        ?~  hit
+          [%| [%invite 'invalid ship name']]
+        =/  status=(unit status)
+          ~(current-status re:~(. ev pull-id) u.hit)
+        =/  hold=(unit @t)
+          ?~  status  ~
+          ?+  p.u.status  ~
+            %invited     `'invited'
+            %registered  `'registered'
+            %attended    `'attended'
+          ==
+        ?~  hold
+          [%& [pull-id %invite [u.hit]~]]
+        [%| [%invite (crip ~['already' ' ' u.hold])]]
       ::
           %info
         ?>  as-host
@@ -1186,43 +1262,6 @@
           ==
         --
       --
-    ::  +redirect: redirect to url based on poke
-    ::
-    ++  redirect
-      |=  [=mark =vase]
-      ^+  cor
-      =;  url=path
-        (emil (send [303 ~ [%redirect (spat url)]]))
-      ?+    mark  ~|(bad-mark+mark !!)
-          %live-dial
-        =+  !<(=dial vase)
-        ?-  -.dial
-          %case  !!
-          %find  /apps/live/results
-        ==
-      ::
-          %live-operation
-        =+  !<(op=operation vase)
-        =/  id=path
-          =+  id=pull-id
-          /(scot %p ship.id)/(scot %tas name.id)
-        =/  we-host=?
-          =(our.bowl ship:pull-id)
-        =/  site=path
-          :(weld /apps/live ?:(we-host /manage /contact) id)
-        ?-  -.action.op
-          %subscribe   !!
-          %create      /apps/live
-          %delete      /apps/live
-          %info        (weld /apps/live/event id)
-          %secret      (weld /apps/live/event id)
-          %limit       (weld /apps/live/event id)
-          %invite      (weld /apps/live/manage id)
-          %register    ?:(we-host site (weld site /register))
-          %unregister  ?:(we-host site (weld site /unregister))
-          %punch       (weld /apps/live/manage id)
-        ==
-      ==
     --
   --
 --

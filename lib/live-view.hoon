@@ -87,6 +87,7 @@
 ::  under a ship
 ::
 ++  find
+  |=  error=(unit @t)
   ^-  manx
   %-  page
   =/  begin=marl
@@ -110,6 +111,8 @@
         ==
         :: initial page load shows results of previous search, if retreived
         ;div
+          ;+  ?~  error  ;/("")
+              ;p.red.center: {(trip u.error)}
           ;*  ?~  result  begin
               ?@  result  begin
               ;+  ;div.timeline
@@ -464,7 +467,7 @@
 ::  +manage: records management page
 ::
 ++  manage
-  |=  =id
+  |=  [=id error=(unit @t)]
   |^  ^-  manx
   %-  page
   ?~  (~(get by events) id)
@@ -492,6 +495,8 @@
             ==
       ==
       ;div.content
+        ;+  ?~  error  ;/("")
+            ;p.red.center: {(trip u.error)}
         ;div.reload
           ;+  (reload-button (make-path %manage `id))
         ==
