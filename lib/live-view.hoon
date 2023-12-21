@@ -505,11 +505,11 @@
           ;div
             ;+  ;/  (weld "registered: " ~(registered count id))
             ;br;
-            ;+  ;/  (weld "attended: " ~(attended count id))
+            ;+  ;/  (weld "requesting entry: " ~(requested count id))
             ;br;
             ;+  ;/  (weld "invited: " ~(invited count id))
             ;br;
-            ;+  ;/  (weld "requesting entry: " ~(requested count id))
+            ;+  ;/  (weld "attended: " ~(attended count id))
             ;br;
             ;+  ;/  (weld "unregistered: " ~(unregistered count id))
           ==
@@ -567,11 +567,11 @@
         ^-  (list (list [ship status]))
         =|  out=(list (list [ship status]))
         =/  pins=(list _-:status)
-          :~  %invited
+          :~  %unregistered
+              %attended
+              %invited
               %requested
               %registered
-              %unregistered
-              %attended
           ==
         |-
         ?~  pins  out
