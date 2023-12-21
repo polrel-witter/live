@@ -576,11 +576,17 @@
         |-
         ?~  pins  out
         =;  group=(list [ship status])
+          =.  group  (sort group alp)
           $(out ?~(group out [group out]), pins t.pins)
         %+  murn  guests
         |=  [=ship =status]
         ?.  =(p.status i.pins)  ~
         `[ship status]
+      ::  +alp: order ships alphabetical
+      ::
+      ++  alp
+        |=  [[a=ship *] [b=ship *]]
+        (aor (scot %p a) (scot %p b))
       --
     ::  +make-table: build a table organized by status type
     ::
