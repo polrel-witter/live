@@ -140,7 +140,7 @@
       cor(result (crip msg))
     ?:  =('all' name)
       "No events found"
-    (join ' ' `tape`~[name 'does not exist under' (scot %p ship)])
+    :(weld "'{<name>}'" " does not exist under " (scow %p ship))
   ::
       [~ %sss %on-rock @ @ @ %record @ @ ~]
     =.  sub-records
@@ -175,9 +175,6 @@
   ::
       [%remote %scry *]
     ?+    t.t.wire    ~|(bad-arvo-wire+wire !!)
-        [%delete ~]     ~|(unexpected-system-response+sign-arvo !!)
-        [%cancel ~]   ~|(cannot-cancel-scry-request+sign-arvo !!)
-        [%publish ~]  ~|(unexpected-system-response+sign-arvo !!)
         ?([%all ~] [%event @ ~])
       ?.  ?=([%ames %tune *] sign-arvo)
         ~|(unexpected-system-response+sign-arvo !!)
@@ -192,7 +189,7 @@
     ::
         [%timer @ @ *]
       =/  end=path
-        ?+  t.t.t.t.t.wire  ~|(unexpected-system-response+sign-arvo !!)
+        ?+  t.t.t.t.t.wire  ~|(bad-wire+wire !!)
           [%all ~]      //all
           [%event @ ~]  //event/(scot %tas `term`i.t.t.t.t.t.wire)
         ==
@@ -663,8 +660,8 @@
       ?-    -.sub-info
           %title   event(title.info +.sub-info)
           %about   event(about.info +.sub-info)
-          %moment  event(moment.info +.sub-info)
           %kind    event(kind.info +.sub-info)
+          %moment  event(moment.info +.sub-info)
           %latch
         :: if limit is reached, prevent host from opening
         ?:  ?&  ?=(%open +.sub-info)
