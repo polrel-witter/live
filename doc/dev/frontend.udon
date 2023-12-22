@@ -1,0 +1,9 @@
+;>
+
+This was written in Sail and uses [htmx](https://htmx.org/) to acheive
+reactivity. Most frontend code can be found in `/lib/live-view`.
+`/lib/live-help` and `/lib/live-icons` contain a few auxiliary components
+which are imported into `live-view.hoon`.
+
+The "glue" that handles the get/post requests is in `/app/live.hoon` under
+the `+handle-http` arm.

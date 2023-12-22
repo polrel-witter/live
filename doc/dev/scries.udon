@@ -1,0 +1,70 @@
+;>
+
+The %live agent contains the following scry endpoints. Each result in a
+`$demand` type, defined below each endpoint. References to 'host ship' and
+'name' correlate to the event `$id`, which is defined in `/sur` as
+`[=ship name=term]`.
+
+
+# `%u scries`
+
+`/event/exists/[host ship]/[name]` -> does an event exist?
+
+```
+[%event-exists p=?]
+```
+
+`/record/exists/[host ship]/[name]/[guest ship]` -> does a record exist?
+
+```
+[%record-exists p=?]
+```
+
+# `%x scries`
+
+`/event/[host ship]/[name]` -> an event
+
+```
+[%event p=(unit event)]
+```
+
+`/record/[host ship]/[name]/[guest ship]` -> a record
+
+```
+[%record p=(unit record)]
+```
+
+`/counts/[host ship]/[name]` -> a map of record statuses with their cumulative
+totals
+
+```
+[%counts p=(map _-.status @ud)]
+```
+
+`/events/all` -> a map of all events
+
+```
+[%all-events p=(map id event)]
+```
+
+`/records/all` -> a mip of all records
+
+```
+[%all-records p=(mip id ship record)]
+```
+
+`/records/[host ship]/[name]` -> a map of all records for a specific event
+
+```
+[%event-records p=(map ship record)]
+```
+
+# Remote scry
+
+The `$info` for `%public` and `%private` events are published over remote scry
+so others can find it. This is the data type that gets published:
+
+```
+[%remote-events p=(map id info)]
+```
+

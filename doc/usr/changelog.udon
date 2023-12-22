@@ -1,0 +1,31 @@
+;>
+
+## 1.0.4 `~2023.12.22`
+
+- `%docs` integration!
+
+## 1.0.3 `~2023.12.21`
+
+- User feedback for malformatted ships in the invite and find
+  fields. User will also be notified if a ship has already been invited,
+  registered, or is attending
+- Ships are sorted in alphabetical order on the Manage page
+- Record status sections match the count list order
+
+## 1.0.2 `~2023.12.4`
+
+- App crashed when a secret event was deleted; now fixed
+- On the create page, entering a leading decimal for a title would crash
+  and not allow you to click create; fixed
+
+## 1.0.1 `~2023.12.3`
+
+- Event link button is more noticeable
+- Registrant count/limit is displayed on host tile
+- A host's event tile opens directly to the manage page
+- Guest receives a Landscape notification when a host accepts their
+  entry request
+
+## 1.0.0 `~2023.11.30`
+
+- Initial release

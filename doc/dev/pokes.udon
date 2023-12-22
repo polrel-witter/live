@@ -1,0 +1,148 @@
+;>
+
+# Overview
+
+Most pokes are event-specific and sent via an `$operation`. An operation
+requires the event `$id` and an `$action` to be performed on the event.
+
+Non-event-specific pokes take a `$dial`, which includes a `%find` and `%case`
+option. `%find` is an external event search and `%case` is a purely backend
+function: used to obtain the remote scry endpoint's 'latest' revision number.
+This was included as a workaround until this type of scrying is supported on
+the kernel level.
+
+# `$dial`
+
+### `%find`
+
+Search for an external event; ~ for name will search for all `%public` and
+`%private` events under a ship.
+
+```
+[%find =ship name=(unit term)]
+```
+
+### `%case`
+
+Scry revision number request/response
+
+```
+[%case case=(unit @ud) name=(unit term)]
+```
+
+At the time of writing, remote scry doesn't support latest revision number
+scrying so we request the case to get the latest data
+
+- w/o a case: some ship is trying to find our latest
+  scry path revision number for our events
+- with a case: some ship is giving us their latest revision number
+  so we can scry for their event(s)
+- w/o name: all discoverable events are sent/requested
+- with name: a specific event is sent/requested
+
+# `$operation`
+
+Act on an event
+
+```
+[=id =action]
+```
+
+## `$action`
+
+An event's API
+
+### `%create`
+
+Create an event
+
+```
+[%create =event]
+```
+
+### `%delete`
+
+Delete an event
+
+```
+[%delete ~]
+```
+
+### `%info`
+
+Change event info (see `$sub-info` below)
+
+```
+[%info =sub-info]
+```
+
+### `%secret`
+
+Change event secret
+
+```
+[%secret =secret]
+```
+
+### `%limit`
+
+Change event limit
+
+```
+[%limit =limit]
+```
+
+### `%subscribe`
+
+Subscribe to record updates. The frontend doesn\'t use this; only the backend
+does. Subscriptions happen automatically as a result of passing one of the
+actions below.
+
+```
+[%subscribe ~]
+```
+
+### `%invite`
+
+Invite ships to an event
+
+```
+[%invite ships=(list ship)]
+```
+
+### `%register`
+
+Register to an event. Guest ships will pass ~ for `who`; the host will include
+the ship they want to register.
+
+```
+[%register who=(unit ship)]
+```
+
+### `%unregister`
+
+Unregister from an event
+
+```
+[%unregister who=(unit ship)]
+```
+
+### `%punch`
+
+Validate or revoke a ship's attendance status
+
+```
+[%punch ?(%verify %revoke) =ship]
+```
+
+## `$sub-info`
+
+Modify event info; slotted into an `%info` action
+
+```
+[%title title=cord]
+[%about about=(unit cord)]
+[%moment =moment]
+[%kind =kind]
+[%latch =latch]
+```

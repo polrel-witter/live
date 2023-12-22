@@ -1,0 +1,49 @@
+;>
+
+`%live` gives users a basic set of tools to organize an event (parties,
+meetings, weddings, meetups, etc.). It's best approached from two perspectives:
+
+## As a host
+
+I can create an `$event`, which is static data stored in our state as an
+`$events` map. It consists of the following:
+
+- Basic info, which includes: title, description, a start and end date,
+  the kind of event (public, private, or secret) and a latch (open, closed,
+  over).
+- An optional secret, which is a message only sent to `%registered` guests and
+  those who `%attended`.
+- A possible limit on the number of accepted registrants
+
+Once an event is written to state, the host can begin building a guest list
+(i.e. `$records`). They can do so in one of two ways: either by inviting ships
+directly, or sharing their event link so that others can find it.
+
+Event discoverability functions differently based on its `$kind`. Public and
+Private events can be found through the search feature; Secret events are
+hidden, so in this case, hosts must invite ships themselves.
+
+Additionally, `$record` status changes will behave differently according to
+these types. For Public events, anyone can send a register poke and get a
+`%registered` status; for Private ones, their status will initiate to
+`%requested` forcing the host to register them, unless of course the host
+invites them first. As mentioned, Secret events are invite-only.
+
+Finally, if a `$latch` is `%open` it means registrants are actively accepted;
+`%closed` will default all `%register` pokes to a `%requested` status; and
+`%over` means the event's been archived so any pokes (excluding a `$latch`
+change) will fail.
+
+## As a guest
+
+With a record to an event, we'll have one of 5 statuses:
+
+- `%invited` (a host sent us an event invite)
+- `%requested` (requesting access to a private or closed event; subject to host
+  approval)
+- `%registered` (rsvp'd / will be attening)
+- `%unregistered` (registration was revoked either by the host or guest themselves)
+- `%attended` (we showed up; validated by the host)
+
+A record will have the event info, and if we're also `%registered` or have an
+`%attended` status, we\'ll have the host\'s secret.

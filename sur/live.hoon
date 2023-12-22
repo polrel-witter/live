@@ -21,14 +21,14 @@
 ::    %secret: non-discoverable and restricted to invite-only
 ::
 +$  kind  ?(%public %private %secret)
-::  $latch: status of an event
+::  $latch: acceptance status of an event
 ::
 ::    %open: actively accepting registrants
 ::    %closed: not accepting registrants; still receive requests
 ::    %over: inactive, non-discoverable
 ::
 +$  latch  ?(%open %closed %over)
-::  $info: metadata for an event, sharable with all guests
+::  $info: public metadata for an event
 ::
 +$  info
   $:  title=cord
@@ -40,7 +40,7 @@
 ::  $limit: number of ships that can register per event
 ::
 +$  limit  (unit @ud)
-::  $secret: some data reserved for %registered and %attended guests
+::  $secret: some message reserved for %registered and %attended guests
 ::
 +$  secret  (unit cord)
 ::  $event: event info controlled by host ship
@@ -66,7 +66,7 @@
   $%  [%find =ship name=(unit term)]            :: search for external events
       :: TODO %case is a workaround until a path's "latest" revision number
       :: can be remote scried (i.e. /=/some/path)
-      [%case case=(unit @ud) name=(unit term)]  :: scry path request/response
+      [%case case=(unit @ud) name=(unit term)]  :: case number request/response
   ==
 ::  $sub-info: modify event info; slotted into an %info action
 ::

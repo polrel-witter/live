@@ -1,0 +1,118 @@
+;>
+
+Below are the core data types found in `/sur/live.hoon`.
+
+## `$id`
+
+Event identifier
+
+```
+[=ship name=term]
+```
+
+## `$timezone`
+
+GMT zone
+
+```
+(pair ? @ud)
+```
+
+## `$moment`
+
+Event duration
+
+```
+[start=(unit time) end=(unit time) =timezone]
+```
+
+## `$kind`
+
+An event type
+
+`%public`: discoverable and open to anyone
+
+`%private`: discoverable but restricted to approval and invite-only
+
+`%secret`: non-discoverable and restricted to invite-only
+
+```
+?(%public %private %secret)
+```
+
+## `$latch`
+
+The acceptance status of an event
+
+`%open`: actively accepting registrants
+
+`%closed`: not accepting registrants; still receive requests
+
+`%over`: inactive, non-discoverable
+
+```
+?(%open %closed %over)
+```
+
+## `$info`
+
+Public metadata for an event
+
+```
+  $:  title=cord
+      about=(unit cord)
+      =moment
+      =kind
+      =latch
+  ==
+```
+
+## `$limit`
+
+Number of ships that can register
+
+```
+(unit @ud)
+```
+
+## `$secret`
+
+Some message reserved for `%registered` and `%attended` guests
+
+```
+(unit cord)
+```
+
+## `$event`
+
+Event info controlled by the host
+
+```
+[=info =secret =limit]
+```
+
+## `$status`
+
+State of a guest
+
+```
+  %+  pair
+    $?  %invited
+        %requested
+        %registered
+        %unregistered
+        %attended
+    ==
+  time
+```
+
+## `$record`
+
+Guest information, kept in sync between host and guest. Host is authority on
+updates.
+
+```
+[=info =secret =status]
+```
+
+
