@@ -56,9 +56,7 @@
       ==
       ;div.timeline
         ;+  ?~  timeline
-              ;h3.center
-                No active events; find or create your own above
-              ==
+              ;h3.center: No active events; find or create your own above
             ;ul
               ;*  timeline
             ==
@@ -153,9 +151,7 @@
     ;nav
       ;+  (page-button "new search" (make-path %find ~))
     ==
-    ;h3.center
-      ;+  ;/  (trip result)
-    ==
+    ;h3.center: {(trip result)}
   ==
 ::  +contact: polling mechanism for when a guest requests a status
 ::  change (i.e. sends a %register or %unregister poke to the host)
@@ -237,7 +233,7 @@
         ==
         ;div
           ;+  (event-header id u.info)
-          ;+  ?~  about.u.info  ;/  ""
+          ;+  ?~  about.u.info  ;/("")
               ;div.about
                 ;*  (render-text u.about.u.info)
               ==
@@ -267,7 +263,7 @@
           ;+  ?.  ?=(%over latch.info.u.record)
                 (page-button "home" /apps/live)
               (page-button "home" (make-path %archive ~))
-          ;+  ?~  act  ;/  ""
+          ;+  ?~  act  ;/("")
               ;form
                 =hx-post    (spud (make-path %operation `id))
                 =hx-target  "#whole"
@@ -288,7 +284,7 @@
         ;div
           ;+  (event-header id info.u.record)
           ;+  render-status
-          ;+  ?~  about.info.u.record  ;/  ""
+          ;+  ?~  about.info.u.record  ;/("")
               ;div.about
                 ;*  (render-text u.about.info.u.record)
               ==
@@ -384,10 +380,9 @@
       ?:  ?&  ?=(%over latch.info)
               ?!(?=(%latch get-fleck))
           ==
-        ;/  ""
+        ;/("")
       ;button(hx-get (spud (make-path get-fleck `id)))
-        ;+  ?~  label
-              edit:icon
+        ;+  ?~  label  edit:icon
             ;/  (trip u.label)
       ==
     --
@@ -397,9 +392,7 @@
     |=  [=_id =info]
     ^-  manx
     ;div.white-border
-      ;div.title
-        ;+  ;/  (trip title.info)
-      ==
+      ;div.title: {(trip title.info)}
       ;div
         ;code: hosted by {<ship.id>}
       ==
@@ -470,9 +463,9 @@
   |=  [=id error=(unit @t)]
   |^  ^-  manx
   %-  page
-  ?~  (~(get by events) id)
+  ?~  e=(~(get by events) id)
     (not-found "event")
-  =/  =event  (~(got by events) id)
+  =/  =event  u.e
   ;=  ;nav
         ;+  ?.  ?=(%over latch.info.event)
               (page-button "home" /apps/live)
@@ -480,8 +473,7 @@
         ::
         ;+  (page-button "edit" (make-path %event `id))
         :: cannot invite ships if event is %over
-        ;+  ?:  ?=(%over latch.info.event)
-              ;/  ""
+        ;+  ?:  ?=(%over latch.info.event)  ;/("")
             ;form.nav-input
               =method  "post"
               =action  (spud (make-path %operation `id))
@@ -501,9 +493,7 @@
           ;+  (reload-button (make-path %manage `id))
         ==
         ;div.white-border
-          ;div.title
-            ;+  ;/  (trip title.info.event)
-          ==
+          ;div.title: {(trip title.info.event)}
           ::
           ;+  (render-latch-and-kind latch.info.event kind.info.event)
           ::
@@ -605,9 +595,7 @@
       ?~  guests
         ;+  ;h3.center: No records
       ;=
-        ;h2
-          ;+  ;/  (scow %tas p.status.i.guests)
-        ==
+        ;h2: {(scow %tas p.status.i.guests)}
         ;table
           ;tbody
             ;*  (~(make-rows tb id) guests)
@@ -633,7 +621,7 @@
               ==
             ==
             :: don't add controls if event is %over
-            ;+  ?:  ?=(%over latch.info.event)  ;/  ""
+            ;+  ?:  ?=(%over latch.info.event)  ;/("")
                 ;td
                   ;+  (~(make-controls tb id) ship status)
                 ==
@@ -645,13 +633,13 @@
       |^  ^-  manx
       ;div
         ;+  ?-    p.status
-                %invited       ;/  ""
+                %invited       ;/("")
                 %unregistered  (control-button ship "invite" ~)
                 %attended      (control-button ship "punch" "revoke")
                 %requested
               :: if the event limit is reached, don't render
               =;  render=?
-                ?.  render  ;/  ""
+                ?.  render  ;/("")
                 (control-button ship "register" ~)
               ?~  limit.event  &
               ?!(=(~(total-permitted count id) (need limit.event)))
@@ -663,7 +651,7 @@
               ==
             ==
       ==
-      ::  +control-button: create a button to act on a ship
+      ::  +control-button: create a ship action button
       ::
       ++  control-button
         |=  [=_ship act-1=tape act-2=tape]
@@ -672,14 +660,10 @@
           ;input(type "hidden", name "head", value act-1);
           ;input(type "hidden", name "ship", value (scow %p ship));
           ;+  ?.  |(=("revoke" act-2) =("verify" act-2))
-                ;button
-                  ;+  ;/  act-1
-                ==
+                ;button: {act-1}
               ;div
                 ;input(type "hidden", name "job", value act-2);
-                ;button
-                  ;+  ;/  act-2
-                ==
+                ;button: {act-2}
               ==
         ==
       --
@@ -737,9 +721,7 @@
       ;form(method "post", action (spud (make-path %operation `id)))
         ;input(type "hidden", name "head", value "info");
         ;input(type "hidden", name "sub", value "about");
-        ;textarea(name "about", rows "10", cols "40")
-          ;+  ;/  about
-        ==
+        ;textarea(name "about", rows "10", cols "40"): {about}
         ;button(type "submit"): save
         ;+  ;/  " "
         ;+  cancel-button
@@ -761,9 +743,7 @@
         ;input.moment(type "datetime-local", name "end");
         ;p: GMT zone:
         ;select(name "timezone")
-          ;option(value current-zone, selected "selected")
-            ;+  ;/  current-zone
-          ==
+          ;option(value current-zone, selected "selected"): {current-zone}
           ;*  generate-zones
         ==
         ;br;
@@ -818,9 +798,7 @@
     ;div
       ;form(method "post", action (spud (make-path %operation `id)))
         ;input(type "hidden", name "head", value "secret");
-        ;textarea(name "txt", rows "10", cols "40")
-          ;+  ;/  secret
-        ==
+        ;textarea(name "txt", rows "10", cols "40"): {secret}
         ;button(type "submit"): save
         ;+  ;/  " "
         ;+  cancel-button
@@ -903,9 +881,7 @@
   |=  =path
   ^-  manx
   ;div
-    ;code.stamp
-      ;+  ;/  (slag 23 (scow %da now.bowl))
-    ==
+    ;code.stamp: {(slag 23 (scow %da now.bowl))}
     ;
     ;a(href (spud path), target "_self")
       ;button.reload
@@ -921,9 +897,7 @@
   ;a
     =href    (spud path)
     =target  "_self"
-    ;button
-      ;+  ;/  txt
-    ==
+    ;button: {txt}
   ==
 ::  +not-found: general error element for some missing data
 ::
@@ -931,9 +905,7 @@
   |=  missing=tape
   ^-  marl
   ;=  ;div
-        ;h1
-          ;+  ;/  ~['No' ' ' (crip missing) ' ' 'found']
-        ==
+        ;h1: {~['No' ' ' (crip missing) ' ' 'found']}
       ==
       ;nav
         ;+  (page-button "home" /apps/live)
@@ -949,9 +921,7 @@
     (turn (gulf 1 12) |=(a=@ud "-{<a>}"))
   ;*  %+  turn  (weld plus minus)
       |=  =tape
-      ;option(value tape)
-        ;+  ;/  tape
-      ==
+      ;option(value tape): {tape}
 ::  +latch-tip: tool-tip text for $latch
 ::
 ++  latch-tip
@@ -1068,7 +1038,7 @@
         =(d:(yell u.start.moment) d:(yell u.end.moment))
       =+  e=(make-legible u.end.moment)
       :(weld " - " ?:(render-once (slag 11 e) e) zone)
-  ::  +make-legible: render @da more legible
+  ::  +make-legible: render legible @da
   ::
   ::    e.g. ~2023.11.24..22.09.48..43b3  to  2023.11.24  22:09
   ::
