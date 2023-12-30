@@ -46,8 +46,11 @@
     ;br;
     ;h3: Manage
     ;p: Guests will have one of the following statuses:
-    ;p: - %registered: planning to attend; has access to your secret (if set)
-    ;p: - %attended: showed up to the event; validated by you, the host
+    ;p: - %registered: planning to attend; has access to secret
+    ;p
+      ; - %attended: showed up to the event; validated by you, the host;
+      ; has access to secret
+    ==
     ;p
       ; - %invited: the ship was sent an invite, but still needs to register
       ; themselves
@@ -65,7 +68,7 @@
     ;br;
     ;p: Finally, an event can have one of the following latches:
     ;p: - %open: accepting registrants; considered active
-    ;p: - %closed: not accepting registrants, but still considered active
+    ;p: - %closed: not accepting registrants; still considered active
     ;p: - %over: inactive; archived
     ;br;
     ;p: *Archived events appear on a separate tab once you have one or more.
