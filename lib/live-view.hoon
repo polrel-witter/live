@@ -1001,26 +1001,59 @@
 ++  render-text
   |=  text=@t
   |^  ^-  marl
-  ;*  %+  turn  (make-lines text)
-      |=  line=@t
-      ;div
-        ; {(trip line)}
-      ==
-  ::  +make-lines: convert a cord to lines of text
+  =/  txt  (trip text)
+  =|  line=tape
+  =|  block=marl
+  |-
+  ?~  txt
+    ?~  line  block
+    (weld block (para line))
+  ?:  =('\0a' i.txt)
+    $(txt t.txt, block (weld block (para line)), line "")
+  :: check for embedded image
   ::
-  ++  make-lines
-    |=  text=@t
-    ^-  tape
-    =/  txt  (trip text)
-    =|  line=tape
-    |-
-    ?~  txt
-      ?~  line  ~
-      [(crip (flop line)) ~]
-    ?:  =('\0a' i.txt)
-      :-  (crip (flop line))
-      $(line "", txt t.txt)
+  ?.  &(=('!' i.txt) =('[' -.t.txt))
     $(line [i.txt line], txt t.txt)
+  :: find end of image syntax so we know where to snip txt
+  ::
+  =/  end=(unit @ud)
+    (find ")" txt)
+  ?~  end  $(line [i.txt line], txt t.txt)
+  ?~  img=(extract (scag u.end `tape`txt))
+    $(line [i.txt line], txt t.txt)
+  :: build image manx and cut the txt at ending ')'
+  ::
+  %=  $
+    txt    (slag +(u.end) `tape`txt)
+    block  :(weld block (para line) (shake u.img))
+    line   ""
+  ==
+  ::  +shake: make image tag from tapes
+  ::
+  ++  shake
+    |=  [cap=tape url=tape]
+    ^-  marl
+    ;+  ;div
+          ;img@"{url}"(alt cap, width "100%");
+        ==
+  ::  +para: make paragraph div
+  ::
+  ++  para
+    |=  line=tape
+    ^-  marl
+    ;+  ;div: {(flop line)}
+  ::  +extract: parse to alt text and url
+  ::
+  ++  extract
+    |=  txt=tape
+    ^-  (unit [tape tape])
+    %+  rush  (crip txt)
+    ;~  plug
+      ;~  pfix  zap
+        ;~(pfix sel ;~(sfix (star ;~(pose alp ace)) ser))
+      ==
+      ;~(pfix pal (star next))
+    ==
   --
 ::  +render-moment: format an event's date and time
 ::
