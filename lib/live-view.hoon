@@ -434,23 +434,37 @@
           ;p: registration limit:
           ;input(type "number", name "limit", min "0");
         ==
-        ;textarea
-          =name         "about"
-          =placeholder  "Description..."
-          =rows         "10";
-        ;textarea
-          =name         "secret"
-          =placeholder  "Secret; a message sent to registered guests..."
-          =rows         "10";
+        ;p.center: ---
         ;div
           ;+  kind-select
         ==
+        ;p: - %public: registration is open to anyone; discoverable
+        ;p: - %private: approval and invite-only; discoverable
+        ;p: - %secret: invite-only; not discoverable
         ;div
           ;select(name "latch")
             ;option(name "open"): open
             ;option(name "closed"): closed
+            ;option(name "over"): over
           ==
         ==
+        ;p: - %open: accepting registrants; considered active
+        ;p: - %closed: not accepting registrants; considered active
+        ;p: - %over: inactive; archived
+        ;p.center: ---
+        ;textarea
+          =name         "about"
+          =placeholder  "description..."
+          =rows         "10";
+        ;textarea
+          =name         "secret"
+          =placeholder  "secret; a message sent to registered/attended guests..."
+          =rows         "10";
+        ;code.stamp
+          ; *include inline images:
+          ; ![alt txt](https://link-to-s3-bucket.com/image)
+        ==
+        ;p.center: ---
         ;button(type "submit"): create
       ==
   ==
