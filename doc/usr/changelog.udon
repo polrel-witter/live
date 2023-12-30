@@ -1,5 +1,12 @@
 ;>
 
+## 1.0.5 `~2023.12.30`
+
+- Invite and find input fields no longer crash on capital letters
+- Changed guest secret to white bg
+- Event descriptions and secrets now support inline image rendering
+- Added event Latch and Kind descriptions on Create page
+
 ## 1.0.4 `~2023.12.22`
 
 - `%docs` integration!
