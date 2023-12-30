@@ -81,10 +81,10 @@
       ==
       ;+  footer
   ==
-::  +find: search page; renders a list of discoverable events found
+::  +search: find page; renders a list of discoverable events found
 ::  under a ship
 ::
-++  find
+++  search
   |=  error=(unit @t)
   ^-  manx
   %-  page
@@ -123,7 +123,7 @@
       ==
   ==
 ::  +results: populate events initiated from a %find; embedded in the
-::  +find page
+::  +search page
 ::
 ++  results
   ^-  manx

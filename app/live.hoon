@@ -263,7 +263,7 @@
       %live-dial
     =+  !<(=dial vase)
     ?-  -.dial
-      %find  (find +.dial)
+      %find  (search +.dial)
       %case  (case +.dial)
     ==
   ::
@@ -392,12 +392,12 @@
   ?:  |(?=(%secret kind.info) ?=(%over latch.info))
     ~
   `[id info]
-::  +find: search for a ship's discoverable events (i.e. %public and %private)
+::  +search: search for a ship's discoverable events (i.e. %public and %private)
 ::
 ::    this just sends a %case poke, requesting a ship's latest revision number
 ::    for a remote scry path; +case performs the scry upon receiving it
 ::
-++  find
+++  search
   |=  [=ship name=(unit term)]
   ^+  cor
   :: reset result state before sending the poke
@@ -976,7 +976,7 @@
     |=  [act=_-.action msg=@t]
     =;  =manx
       (emil (send 200 ~ [%manx manx]))
-    ?:  ?=(%find act)    (find:view `msg)
+    ?:  ?=(%find act)    (search:view `msg)
     ?>  ?=(%invite act)  (manage:view pull-id `msg)
   ::  +get: http get method handling
   ::
@@ -992,7 +992,7 @@
         ~                    active:view
         [%archive ~]         archive:view
         [%help ~]            help:view
-        [%find ~]            (find:view ~)
+        [%find ~]            (search:view ~)
         [%create ~]          create:view
         [%results ~]         results:view
         [%event @ @ ~]       (details:view id)
