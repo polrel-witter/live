@@ -1117,7 +1117,7 @@
         =;  (unit [=ship name=(unit term)])
           ?~  -  [%| [%find 'invalid ship name']]
           [%& [%find ship.u.- name.u.-]]
-        %+  rust  (trip u.qur)
+        %+  rust  (cass (trip u.qur))
         ;~  plug
           ;~(pose ;~(pfix sig fed:ag) fed:ag)
           (punt ;~(pfix fas urs:ab))
@@ -1135,7 +1135,7 @@
         ?>  as-host
         ?~  who=(~(get by args) 'ship')  drop
         =/  hit=(unit ship)
-          %+  rust  (trip u.who)
+          %+  rust  (cass (trip u.who))
           ;~(pose ;~(pfix sig fed:ag) fed:ag)
         ?~  hit
           [%| [%invite 'invalid ship name']]
