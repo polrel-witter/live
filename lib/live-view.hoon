@@ -234,7 +234,7 @@
         ;div
           ;+  (event-header id u.info)
           ;+  ?~  about.u.info  ;/("")
-              ;div.about
+              ;div.bun
                 ;*  (render-text u.about.u.info)
               ==
         ==
@@ -285,7 +285,7 @@
           ;+  (event-header id info.u.record)
           ;+  render-status
           ;+  ?~  about.info.u.record  ;/("")
-              ;div.about
+              ;div.bun
                 ;*  (render-text u.about.info.u.record)
               ==
           ;+  ?~  secret.u.record  ;/("")
@@ -343,24 +343,21 @@
             ==
           ==
         ::
-          ;+  ?~  about.info.event
-                ;div.align-right(hx-target "this", hx-swap "outerHTML")
-                  ;+  (edit-button id %about `'add description')
-                ==
-              ;div.about(hx-target "this", hx-swap "outerHTML")
-                ;*  (render-text u.about.info.event)
-                ;+  (edit-button id %about ~)
-              ==
-        ::
           ;div
-            =hx-target  "this"
-            =hx-swap    "outerHTML"
-            =title      "this message is only sent to registrants"
+            ;+  ?~  about.info.event
+                  ;div(hx-target "this", hx-swap "outerHTML")
+                    ;+  (edit-button id %about `'add description')
+                  ==
+                ;div.bun(hx-target "this", hx-swap "outerHTML")
+                  ;*  (render-text u.about.info.event)
+                  ;+  (edit-button id %about ~)
+                ==
+          ::
             ;+  ?~  secret.event
-                  ;div.align-right
+                  ;div(hx-target "this", hx-swap "outerHTML")
                     ;+  (edit-button id %secret `'add secret')
                   ==
-                ;div.white-border
+                ;div.white-border(hx-target "this", hx-swap "outerHTML")
                   ;p.tip.center: - - - secret - - -
                   ;*  (render-text u.secret.event)
                   ;+  (edit-button id %secret ~)
@@ -717,11 +714,17 @@
     =/  about=tape
       =+  about.info.event
       ?~(- "" (trip u.-))
-    ;div
+    ;div.bun
+      ;p: description
       ;form(method "post", action (spud (make-path %operation `id)))
         ;input(type "hidden", name "head", value "info");
         ;input(type "hidden", name "sub", value "about");
-        ;textarea(name "about", rows "10", cols "40"): {about}
+        ;textarea(name "about", rows "10"): {about}
+        ;code.stamp
+          ; *include inline images:
+          ; ![alt txt](https://link-to-s3-bucket.com/image)
+        ==
+        ;br;
         ;button(type "submit"): save
         ;+  ;/  " "
         ;+  cancel-button
@@ -795,10 +798,16 @@
     =/  secret=tape
       =+  secret.event
       ?~(- "" (trip u.-))
-    ;div
+    ;div.bun
+      ;p: secret
       ;form(method "post", action (spud (make-path %operation `id)))
         ;input(type "hidden", name "head", value "secret");
-        ;textarea(name "txt", rows "10", cols "40"): {secret}
+        ;textarea(name "txt", rows "10"): {secret}
+        ;code.stamp
+          ; *include inline images:
+          ; ![alt txt](https://link-to-s3-bucket.com/image)
+        ==
+        ;br;
         ;button(type "submit"): save
         ;+  ;/  " "
         ;+  cancel-button
@@ -1324,7 +1333,7 @@
     font-size: 1.05rem;
   }
   code.stamp {
-    font-size: .65rem;
+    font-size: .75rem;
   }
   li {
     display: block;
@@ -1408,7 +1417,7 @@
     padding-top: 10px;
     text-align: right;
   }
-  .about {
+  .bun {
     padding: 20px 0px 20px 0px;
   }
   .center {
