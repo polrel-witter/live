@@ -289,7 +289,7 @@
                 ;*  (render-text u.about.info.u.record)
               ==
           ;+  ?~  secret.u.record  ;/("")
-              ;div.white-border
+              ;div.white-bg
                 ;p.center: - - - secret - - -
                 ;*  (render-text u.secret.u.record)
               ==
@@ -1128,10 +1128,10 @@
     ^-  manx
     =;  content=manx
       ?:  =(our.bowl ship.id)
-        ;li.host
+        ;li.black-bg
           ;+  content
         ==
-      ;li.guest
+      ;li.white-bg
         ;+  content
       ==
     =/  get-path=tape
@@ -1307,11 +1307,11 @@
     z-index: 2;
     cursor: pointer;
   }
-  .host {
+  .black-bg {
     color: var(--white);
     background: var(--black);
   }
-  .guest {
+  .white-bg {
     color: var(--black);
     background: var(--white);
   }
@@ -1327,7 +1327,6 @@
   }
   .white-border {
     background: var(--black);
-    border-radius: var(--radius);
     border-color: var(--white);
     border-style: solid;
     border-width: 2px;
@@ -1337,6 +1336,7 @@
   div {
     display: block;
     padding: 0.2em;
+    border-radius: var(--radius);
   }
   .align-right {
     display: flex;
