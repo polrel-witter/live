@@ -308,20 +308,30 @@
       ~
     =/  current=(unit record)
       (~(get bi records) [src.msg name] our.bowl)
-    :: push notification to Landscape, if we've been %invited or our
-    :: status goes from %requested to %registered
-    ::
-    =?  cor  ?|  ?=(%invited p.status.update)
-                 ?~  current  |
-                 ?&  ?=(%requested p.status.u.current)
-                     ?=(%registered p.status.update)
-                 ==
-             ==
-      (emit (notify src.msg title.info.update status.update))
+    =?  cor  (notify current update)
+      (emit (make-hark src.msg title.info.update status.update))
     cor(records (~(put bi records) [src.msg name] our.bowl update))
-    ::  +notify: build hark notification card
+    ::  +notify: push notification to Landscape, if we've been %invited or our
+    ::  status goes from %requested to %registered
     ::
     ++  notify
+      |=  [current=(unit record) update=record]
+      ^-  ?
+      ?|  ?~  current
+            ?=(%invited p.status.update)
+              :: if our current status is %invited, don't notify
+              ::
+          ?|  ?&  ?=(%invited p.status.update)
+                  ?!(?=(%invited p.status.u.current))
+              ==
+              ?&  ?=(%requested p.status.u.current)
+                  ?=(%registered p.status.update)
+              ==
+          ==
+      ==
+    ::  +make-hark: build hark notification card
+    ::
+    ++  make-hark
       |=  [host=ship title=cord =status]
       ^-  card
       =;  act=action:hark
