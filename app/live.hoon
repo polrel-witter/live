@@ -283,11 +283,11 @@
       %handle-http-request
     ?>  =(src.bowl our.bowl)
     =+  !<(req=[eyre-id=@ta =inbound-request:eyre] vase)
-    =/  drop=(list card)
+    =/  throw=(list card)
       (response:schooner eyre-id.req 404 ~ [%none ~])
     ?.  authenticated.inbound-request.req
-      (emil drop)
-    ?+  method.request.inbound-request.req  (emil drop)
+      (emil throw)
+    ?+  method.request.inbound-request.req  (emil throw)
       %'GET'     ~(get handle-http req)
       %'POST'    ~(post handle-http req)
     ==
@@ -966,17 +966,17 @@
 ::
 ++  handle-http
   |_  [eyre-id=@ta =inbound-request:eyre]
-  +*  req   (parse-request-line:server url.request.inbound-request)
-      send  (cury response:schooner eyre-id)
-      drop  (emil (send 404 ~ [%none ~]))
-      stan  (emil (send 500 ~ [%stock ~]))
-      view  ~(. live-view [bowl events records result])
+  +*  req    (parse-request-line:server url.request.inbound-request)
+      send   (cury response:schooner eyre-id)
+      throw  (emil (send 404 ~ [%none ~]))
+      stan   (emil (send 500 ~ [%stock ~]))
+      view   ~(. live-view [bowl events records result])
   ::  +pull-id: extract id from site:req
   ::
   ++  pull-id
     ^-  id
     =+  site=site.req
-    ?.  ?=([@ @ @ @ @ *] site)  drop
+    ?.  ?=([@ @ @ @ @ *] site)  throw
     :-  (slav %p i.t.t.t.site)
     ?~  i.t.t.t.t.site  %$
     (slav %tas i.t.t.t.t.site)
@@ -997,8 +997,8 @@
     =;  =manx
       (emil (send 200 ~ [%manx manx]))
     =/  =id  pull-id
-    ?.  ?=([@ %live *] site)  drop
-    ?+    t.t.site  drop
+    ?.  ?=([@ %live *] site)  throw
+    ?+    t.t.site  throw
         ~                    active:view
         [%archive ~]         archive:view
         [%help ~]            help:view
@@ -1009,7 +1009,7 @@
         [%manage @ @ ~]      (manage:view id ~)
         [%event-link @ @ ~]  (link:view id)
         [%contact @ @ *]
-      ?+  t.t.t.t.t.site  drop
+      ?+  t.t.t.t.t.site  throw
         [%register ~]    ~(reg contact:view id)
         [%unregister ~]  ~(unreg contact:view id)
       ==
@@ -1071,7 +1071,7 @@
       ?~  body=body.request.inbound-request  ~
       %-  ~(gas by *(map @t @t))
       (fall (rush q.u.body yquy:de-purl:html) ~)
-    ?~  args  drop
+    ?~  args  throw
     =/  op=(each =cage error=[_-.action @t])
       (compose args)
     ?-    -.op
@@ -1080,7 +1080,7 @@
       =/  update=(unit _cor)
         %-  mole
         |.  (poke cage.p.op)
-      ?~  update  drop
+      ?~  update  throw
       =.  cor  u.update
       (redirect cage.p.op)
     ==
@@ -1099,31 +1099,31 @@
           live-operation+!>(;;(operation p.out))
         ==
       ?~  head=(~(get by args) 'head')
-        drop
+        throw
       =/  as-host=?
         =(our.bowl ship:pull-id)
-      ?+    u.head  drop
+      ?+    u.head  throw
           %delete  [%& [pull-id %delete ~]]
           %limit
         ?>  as-host
-        ?~  num=(~(get by args) 'num')  drop
+        ?~  num=(~(get by args) 'num')  throw
         [%& [pull-id %limit (rush u.num dem)]]
       ::
           %punch
         ?>  as-host
-        ?~  who=(~(get by args) 'ship')  drop
+        ?~  who=(~(get by args) 'ship')  throw
         =/  job=?(%verify %revoke)
-          ?~  j=(~(get by args) 'job')  drop
+          ?~  j=(~(get by args) 'job')  throw
           ;;(?(%verify %revoke) (slav %tas u.j))
         [%& [pull-id %punch job (slav %p u.who)]]
       ::
           %secret
         ?>  as-host
-        ?~  txt=(~(get by args) 'txt')  drop
+        ?~  txt=(~(get by args) 'txt')  throw
         [%& [pull-id %secret ?~(u.txt ~ `u.txt)]]
       ::
           %find
-        ?~  qur=(~(get by args) 'ship-name')  drop
+        ?~  qur=(~(get by args) 'ship-name')  throw
         =;  (unit [=ship name=(unit term)])
           ?~  -  [%| [%find 'invalid ship name']]
           [%& [%find ship.u.- name.u.-]]
@@ -1134,7 +1134,7 @@
         ==
       ::
           ?(%register %unregister)
-        ?~  them=(~(get by args) 'ship')  drop
+        ?~  them=(~(get by args) 'ship')  throw
         =/  who=(unit ship)
           ?.  as-host  ?~(u.them ~ !!)
           ?~  u.them  !!
@@ -1143,7 +1143,7 @@
       ::
           %invite
         ?>  as-host
-        ?~  who=(~(get by args) 'ship')  drop
+        ?~  who=(~(get by args) 'ship')  throw
         =/  hit=(unit ship)
           %+  rust  (cass (trip u.who))
           ;~(pose ;~(pfix sig fed:ag) fed:ag)
@@ -1166,7 +1166,7 @@
         ?>  as-host
         =;  =sub-info
           [%& [pull-id %info sub-info]]
-        ?~  sub=(~(get by args) 'sub')  drop
+        ?~  sub=(~(get by args) 'sub')  throw
         ?+    u.sub  ~|(bad-input-argument+sub !!)
             %title   [%title (~(got by args) 'title')]
             %about   [%about ?~(a=(~(got by args) 'about') ~ `a)]
