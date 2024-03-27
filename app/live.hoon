@@ -455,7 +455,6 @@
           %+  weld  /remote/scry/event
           ?~  name  /all
           /(scot %tas u.name)
-          %arvo  %a
           %keen  %|  src.bowl
           %+  weld   /g/x/(scot %ud u.case)/live
           ?~  name  //all
