@@ -976,7 +976,7 @@
   ++  pull-id
     ^-  id
     =+  site=site.req
-    ?.  ?=([@ @ @ @ @ *] site)  throw
+    ?.  ?=([@ @ @ @ @ *] site)  !!
     :-  (slav %p i.t.t.t.site)
     ?~  i.t.t.t.t.site  %$
     (slav %tas i.t.t.t.t.site)
@@ -994,37 +994,37 @@
     ^+  cor
     ?>  =(src our):bowl
     =+  site=site.req
-    =;  =manx
-      (emil (send 200 ~ [%manx manx]))
-    =/  =id  pull-id
-    ?.  ?=([@ %live *] site)  throw
-    ?+    t.t.site  throw
-        ~                    active:view
-        [%archive ~]         archive:view
-        [%help ~]            help:view
-        [%find ~]            (search:view ~)
-        [%create ~]          create:view
-        [%results ~]         results:view
-        [%event @ @ ~]       (details:view id)
-        [%manage @ @ ~]      (manage:view id ~)
-        [%event-link @ @ ~]  (link:view id)
+    =;  page=(unit manx)
+      ?~  page  throw
+      (emil (send 200 ~ [%manx u.page]))
+    ?.  ?=([@ %live *] site)  ~
+    ?+    t.t.site  ~
+        ~                    `active:view
+        [%archive ~]         `archive:view
+        [%help ~]            `help:view
+        [%find ~]            `(search:view ~)
+        [%create ~]          `create:view
+        [%results ~]         `results:view
+        [%event @ @ ~]       `(details:view pull-id)
+        [%manage @ @ ~]      `(manage:view pull-id ~)
+        [%event-link @ @ ~]  `(link:view pull-id)
         [%contact @ @ *]
-      ?+  t.t.t.t.t.site  throw
-        [%register ~]    ~(reg contact:view id)
-        [%unregister ~]  ~(unreg contact:view id)
+      ?+  t.t.t.t.t.site  ~
+        [%register ~]    `~(reg contact:view pull-id)
+        [%unregister ~]  `~(unreg contact:view pull-id)
       ==
-        [%delete @ @ ~]      ~(delete edit:view id)
-        [%title @ @ ~]       ~(title edit:view id)
-        [%about @ @ ~]       ~(about edit:view id)
-        [%moment @ @ ~]      ~(moment edit:view id)
-        [%kind @ @ ~]        ~(kind edit:view id)
-        [%latch @ @ ~]       ~(latch edit:view id)
-        [%secret @ @ ~]      ~(secret edit:view id)
-        [%limit @ @ ~]       ~(limit edit:view id)
+        [%delete @ @ ~]      `~(delete edit:view pull-id)
+        [%title @ @ ~]       `~(title edit:view pull-id)
+        [%about @ @ ~]       `~(about edit:view pull-id)
+        [%moment @ @ ~]      `~(moment edit:view pull-id)
+        [%kind @ @ ~]        `~(kind edit:view pull-id)
+        [%latch @ @ ~]       `~(latch edit:view pull-id)
+        [%secret @ @ ~]      `~(secret edit:view pull-id)
+        [%limit @ @ ~]       `~(limit edit:view pull-id)
         :: TODO better way to handle this; essentially user should not
         :: call this site, but it may happen with the way errors are
         :: passed to the frontend. only happens on manage page atm
-        [%operation @ @ ~]   (manage:view id ~)
+        [%operation @ @ ~]   `(manage:view pull-id ~)
     ==
   ::  +redirect: redirect to url
   ::
@@ -1098,32 +1098,31 @@
             live-dial+!>(;;(dial p.out))
           live-operation+!>(;;(operation p.out))
         ==
-      ?~  head=(~(get by args) 'head')
-        throw
+      ?~  head=(~(get by args) 'head')  !!
       =/  as-host=?
         =(our.bowl ship:pull-id)
-      ?+    u.head  throw
+      ?+    u.head  !!
           %delete  [%& [pull-id %delete ~]]
           %limit
         ?>  as-host
-        ?~  num=(~(get by args) 'num')  throw
+        ?~  num=(~(get by args) 'num')  !!
         [%& [pull-id %limit (rush u.num dem)]]
       ::
           %punch
         ?>  as-host
-        ?~  who=(~(get by args) 'ship')  throw
+        ?~  who=(~(get by args) 'ship')  !!
         =/  job=?(%verify %revoke)
-          ?~  j=(~(get by args) 'job')  throw
+          ?~  j=(~(get by args) 'job')  !!
           ;;(?(%verify %revoke) (slav %tas u.j))
         [%& [pull-id %punch job (slav %p u.who)]]
       ::
           %secret
         ?>  as-host
-        ?~  txt=(~(get by args) 'txt')  throw
+        ?~  txt=(~(get by args) 'txt')  !!
         [%& [pull-id %secret ?~(u.txt ~ `u.txt)]]
       ::
           %find
-        ?~  qur=(~(get by args) 'ship-name')  throw
+        ?~  qur=(~(get by args) 'ship-name')  !!
         =;  (unit [=ship name=(unit term)])
           ?~  -  [%| [%find 'invalid ship name']]
           [%& [%find ship.u.- name.u.-]]
@@ -1134,7 +1133,7 @@
         ==
       ::
           ?(%register %unregister)
-        ?~  them=(~(get by args) 'ship')  throw
+        ?~  them=(~(get by args) 'ship')  !!
         =/  who=(unit ship)
           ?.  as-host  ?~(u.them ~ !!)
           ?~  u.them  !!
@@ -1143,7 +1142,7 @@
       ::
           %invite
         ?>  as-host
-        ?~  who=(~(get by args) 'ship')  throw
+        ?~  who=(~(get by args) 'ship')  !!
         =/  hit=(unit ship)
           %+  rust  (cass (trip u.who))
           ;~(pose ;~(pfix sig fed:ag) fed:ag)
@@ -1166,7 +1165,7 @@
         ?>  as-host
         =;  =sub-info
           [%& [pull-id %info sub-info]]
-        ?~  sub=(~(get by args) 'sub')  throw
+        ?~  sub=(~(get by args) 'sub')  !!
         ?+    u.sub  ~|(bad-input-argument+sub !!)
             %title   [%title (~(got by args) 'title')]
             %about   [%about ?~(a=(~(got by args) 'about') ~ `a)]

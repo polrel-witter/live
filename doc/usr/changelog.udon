@@ -1,5 +1,8 @@
 ;>
 
+## 1.0.6 `~2024.3.26`
+- bug preventing ships from upgrading to kelvin `411` fixed
+
 ## 1.0.5 `~2023.12.30`
 
 - Invite and find input fields no longer crash on capital letters
