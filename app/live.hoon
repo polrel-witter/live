@@ -456,7 +456,7 @@
           ?~  name  /all
           /(scot %tas u.name)
           %arvo  %a
-          %keen  src.bowl
+          %keen  %|  src.bowl
           %+  weld   /g/x/(scot %ud u.case)/live
           ?~  name  //all
           //event/(scot %tas u.name)

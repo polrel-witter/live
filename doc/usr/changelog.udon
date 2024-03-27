@@ -2,6 +2,7 @@
 
 ## 1.0.6 `~2024.3.26`
 - bug preventing ships from upgrading to kelvin `411` fixed
+- updated `%keen` task to fit card format
 
 ## 1.0.5 `~2023.12.30`
 
