@@ -1098,8 +1098,6 @@
           live-operation+!>(;;(operation p.out))
         ==
       ?~  head=(~(get by args) 'head')  !!
-      =/  as-host=?
-        =(our.bowl ship:pull-id)
       ?+    u.head  !!
           %delete  [%& [pull-id %delete ~]]
           %limit
@@ -1207,6 +1205,11 @@
           %moment-end  event(end.moment.info ?~(val ~ `~(date co val)))
         ==
       ==
+      ::  +as-host: confirm ship in the request url is us, the host
+      ::
+      ++  as-host
+        ^-  ?
+        =(our.bowl ship:pull-id)
       ::  +co: compose some cord to a structure
       ::
       ++  co
