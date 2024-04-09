@@ -139,8 +139,8 @@
     =;  msg=tape
       cor(result (crip msg))
     ?:  =('all' name)
-      "No events found"
-    :(weld "'{<name>}'" " does not exist under " (scow %p ship))
+      ~['No events found under' ' ' (scot %p ship)]
+    ~[(crip "{<name>}") ' not found under ' (scot %p ship)]
   ::
       [~ %sss %on-rock @ @ @ %record @ @ ~]
     =.  sub-records
