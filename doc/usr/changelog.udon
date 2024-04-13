@@ -1,5 +1,10 @@
 ;>
 
+## 1.0.7 `~2024.4.12`
+- search bug fixed; gall's scry interface changed with `411`
+- refactored remote scry revision number request/response functions for
+clarity purposes
+
 ## 1.0.6 `~2024.3.26`
 - bug preventing ships from upgrading to kelvin `411` fixed
 - updated `%keen` task to fit card format

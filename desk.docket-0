@@ -2,7 +2,7 @@
   title+'live'
   info+'event coordination'
   color+0x1a.1a1a
-  version+[1 0 6]
+  version+[1 0 7]
   website+'https://x.com/polrel_witter'
   license+'MIT'
   site+/apps/live

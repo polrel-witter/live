@@ -5,11 +5,11 @@
 Most pokes are event-specific and sent via an `$operation`. An operation
 requires the event `$id` and an `$action` to be performed on the event.
 
-Non-event-specific pokes take a `$dial`, which includes a `%find` and `%case`
-option. `%find` is an external event search and `%case` is a purely backend
-function: used to obtain the remote scry endpoint's 'latest' revision number.
-This was included as a workaround until this type of scrying is supported on
-the kernel level.
+Non-event-specific pokes take a `$dial`, which includes a `%find` and case
+request/response options. `%find` is an external event search and
+`%case-request`/`%case-response` are purely backend functions used to obtain
+a remote scry endpoint's 'latest' revision number. This was included as a
+workaround until this type of scrying is supported on the kernel level.
 
 # `$dial`
 
@@ -22,23 +22,27 @@ Search for an external event; ~ for name will search for all `%public` and
 [%find =ship name=(unit term)]
 ```
 
-### `%case`
+### `%case-request`
 
-Scry revision number request/response
+Scry revision number request
 
 ```
-[%case case=(unit @ud) name=(unit term)]
+[%case-request name=(unit term)]
 ```
 
 At the time of writing, remote scry doesn't support latest revision number
-scrying so we request the case to get the latest data
+scrying so we request the case to be sure we're getting the latest event data.
 
-- w/o a case: some ship is trying to find our latest
-  scry path revision number for our events
-- with a case: some ship is giving us their latest revision number
-  so we can scry for their event(s)
-- w/o name: all discoverable events are sent/requested
-- with name: a specific event is sent/requested
+### `%case-response`
+
+Scry revision number response
+
+```
+[%case-response case=(unit @ud) name=(unit term)]
+```
+
+If `case` is null it means the path in question is not discoverable or does not
+exist.
 
 # `$operation`
 
