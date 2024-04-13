@@ -1,5 +1,5 @@
 ::  %live: event coordination
-::    version ~2023.12.5
+::    version ~2024.4.12
 ::    ~polrel-witter
 ::
 /+  *mip
@@ -64,9 +64,10 @@
 ::
 +$  dial
   $%  [%find =ship name=(unit term)]            :: search for external events
-      :: TODO %case is a workaround until a path's "latest" revision number
+      :: TODO these are a workaround until a path's "latest" revision number
       :: can be remote scried (i.e. /=/some/path)
-      [%case case=(unit @ud) name=(unit term)]  :: case number request/response
+      [%case-request name=(unit term)]
+      [%case-response case=(unit @ud) name=(unit term)]
   ==
 ::  $sub-info: modify event info; slotted into an %info action
 ::

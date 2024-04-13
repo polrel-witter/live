@@ -140,7 +140,7 @@
       cor(result (crip msg))
     ?:  =('all' name)
       ~['No events found under' ' ' (scot %p ship)]
-    ~[(crip "{<name>}") ' not found under ' (scot %p ship)]
+    ~[(crip "'{<name>}'") ' not found under ' (scot %p ship)]
   ::
       [~ %sss %on-rock @ @ @ %record @ @ ~]
     =.  sub-records
@@ -167,7 +167,7 @@
   ::
       [%case %response @ ~]
     =/  =ship  (slav %p i.t.t.wire)
-    ~|(failed-to-send-remote-scry-case+ship !!)
+    ~|(failed-to-send-case+ship !!)
   ::
       [%case %request @ *]
     =/  =ship  (slav %p i.t.t.wire)
@@ -263,8 +263,9 @@
       %live-dial
     =+  !<(=dial vase)
     ?-  -.dial
-      %find  (search +.dial)
-      %case  (case +.dial)
+      %find           (search +.dial)
+      %case-request   (case-request +.dial)
+      %case-response  (case-response +.dial)
     ==
   ::
       %sss-to-pub
@@ -380,20 +381,31 @@
   %+  slav  %tas
   %-  crip
   :(weld (scow %tas name) "-" (swag [6 5] (scow %uv eny.bowl)))
-::  +get-revision-number: get a remote scry path's revision number
+::  +get-our-case: get a remote scry revision number for one of our
+::  published paths
 ::
-++  get-revision-number
+++  get-our-case
   |=  name=(unit term)
+  ^-  (unit @ud)
+  =/  exe=?
+    :: check if a published path exists to avoid crashing
+    ::
+    ?~  name
+      ?~(`(map id info)`get-remote-events %| %&)
+    ?~((~(get by get-remote-events) [our.bowl u.name]) %| %&)
+  ?.  exe  ~
+  %-  some
+  =-  +.-
   .^  [%ud @ud]
     %gw
     %+  weld  /(scot %p our.bowl)/live/(scot %da now.bowl)
-    ?~  name  //all
-    //event/(scot %tas u.name)
+    ?~  name  //1/all
+    //1/event/(scot %tas u.name)
   ==
-::  +get-discoverable-events: produce a map of id and event info of
-::  all %public and %private events that are not %over
+::  +get-remote-events: produce a map of id and event info of all discoverable
+::  events; i.e. %public and %private that are not %over
 ::
-++  get-discoverable-events
+++  get-remote-events
   ^-  (map id info)
   %-  malt
   %+  murn  ~(tap by events)
@@ -404,13 +416,15 @@
   `[id info]
 ::  +search: search for a ship's discoverable events (i.e. %public and %private)
 ::
-::    this just sends a %case poke, requesting a ship's latest revision number
-::    for a remote scry path; +case performs the scry upon receiving it
+::    this just sends a %case-request poke, requesting a ship's latest revision
+::    number for a remote scry path; +case-response performs the scry as
+::    long as a case is provided
 ::
 ++  search
   |=  [=ship name=(unit term)]
   ^+  cor
   :: reset result state before sending the poke
+  ::
   =.  result  *@t
   ?:  =(our.bowl ship)
     cor(result 'See home page for our events')
@@ -419,30 +433,38 @@
     ?~  name  /all
     /(scot %tas u.name)
   %-  emit
-  (make-act wire ship dap.bowl live-dial+!>(`dial`[%case ~ name]))
-::  +case: remote scry revision number request/response
+  (make-act wire ship dap.bowl live-dial+!>(`dial`[%case-request name]))
+::  +case-request: someone is requesting a remote scry revision number
+::  for one of our published paths
 ::
-::    atm, remote scry doesn't support "latest" revision number scrying
-::    so we request the case to scry for the latest data
-::      - w/o a case: some ship is trying to find our latest
-::        scry path revision number for our events
-::      - with a case: some ship is giving us their latest revision number
-::        so we can scry for their event(s)
-::      - w/o name: all discoverable events are sent/requested
-::      - with name: a specific event is sent/requested
+++  case-request
+  |=  name=(unit term)
+  ^+  cor
+  ?<  =(our src):bowl
+  %-  emit
+  %:  make-act
+    /case/response/(scot %p src.bowl)
+    src.bowl
+    dap.bowl
+    live-dial+!>(`dial`[%case-response (get-our-case name) name])
+  ==
+::  +case-response: someone is responding to our +case-request
 ::
-++  case
+++  case-response
   |=  [case=(unit @ud) name=(unit term)]
   ^+  cor
-  ?>  ?!(=(our src):bowl)
+  ?<  =(our src):bowl
   ?~  case
-    %-  emit
-    %:  make-act
-      /case/response/(scot %p src.bowl)
-      src.bowl
-      dap.bowl
-      live-dial+!>(`dial`[%case `+:(get-revision-number name) name])
-    ==
+    :: no case provided which means there are no discoverable events at
+    :: the path in question
+    ::
+    =;  msg=tape
+      cor(result (crip msg))
+    ?~  name
+      ~['No events found under' ' ' (scot %p src.bowl)]
+    ~[(crip "{<(scow %tas u.name)>}") ' not found under ' (scot %p src.bowl)]
+  :: perform the scry
+  ::
   %-  emil
   :~  :*  %pass
           %+  weld  /remote/scry/timer/(scot %p src.bowl)/(scot %ud u.case)
@@ -457,8 +479,8 @@
           /(scot %tas u.name)
           %keen  %|  src.bowl
           %+  weld   /g/x/(scot %ud u.case)/live
-          ?~  name  //all
-          //event/(scot %tas u.name)
+          ?~  name  //1/all
+          //1/event/(scot %tas u.name)
       ==
   ==
 ::  +ev: event handling
@@ -505,7 +527,7 @@
   ::  path
   ::
   ++  delete-remote-path
-    |=  =path
+    |=  [case=@ud =path]
     ^+  cor
     =/  name=(unit term)
       ?+  path  ~|(invalid-remote-path+path !!)
@@ -513,7 +535,7 @@
         [%event @ ~]  `(slav %tas i.t.path)
       ==
     %-  emit
-    [%pass /remote/scry/delete %cull [%ud +:(get-revision-number name)] path]
+    [%pass /remote/scry/delete %cull [%ud case] path]
   ::  +permitted-count: total number of guests with status of
   ::  %registered or %attended
   ::
@@ -573,7 +595,7 @@
     ^+  cor
     %-  emit
     :-  %pass
-    [/remote/scry/publish %grow /all [%remote-events get-discoverable-events]]
+    [/remote/scry/publish %grow /all [%remote-events get-remote-events]]
   ::  +route: send an action to the appropriate arm
   ::
   ++  route
@@ -615,25 +637,21 @@
           (quit:da-records ship.id dap.bowl [%record name.id our.bowl ~])
         cor(records (~(del bi records) id our.bowl))
       =/  =event  get-event
-      :: if %open or %closed and not %secret, also delete the remote
-      :: path; in all other cases, we've already deleted it so this
-      :: would crash
-      ::
-      =?  cor  ?&  ?=(?(%open %closed) latch.info.event)
-                   ?!(?=(%secret kind.info.event))
-               ==
-        (delete-remote-path /event/(scot %tas name.id))
+      =?  cor  ?~((get-our-case `name.id) %| %&)
+        %+  delete-remote-path
+          (need (get-our-case `name.id))
+        /event/(scot %tas name.id)
       :: delete an event and notify all guests that it's so %over
       ::
       =.  cor  (update-event event(latch.info %over))
       =.  cor  (update-guests get-all-guests)
       =.  cor  update-all-remote-events
       =.  events  (~(del by events) id)
-      :: if no events, also cull the /all path so others get a nack
-      :: when they search for our discoverable events
+      :: if no discoverable events, also cull the /all path so others get a nack
+      :: when they search for them
       ::
-      =?  cor  ?~(events & |)
-        (delete-remote-path /all)
+      =?  cor  ?~((get-our-case ~) %| %&)
+        (delete-remote-path (need (get-our-case ~)) /all)
       =.  cor  delete-records
       cor
       ::  +delete-records: deletes all records associated with an event
@@ -663,8 +681,9 @@
       =/  =event  get-event
       =;  =_event
         =.  cor  (update-event event)
-        =?  cor  ?=(?([%kind %secret] [%latch %over]) sub-info)
-          (delete-remote-path /event/(scot %tas name.id))
+        =?  cor  ?~((get-our-case `name.id) %| %&)
+          %+  delete-remote-path  (need (get-our-case `name.id))
+          /event/(scot %tas name.id)
         (update-guests get-all-guests)
       ?-    -.sub-info
           %title   event(title.info +.sub-info)
@@ -1036,8 +1055,9 @@
         %live-dial
       =+  !<(=dial vase)
       ?-  -.dial
-        %case  !!
         %find  /apps/live/results
+        %case-request   !!
+        %case-response  !!
       ==
     ::
         %live-operation

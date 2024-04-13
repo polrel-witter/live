@@ -904,7 +904,7 @@
   |=  =path
   ^-  manx
   ;div
-    ;code.stamp: {(slag 23 (scow %da now.bowl))}
+    ;code.stamp: {(slag 22 (scow %da now.bowl))}
     ;
     ;a(href (spud path), target "_self")
       ;button.reload
