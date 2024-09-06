@@ -131,10 +131,21 @@
     %=  cor
       state   :*  %1
                   (~(urn by events.ole) event-0-to-1)
-                  (~(gas bi *(mip id ship record-1)) (turn ~(tap bi records.ole) record-0-to-1))
-                  ?@  results.ole
-                    results.ole
-                  (~(urn by result.ole) result-0-to-1)
+                  ^-  (mip id ship record-1)
+                  =/  ls  `(list (trel id ship record-1))`(turn ~(tap bi records.ole) record-0-to-1)
+                    =|  ms=(mip id ship record-1)
+                    |-
+                    ?~  ls  ms
+                    $(ls t.ls, ms (~(put bi ms) p.i.ls q.i.ls r.i.ls))
+                  ^-  $@(@t (map id info-1))
+                  ?@  result.ole
+                    result.ole
+                  ^-  (map id info-1)
+                  %-  malt
+                  =/  ls=(list [id info])  ~(tap by ;;((map id info) result.ole))
+                  %+  turn  ls  result-0-to-1
+                  ::  TODO
+                  :: (~(urn by result.ole) result-0-to-1)
                   sub-records.ole
                   pub-records.ole
     ==        ==

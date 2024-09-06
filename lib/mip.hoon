@@ -14,12 +14,6 @@
       (~(del by a) b)
     (~(put by a) b e)
   ::
-  ++  gas
-    |*  b=(list [p=* q=* r=*])
-    ?~  b
-      a
-    $(b t.b, a (put p.i.b q.i.b r.i.b))
-  ::
   ++  get
     |*  [b=* c=*]
     =>  .(b `_?>(?=(^ a) p.n.a)`b, c `_?>(?=(^ a) ?>(?=(^ q.n.a) p.n.q.n.a))`c)
