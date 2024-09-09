@@ -142,8 +142,10 @@
                     result.ole
                   ^-  (map id info-1)
                   %-  malt
+                  ^-  (list [id info-1])
                   =/  ls=(list [id info])  ~(tap by ;;((map id info) result.ole))
-                  %+  turn  ls  result-0-to-1
+                  ^-  (list [id info-1])
+                  %+  turn  `(list [id info])`ls  result-0-to-1
                   ::  TODO
                   :: (~(urn by result.ole) result-0-to-1)
                   sub-records.ole
@@ -218,7 +220,7 @@
       ?~  roar.sign-arvo  msg
       =/  =roar:ames      u.roar.sign-arvo
       ?~  q.dat.roar      msg
-      ;;((map id info) +.u.q.dat.roar)
+      ;;((map id info-1) +.u.q.dat.roar)
     ::
         [%timer @ @ *]
       =/  end=path
@@ -424,7 +426,7 @@
     :: check if a published path exists to avoid crashing
     ::
     ?~  name
-      ?~(`(map id info)`get-remote-events %| %&)
+      ?~(`(map id info-1)`get-remote-events %| %&)
     ?~((~(get by get-remote-events) [our.bowl u.name]) %| %&)
   ?.  exe  ~
   %-  some
@@ -439,7 +441,7 @@
 ::  events; i.e. %public and %private that are not %over
 ::
 ++  get-remote-events
-  ^-  (map id info)
+  ^-  (map id info-1)
   %-  malt
   %+  murn  ~(tap by events)
   |=  [=id event=event-1]
@@ -1331,8 +1333,8 @@
   [(info-0-to-1 info.v) secret.v limit.v]
 ++  result-0-to-1
   |=  [k=id v=info]
-  ^-  info-1
-  [(info-0-to-1 info.v)]
+  ^-  [id info-1]
+  [k (info-0-to-1 v)]
 ++  info-0-to-1
   |=  =info
   ^-  info-1
