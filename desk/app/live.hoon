@@ -6,13 +6,21 @@
 ::
 |%
 ::
-+$  versioned-state  $%(state-0)
++$  versioned-state  $%(state-0 state-1)
 ::
 +$  state-0
   $:  %0
       events=(map id event)                                 :: events we host
       records=(mip id ship record)                          :: guests & passes
       result=$@(@t (map id info))                           :: search result
+      sub-records=_(mk-subs live-records ,[%record @ @ ~])  :: record subs
+      pub-records=_(mk-pubs live-records ,[%record @ @ ~])  :: record pubs
+  ==
++$  state-1
+  $:  %1
+      events=(map id event-1)                               :: events we host
+      records=(mip id ship record-1)                        :: guests & passes
+      result=$@(@t (map id info-1))                         :: search result
       sub-records=_(mk-subs live-records ,[%record @ @ ~])  :: record subs
       pub-records=_(mk-pubs live-records ,[%record @ @ ~])  :: record pubs
   ==
@@ -24,7 +32,7 @@
 ::
 %+  verb  |
 %-  agent:dbug
-=|  state-0
+=|  state-1
 =*  state  -
 ::
 ^-  agent:gall
@@ -117,8 +125,35 @@
 ++  load
   |=  =vase
   ^+  cor
-  ?>  ?=([%0 *] q.vase)
-  cor(state !<(state-0 vase))
+  =/  ole  !<(versioned-state vase)
+  ?-    -.ole
+      %0
+    %=  cor
+      state   :*  %1
+                  (~(urn by events.ole) event-0-to-1)
+                  ^-  (mip id ship record-1)
+                  =/  ls  `(list (trel id ship record-1))`(turn ~(tap bi records.ole) record-0-to-1)
+                    =|  ms=(mip id ship record-1)
+                    |-
+                    ?~  ls  ms
+                    $(ls t.ls, ms (~(put bi ms) p.i.ls q.i.ls r.i.ls))
+                  ^-  $@(@t (map id info-1))
+                  ?@  result.ole
+                    result.ole
+                  ^-  (map id info-1)
+                  %-  malt
+                  ^-  (list [id info-1])
+                  =/  ls=(list [id info])  ~(tap by ;;((map id info) result.ole))
+                  ^-  (list [id info-1])
+                  %+  turn  `(list [id info])`ls  result-0-to-1
+                  ::  TODO
+                  :: (~(urn by result.ole) result-0-to-1)
+                  sub-records.ole
+                  pub-records.ole
+    ==        ==
+      %1
+    cor(state ole)
+  ==
 ::
 ++  watch
   |=  pol=(pole knot)
@@ -185,7 +220,7 @@
       ?~  roar.sign-arvo  msg
       =/  =roar:ames      u.roar.sign-arvo
       ?~  q.dat.roar      msg
-      ;;((map id info) +.u.q.dat.roar)
+      ;;((map id info-1) +.u.q.dat.roar)
     ::
         [%timer @ @ *]
       =/  end=path
@@ -246,7 +281,7 @@
           unregistered+0
           attended+0
       ==
-    =/  r=(list [ship =record])
+    =/  r=(list [ship record=record-1])
       ~(tap by u.rec)
     |-  ?~  r  [%counts cnt]
     $(cnt (~(jab by cnt) p.status.record.i.r |=(a=@ud +(a))), r t.r)
@@ -299,7 +334,7 @@
     ?>  ?=([[%record @ @ ~] *] msg)
     ?>  =(our.bowl `ship`+>-:path.msg)
     =/  name=term  +<:path.msg
-    =/  update=record
+    =/  update=record-1
       ?~(wave.msg rock.msg u.wave.msg)
     :: clear secret if we're not %registered or %attended since it
     :: might diverge otherwise
@@ -307,7 +342,7 @@
     =?  secret.update  ?=  ?(%invited %requested %unregistered)
                        p.status.update
       ~
-    =/  current=(unit record)
+    =/  current=(unit record-1)
       (~(get bi records) [src.msg name] our.bowl)
     =?  cor  (notify current update)
       (emit (make-hark src.msg title.info.update status.update))
@@ -316,7 +351,7 @@
     ::  status goes from %requested to %registered
     ::
     ++  notify
-      |=  [current=(unit record) update=record]
+      |=  [current=(unit record-1) update=record-1]
       ^-  ?
       ?|  ?~  current
             ?=(%invited p.status.update)
@@ -391,7 +426,7 @@
     :: check if a published path exists to avoid crashing
     ::
     ?~  name
-      ?~(`(map id info)`get-remote-events %| %&)
+      ?~(`(map id info-1)`get-remote-events %| %&)
     ?~((~(get by get-remote-events) [our.bowl u.name]) %| %&)
   ?.  exe  ~
   %-  some
@@ -406,10 +441,10 @@
 ::  events; i.e. %public and %private that are not %over
 ::
 ++  get-remote-events
-  ^-  (map id info)
+  ^-  (map id info-1)
   %-  malt
   %+  murn  ~(tap by events)
-  |=  [=id =event]
+  |=  [=id event=event-1]
   =,  event
   ?:  |(?=(%secret kind.info) ?=(%over latch.info))
     ~
@@ -490,7 +525,7 @@
   ::  +get-event: retreive an event
   ::
   ++  get-event
-    ^-  event
+    ^-  event-1
     ~|(no-event-found+id (~(got by events) id))
   ::  +get-all-guests: retreive guest ships for an event
   ::
@@ -506,7 +541,7 @@
   ::
   ++  over
     ^-  ?
-    =/  =event  get-event
+    =/  event=event-1  get-event
     ?=(%over latch.info.event)
   ::  +host-call: verify that a host is performing the action
   ::
@@ -556,10 +591,10 @@
   ++  update-guests
     |=  guests=(list ship)
     ^+  cor
-    =/  =event  get-event
+    =/  event=event-1  get-event
     |-
     ?~  guests  cor
-    =/  =record
+    =/  record=record-1
       (~(got bi records) id i.guests)
     =:  info.record  info.event
         secret.record  secret.event
@@ -570,7 +605,7 @@
   ::  +update-event: write an event update to state
   ::
   ++  update-event
-    |=  update=event
+    |=  update=event-1
     ^+  cor
     =.  events  (~(put by events) id update)
     =.  cor  (update-remote-event update)
@@ -578,7 +613,7 @@
   ::  +update-remote-event: update an event discoverable over remote scry
   ::
   ++  update-remote-event
-    |=  =event
+    |=  event=event-1
     ^+  cor
     =,  event
     ?:  |(?=(%secret kind.info) ?=(%over latch.info))
@@ -617,7 +652,7 @@
     ::  +create: write a new event to state
     ::
     ++  create
-      |=  =event
+      |=  event=event-1
       ^+  cor
       ?>  host-call
       =?  id  (~(has by events) id)
@@ -636,7 +671,7 @@
         =.  sub-records
           (quit:da-records ship.id dap.bowl [%record name.id our.bowl ~])
         cor(records (~(del bi records) id our.bowl))
-      =/  =event  get-event
+      =/  event=event-1  get-event
       =?  cor  ?~((get-our-case `name.id) %| %&)
         %+  delete-remote-path
           (need (get-our-case `name.id))
@@ -678,7 +713,7 @@
       :: if event is %over, only allow a %latch modification
       ?:  &(?!(?=(%latch -.sub-info)) over)
         cor
-      =/  =event  get-event
+      =/  event=event-1  get-event
       =;  =_event
         =.  cor  (update-event event)
         =?  cor  ?~((get-our-case `name.id) %| %&)
@@ -707,7 +742,7 @@
       ?:  over  cor
       =;  write=?
         ?.  write  ~|(limit-lower-than-registered-count+id !!)
-        =/  =event  get-event
+        =/  event=event-1  get-event
         =.  limit.event
           new-limit
         (update-event event)
@@ -721,7 +756,7 @@
       ^+  cor
       ?>  host-call
       ?:  over  cor
-      =/  =event  get-event
+      =/  event=event-1  get-event
       =.  secret.event  new-secret
       =.  cor  (update-event event)
       =+  guests=get-all-guests
@@ -795,7 +830,7 @@
         (emit (make-act wire ship.id dap.bowl cage))
       :: poke from host or some foreign ship
       ?:  over  cor
-      =/  =event  get-event
+      =/  event=event-1  get-event
       =/  =ship  ?~(who src.bowl u.who)
       :: ask the ship to subscribe to their record
       ::
@@ -854,7 +889,7 @@
         |=  =ship
         ^-  (unit status)
         ?>  guest-call
-        =/  =event  get-event
+        =/  event=event-1  get-event
         :: if event is closed, or has a limit of 0, make the guest
         :: status %requested
         ?:  ?|  ?=(%closed latch.info.event)
@@ -936,9 +971,9 @@
     ++  update-status
       |=  new-status=status
       ^+  cor
-      =;  =record
+      =;  record=record-1
         (~(publish re ship) record)
-      =/  =record
+      =/  record=record-1
         ~|  no-record+[id ship]
         (~(got bi records) id ship)
       :: if %registered or %attended, also publish secret
@@ -951,7 +986,7 @@
     ::  $publish: update local records mip and publish the record to guest
     ::
     ++  publish
-      |=  =record
+      |=  record=record-1
       ^+  cor
       =.  records
         (~(put bi records) id ship record)
@@ -965,7 +1000,7 @@
       |=  =status
       ^+  cor
       =+  path=[%record name.id ship ~]
-      =/  =record
+      =/  record=record-1
         =+  event=get-event
         ?.  ?=(%registered p.status)
           [info.event ~ status]
@@ -1198,7 +1233,7 @@
       ::
           %create
         ?>  as-host
-        =;  =event
+        =;  event=event-1
           =,  pull-id
           ?>  ?=(%$ name)
           :-  %&
@@ -1207,7 +1242,7 @@
         ::
         =/  vals=(list [key=@t val=@t])
           ~(tap by (~(del by args) 'head'))
-        =|  =event
+        =|  event=event-1
         |-
         ?~  vals  event
         =;  update=_event
@@ -1292,4 +1327,22 @@
       --
     --
   --
+++  event-0-to-1
+  |=  [k=id v=event]
+  ^-  event-1
+  [(info-0-to-1 info.v) secret.v limit.v]
+++  result-0-to-1
+  |=  [k=id v=info]
+  ^-  [id info-1]
+  [k (info-0-to-1 v)]
+++  info-0-to-1
+  |=  =info
+  ^-  info-1
+  [title.info about.info moment.info kind.info latch.info *(list talk)]
+++  record-0-to-1
+  |=  [k0=id k1=ship v=record]
+  ^-  [id ship record-1]
+  :+  k0
+    k1
+  [(info-0-to-1 info.v) secret.v status.v]
 --
