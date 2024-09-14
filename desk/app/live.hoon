@@ -394,14 +394,14 @@
   |=  [=id =action]
   ^-  cage
   live-operation+!>(`operation`[id action])
-::  +append-entropy: add random characters to event name for uniqueness
+::  +append-entropy: add random characters to a name for uniqueness
 ::
 ++  append-entropy
   |=  name=term
   ^-  term
   %+  slav  %tas
   %-  crip
-  :(weld (scow %tas name) "-" (swag [6 5] (scow %uv eny.bowl)))
+  :(weld (scow %tas name) "-" (swag [6 4] (scow %uv eny.bowl)))
 ::  +get-our-case: get a remote scry revision number for one of our
 ::  published paths
 ::
