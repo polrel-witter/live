@@ -53,7 +53,7 @@ secret.
 # Pokes
 Most pokes are event-specific and sent via an `$operation`. An operation
 requires the event `$id` and an `$action` to be performed on the event.
-All actions are explained in `/sur/live`.
+All actions are explained in `desk/sur/live`.
 
 Non-event-specific pokes take a `$dial`, which includes a `%find` and
 `%case` option. `%find` is an external event search and `%case` is a
@@ -63,8 +63,8 @@ type of scrying is supported on the kernel level.
 
 # Scries
 The `%live` agent contains the following scry endpoints. Each result in
-a `$demand` type, defined in `/sur/live`. References to 'host ship' and
-'name' correlate to the event id, which is defined in `/sur` as `[=ship
+a `$demand` type, defined in `/desk/sur/live`. References to 'host ship' and
+'name' correlate to the event id, which is defined in `/desk/sur/live` as `[=ship
 name=term]`.
 
 ### %u scries
@@ -85,7 +85,7 @@ The only subscriptions maintained are between host and guests to keep
 `$records` in sync and a basic Eyre connection for the frontend.
 
 We use Solid State Subscriptions for the record maintenance. The `$lake` is
-found in `/sur/live-records`. It simply defines the `$rock` and `$wave` as a
+found in `/desk/sur/live-records`. It simply defines the `$rock` and `$wave` as a
 single `$record`. These updates are processed in `%live`'s `+poke` arm,
 under the `%sss-on-rock` branch (see details on SSS
 [here](https://github.com/wicrum-wicrun/sss/blob/master/urbit/app/simple.hoon))
@@ -94,8 +94,8 @@ a few tests.
 
 # A brief note on the frontend
 This was written in Sail and uses [htmx](https://htmx.org/) to acheive
-reactivity. All frontend code can be found in `/lib/live-view`.
-`/lib/live-help` and `/lib/live-icons` contain a few auxiliary components
+reactivity. All frontend code can be found in `/desk/lib/live-view`.
+`/desk/lib/live-help` and `/desk/lib/live-icons` contain a few auxiliary components
 which are imported into `live-view`.
 
 The "glue" that handles the get/post requests is in the `%live` agent
