@@ -4,9 +4,9 @@
 /+  *mip, icon=live-icons, live-help
 ::
 |_  $:  =bowl:gall
-        events=(map id event)
-        records=(mip id ship record)
-        result=$@(@t (map id info))
+        events=(map id event-1)
+        records=(mip id ship record-1)
+        result=$@(@t (map id info-1))
     ==
 ::
 ++  page
@@ -116,7 +116,7 @@
               ;+  ;div.timeline
                     ;p: previous search:
                     ;ul
-                      ;*  (render-timeline %active ;;((map id info) result))
+                      ;*  (render-timeline %active ;;((map id info-1) result))
                     ==
                   ==
         ==
@@ -144,7 +144,7 @@
         ;+  (page-button "new search" (make-path %find ~))
       ==
       ;ul
-        ;*  (render-timeline %active ;;((map id info) result))
+        ;*  (render-timeline %active ;;((map id info-1) result))
       ==
     ==
   ;div
@@ -211,7 +211,7 @@
     |=  =_id
     ^-  marl
     ?@  result  (not-found "event")
-    ?~  info=(~(get by ;;((map [ship term] info) result)) id)
+    ?~  info=(~(get by ;;((map [ship term] info-1) result)) id)
       (not-found "event")
     ;=  ;nav
           ;+  (page-button "back" (make-path %find ~))
@@ -294,6 +294,10 @@
                 ;*  (render-text u.secret.u.record)
               ==
         ==
+        :: ;div  %+  turn
+        ::         talks.info.u.record
+        :: TODO maybe use card render arm +render-tile
+        :: ==
     ==
   ::  +host: event dashboard for host
   ::
@@ -302,7 +306,7 @@
     |^  ^-  marl
     ?~  e=(~(get by events) id)
       (not-found "event")
-    =/  =event  u.e
+    =/  event=event-1  u.e
     ;=  ;nav
           ;+  (page-button "back" (make-path %manage `id))
           ;+  (delete-event-button id)
@@ -371,7 +375,7 @@
     ++  edit-button
       |=  [=_id =get-fleck label=(unit @t)]
       ^-  manx
-      =/  =info
+      =/  info=info-1
         info:(~(got by events) id)
       :: don't produce a button for an %over event, barring %latch
       ?:  ?&  ?=(%over latch.info)
@@ -386,7 +390,7 @@
   ::  +event-header: render some event metadata
   ::
   ++  event-header
-    |=  [=_id =info]
+    |=  [=_id info=info-1]
     ^-  manx
     ;div.white-border
       ;div.title: {(trip title.info)}
@@ -476,7 +480,7 @@
   %-  page
   ?~  e=(~(get by events) id)
     (not-found "event")
-  =/  =event  u.e
+  =/  event=event-1  u.e
   ;=  ;nav
         ;+  ?.  ?=(%over latch.info.event)
               (page-button "home" /apps/live)
@@ -1017,7 +1021,7 @@
     ?~  rcds=(~(get by records) id)  0
     %-  lent
     %+  murn  ~(tap by u.rcds)
-    |=([* r=record] ?:(=(chk p.status.r) `- ~))
+    |=([* r=record-1] ?:(=(chk p.status.r) `- ~))
   --
 ::  +render-text: format paragraphs
 ::
@@ -1117,17 +1121,17 @@
 ::  +render-timeline: render events in a timeline, ordered by start date
 ::
 ++  render-timeline
-  |=  [pulse=?(%active %over) foreign=(map id info)]
+  |=  [pulse=?(%active %over) foreign=(map id info-1)]
   |^  ^-  marl
   =;  tiles=marl
     ;*  tiles
-  =/  items=(list [id info])
+  =/  items=(list [id info-1])
     ?.  =(~ foreign)
       ~(tap by foreign)
     %+  weld  get-our-records
-    (turn ~(tap by events) |=([=id =event] [id info.event]))
+    (turn ~(tap by events) |=([=id event=event-1] [id info.event]))
   ;*  %+  murn  (order items)
-      |=  [=id =info]
+      |=  [=id info=info-1]
       ^-  (unit manx)
       ?-  pulse
         %active  ?:(?=(%over latch.info) ~ `(render-tile id info))
@@ -1136,19 +1140,19 @@
   ::  +get-our-records: pull records for which we're a guest
   ::
   ++  get-our-records
-    ^-  (list [id info])
+    ^-  (list [id info-1])
     %+  murn  ~(tap bi records)
-    |=  [=id =ship =record]
+    |=  [=id =ship record=record-1]
     ?:  =(our.bowl ship.id)  ~
     ?.  =(our.bowl ship)  ~
     `[id info.record]
   ::  +order: put events in order by start date
   ::
   ++  order
-    |=  items=(list [id info])
-    |^  ^-  (list [id info])
+    |=  items=(list [id info-1])
+    |^  ^-  (list [id info-1])
     %+  sort  items
-    |=  [[* a=info] [* b=info]]
+    |=  [[* a=info-1] [* b=info-1]]
     =/  a-start  start.moment.a
     =/  b-start  start.moment.b
     ?~  a-start  |
@@ -1180,7 +1184,7 @@
   ::  +render-tile: make an event as a clickable item in a list
   ::
   ++  render-tile
-    |=  [=id =info]
+    |=  [=id info=info-1]
     ^-  manx
     =;  content=manx
       ?:  =(our.bowl ship.id)

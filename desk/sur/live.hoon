@@ -28,6 +28,13 @@
 ::    %over: inactive, non-discoverable
 ::
 +$  latch  ?(%open %closed %over)
+::  $talk: single event component
++$  talk
+  $:  title=cord
+      speaker=cord
+      about=(unit cord)
+      =moment
+  ==
 ::  $info: public metadata for an event
 ::
 +$  info
@@ -37,6 +44,14 @@
       =kind
       =latch
   ==
++$  info-1
+  $:  title=cord
+      about=(unit cord)
+      =moment
+      =kind
+      =latch
+      talks=(list talk)
+  ==
 ::  $limit: number of ships that can register per event
 ::
 +$  limit  (unit @ud)
@@ -45,7 +60,8 @@
 +$  secret  (unit cord)
 ::  $event: event info controlled by host ship
 ::
-+$  event  [=info =secret =limit]
++$  event    [=info =secret =limit]
++$  event-1  [info=info-1 =secret =limit]
 ::  $status: state of a guest
 ::
 +$  status
@@ -59,7 +75,8 @@
   time
 ::  $record: guest information
 ::
-+$  record  [=info =secret =status]
++$  record    [=info =secret =status]
++$  record-1  [info=info-1 =secret =status]
 ::  $dial: non-event-specific actions
 ::
 +$  dial
@@ -78,10 +95,18 @@
       [%kind =kind]
       [%latch =latch]
   ==
++$  sub-info-1
+  $%  [%title title=cord]
+      [%about about=(unit cord)]
+      [%moment =moment]
+      [%kind =kind]
+      [%latch =latch]
+      [%talks talks=(list talk)]
+  ==
 ::  $action: event api
 ::
 +$  action
-  $%  [%create =event]                       :: create an event
+  $%  [%create =event-1]                       :: create an event
       [%delete ~]                            :: delete an event
       [%info =sub-info]                      :: change event info
       [%secret =secret]                      :: change event secret
@@ -101,12 +126,12 @@
 +$  demand
   $%  [%event-exists p=?]                    :: does an event exist?
       [%record-exists p=?]                   :: does a record exist?
-      [%event p=(unit event)]                :: an event
-      [%record p=(unit record)]              :: a record
+      [%event p=(unit event-1)]                :: an event
+      [%record p=(unit record-1)]              :: a record
       [%counts p=(map _-.status @ud)]        :: record status counts
-      [%all-events p=(map id event)]         :: all events
-      [%all-records p=(mip id ship record)]  :: all records
-      [%event-records p=(map ship record)]   :: all records for an event
-      [%remote-events p=(map id info)]       :: remote scry discoverable events
+      [%all-events p=(map id event-1)]         :: all events
+      [%all-records p=(mip id ship record-1)]  :: all records
+      [%event-records p=(map ship record-1)]   :: all records for an event
+      [%remote-events p=(map id info-1)]     :: remote scry discoverable events
   ==
 --
