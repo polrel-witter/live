@@ -15,6 +15,7 @@
 ::  $moment: event duration
 ::
 +$  moment  [start=(unit time) end=(unit time) =timezone]
++$  moment-1  [start=(unit time) end=(unit time)]
 ::  $group: Tlon group id
 ::
 +$  group  (unit flag:groups)
@@ -38,7 +39,7 @@
       panel=(unit cord)
       location=(unit cord)
       about=(unit cord)
-      =moment
+      moment=moment-1
   ==
 ::  $info: public metadata for an event
 ::
@@ -52,7 +53,8 @@
 +$  info-1
   $:  title=cord
       about=(unit cord)
-      =moment
+      moment=moment-1
+      =timezone
       location=(unit cord)
       =group
       =kind
@@ -100,7 +102,7 @@
       [%panel p=(unit cord)]
       [%location p=(unit cord)]
       [%about p=(unit cord)]
-      [%moment p=moment]
+      [%moment p=moment-1]
   ==
 ::  $sub-info: modify event info; slotted into an %info action
 ::
@@ -114,7 +116,8 @@
 +$  sub-info-1
   $%  [%title p=cord]
       [%about p=(unit cord)]
-      [%moment p=moment]
+      [%moment p=moment-1]
+      [%timezone p=timezone]
       [%location p=(unit cord)]
       [%group p=group]
       [%kind p=kind]

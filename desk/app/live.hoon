@@ -710,9 +710,11 @@
           %title     event(title.info p.sub-info)
           %about     event(about.info p.sub-info)
           %kind      event(kind.info p.sub-info)
-          %moment    event(moment.info p.sub-info)
           %location  event(location.info p.sub-info)
           %group     event(group.info p.sub-info)
+          %moment    event(moment.info p.sub-info)
+          %timezone  event(timezone.info p.sub-info)
+      ::
           %latch
         :: if limit is reached, prevent host from opening
         ::
@@ -1046,8 +1048,10 @@
 ++  info-0-to-1
   |=  =info
   ^-  info-1
+  =/  [start=(unit time) end=(unit time) =timezone]
+    moment.info
   :-  title.info
-  [about.info moment.info ~ ~ kind.info latch.info ~]
+  [about.info [start end] timezone ~ ~ kind.info latch.info ~]
 ++  record-0-to-1
   |=  [k0=id k1=ship v=record]
   ^-  [id ship record-1]
