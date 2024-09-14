@@ -588,7 +588,7 @@
     =.  cor
       (~(publish re i.guests) record)
     $(guests t.guests)
-  ::  +update-event: write an event update to state
+  ::  +update-event: write an event change to state
   ::
   ++  update-event
     |=  update=event-1
@@ -693,7 +693,7 @@
     ::  +change-info: update an event's metadata and publish to guests
     ::
     ++  change-info
-      |=  =sub-info
+      |=  sub-info=sub-info-1
       ^+  cor
       ?>  host-call
       :: if event is %over, only allow a %latch modification
@@ -707,17 +707,51 @@
           /event/(scot %tas name.id)
         (update-guests get-all-guests)
       ?-    -.sub-info
-          %title   event(title.info +.sub-info)
-          %about   event(about.info +.sub-info)
-          %kind    event(kind.info +.sub-info)
-          %moment  event(moment.info +.sub-info)
+          %title     event(title.info p.sub-info)
+          %about     event(about.info p.sub-info)
+          %kind      event(kind.info p.sub-info)
+          %moment    event(moment.info p.sub-info)
+          %location  event(location.info p.sub-info)
+          %group     event(group.info p.sub-info)
           %latch
         :: if limit is reached, prevent host from opening
-        ?:  ?&  ?=(%open +.sub-info)
+        ::
+        ?:  ?&  ?=(%open p.sub-info)
                 ?~(limit.event | =(u.limit.event permitted-count))
             ==
           ~|(event-limit-is-reached+id !!)
-        event(latch.info +.sub-info)
+        event(latch.info p.sub-info)
+      ::
+          %delete-session
+        =/  sid=@tas  p.sub-info
+        event(sessions.info (~(del by sessions.info.event) sid))
+      ::
+          %create-session
+        =/  sid=@tas
+          :: all session ids inheret the name of the parent event, but
+          :: have unique entropy and a '-s' appended to them
+          ::
+          %+  slav  %tas
+          %-  crip
+          (weld (scow %tas (append-entropy name.id)) "-s")
+        =/  =session  p.sub-info
+        event(sessions.info (~(put by sessions.info.event) sid session))
+      ::
+          %edit-session
+        =/  sid=@tas  p.sub-info
+        =/  ses=(unit session)
+          (~(get by sessions.info.event) sid)
+        ?~  ses
+          ~&(>>> "no session found for sid {<sid>}" event)
+        =;  update=session
+          event(sessions.info (~(put by sessions.info.event) sid update))
+        ?-    -.q.sub-info
+            %title     u.ses(title p.q.sub-info)
+            %panel     u.ses(panel p.q.sub-info)
+            %location  u.ses(location p.q.sub-info)
+            %about     u.ses(about p.q.sub-info)
+            %moment    u.ses(moment p.q.sub-info)
+        ==
       ==
     ::  +change-limit: update register limit
     ::
@@ -1012,7 +1046,8 @@
 ++  info-0-to-1
   |=  =info
   ^-  info-1
-  [title.info about.info moment.info kind.info latch.info *(list talk)]
+  :-  title.info
+  [about.info moment.info ~ ~ kind.info latch.info ~]
 ++  record-0-to-1
   |=  [k0=id k1=ship v=record]
   ^-  [id ship record-1]
