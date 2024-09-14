@@ -2,6 +2,7 @@
 ::    version ~2024.4.12
 ::    ~polrel-witter
 ::
+/-  groups
 /+  *mip
 ::
 |%
@@ -14,6 +15,9 @@
 ::  $moment: event duration
 ::
 +$  moment  [start=(unit time) end=(unit time) =timezone]
+::  $group: Tlon group id
+::
++$  group  (unit flag:groups)
 ::  $kind: event type
 ::
 ::    %public: discoverable and open to anyone
@@ -28,10 +32,11 @@
 ::    %over: inactive, non-discoverable
 ::
 +$  latch  ?(%open %closed %over)
-::  $talk: single event component
-+$  talk
+::  $session: single event component
++$  session
   $:  title=cord
-      speaker=cord
+      panel=(unit cord)
+      location=(unit cord)
       about=(unit cord)
       =moment
   ==
@@ -48,9 +53,11 @@
   $:  title=cord
       about=(unit cord)
       =moment
+      location=(unit cord)
+      =group
       =kind
       =latch
-      talks=(list talk)
+      sessions=(map sid=@tas =session)
   ==
 ::  $limit: number of ships that can register per event
 ::
@@ -86,6 +93,15 @@
       [%case-request name=(unit term)]
       [%case-response case=(unit @ud) name=(unit term)]
   ==
+::  $sub-sesssion: modify a piece of session info
+::
++$  sub-session
+  $%  [%title p=cord]
+      [%panel p=(unit cord)]
+      [%location p=(unit cord)]
+      [%about p=(unit cord)]
+      [%moment p=moment]
+  ==
 ::  $sub-info: modify event info; slotted into an %info action
 ::
 +$  sub-info
@@ -96,19 +112,23 @@
       [%latch =latch]
   ==
 +$  sub-info-1
-  $%  [%title title=cord]
-      [%about about=(unit cord)]
-      [%moment =moment]
-      [%kind =kind]
-      [%latch =latch]
-      [%talks talks=(list talk)]
+  $%  [%title p=cord]
+      [%about p=(unit cord)]
+      [%moment p=moment]
+      [%location p=(unit cord)]
+      [%group p=group]
+      [%kind p=kind]
+      [%latch p=latch]
+      [%create-session p=session]
+      [%edit-session p=@tas q=sub-session]
+      [%delete-session p=@tas]
   ==
 ::  $action: event api
 ::
 +$  action
-  $%  [%create =event-1]                       :: create an event
+  $%  [%create =event-1]                     :: create an event
       [%delete ~]                            :: delete an event
-      [%info =sub-info]                      :: change event info
+      [%info =sub-info-1]                    :: change event info
       [%secret =secret]                      :: change event secret
       [%limit =limit]                        :: change event limit
     ::
@@ -124,14 +144,14 @@
 ::  $demand: scry api
 ::
 +$  demand
-  $%  [%event-exists p=?]                    :: does an event exist?
-      [%record-exists p=?]                   :: does a record exist?
+  $%  [%event-exists p=?]                      :: does an event exist?
+      [%record-exists p=?]                     :: does a record exist?
       [%event p=(unit event-1)]                :: an event
       [%record p=(unit record-1)]              :: a record
-      [%counts p=(map _-.status @ud)]        :: record status counts
+      [%counts p=(map _-.status @ud)]          :: record status counts
       [%all-events p=(map id event-1)]         :: all events
       [%all-records p=(mip id ship record-1)]  :: all records
       [%event-records p=(map ship record-1)]   :: all records for an event
-      [%remote-events p=(map id info-1)]     :: remote scry discoverable events
+      [%remote-events p=(map id info-1)]       :: discoverable events
   ==
 --
