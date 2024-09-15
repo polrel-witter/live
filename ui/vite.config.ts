@@ -1,5 +1,6 @@
 import { loadEnv, defineConfig } from 'vite';
 import reactRefresh from '@vitejs/plugin-react';
+import path from "path"
 import { urbitPlugin } from '@urbit/vite-plugin-urbit';
 
 // we pin vite-plugin-rewrite-all to 1.0.1 (it's a dependency of vite-plugin
@@ -16,6 +17,11 @@ export default ({ mode }) => {
     plugins: [
       // urbitPlugin({ base: 'live', target: SHIP_URL, secure: false }),
       reactRefresh()
-    ]
+    ],
+    resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
   });
 };
