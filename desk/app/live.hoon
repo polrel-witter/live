@@ -19,7 +19,6 @@
   $:  %1
       events=(map id event-1)                               :: events we host
       records=(mip id ship record-1)                        :: guests & passes
-      :: TODO remove result; purely a sail/htmx frontend structure
       result=$@(@t (map id info-1))                         :: search result
       sub-records=_(mk-subs live-records ,[%record @ @ ~])  :: record subs
       pub-records=_(mk-pubs live-records ,[%record @ @ ~])  :: record pubs
