@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import Urbit from '@urbit/http-api';
-import { AppTile } from './components/AppTile';
 
 const api = new Urbit('', '', window.desk);
 api.ship = window.ship;
