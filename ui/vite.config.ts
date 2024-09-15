@@ -13,6 +13,9 @@ export default ({ mode }) => {
   console.log(SHIP_URL);
 
   return defineConfig({
-    plugins: [urbitPlugin({ base: 'landspace', target: SHIP_URL, secure: false }), reactRefresh()]
+    plugins: [
+      // urbitPlugin({ base: 'live', target: SHIP_URL, secure: false }),
+      reactRefresh()
+    ]
   });
 };
