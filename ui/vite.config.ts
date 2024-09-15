@@ -2,6 +2,10 @@ import { loadEnv, defineConfig } from 'vite';
 import reactRefresh from '@vitejs/plugin-react';
 import { urbitPlugin } from '@urbit/vite-plugin-urbit';
 
+// we pin vite-plugin-rewrite-all to 1.0.1 (it's a dependency of vite-plugin
+// -urbit) because of this:
+// https://github.com/RDFLib/prez-ui/issues/161#issuecomment-2185944740
+
 // https://vitejs.dev/config/
 export default ({ mode }) => {
   Object.assign(process.env, loadEnv(mode, process.cwd()));
