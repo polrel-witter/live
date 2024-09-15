@@ -18,7 +18,8 @@
 +$  state-1
   $:  %1
       events=(map id event-1)                               :: events we host
-      records=(mip id ship record-1)                        :: guests & passes
+      records=(mip id ship record-1)                        :: access data
+      profiles=(mip ship term entry)                        :: contact info
       result=$@(@t (map id info-1))                         :: search result
       sub-records=_(mk-subs live-records ,[%record @ @ ~])  :: record subs
       pub-records=_(mk-pubs live-records ,[%record @ @ ~])  :: record pubs
@@ -118,8 +119,15 @@
 ::
 ++  init
   ^+  cor
-  %-  emit
-  [%pass /eyre/connect %arvo %e %connect [~ /apps/live] %live]
+  =.  cor
+    %-  emit
+    [%pass /eyre/connect %arvo %e %connect [~ /apps/live] %live]
+  ::  populate our profile with default fields and pull in Tlon profile
+  ::  data
+  ::
+  =.  profiles  generate-default-fields
+  :: =.  cor  set-tlon-fields  cor
+  cor
 ::
 ++  load
   |=  =vase
@@ -127,15 +135,20 @@
   =/  ole  !<(versioned-state vase)
   ?-    -.ole
       %0
+    :: =;  =_cor  =.(cor set-tlon-fields cor)
     %=  cor
       state   :*  %1
                   (~(urn by events.ole) event-0-to-1)
+                  ::
                   ^-  (mip id ship record-1)
                   =/  ls  `(list (trel id ship record-1))`(turn ~(tap bi records.ole) record-0-to-1)
                     =|  ms=(mip id ship record-1)
                     |-
                     ?~  ls  ms
                     $(ls t.ls, ms (~(put bi ms) p.i.ls q.i.ls r.i.ls))
+                  ::
+                  generate-default-fields
+                  ::
                   ^-  $@(@t (map id info-1))
                   ?@  result.ole
                     result.ole
@@ -147,6 +160,7 @@
                   %+  turn  `(list [id info])`ls  result-0-to-1
                   ::  TODO
                   :: (~(urn by result.ole) result-0-to-1)
+                  ::
                   sub-records.ole
                   pub-records.ole
     ==        ==
@@ -294,10 +308,11 @@
   ::
       %live-dial
     =+  !<(=dial vase)
-    ?-  -.dial
-      %find           (search +.dial)
-      %case-request   (case-request +.dial)
-      %case-response  (case-response +.dial)
+    ?-    -.dial
+        %find           (search +.dial)
+        %case-request   (case-request +.dial)
+        %case-response  (case-response +.dial)
+        %profile-entry  (~(edit pr p.dial) q.dial)
     ==
   ::
       %sss-to-pub
@@ -434,6 +449,74 @@
   ?:  |(?=(%secret kind.info) ?=(%over latch.info))
     ~
   `[id info]
+::  +set-tlon-fields: populate our Tlon profile data into our profiles
+::  map
+::
+:: ++  set-tlon-fields
+::  |^  ^+  cor
+::  =/  c=(unit contact:gc)  scry-profile
+::  ?~  c
+::    ~&(>> "no Tlon profile data found" cor)
+::  =/  ls=(list [field-id=term =entry])
+::    ~[[%nickname `nickname.u.c] [%bio `bio.u.c] [%avatar avatar.u.c]]
+::  |-
+::  ?~  ls  cor
+::  =.  profiles
+::    (~(put bi profiles) our.bowl field-id.i.ls entry.i.ls)
+::  $(ls t.ls)
+::  ::
+::  ++  base-path  /(scot %p our.bowl)/contacts/(scot %da now.bowl)
+::  ::
+::  ++  is-running  ~+  .^(? %gu (weld base-path /$))
+::  ::
+::  ++  scry-profile  ~+
+::    ^-  (unit contact:gc)
+::    ?.  is-running
+::      ~&(>> "%contacts isn't running, cannot pull our Tlon profile data" ~)
+::    `.^(contact:gc %gx (weld base-path /contact/(scot %p our.bowl)/contacts/contact))
+::  --
+::  +generate-default-fields: create default profile fields
+::
+++  generate-default-fields
+  ^+  profiles
+  =;  ms=(map term entry)
+    (~(put by *(mip ship term entry)) our.bowl ms)
+  %-  malt
+  %+  turn
+    ^-  (list term)
+    :~  %nickname
+        %avatar
+        %bio
+        %ens-domain
+        %telegram
+        %github
+        %signal
+        %x
+        %email
+        %phone
+    ==
+  |=  =term
+  [term ~]
+::  +pr: profile handler
+::
+++  pr
+  |_  field-id=term
+  ::  +edit: add/update a profile field entry
+  ::
+  ++  edit
+    |=  update=entry
+    ^+  cor
+    =/  =entry  get-entry
+    ?~  entry  cor
+    cor(profiles (~(put bi profiles) our.bowl field-id update))
+  ::  +get-entry: pull a profile entry
+  ::
+  ++  get-entry
+    ^-  entry
+    ?~  ent=(~(get bi profiles) our.bowl field-id)
+      ~&(>>> "profile field, {<field-id>}, not supported" ~)
+    u.ent
+  --
 ::  +search: search for a ship's discoverable events (i.e. %public and %private)
 ::
 ::    this just sends a %case-request poke, requesting a ship's latest revision
