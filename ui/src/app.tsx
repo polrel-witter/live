@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Urbit from '@urbit/http-api';
+import NavBar from "@/components/navbar"
 
 const api = new Urbit('', '', window.desk);
 api.ship = window.ship;
@@ -14,10 +15,10 @@ export function App() {
   }, []);
 
   return (
-    <main className="flex items-center justify-center min-h-screen">
-      <div className="max-w-md space-y-6 py-20">
-        <h1 className="text-3xl font-bold">Welcome to live</h1>
-        <p>Here&apos;s your urbit&apos;s installed apps:</p>
+    <main className="grid size-full">
+      <NavBar > </NavBar>
+      <div className="max-w-2lg space-y-6 py-20 text-center">
+        <h1 className="text-3xl font-bold">Welcome to %live</h1>
       </div>
     </main>
   );
