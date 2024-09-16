@@ -1,6 +1,6 @@
 ::  %live: event coordination
 ::
-/-  *live, live-records, hark
+/-  *live, live-records, hark, gc=contacts
 /+  *sss, *mip, verb, dbug, default-agent
 ::
 |%
