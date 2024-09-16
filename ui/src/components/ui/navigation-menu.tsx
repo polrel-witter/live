@@ -1,7 +1,7 @@
 import * as React from "react"
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu"
 import { cva } from "class-variance-authority"
-import { ChevronDown } from "lucide-react"
+import { Menu } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -13,8 +13,9 @@ const NavigationMenu = React.forwardRef<
     ref={ref}
     className={cn(
       // original
-      //"relative z-10 flex max-w-max flex-1 items-center justify-center",
-      "relative right-0",
+      // "relative z-10 flex max-w-max flex-1 items-center justify-end",
+      "relative z-10 flex  flex-1 items-center",
+      // "relative right-0",
       className
     )}
     {...props}
@@ -29,7 +30,7 @@ const NavigationMenuList = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.List>
 >(({ className, ...props }, ref) => (
-  <NavigationMenuPrimitive.List
+  <ul
     ref={ref}
     className={cn(
       "group flex flex-1 list-none items-center justify-center space-x-1",
@@ -56,8 +57,8 @@ const NavigationMenuTrigger = React.forwardRef<
     {...props}
   >
     {children}{" "}
-    <ChevronDown
-      className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180"
+    <Menu
+      className="relative top-[1px] ml-1 h-4 w-4 transition duration-450 group-data-[state=open]:rotate-90"
       aria-hidden="true"
     />
   </NavigationMenuPrimitive.Trigger>
@@ -85,7 +86,7 @@ const NavigationMenuViewport = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Viewport>,
   React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Viewport>
 >(({ className, ...props }, ref) => (
-  <div className={cn("absolute left-0 top-full flex justify-center")}>
+  <div className={cn("absolute right-0 top-full flex justify-center")}>
     <NavigationMenuPrimitive.Viewport
       className={cn(
         "origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 md:w-[var(--radix-navigation-menu-viewport-width)]",
