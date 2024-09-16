@@ -1,14 +1,14 @@
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, } from "@/components/ui/navigation-menu"
 
-export default function NavBar() {
+export default function NavBar(_props: any) {
   return (
     <NavigationMenu >
-      <NavigationMenuList className="flex">
-        <NavigationMenuItem className="flex-auto flex-grow text-center"> %live </NavigationMenuItem>
-        <NavigationMenuItem className="flex-none order-last">
-          <NavigationMenuTrigger> menu </NavigationMenuTrigger>
+      <NavigationMenuList>
+        <NavigationMenuItem className="grow text-center"> %live </NavigationMenuItem>
+        <NavigationMenuItem >
+          <NavigationMenuTrigger />
           <NavigationMenuContent>
-            <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
+            <ul className="grid gap-3 p-4  md:w-[400px] lg:w-[500px] ">
               <li className="row row-span-3"> Details </li>
               <li className="row row-span-3"> Schedule </li>
               <li className="row row-span-3"> List </li>

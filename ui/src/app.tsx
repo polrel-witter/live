@@ -16,7 +16,7 @@ export function App() {
 
   return (
     <main className="grid size-full">
-      <NavBar > </NavBar>
+      <NavBar />
       <div className="max-w-2lg space-y-6 py-20 text-center">
         <h1 className="text-3xl font-bold">Welcome to %live</h1>
       </div>
