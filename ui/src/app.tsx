@@ -4,6 +4,7 @@ import NavBar from "@/components/navbar"
 
 const api = new Urbit('', '', window.desk);
 api.ship = window.ship;
+window.urbit = api;
 
 export function App() {
 
