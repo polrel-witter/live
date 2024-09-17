@@ -1,18 +1,26 @@
 ::  %live: event coordination
 ::
-/-  *live, live-records, hark
+/-  *live, live-records, hark, contacts
 /+  *sss, *mip, verb, dbug, default-agent
-/+  server, schooner, live-view
 ::
 |%
 ::
-+$  versioned-state  $%(state-0)
++$  versioned-state  $%(state-0 state-1)
 ::
 +$  state-0
   $:  %0
       events=(map id event)                                 :: events we host
       records=(mip id ship record)                          :: guests & passes
       result=$@(@t (map id info))                           :: search result
+      sub-records=_(mk-subs live-records ,[%record @ @ ~])  :: record subs
+      pub-records=_(mk-pubs live-records ,[%record @ @ ~])  :: record pubs
+  ==
++$  state-1
+  $:  %1
+      events=(map id event-1)                               :: events we host
+      records=(mip id ship record-1)                        :: access data
+      profiles=(mip ship term entry)                        :: contact info
+      result=$@(@t (map id info-1))                         :: search result
       sub-records=_(mk-subs live-records ,[%record @ @ ~])  :: record subs
       pub-records=_(mk-pubs live-records ,[%record @ @ ~])  :: record pubs
   ==
@@ -24,7 +32,7 @@
 ::
 %+  verb  |
 %-  agent:dbug
-=|  state-0
+=|  state-1
 =*  state  -
 ::
 ^-  agent:gall
@@ -111,26 +119,77 @@
 ::
 ++  init
   ^+  cor
-  %-  emit
-  [%pass /eyre/connect %arvo %e %connect [~ /apps/live] %live]
+  =.  cor
+    %-  emit
+    [%pass /eyre/connect %arvo %e %connect [~ /apps/live] %live]
+  ::  populate our profile with default fields and subscribe to our Tlon
+  ::  profile data
+  ::
+  =.  profiles  set-default-fields
+  =.  cor  (emit (make-watch /profile/local our.bowl %contacts /contact))
+  =.  cor  scry-tlon-fields  cor
 ::
 ++  load
   |=  =vase
   ^+  cor
-  ?>  ?=([%0 *] q.vase)
-  cor(state !<(state-0 vase))
+  =/  ole  !<(versioned-state vase)
+  ?-    -.ole
+      %0
+    =;  =_cor
+      =.  cor  (emit (make-watch /profile/local our.bowl %contacts /contact))
+      =.  cor  scry-tlon-fields  cor
+    %=  cor
+      state   :*  %1
+                  (~(urn by events.ole) event-0-to-1)
+                  ::
+                  ^-  (mip id ship record-1)
+                  =/  ls  `(list (trel id ship record-1))`(turn ~(tap bi records.ole) record-0-to-1)
+                    =|  ms=(mip id ship record-1)
+                    |-
+                    ?~  ls  ms
+                    $(ls t.ls, ms (~(put bi ms) p.i.ls q.i.ls r.i.ls))
+                  ::
+                  set-default-fields
+                  ::
+                  ^-  $@(@t (map id info-1))
+                  ?@  result.ole
+                    result.ole
+                  ^-  (map id info-1)
+                  %-  malt
+                  ^-  (list [id info-1])
+                  =/  ls=(list [id info])  ~(tap by ;;((map id info) result.ole))
+                  ^-  (list [id info-1])
+                  %+  turn  `(list [id info])`ls  result-0-to-1
+                  ::  TODO
+                  :: (~(urn by result.ole) result-0-to-1)
+                  ::
+                  sub-records.ole
+                  pub-records.ole
+    ==        ==
+      %1
+    cor(state ole)
+  ==
 ::
 ++  watch
   |=  pol=(pole knot)
   ^+  cor
-  ?+  pol  ~|(bad-watch-path+pol !!)
-    [%http-response *]  cor
-  ==
+  cor
 ::
 ++  agent
   |=  [=wire =sign:agent:gall]
   ^+  cor
   ?+    wire  cor
+      [~ %sss %on-rock @ @ @ %record @ @ ~]
+    =.  sub-records
+      (chit:da-records |3:wire sign)
+    cor
+  ::
+      [~ %sss %scry-request @ @ @ %record @ @ ~]
+    (sss-sub-records (tell:da-records |3:wire sign))
+  ::
+      [~ %sss %scry-response @ @ @ %record @ @ ~]
+    (sss-pub-records (tell:du-records |3:wire sign))
+  ::
       [%case %request @ @ ~]
     =/  =ship  (slav %p i.t.t.wire)
     =/  name=@t  i.t.t.t.wire
@@ -142,16 +201,24 @@
       ~['No events found under' ' ' (scot %p ship)]
     ~[(crip "'{<name>}'") ' not found under ' (scot %p ship)]
   ::
-      [~ %sss %on-rock @ @ @ %record @ @ ~]
-    =.  sub-records
-      (chit:da-records |3:wire sign)
-    cor
-  ::
-      [~ %sss %scry-request @ @ @ %record @ @ ~]
-    (sss-sub-records (tell:da-records |3:wire sign))
-  ::
-      [~ %sss %scry-response @ @ @ %record @ @ ~]
-    (sss-pub-records (tell:du-records |3:wire sign))
+      [%profile *]
+    ?+    t.wire  ~|(bad-agent-wire+wire !!)
+        [%local ~]
+      :: TODO handle these properly
+      ?-    -.sign
+          %kick  !!
+          %poke-ack  !!
+          %watch-ack
+        ?~  p.sign
+          ~&(> "watching %contacts for updates to our Tlon profile" cor)
+        :: TODO handle the $tang properly
+        ~&(u.p.sign cor)
+      ::
+          %fact
+        =/  =update:contacts  !<(update:contacts q.cage.sign)
+        =.(cor (update-tlon-fields ?~(con.update ~ `con.update)) cor)
+      ==
+    ==
   ==
 ::
 ++  arvo
@@ -185,7 +252,7 @@
       ?~  roar.sign-arvo  msg
       =/  =roar:ames      u.roar.sign-arvo
       ?~  q.dat.roar      msg
-      ;;((map id info) +.u.q.dat.roar)
+      ;;((map id info-1) +.u.q.dat.roar)
     ::
         [%timer @ @ *]
       =/  end=path
@@ -246,7 +313,7 @@
           unregistered+0
           attended+0
       ==
-    =/  r=(list [ship =record])
+    =/  r=(list [ship record=record-1])
       ~(tap by u.rec)
     |-  ?~  r  [%counts cnt]
     $(cnt (~(jab by cnt) p.status.record.i.r |=(a=@ud +(a))), r t.r)
@@ -262,10 +329,11 @@
   ::
       %live-dial
     =+  !<(=dial vase)
-    ?-  -.dial
-      %find           (search +.dial)
-      %case-request   (case-request +.dial)
-      %case-response  (case-response +.dial)
+    ?-    -.dial
+        %find           (search +.dial)
+        %case-request   (case-request +.dial)
+        %case-response  (case-response +.dial)
+        %profile-entry  (~(edit pr p.dial) q.dial)
     ==
   ::
       %sss-to-pub
@@ -281,25 +349,13 @@
     ?>  ?=([[%record @ @ ~] *] msg)
     (emil (handle-fake-on-rock:da-records msg))
   ::
-      %handle-http-request
-    ?>  =(src.bowl our.bowl)
-    =+  !<(req=[eyre-id=@ta =inbound-request:eyre] vase)
-    =/  throw=(list card)
-      (response:schooner eyre-id.req 404 ~ [%none ~])
-    ?.  authenticated.inbound-request.req
-      (emil throw)
-    ?+  method.request.inbound-request.req  (emil throw)
-      %'GET'     ~(get handle-http req)
-      %'POST'    ~(post handle-http req)
-    ==
-  ::
       %sss-on-rock
     |^
     =/  msg  !<(from:da-records (fled vase))
     ?>  ?=([[%record @ @ ~] *] msg)
     ?>  =(our.bowl `ship`+>-:path.msg)
     =/  name=term  +<:path.msg
-    =/  update=record
+    =/  update=record-1
       ?~(wave.msg rock.msg u.wave.msg)
     :: clear secret if we're not %registered or %attended since it
     :: might diverge otherwise
@@ -307,7 +363,7 @@
     =?  secret.update  ?=  ?(%invited %requested %unregistered)
                        p.status.update
       ~
-    =/  current=(unit record)
+    =/  current=(unit record-1)
       (~(get bi records) [src.msg name] our.bowl)
     =?  cor  (notify current update)
       (emit (make-hark src.msg title.info.update status.update))
@@ -316,7 +372,7 @@
     ::  status goes from %requested to %registered
     ::
     ++  notify
-      |=  [current=(unit record) update=record]
+      |=  [current=(unit record-1) update=record-1]
       ^-  ?
       ?|  ?~  current
             ?=(%invited p.status.update)
@@ -361,26 +417,106 @@
       ==
     --
   ==
-::  +act: build poke card
+::  +make-act: build poke card
 ::
 ++  make-act
   |=  [=wire who=ship app=term =cage]
   ^-  card
   [%pass wire %agent [who app] %poke cage]
+::  +make-watch: build watch card
+::
+++  make-watch
+  |=  [=wire who=ship app=term =path]
+  ^-  card
+  [%pass wire %agent [who app] %watch path]
 ::  +make-operation: produce an $operation cage
 ::
 ++  make-operation
   |=  [=id =action]
   ^-  cage
   live-operation+!>(`operation`[id action])
-::  +append-entropy: add random characters to event name for uniqueness
+::  +append-entropy: add random characters to a name for uniqueness
 ::
 ++  append-entropy
   |=  name=term
   ^-  term
   %+  slav  %tas
   %-  crip
-  :(weld (scow %tas name) "-" (swag [6 5] (scow %uv eny.bowl)))
+  :(weld (scow %tas name) "-" (swag [6 4] (scow %uv eny.bowl)))
+::  +scry-tlon-fields: populate Tlon profile via scry
+::
+++  scry-tlon-fields
+  ^+  cor
+  =;  con=(unit contact:contacts)
+    ?~  con  cor
+    (update-tlon-fields con)
+  =/  base-path=path
+    /(scot %p our.bowl)/contacts/(scot %da now.bowl)
+  =/  is-running=?
+    .^(? %gu (weld base-path /$))
+  ?.  is-running
+    ~&(>> "%contacts isn't running, cannot pull our Tlon profile data" ~)
+  %-  some
+  .^  contact:contacts
+    %gx
+    (weld base-path /contact/(scot %p our.bowl)/contact)
+  ==
+::  +update-tlon-fields: populate supported Tlon fields into %live profile
+::
+++  update-tlon-fields
+  |=  con=(unit contact:contacts)
+  ^+  cor
+  =/  ls=(list f=[term entry])
+    ?~  con
+      ~[[%nickname ~] [%bio ~] [%avatar ~]]
+    ~[[%nickname `nickname.u.con] [%bio `bio.u.con] [%avatar avatar.u.con]]
+  |-
+  ?~  ls  cor
+  =.  profiles
+    (~(put bi profiles) our.bowl f.i.ls)
+  $(ls t.ls)
+::  +set-default-fields: create default profile fields
+::
+++  set-default-fields
+  ^+  profiles
+  =;  ms=(map term entry)
+    (~(put by *(mip ship term entry)) our.bowl ms)
+  %-  malt
+  %+  turn
+    ^-  (list term)
+    :~  %nickname
+        %avatar
+        %bio
+        %ens-domain
+        %telegram
+        %github
+        %signal
+        %x
+        %email
+        %phone
+    ==
+  |=  =term
+  [term ~]
+::  +pr: profile handler
+::
+++  pr
+  |_  field-id=term
+  ::  +edit: add/update a profile field entry
+  ::
+  ++  edit
+    |=  update=entry
+    ^+  cor
+    =/  =entry  get-entry
+    ?~  entry  cor
+    cor(profiles (~(put bi profiles) our.bowl field-id update))
+  ::  +get-entry: pull a profile entry
+  ::
+  ++  get-entry
+    ^-  entry
+    ?~  ent=(~(get bi profiles) our.bowl field-id)
+      ~&(>>> "profile field, {<field-id>}, not supported" ~)
+    u.ent
+  --
 ::  +get-our-case: get a remote scry revision number for one of our
 ::  published paths
 ::
@@ -391,7 +527,7 @@
     :: check if a published path exists to avoid crashing
     ::
     ?~  name
-      ?~(`(map id info)`get-remote-events %| %&)
+      ?~(`(map id info-1)`get-remote-events %| %&)
     ?~((~(get by get-remote-events) [our.bowl u.name]) %| %&)
   ?.  exe  ~
   %-  some
@@ -406,10 +542,10 @@
 ::  events; i.e. %public and %private that are not %over
 ::
 ++  get-remote-events
-  ^-  (map id info)
+  ^-  (map id info-1)
   %-  malt
   %+  murn  ~(tap by events)
-  |=  [=id =event]
+  |=  [=id event=event-1]
   =,  event
   ?:  |(?=(%secret kind.info) ?=(%over latch.info))
     ~
@@ -490,7 +626,7 @@
   ::  +get-event: retreive an event
   ::
   ++  get-event
-    ^-  event
+    ^-  event-1
     ~|(no-event-found+id (~(got by events) id))
   ::  +get-all-guests: retreive guest ships for an event
   ::
@@ -506,7 +642,7 @@
   ::
   ++  over
     ^-  ?
-    =/  =event  get-event
+    =/  event=event-1  get-event
     ?=(%over latch.info.event)
   ::  +host-call: verify that a host is performing the action
   ::
@@ -556,10 +692,10 @@
   ++  update-guests
     |=  guests=(list ship)
     ^+  cor
-    =/  =event  get-event
+    =/  event=event-1  get-event
     |-
     ?~  guests  cor
-    =/  =record
+    =/  record=record-1
       (~(got bi records) id i.guests)
     =:  info.record  info.event
         secret.record  secret.event
@@ -567,10 +703,10 @@
     =.  cor
       (~(publish re i.guests) record)
     $(guests t.guests)
-  ::  +update-event: write an event update to state
+  ::  +update-event: write an event change to state
   ::
   ++  update-event
-    |=  update=event
+    |=  update=event-1
     ^+  cor
     =.  events  (~(put by events) id update)
     =.  cor  (update-remote-event update)
@@ -578,7 +714,7 @@
   ::  +update-remote-event: update an event discoverable over remote scry
   ::
   ++  update-remote-event
-    |=  =event
+    |=  event=event-1
     ^+  cor
     =,  event
     ?:  |(?=(%secret kind.info) ?=(%over latch.info))
@@ -617,7 +753,7 @@
     ::  +create: write a new event to state
     ::
     ++  create
-      |=  =event
+      |=  event=event-1
       ^+  cor
       ?>  host-call
       =?  id  (~(has by events) id)
@@ -636,7 +772,7 @@
         =.  sub-records
           (quit:da-records ship.id dap.bowl [%record name.id our.bowl ~])
         cor(records (~(del bi records) id our.bowl))
-      =/  =event  get-event
+      =/  event=event-1  get-event
       =?  cor  ?~((get-our-case `name.id) %| %&)
         %+  delete-remote-path
           (need (get-our-case `name.id))
@@ -672,13 +808,13 @@
     ::  +change-info: update an event's metadata and publish to guests
     ::
     ++  change-info
-      |=  =sub-info
+      |=  sub-info=sub-info-1
       ^+  cor
       ?>  host-call
       :: if event is %over, only allow a %latch modification
       ?:  &(?!(?=(%latch -.sub-info)) over)
         cor
-      =/  =event  get-event
+      =/  event=event-1  get-event
       =;  =_event
         =.  cor  (update-event event)
         =?  cor  ?~((get-our-case `name.id) %| %&)
@@ -686,17 +822,53 @@
           /event/(scot %tas name.id)
         (update-guests get-all-guests)
       ?-    -.sub-info
-          %title   event(title.info +.sub-info)
-          %about   event(about.info +.sub-info)
-          %kind    event(kind.info +.sub-info)
-          %moment  event(moment.info +.sub-info)
+          %title     event(title.info p.sub-info)
+          %about     event(about.info p.sub-info)
+          %kind      event(kind.info p.sub-info)
+          %location  event(location.info p.sub-info)
+          %group     event(group.info p.sub-info)
+          %moment    event(moment.info p.sub-info)
+          %timezone  event(timezone.info p.sub-info)
+      ::
           %latch
         :: if limit is reached, prevent host from opening
-        ?:  ?&  ?=(%open +.sub-info)
+        ::
+        ?:  ?&  ?=(%open p.sub-info)
                 ?~(limit.event | =(u.limit.event permitted-count))
             ==
           ~|(event-limit-is-reached+id !!)
-        event(latch.info +.sub-info)
+        event(latch.info p.sub-info)
+      ::
+          %delete-session
+        =/  sid=@tas  p.sub-info
+        event(sessions.info (~(del by sessions.info.event) sid))
+      ::
+          %create-session
+        =/  sid=@tas
+          :: all session ids inheret the name of the parent event, but
+          :: have unique entropy and a '-s' appended to them
+          ::
+          %+  slav  %tas
+          %-  crip
+          (weld (scow %tas (append-entropy name.id)) "-s")
+        =/  =session  p.sub-info
+        event(sessions.info (~(put by sessions.info.event) sid session))
+      ::
+          %edit-session
+        =/  sid=@tas  p.sub-info
+        =/  ses=(unit session)
+          (~(get by sessions.info.event) sid)
+        ?~  ses
+          ~&(>>> "no session found for sid {<sid>}" event)
+        =;  update=session
+          event(sessions.info (~(put by sessions.info.event) sid update))
+        ?-    -.q.sub-info
+            %title     u.ses(title p.q.sub-info)
+            %panel     u.ses(panel p.q.sub-info)
+            %location  u.ses(location p.q.sub-info)
+            %about     u.ses(about p.q.sub-info)
+            %moment    u.ses(moment p.q.sub-info)
+        ==
       ==
     ::  +change-limit: update register limit
     ::
@@ -707,7 +879,7 @@
       ?:  over  cor
       =;  write=?
         ?.  write  ~|(limit-lower-than-registered-count+id !!)
-        =/  =event  get-event
+        =/  event=event-1  get-event
         =.  limit.event
           new-limit
         (update-event event)
@@ -721,7 +893,7 @@
       ^+  cor
       ?>  host-call
       ?:  over  cor
-      =/  =event  get-event
+      =/  event=event-1  get-event
       =.  secret.event  new-secret
       =.  cor  (update-event event)
       =+  guests=get-all-guests
@@ -795,7 +967,7 @@
         (emit (make-act wire ship.id dap.bowl cage))
       :: poke from host or some foreign ship
       ?:  over  cor
-      =/  =event  get-event
+      =/  event=event-1  get-event
       =/  =ship  ?~(who src.bowl u.who)
       :: ask the ship to subscribe to their record
       ::
@@ -854,7 +1026,7 @@
         |=  =ship
         ^-  (unit status)
         ?>  guest-call
-        =/  =event  get-event
+        =/  event=event-1  get-event
         :: if event is closed, or has a limit of 0, make the guest
         :: status %requested
         ?:  ?|  ?=(%closed latch.info.event)
@@ -936,9 +1108,9 @@
     ++  update-status
       |=  new-status=status
       ^+  cor
-      =;  =record
+      =;  record=record-1
         (~(publish re ship) record)
-      =/  =record
+      =/  record=record-1
         ~|  no-record+[id ship]
         (~(got bi records) id ship)
       :: if %registered or %attended, also publish secret
@@ -951,7 +1123,7 @@
     ::  $publish: update local records mip and publish the record to guest
     ::
     ++  publish
-      |=  =record
+      |=  record=record-1
       ^+  cor
       =.  records
         (~(put bi records) id ship record)
@@ -965,7 +1137,7 @@
       |=  =status
       ^+  cor
       =+  path=[%record name.id ship ~]
-      =/  =record
+      =/  record=record-1
         =+  event=get-event
         ?.  ?=(%registered p.status)
           [info.event ~ status]
@@ -980,316 +1152,25 @@
       (~(publish re ship) record)
     --
   --
-::  +handle-http: incoming from eyre
-::
-++  handle-http
-  |_  [eyre-id=@ta =inbound-request:eyre]
-  +*  req    (parse-request-line:server url.request.inbound-request)
-      send   (cury response:schooner eyre-id)
-      throw  (emil (send 404 ~ [%none ~]))
-      stan   (emil (send 500 ~ [%stock ~]))
-      view   ~(. live-view [bowl events records result])
-  ::  +pull-id: extract id from site:req
-  ::
-  ++  pull-id
-    ^-  id
-    =+  site=site.req
-    ?.  ?=([@ @ @ @ @ *] site)  !!
-    :-  (slav %p i.t.t.t.site)
-    ?~  i.t.t.t.t.site  %$
-    (slav %tas i.t.t.t.t.site)
-  ::  +handle-error: build page with error code
-  ::
-  ++  handle-error
-    |=  [act=_-.action msg=@t]
-    =;  =manx
-      (emil (send 200 ~ [%manx manx]))
-    ?:  ?=(%find act)    (search:view `msg)
-    ?>  ?=(%invite act)  (manage:view pull-id `msg)
-  ::  +get: http get method handling
-  ::
-  ++  get
-    ^+  cor
-    ?>  =(src our):bowl
-    =+  site=site.req
-    =;  page=(unit manx)
-      ?~  page  throw
-      (emil (send 200 ~ [%manx u.page]))
-    ?.  ?=([@ %live *] site)  ~
-    ?+    t.t.site  ~
-        ~                    `active:view
-        [%archive ~]         `archive:view
-        [%help ~]            `help:view
-        [%find ~]            `(search:view ~)
-        [%create ~]          `create:view
-        [%results ~]         `results:view
-        [%event @ @ ~]       `(details:view pull-id)
-        [%manage @ @ ~]      `(manage:view pull-id ~)
-        [%event-link @ @ ~]  `(link:view pull-id)
-        [%contact @ @ *]
-      ?+  t.t.t.t.t.site  ~
-        [%register ~]    `~(reg contact:view pull-id)
-        [%unregister ~]  `~(unreg contact:view pull-id)
-      ==
-        [%delete @ @ ~]      `~(delete edit:view pull-id)
-        [%title @ @ ~]       `~(title edit:view pull-id)
-        [%about @ @ ~]       `~(about edit:view pull-id)
-        [%moment @ @ ~]      `~(moment edit:view pull-id)
-        [%kind @ @ ~]        `~(kind edit:view pull-id)
-        [%latch @ @ ~]       `~(latch edit:view pull-id)
-        [%secret @ @ ~]      `~(secret edit:view pull-id)
-        [%limit @ @ ~]       `~(limit edit:view pull-id)
-        :: TODO better way to handle this; essentially user should not
-        :: call this site, but it may happen with the way errors are
-        :: passed to the frontend. only happens on manage page atm
-        [%operation @ @ ~]   `(manage:view pull-id ~)
-    ==
-  ::  +redirect: redirect to url
-  ::
-  ++  redirect
-    |=  [=mark =vase]
-    ^+  cor
-    =;  url=path
-      (emil (send [303 ~ [%redirect (spat url)]]))
-    ?+    mark  ~|(bad-mark+mark !!)
-        %live-dial
-      =+  !<(=dial vase)
-      ?-  -.dial
-        %find  /apps/live/results
-        %case-request   !!
-        %case-response  !!
-      ==
-    ::
-        %live-operation
-      =+  !<(op=operation vase)
-      =/  id=path
-        ~(id-to-path ev pull-id)
-      =/  we-host=?
-        =(our.bowl ship:pull-id)
-      =/  site=path
-        :(weld /apps/live ?:(we-host /manage /contact) id)
-      ?-  -.action.op
-        %subscribe   !!
-        %create      /apps/live
-        %delete      /apps/live
-        %info        (weld /apps/live/event id)
-        %secret      (weld /apps/live/event id)
-        %limit       (weld /apps/live/event id)
-        %invite      (weld /apps/live/manage id)
-        %register    ?:(we-host site (weld site /register))
-        %unregister  ?:(we-host site (weld site /unregister))
-        %punch       (weld /apps/live/manage id)
-      ==
-    ==
-  ::  +post: http post method handling
-  ::
-  ++  post
-    |^  ^+  cor
-    ?>  =(src our):bowl
-    =/  args=(map @t @t)
-      ?~  body=body.request.inbound-request  ~
-      %-  ~(gas by *(map @t @t))
-      (fall (rush q.u.body yquy:de-purl:html) ~)
-    ?~  args  throw
-    =/  op=(each =cage error=[_-.action @t])
-      (compose args)
-    ?-    -.op
-        %|  (handle-error error.p.op)
-        %&
-      =/  update=(unit _cor)
-        %-  mole
-        |.  (poke cage.p.op)
-      ?~  update  throw
-      =.  cor  u.update
-      (redirect cage.p.op)
-    ==
-    ::  +compose: build $operation or $dial cage
-    ::
-    ++  compose
-      |=  args=(map @t @t)
-      |^  ^-  (each cage [_-.action @t])
-      =;  out=(each * error=[_-.action @t])
-        ?-  -.out
-            %|  [%| error.p.out]
-            %&
-          :-  %&
-          ?:  ?=(%find -.p.out)
-            live-dial+!>(;;(dial p.out))
-          live-operation+!>(;;(operation p.out))
-        ==
-      ?~  head=(~(get by args) 'head')  !!
-      ?+    u.head  !!
-          %delete  [%& [pull-id %delete ~]]
-          %limit
-        ?>  as-host
-        ?~  num=(~(get by args) 'num')  !!
-        [%& [pull-id %limit (rush u.num dem)]]
-      ::
-          %punch
-        ?>  as-host
-        ?~  who=(~(get by args) 'ship')  !!
-        =/  job=?(%verify %revoke)
-          ?~  j=(~(get by args) 'job')  !!
-          ;;(?(%verify %revoke) (slav %tas u.j))
-        [%& [pull-id %punch job (slav %p u.who)]]
-      ::
-          %secret
-        ?>  as-host
-        ?~  txt=(~(get by args) 'txt')  !!
-        [%& [pull-id %secret ?~(u.txt ~ `u.txt)]]
-      ::
-          %find
-        ?~  qur=(~(get by args) 'ship-name')  !!
-        =;  (unit [=ship name=(unit term)])
-          ?~  -  [%| [%find 'invalid ship name']]
-          [%& [%find ship.u.- name.u.-]]
-        %+  rust  (cass (trip u.qur))
-        ;~  plug
-          ;~(pose ;~(pfix sig fed:ag) fed:ag)
-          (punt ;~(pfix fas urs:ab))
-        ==
-      ::
-          ?(%register %unregister)
-        ?~  them=(~(get by args) 'ship')  !!
-        =/  who=(unit ship)
-          ?.  as-host  ?~(u.them ~ !!)
-          ?~  u.them  !!
-          `(slav %p u.them)
-         [%& pull-id ;;(action [(slav %tas u.head) who])]
-      ::
-          %invite
-        ?>  as-host
-        ?~  who=(~(get by args) 'ship')  !!
-        =/  hit=(unit ship)
-          %+  rust  (cass (trip u.who))
-          ;~(pose ;~(pfix sig fed:ag) fed:ag)
-        ?~  hit
-          [%| [%invite 'invalid ship name']]
-        =/  status=(unit status)
-          ~(current-status re:~(. ev pull-id) u.hit)
-        =/  hold=(unit @t)
-          ?~  status  ~
-          ?+  p.u.status  ~
-            %invited     `'invited'
-            %registered  `'registered'
-            %attended    `'attended'
-          ==
-        ?~  hold
-          [%& [pull-id %invite [u.hit]~]]
-        [%| [%invite (crip ~['already' ' ' u.hold])]]
-      ::
-          %info
-        ?>  as-host
-        =;  =sub-info
-          [%& [pull-id %info sub-info]]
-        ?~  sub=(~(get by args) 'sub')  !!
-        ?+    u.sub  ~|(bad-input-argument+sub !!)
-            %title   [%title (~(got by args) 'title')]
-            %about   [%about ?~(a=(~(got by args) 'about') ~ `a)]
-            %kind    [%kind ;;(kind (slav %tas (~(got by args) 'kind')))]
-            %latch   [%latch ;;(latch (slav %tas (~(got by args) 'latch')))]
-            %moment
-          :*  %moment
-              ?~(val=(~(got by args) 'start') ~ `~(date co val))
-              ?~(val=(~(got by args) 'end') ~ `~(date co val))
-              ~(timezone co (~(got by args) 'timezone'))
-          ==
-        ==
-      ::
-          %create
-        ?>  as-host
-        =;  =event
-          =,  pull-id
-          ?>  ?=(%$ name)
-          :-  %&
-          :_  [%create event]
-          [ship ~(name co title.info.event)]
-        ::
-        =/  vals=(list [key=@t val=@t])
-          ~(tap by (~(del by args) 'head'))
-        =|  =event
-        |-
-        ?~  vals  event
-        =;  update=_event
-          $(event update, vals t.vals)
-        =+  val=val.i.vals
-        ?+  key.i.vals  ~|(bad-input-argument+i.vals !!)
-          %title   event(title.info val)
-          %about   event(about.info ?~(val ~ `val))
-          %kind    event(kind.info ;;(kind (slav %tas val)))
-          %latch   event(latch.info ;;(latch (slav %tas val)))
-          %secret  event(secret ?~(val ~ `val))
-          %limit   event(limit ?~(val ~ `(rash val dem)))
-          %timezone  event(timezone.moment.info ~(timezone co val))
-          %moment-start  event(start.moment.info ?~(val ~ `~(date co val)))
-          %moment-end  event(end.moment.info ?~(val ~ `~(date co val)))
-        ==
-      ==
-      ::  +as-host: confirm ship in the request url is us, the host
-      ::
-      ++  as-host
-        ^-  ?
-        =(our.bowl ship:pull-id)
-      ::  +co: compose some cord to a structure
-      ::
-      ++  co
-        |_  val=@t
-        ::  +name: convert cord to $name:id
-        ::
-        ++  name
-          ^-  @tas
-          %+  slav  %tas
-          %-  crip
-          =;  =tape
-            ?.  (~(has in (silt "0123456789")) (snag 0 tape))
-              tape
-            (weld "n" tape)
-          %+  murn  (cass (trip val))
-          |=  a=@t
-          =/  special
-            (silt " ~`!@#$%^&*()-=_+[]\{}'\\:;\",.<>?")
-          ?:((~(has in special) a) ~ `a)
-        ::  +timezone: parse timezone input to $timezone
-        ::
-        ++  timezone
-          ^-  [? @ud]
-          %+  scan  (trip val)
-          ;~  plug
-            ;~  pose
-              (cold %| (just '-'))
-              (cold %& (just '+'))
-            ==
-            dem:ag
-          ==
-        ::  +date: convert UTC date format to @da
-        ::
-        ++  date
-          ^-  @da
-          %-  year
-          =;  [y=@ud mo=@ud d=@ud h=@ud min=@ud]
-            =/  hx=@ux
-              %+  slav  %ux
-              (crip (swag [0 6] (scow %ux eny.bowl)))
-            [[%& y] mo [d h min 0 ~[hx]]]
-          %+  scan  (trip val)
-          ;~  plug
-            ;~(sfix dim:ag hep)
-            ;~  pose
-              ;~(pfix (just '0') ;~(sfix dem:ag hep))
-              ;~(sfix dem:ag hep)
-            ==
-            ;~  pose
-              ;~(pfix (just '0') ;~(sfix dem:ag (just 'T')))
-              ;~(sfix dem:ag (just 'T'))
-            ==
-            ;~  pose
-              ;~(pfix (just '0') ;~(sfix dem:ag col))
-              ;~(sfix dem:ag col)
-            ==
-            ;~(pose ;~(pfix (just '0') dem:ag) dem:ag)
-          ==
-        --
-      --
-    --
-  --
+++  event-0-to-1
+  |=  [k=id v=event]
+  ^-  event-1
+  [(info-0-to-1 info.v) secret.v limit.v]
+++  result-0-to-1
+  |=  [k=id v=info]
+  ^-  [id info-1]
+  [k (info-0-to-1 v)]
+++  info-0-to-1
+  |=  =info
+  ^-  info-1
+  =/  [start=(unit time) end=(unit time) =timezone]
+    moment.info
+  :-  title.info
+  [about.info [start end] timezone ~ ~ kind.info latch.info ~]
+++  record-0-to-1
+  |=  [k0=id k1=ship v=record]
+  ^-  [id ship record-1]
+  :+  k0
+    k1
+  [(info-0-to-1 info.v) secret.v status.v]
 --

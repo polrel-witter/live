@@ -3,8 +3,8 @@
 /-  *live
 |%
 ++  name  %live-records
-+$  rock  =record
-+$  wave  =record
++$  rock  record=record-1
++$  wave  record=record-1
 ++  wash
   |=  [=rock =wave]
   rock(record record.wave)
