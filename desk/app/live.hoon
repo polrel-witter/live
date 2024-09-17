@@ -1,6 +1,6 @@
 ::  %live: event coordination
 ::
-/-  *live, live-records, hark, gc=contacts
+/-  *live, live-records, hark, contacts
 /+  *sss, *mip, verb, dbug, default-agent
 ::
 |%
@@ -122,12 +122,12 @@
   =.  cor
     %-  emit
     [%pass /eyre/connect %arvo %e %connect [~ /apps/live] %live]
-  ::  populate our profile with default fields and pull in Tlon profile
-  ::  data
+  ::  populate our profile with default fields and subscribe to our Tlon
+  ::  profile data
   ::
-  =.  profiles  generate-default-fields
-  :: =.  cor  set-tlon-fields  cor
-  cor
+  =.  profiles  set-default-fields
+  =.  cor  (emit (make-watch /profile/local our.bowl %contacts /contact))
+  =.  cor  scry-tlon-fields  cor
 ::
 ++  load
   |=  =vase
@@ -135,7 +135,9 @@
   =/  ole  !<(versioned-state vase)
   ?-    -.ole
       %0
-    :: =;  =_cor  =.(cor set-tlon-fields cor)
+    =;  =_cor
+      =.  cor  (emit (make-watch /profile/local our.bowl %contacts /contact))
+      =.  cor  scry-tlon-fields  cor
     %=  cor
       state   :*  %1
                   (~(urn by events.ole) event-0-to-1)
@@ -147,7 +149,7 @@
                     ?~  ls  ms
                     $(ls t.ls, ms (~(put bi ms) p.i.ls q.i.ls r.i.ls))
                   ::
-                  generate-default-fields
+                  set-default-fields
                   ::
                   ^-  $@(@t (map id info-1))
                   ?@  result.ole
@@ -177,6 +179,17 @@
   |=  [=wire =sign:agent:gall]
   ^+  cor
   ?+    wire  cor
+      [~ %sss %on-rock @ @ @ %record @ @ ~]
+    =.  sub-records
+      (chit:da-records |3:wire sign)
+    cor
+  ::
+      [~ %sss %scry-request @ @ @ %record @ @ ~]
+    (sss-sub-records (tell:da-records |3:wire sign))
+  ::
+      [~ %sss %scry-response @ @ @ %record @ @ ~]
+    (sss-pub-records (tell:du-records |3:wire sign))
+  ::
       [%case %request @ @ ~]
     =/  =ship  (slav %p i.t.t.wire)
     =/  name=@t  i.t.t.t.wire
@@ -188,16 +201,24 @@
       ~['No events found under' ' ' (scot %p ship)]
     ~[(crip "'{<name>}'") ' not found under ' (scot %p ship)]
   ::
-      [~ %sss %on-rock @ @ @ %record @ @ ~]
-    =.  sub-records
-      (chit:da-records |3:wire sign)
-    cor
-  ::
-      [~ %sss %scry-request @ @ @ %record @ @ ~]
-    (sss-sub-records (tell:da-records |3:wire sign))
-  ::
-      [~ %sss %scry-response @ @ @ %record @ @ ~]
-    (sss-pub-records (tell:du-records |3:wire sign))
+      [%profile *]
+    ?+    t.wire  ~|(bad-agent-wire+wire !!)
+        [%local ~]
+      :: TODO handle these properly
+      ?-    -.sign
+          %kick  !!
+          %poke-ack  !!
+          %watch-ack
+        ?~  p.sign
+          ~&(> "watching %contacts for updates to our Tlon profile" cor)
+        :: TODO handle the $tang properly
+        ~&(u.p.sign cor)
+      ::
+          %fact
+        =/  =update:contacts  !<(update:contacts q.cage.sign)
+        =.(cor (update-tlon-fields ?~(con.update ~ `con.update)) cor)
+      ==
+    ==
   ==
 ::
 ++  arvo
@@ -396,12 +417,18 @@
       ==
     --
   ==
-::  +act: build poke card
+::  +make-act: build poke card
 ::
 ++  make-act
   |=  [=wire who=ship app=term =cage]
   ^-  card
   [%pass wire %agent [who app] %poke cage]
+::  +make-watch: build watch card
+::
+++  make-watch
+  |=  [=wire who=ship app=term =path]
+  ^-  card
+  [%pass wire %agent [who app] %watch path]
 ::  +make-operation: produce an $operation cage
 ::
 ++  make-operation
@@ -416,68 +443,41 @@
   %+  slav  %tas
   %-  crip
   :(weld (scow %tas name) "-" (swag [6 4] (scow %uv eny.bowl)))
-::  +get-our-case: get a remote scry revision number for one of our
-::  published paths
+::  +scry-tlon-fields: populate Tlon profile via scry
 ::
-++  get-our-case
-  |=  name=(unit term)
-  ^-  (unit @ud)
-  =/  exe=?
-    :: check if a published path exists to avoid crashing
-    ::
-    ?~  name
-      ?~(`(map id info-1)`get-remote-events %| %&)
-    ?~((~(get by get-remote-events) [our.bowl u.name]) %| %&)
-  ?.  exe  ~
+++  scry-tlon-fields
+  ^+  cor
+  =;  con=(unit contact:contacts)
+    ?~  con  cor
+    (update-tlon-fields con)
+  =/  base-path=path
+    /(scot %p our.bowl)/contacts/(scot %da now.bowl)
+  =/  is-running=?
+    .^(? %gu (weld base-path /$))
+  ?.  is-running
+    ~&(>> "%contacts isn't running, cannot pull our Tlon profile data" ~)
   %-  some
-  =-  +.-
-  .^  [%ud @ud]
-    %gw
-    %+  weld  /(scot %p our.bowl)/live/(scot %da now.bowl)
-    ?~  name  //1/all
-    //1/event/(scot %tas u.name)
+  .^  contact:contacts
+    %gx
+    (weld base-path /contact/(scot %p our.bowl)/contact)
   ==
-::  +get-remote-events: produce a map of id and event info of all discoverable
-::  events; i.e. %public and %private that are not %over
+::  +update-tlon-fields: populate supported Tlon fields into %live profile
 ::
-++  get-remote-events
-  ^-  (map id info-1)
-  %-  malt
-  %+  murn  ~(tap by events)
-  |=  [=id event=event-1]
-  =,  event
-  ?:  |(?=(%secret kind.info) ?=(%over latch.info))
-    ~
-  `[id info]
-::  +set-tlon-fields: populate our Tlon profile data into our profiles
-::  map
+++  update-tlon-fields
+  |=  con=(unit contact:contacts)
+  ^+  cor
+  =/  ls=(list f=[term entry])
+    ?~  con
+      ~[[%nickname ~] [%bio ~] [%avatar ~]]
+    ~[[%nickname `nickname.u.con] [%bio `bio.u.con] [%avatar avatar.u.con]]
+  |-
+  ?~  ls  cor
+  =.  profiles
+    (~(put bi profiles) our.bowl f.i.ls)
+  $(ls t.ls)
+::  +set-default-fields: create default profile fields
 ::
-:: ++  set-tlon-fields
-::  |^  ^+  cor
-::  =/  c=(unit contact:gc)  scry-profile
-::  ?~  c
-::    ~&(>> "no Tlon profile data found" cor)
-::  =/  ls=(list [field-id=term =entry])
-::    ~[[%nickname `nickname.u.c] [%bio `bio.u.c] [%avatar avatar.u.c]]
-::  |-
-::  ?~  ls  cor
-::  =.  profiles
-::    (~(put bi profiles) our.bowl field-id.i.ls entry.i.ls)
-::  $(ls t.ls)
-::  ::
-::  ++  base-path  /(scot %p our.bowl)/contacts/(scot %da now.bowl)
-::  ::
-::  ++  is-running  ~+  .^(? %gu (weld base-path /$))
-::  ::
-::  ++  scry-profile  ~+
-::    ^-  (unit contact:gc)
-::    ?.  is-running
-::      ~&(>> "%contacts isn't running, cannot pull our Tlon profile data" ~)
-::    `.^(contact:gc %gx (weld base-path /contact/(scot %p our.bowl)/contacts/contact))
-::  --
-::  +generate-default-fields: create default profile fields
-::
-++  generate-default-fields
+++  set-default-fields
   ^+  profiles
   =;  ms=(map term entry)
     (~(put by *(mip ship term entry)) our.bowl ms)
@@ -517,6 +517,39 @@
       ~&(>>> "profile field, {<field-id>}, not supported" ~)
     u.ent
   --
+::  +get-our-case: get a remote scry revision number for one of our
+::  published paths
+::
+++  get-our-case
+  |=  name=(unit term)
+  ^-  (unit @ud)
+  =/  exe=?
+    :: check if a published path exists to avoid crashing
+    ::
+    ?~  name
+      ?~(`(map id info-1)`get-remote-events %| %&)
+    ?~((~(get by get-remote-events) [our.bowl u.name]) %| %&)
+  ?.  exe  ~
+  %-  some
+  =-  +.-
+  .^  [%ud @ud]
+    %gw
+    %+  weld  /(scot %p our.bowl)/live/(scot %da now.bowl)
+    ?~  name  //1/all
+    //1/event/(scot %tas u.name)
+  ==
+::  +get-remote-events: produce a map of id and event info of all discoverable
+::  events; i.e. %public and %private that are not %over
+::
+++  get-remote-events
+  ^-  (map id info-1)
+  %-  malt
+  %+  murn  ~(tap by events)
+  |=  [=id event=event-1]
+  =,  event
+  ?:  |(?=(%secret kind.info) ?=(%over latch.info))
+    ~
+  `[id info]
 ::  +search: search for a ship's discoverable events (i.e. %public and %private)
 ::
 ::    this just sends a %case-request poke, requesting a ship's latest revision
