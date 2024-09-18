@@ -8,16 +8,18 @@ import {
 
 import './index.css';
 
-import { Root } from '@/root';
+import { App } from '@/app';
 import { Index } from '@/pages/index';
 import { ErrorPage } from '@/pages/error-page';
 import { EventIdLoader, EventPage } from './pages/event';
 import { AttendeesPage } from './pages/attendees';
+import { SchedulePage } from './pages/schedule';
+import { MapPage } from './pages/map';
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Root />,
+    element: <App />,
     errorElement: <ErrorPage />,
     children: [
       { index: true, element: <Index /> },
@@ -34,6 +36,16 @@ const router = createBrowserRouter([
     loader: EventIdLoader,
     element: <AttendeesPage />
   },
+  {
+    path: "/event/:eventId/schedule",
+    loader: EventIdLoader,
+    element: <SchedulePage />
+  },
+  {
+    path: "/event/:eventId/map",
+    loader: EventIdLoader,
+    element: <MapPage />
+  }
 ]);
 
 // needs null check ("!") to work
