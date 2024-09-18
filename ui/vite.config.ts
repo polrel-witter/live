@@ -1,6 +1,8 @@
 import { loadEnv, defineConfig } from 'vite';
 import reactRefresh from '@vitejs/plugin-react';
 import path from "path"
+import { VitePWA } from 'vite-plugin-pwa'
+
 import { urbitPlugin } from '@urbit/vite-plugin-urbit';
 
 // we pin vite-plugin-rewrite-all to 1.0.1 (it's a dependency of vite-plugin
@@ -16,12 +18,44 @@ export default ({ mode }) => {
   return defineConfig({
     plugins: [
       // urbitPlugin({ base: 'live', target: SHIP_URL, secure: false }),
-      reactRefresh()
+      reactRefresh(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        injectRegister: 'auto',
+        manifest: {
+          name: 'Live',
+          short_name: '%live',
+          description: 'An app to create and coordinate events',
+          theme_color: '#ffffff',
+          icons: []
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+          //   clientsClaim: false,
+          //   runtimeCaching: [
+          //     {
+          //       urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.match(/^\/~\/scry\/journal\/entries.*/i),
+          //       handler: "StaleWhileRevalidate",
+          //       options: {
+          //         cacheName: "scry-cache",
+          //         expiration: {
+          //           maxEntries: 10,
+          //           maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
+          //         },
+          //         cacheableResponse: { statuses: [0, 200], }
+          //       },
+          //     }
+          //   ],
+        },
+        devOptions: {
+          enabled: process.env.NODE_ENV === 'development'
+        },
+      }),
     ],
     resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
     },
-  },
   });
 };
