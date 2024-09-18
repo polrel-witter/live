@@ -822,13 +822,14 @@
           /event/(scot %tas name.id)
         (update-guests get-all-guests)
       ?-    -.sub-info
-          %title     event(title.info p.sub-info)
-          %about     event(about.info p.sub-info)
-          %kind      event(kind.info p.sub-info)
-          %location  event(location.info p.sub-info)
-          %group     event(group.info p.sub-info)
-          %moment    event(moment.info p.sub-info)
-          %timezone  event(timezone.info p.sub-info)
+          %title      event(title.info p.sub-info)
+          %about      event(about.info p.sub-info)
+          %kind       event(kind.info p.sub-info)
+          %location   event(location.info p.sub-info)
+          %venue-map  event(venue-map.info p.sub-info)
+          %group      event(group.info p.sub-info)
+          %moment     event(moment.info p.sub-info)
+          %timezone   event(timezone.info p.sub-info)
       ::
           %latch
         :: if limit is reached, prevent host from opening
@@ -863,11 +864,12 @@
         =;  update=session
           event(sessions.info (~(put by sessions.info.event) sid update))
         ?-    -.q.sub-info
-            %title     u.ses(title p.q.sub-info)
-            %panel     u.ses(panel p.q.sub-info)
-            %location  u.ses(location p.q.sub-info)
-            %about     u.ses(about p.q.sub-info)
-            %moment    u.ses(moment p.q.sub-info)
+            %title      u.ses(title p.q.sub-info)
+            %panel      u.ses(panel p.q.sub-info)
+            %location   u.ses(location p.q.sub-info)
+            %venue-map  u.ses(venue-map p.q.sub-info)
+            %about      u.ses(about p.q.sub-info)
+            %moment     u.ses(moment p.q.sub-info)
         ==
       ==
     ::  +change-limit: update register limit
@@ -1166,7 +1168,7 @@
   =/  [start=(unit time) end=(unit time) =timezone]
     moment.info
   :-  title.info
-  [about.info [start end] timezone ~ ~ kind.info latch.info ~]
+  [about.info [start end] timezone ~ ~ ~ kind.info latch.info ~]
 ++  record-0-to-1
   |=  [k0=id k1=ship v=record]
   ^-  [id ship record-1]

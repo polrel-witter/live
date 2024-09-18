@@ -38,6 +38,7 @@
   $:  title=cord
       panel=(unit cord)
       location=(unit cord)
+      venue-map=(unit cord)
       about=(unit cord)
       moment=moment-1
   ==
@@ -56,6 +57,7 @@
       moment=moment-1
       =timezone
       location=(unit cord)
+      venue-map=(unit cord)
       =group
       =kind
       =latch
@@ -105,6 +107,7 @@
   $%  [%title p=cord]
       [%panel p=(unit cord)]
       [%location p=(unit cord)]
+      [%venue-map p=(unit cord)]
       [%about p=(unit cord)]
       [%moment p=moment-1]
   ==
@@ -123,6 +126,7 @@
       [%moment p=moment-1]
       [%timezone p=timezone]
       [%location p=(unit cord)]
+      [%venue-map p=(unit cord)]
       [%group p=group]
       [%kind p=kind]
       [%latch p=latch]
