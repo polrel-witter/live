@@ -19,7 +19,6 @@
   $:  %1
       events=(map id event-1)                               :: events we host
       records=(mip id ship record-1)                        :: access data
-      profiles=(mip ship term entry)                        :: contact info
       result=$@(@t (map id info-1))                         :: search result
       sub-records=_(mk-subs live-records ,[%record @ @ ~])  :: record subs
       pub-records=_(mk-pubs live-records ,[%record @ @ ~])  :: record pubs
@@ -119,15 +118,8 @@
 ::
 ++  init
   ^+  cor
-  =.  cor
-    %-  emit
-    [%pass /eyre/connect %arvo %e %connect [~ /apps/live] %live]
-  ::  populate our profile with default fields and subscribe to our Tlon
-  ::  profile data
-  ::
-  =.  profiles  set-default-fields
-  =.  cor  (emit (make-watch /profile/local our.bowl %contacts /contact))
-  =.  cor  scry-tlon-fields  cor
+  %-  emit
+  [%pass /eyre/connect %arvo %e %connect [~ /apps/live] %live]
 ::
 ++  load
   |=  =vase
@@ -135,9 +127,6 @@
   =/  ole  !<(versioned-state vase)
   ?-    -.ole
       %0
-    =;  =_cor
-      =.  cor  (emit (make-watch /profile/local our.bowl %contacts /contact))
-      =.  cor  scry-tlon-fields  cor
     %=  cor
       state   :*  %1
                   (~(urn by events.ole) event-0-to-1)
@@ -148,8 +137,6 @@
                     |-
                     ?~  ls  ms
                     $(ls t.ls, ms (~(put bi ms) p.i.ls q.i.ls r.i.ls))
-                  ::
-                  set-default-fields
                   ::
                   ^-  $@(@t (map id info-1))
                   ?@  result.ole
@@ -201,24 +188,6 @@
       ~['No events found under' ' ' (scot %p ship)]
     ~[(crip "'{<name>}'") ' not found under ' (scot %p ship)]
   ::
-      [%profile *]
-    ?+    t.wire  ~|(bad-agent-wire+wire !!)
-        [%local ~]
-      :: TODO handle these properly
-      ?-    -.sign
-          %kick  !!
-          %poke-ack  !!
-          %watch-ack
-        ?~  p.sign
-          ~&(> "watching %contacts for updates to our Tlon profile" cor)
-        :: TODO handle the $tang properly
-        ~&(u.p.sign cor)
-      ::
-          %fact
-        =/  =update:contacts  !<(update:contacts q.cage.sign)
-        =.(cor (update-tlon-fields ?~(con.update ~ `con.update)) cor)
-      ==
-    ==
   ==
 ::
 ++  arvo
@@ -333,7 +302,6 @@
         %find           (search +.dial)
         %case-request   (case-request +.dial)
         %case-response  (case-response +.dial)
-        %profile-entry  (~(edit pr p.dial) q.dial)
     ==
   ::
       %sss-to-pub
@@ -423,12 +391,6 @@
   |=  [=wire who=ship app=term =cage]
   ^-  card
   [%pass wire %agent [who app] %poke cage]
-::  +make-watch: build watch card
-::
-++  make-watch
-  |=  [=wire who=ship app=term =path]
-  ^-  card
-  [%pass wire %agent [who app] %watch path]
 ::  +make-operation: produce an $operation cage
 ::
 ++  make-operation
@@ -443,80 +405,6 @@
   %+  slav  %tas
   %-  crip
   :(weld (scow %tas name) "-" (swag [6 4] (scow %uv eny.bowl)))
-::  +scry-tlon-fields: populate Tlon profile via scry
-::
-++  scry-tlon-fields
-  ^+  cor
-  =;  con=(unit contact:contacts)
-    ?~  con  cor
-    (update-tlon-fields con)
-  =/  base-path=path
-    /(scot %p our.bowl)/contacts/(scot %da now.bowl)
-  =/  is-running=?
-    .^(? %gu (weld base-path /$))
-  ?.  is-running
-    ~&(>> "%contacts isn't running, cannot pull our Tlon profile data" ~)
-  %-  some
-  .^  contact:contacts
-    %gx
-    (weld base-path /contact/(scot %p our.bowl)/contact)
-  ==
-::  +update-tlon-fields: populate supported Tlon fields into %live profile
-::
-++  update-tlon-fields
-  |=  con=(unit contact:contacts)
-  ^+  cor
-  =/  ls=(list f=[term entry])
-    ?~  con
-      ~[[%nickname ~] [%bio ~] [%avatar ~]]
-    ~[[%nickname `nickname.u.con] [%bio `bio.u.con] [%avatar avatar.u.con]]
-  |-
-  ?~  ls  cor
-  =.  profiles
-    (~(put bi profiles) our.bowl f.i.ls)
-  $(ls t.ls)
-::  +set-default-fields: create default profile fields
-::
-++  set-default-fields
-  ^+  profiles
-  =;  ms=(map term entry)
-    (~(put by *(mip ship term entry)) our.bowl ms)
-  %-  malt
-  %+  turn
-    ^-  (list term)
-    :~  %nickname
-        %avatar
-        %bio
-        %ens-domain
-        %telegram
-        %github
-        %signal
-        %x
-        %email
-        %phone
-    ==
-  |=  =term
-  [term ~]
-::  +pr: profile handler
-::
-++  pr
-  |_  field-id=term
-  ::  +edit: add/update a profile field entry
-  ::
-  ++  edit
-    |=  update=entry
-    ^+  cor
-    =/  =entry  get-entry
-    ?~  entry  cor
-    cor(profiles (~(put bi profiles) our.bowl field-id update))
-  ::  +get-entry: pull a profile entry
-  ::
-  ++  get-entry
-    ^-  entry
-    ?~  ent=(~(get bi profiles) our.bowl field-id)
-      ~&(>>> "profile field, {<field-id>}, not supported" ~)
-    u.ent
-  --
 ::  +get-our-case: get a remote scry revision number for one of our
 ::  published paths
 ::
