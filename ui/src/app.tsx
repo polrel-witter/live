@@ -7,7 +7,7 @@ const api = new Urbit('', '', window.desk);
 api.ship = window.ship;
 window.urbit = api;
 
-export function Root() {
+export function App() {
 
   useEffect(() => {
     async function init() {
