@@ -64,3 +64,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+@font-face {
+ font-family: "UrbitSansMonoTT-Medium";
+ src:local("UrbitSansMonoTT-Medium"),
+ url('@/assets/fonts/UrbitSansMonoTT-Medium.ttf') 
+}
+
+html {
+    font-family: "UrbitSansMonoTT-Medium", mono;
+}
