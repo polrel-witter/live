@@ -8,46 +8,52 @@ import {
 
 import './index.css';
 
-import { App } from '@/app';
 import { Index } from '@/pages/index';
 import { ErrorPage } from '@/pages/error-page';
 
 // event
-import { EventIdLoader, EventPage } from './pages/event';
-import { AttendeesPage } from './pages/attendees';
-import { SchedulePage } from './pages/schedule';
-import { MapPage } from './pages/map';
+import { EventIdLoader, EventIndex } from './pages/event';
+import { AttendeesPage } from './pages/event/attendees';
+import { SchedulePage } from './pages/event/schedule';
+import { MapPage } from './pages/event/map';
 import { PatpLoader, ProfilePage } from './pages/profile';
+import { EventDetails } from './pages/event/details';
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />,
+    element: <Index />,
     errorElement: <ErrorPage />,
     children: [
-      { index: true, element: <Index /> },
     ],
   },
   {
     path: "/event/:eventId",
-    element: <EventPage />,
+    element: <EventIndex />,
     loader: EventIdLoader,
     errorElement: <ErrorPage />,
-  },
-  {
-    path: "/event/:eventId/attendees",
-    loader: EventIdLoader,
-    element: <AttendeesPage />
-  },
-  {
-    path: "/event/:eventId/schedule",
-    loader: EventIdLoader,
-    element: <SchedulePage />
-  },
-  {
-    path: "/event/:eventId/map",
-    loader: EventIdLoader,
-    element: <MapPage />
+    children: [
+      {
+        index: true,
+        loader: EventIdLoader,
+        element: <EventDetails />
+      },
+      {
+        path: "/event/:eventId/attendees",
+        loader: EventIdLoader,
+        element: <AttendeesPage />
+      },
+      {
+        path: "/event/:eventId/schedule",
+        loader: EventIdLoader,
+        element: <SchedulePage />
+      },
+      {
+        path: "/event/:eventId/map",
+        loader: EventIdLoader,
+        element: <MapPage />
+      },
+    ],
   },
   {
     path: "/profile/:patp",

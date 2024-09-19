@@ -1,10 +1,10 @@
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, } from "@/components/ui/navigation-menu"
 
-export default function NavBar(_props: any) {
+export default function NavBar(props: { eventName: string }) {
   return (
     <NavigationMenu >
       <NavigationMenuList>
-        <NavigationMenuItem className="grow text-center"> %live </NavigationMenuItem>
+        <NavigationMenuItem className="grow text-center"> {props.eventName || "event"} </NavigationMenuItem>
         <NavigationMenuItem >
           <NavigationMenuTrigger />
           <NavigationMenuContent>
