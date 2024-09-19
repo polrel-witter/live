@@ -11,10 +11,13 @@ import './index.css';
 import { App } from '@/app';
 import { Index } from '@/pages/index';
 import { ErrorPage } from '@/pages/error-page';
+
+// event
 import { EventIdLoader, EventPage } from './pages/event';
 import { AttendeesPage } from './pages/attendees';
 import { SchedulePage } from './pages/schedule';
 import { MapPage } from './pages/map';
+import { PatpLoader, ProfilePage } from './pages/profile';
 
 const router = createBrowserRouter([
   {
@@ -45,6 +48,11 @@ const router = createBrowserRouter([
     path: "/event/:eventId/map",
     loader: EventIdLoader,
     element: <MapPage />
+  },
+  {
+    path: "/profile/:patp",
+    loader: PatpLoader,
+    element: <ProfilePage />
   }
 ]);
 
