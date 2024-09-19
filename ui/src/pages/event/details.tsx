@@ -1,9 +1,6 @@
-import { LoaderFunctionArgs, Params, useLoaderData } from "react-router-dom";
+import { useLoaderData } from "react-router-dom";
 
-export async function EventIdLoader(params: LoaderFunctionArgs<any>):
-  Promise<Params<string>> { return { eventId: params.params.eventId! } }
-
-export function EventPage() {
+export function EventDetails() {
   const loaderData = useLoaderData() as { eventId: number };
   const eventId = loaderData!.eventId || "no-event"
 
