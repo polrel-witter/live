@@ -778,7 +778,6 @@
             %title      u.ses(title p.q.sub-info)
             %panel      u.ses(panel p.q.sub-info)
             %location   u.ses(location p.q.sub-info)
-            %venue-map  u.ses(venue-map p.q.sub-info)
             %about      u.ses(about p.q.sub-info)
             %moment     u.ses(moment p.q.sub-info)
         ==
