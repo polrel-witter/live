@@ -3,9 +3,9 @@ import NavBar from "@/components/navbar"
 import { Outlet, useLoaderData } from 'react-router-dom';
 import { LoaderFunctionArgs, Params } from "react-router-dom";
 
-import { emptyEvent, EventContext } from './context';
+import { EventContext, EventCtx, newEmptyEvent } from './context';
 
-import { Backend } from '@/backend'
+import { Backend, Session } from '@/backend'
 
 interface EventParams {
   hostShip: string,
@@ -24,7 +24,10 @@ export function LoadEventParams(): EventParams {
   return useLoaderData() as EventParams
 }
 
+const emptyEvent = newEmptyEvent()
+
 async function buildContextData(params: EventParams, backend: Backend) {
+
   const evt = emptyEvent
   evt.name = params.name
   evt.host = params.hostShip
@@ -38,27 +41,31 @@ async function buildContextData(params: EventParams, backend: Backend) {
 export function EventIndex(props: { backend: Backend }) {
 
   const eventParams = LoadEventParams();
-  const [eventContext, setEventContext] = useState(emptyEvent)
+  // this code here (newEmptyEvent()) fixed the issue where
+  // data was not showing on first render
+  // previously i was sharing a single emptyEvent object between this
+  // useState call and the buildContextData fn above
+  // 
+  // might refactor into reducer if it becomes annoying
+  const [eventContext, setEventCtx] = useState<EventCtx>(newEmptyEvent())
 
-  buildContextData(eventParams, props.backend).then(setEventContext);
+  buildContextData(eventParams, props.backend).then(setEventCtx);
 
   useEffect(() => {
 
-    //Implementing the setInterval method
     const interval = setInterval(async () => {
       console.log("loop")
       const ctxData = await buildContextData(eventParams, props.backend)
-      setEventContext(ctxData)
+      setEventCtx(ctxData)
     }, 1000);
 
-    //Clearing the interval
     return () => clearInterval(interval);
   }, [])
 
   return (
     <EventContext.Provider value={eventContext}>
       <div className="grid size-full" >
-        <NavBar eventName={eventContext.name} />
+        <NavBar eventName={eventContext!.name} />
         <Outlet />
       </div>
     </EventContext.Provider>

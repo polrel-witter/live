@@ -69,7 +69,7 @@ const router = createBrowserRouter([
   {
     path: "/profile/:patp",
     loader: PatpLoader,
-    element: <ProfilePage />
+    element: <ProfilePage backend={backend} />
   }
 ]);
 

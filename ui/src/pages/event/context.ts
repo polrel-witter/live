@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import { Attendee, Session } from "@/backend";
+import { Session } from "@/backend";
 
 interface EventCtx {
   host: string;
@@ -8,21 +8,25 @@ interface EventCtx {
   startDate: Date;
   endDate: Date;
   description: string;
-  attendees: Attendee[];
+  attendees: string[];
   schedule: Session[];
 }
 
-const emptyEvent = {
-  host: "",
-  name: "",
-  location: "",
-  startDate: new Date(0),
-  endDate: new Date(0),
-  description: "",
-  attendees: [] as Attendee[],
-  schedule: [] as Session[],
+function newEmptyEvent() {
+  return {
+    host: "",
+    name: "",
+    location: "",
+    startDate: new Date(0),
+    endDate: new Date(0),
+    description: "",
+    attendees: [] as string[],
+    schedule: [] as Session[],
+  }
 }
 
-const EventContext = createContext<EventCtx>(emptyEvent)
+const EventContext = createContext<EventCtx | null>(null)
 
-export { EventContext, emptyEvent }
+export { EventContext, newEmptyEvent }
+
+export type { EventCtx }  
