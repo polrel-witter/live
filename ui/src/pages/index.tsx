@@ -1,4 +1,5 @@
 import { Backend, Event } from "@/backend";
+import EventList from "@/components/event-list";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { useEffect, useState } from "react";
 
@@ -20,11 +21,9 @@ export function Index(props: { backend: Backend }) {
         </NavigationMenuList>
       </NavigationMenu>
 
-      <div className="max-w-2lg space-y-6 py-20 text-center">
+      <div className="grid justify-center w-full space-y-6 py-20 text-center">
         <h1 className="text-3xl italic">*events*</h1>
-        <ul>
-        {events.map( evt  => <li>{ JSON.stringify(evt) }</li>)}
-        </ul>
+        <EventList events={events} />
       </div>
     </div>
   )
