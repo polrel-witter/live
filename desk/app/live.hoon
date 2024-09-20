@@ -1,6 +1,6 @@
 ::  %live: event coordination
 ::
-/-  *live, live-records, hark, contacts
+/-  *live, matcher, live-records, hark, contacts
 /+  *sss, *mip, verb, dbug, default-agent
 ::
 |%
@@ -176,6 +176,19 @@
   ::
       [~ %sss %scry-response @ @ @ %record @ @ ~]
     (sss-pub-records (tell:du-records |3:wire sign))
+  ::
+      [%matcher @ *]
+    ?>  ?=(%poke-ack -.sign)
+    =/  =ship  (slav %p i.t.wire)
+    ?+    t.t.wire  ~|(bad-wire+wire cor)
+        [%add ~]
+      ?~  p.sign  ~&(> "{<ship>} added as peer in %matcher" cor)
+      ~&(>>> "failed to add {<ship>} as peer in %matcher" cor)
+    ::
+        [%delete ~]
+      ?~  p.sign  ~&(> "{<ship>} removed from %matcher" cor)
+      ~&(>>> "failed to remove {<ship>} from %matcher" cor)
+    ==
   ::
       [%case %request @ @ ~]
     =/  =ship  (slav %p i.t.t.wire)
@@ -638,6 +651,15 @@
       %unregister  (unregister +.act)
       %punch       (punch +.act)
     ==
+    ::  +add-to-matcher: make peer discoverable in %matcher agent
+    ::
+    ++  add-to-matcher
+      |=  =ship
+      ^+  cor
+      =/  =cage
+        matcher-dictum+!>(`dictum:matcher`[id [%add-peer ship]])
+      %-  emit
+      (make-act /matcher/(scot %p ship)/add our.bowl %matcher cage)
     ::  +create: write a new event to state
     ::
     ++  create
@@ -647,6 +669,7 @@
       =?  id  (~(has by events) id)
         [ship.id (append-entropy name.id)]
       =.  events  (~(put by events) id event)
+      =.  cor  (add-to-matcher our.bowl)
       =.  cor  (update-remote-event event)
       update-all-remote-events
     ::  +delete: as host, permanently delete an event; as a guest,
@@ -890,6 +913,8 @@
         =.  cor
           (update-event event(latch.info %closed))
         (update-guests get-all-guests)
+      =?  cor  ?=(%registered p.status)
+        (add-to-matcher ship)
       :: add or update record
       ::
       ?.  (~(has bi records) id ship)
