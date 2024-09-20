@@ -38,7 +38,6 @@
   $:  title=cord
       panel=(unit cord)
       location=(unit cord)
-      venue-map=(unit cord)
       about=(unit cord)
       moment=moment-1
   ==
@@ -103,7 +102,6 @@
   $%  [%title p=cord]
       [%panel p=(unit cord)]
       [%location p=(unit cord)]
-      [%venue-map p=(unit cord)]
       [%about p=(unit cord)]
       [%moment p=moment-1]
   ==
