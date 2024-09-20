@@ -1,5 +1,13 @@
 import Urbit from "@urbit/http-api";
 
+interface Backend {
+  getEvents(): Promise<Event[]>
+  getEvent(ship: string, name: string): Promise<Event>
+  getAttendees(): Promise<string[]>
+  getSchedule(): Promise<Session[]>
+  getProfile(patp: string): Promise<Profile | null>
+}
+
 interface Profile {
   patp: string;
   github?: string;
@@ -17,10 +25,17 @@ interface Session {
   endTime: Date;
 }
 
-interface Backend {
-  getAttendees(): Promise<string[]>
-  getSchedule(): Promise<Session[]>
-  getProfile(patp: string): Promise<Profile | null>
+interface Event {
+  host: string;
+  name: string;
+  location: string;
+  startDate: Date;
+  endDate: Date;
+  timezone: string;
+  description: string;
+  group: string;
+  kind: "public" | "private" | "secret";
+  latch: "open" | "closed" | "over";
 }
 
 function getAttendees(_api: Urbit): () => Promise<string[]> {
@@ -49,20 +64,24 @@ function getSchedule(_api: Urbit): () => Promise<Session[]> {
 }
 
 const _mockProfiles = (patp: string) => {
+  const sampel = {
+    patp: "~sampel-palnet",
+    email: "sampel-palnet@foo.bar",
+    phone: "1234556799",
+    github: "sampel-palnet",
+    telegram: "@ sampel-palnet"
+  }
+
+  const sorreg = {
+    patp: "~sorreg-namtyv",
+  }
+
   if (patp === "~sampel-palnet") {
     // this is for a matched profile
-    return {
-      patp: "~sampel-palnet",
-      email: "sampel-palnet@foo.bar",
-      phone: "1234556799",
-      github: "sampel-palnet",
-      telegram: "@ sampel-palnet"
-    }
+    return sampel
   } else if (patp === "~sorreg-namtyv") {
     // this is for an unmatched profile
-    return {
-      patp: "~sorreg-namtyv",
-    }
+    return sorreg
   } else { return null }
 }
 
@@ -72,14 +91,54 @@ function getProfile(_api: Urbit): (patp: string) => Promise<Profile | null> {
   )
 }
 
+function getEvents(_api: Urbit): () => Promise<Event[]> {
+  return async () => Promise.resolve(
+    [
+      {
+        host: "~sampel-palnet",
+        name: "my-event",
+        location: "atlantis",
+        startDate: new Date(0),
+        endDate: new Date(0),
+        description: "",
+        timezone: "PST",
+        kind: "public",
+        group: "~sampel-palnet/my-event",
+        latch: "open"
+      }
+    ]
+  )
+}
+
+
+function getEvent(_api: Urbit): (ship: string, name: string) => Promise<Event> {
+  return async (_ship: string, _name: string) => Promise.resolve(
+    {
+      host: "~sampel-palnet",
+      name: "my-event",
+      location: "atlantis",
+      startDate: new Date(0),
+      endDate: new Date(0),
+      description: "",
+      timezone: "PST",
+      kind: "public",
+      group: "~sampel-palnet/my-event",
+      latch: "open"
+    }
+
+  )
+}
+
 function newBackend(api: Urbit): Backend {
   return {
     getAttendees: getAttendees(api),
     getSchedule: getSchedule(api),
-    getProfile: getProfile(api)
+    getProfile: getProfile(api),
+    getEvents: getEvents(api),
+    getEvent: getEvent(api)
   }
 }
 
 export { newBackend }
 
-export type { Session, Profile, Backend }
+export type { Event, Session, Profile, Backend }

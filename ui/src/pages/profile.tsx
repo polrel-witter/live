@@ -1,6 +1,6 @@
 import { LoaderFunctionArgs, Params, useLoaderData } from "react-router-dom";
 import { Backend, Profile } from "@/backend";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export async function PatpLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> { return { patp: params.params.patp! } }
@@ -12,8 +12,10 @@ export function ProfilePage(props: { backend: Backend }) {
 
   const [profile, setProfile] = useState<Profile | null>(null)
 
-  // uncommenting this line makes browser eat 100% cpu???
-  // props.backend.getProfile(patp).then(setProfile)
+  // this needs to have an empty dependency array otherwise cpu blows up
+  useEffect(() => {
+    props.backend.getProfile(patp).then(setProfile)
+  }, [])
 
   return (
     <div className="max-w-2lg space-y-6 py-20 text-center">
