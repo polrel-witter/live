@@ -1,25 +1,26 @@
 import { createContext } from "react";
-import { Session } from "@/backend";
+import { Session , Event} from "@/backend";
 
 interface EventCtx {
-  host: string;
-  name: string;
-  location: string;
-  startDate: Date;
-  endDate: Date;
-  description: string;
+  details: Event
   attendees: string[];
   schedule: Session[];
 }
 
-function newEmptyEvent() {
+function newEmptyContext(): EventCtx {
   return {
-    host: "",
-    name: "",
-    location: "",
-    startDate: new Date(0),
-    endDate: new Date(0),
-    description: "",
+    details: {
+      host: "~sampel-palnet",
+      name: "my-event",
+      location: "atlantis",
+      startDate: new Date(0),
+      endDate: new Date(0),
+      description: "",
+      timezone: "PST",
+      kind: "public",
+      group: "~sampel-palnet/my-event",
+      latch: "open"
+    }, 
     attendees: [] as string[],
     schedule: [] as Session[],
   }
@@ -27,6 +28,6 @@ function newEmptyEvent() {
 
 const EventContext = createContext<EventCtx | null>(null)
 
-export { EventContext, newEmptyEvent }
+export { EventContext, newEmptyContext as newEmptyEvent }
 
 export type { EventCtx }  

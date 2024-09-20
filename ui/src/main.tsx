@@ -33,7 +33,7 @@ const backend = newBackend(window.urbit)
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Index />,
+    element: <Index backend={backend} />,
     errorElement: <ErrorPage />,
     children: [
     ],
