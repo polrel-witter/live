@@ -230,7 +230,7 @@
         ::  if we're removed, we're no longer %registered/%attended so
         ::  we delete the peers for that event and unsubscribe
         ::
-      ::  ?.  =(ship.wave our.bowl)
+        ?.  =(ship.wave our.bowl)
           cor(peers (~(del bi peers) id ship.wave))
       :: TODO problem with unsubscribing at this point; we get mixed
       :: results when it comes to state changes from the host. Thinking
@@ -240,7 +240,7 @@
       ::  =.  sub-peers  %^  quit:da-peers  ship.id
       ::                   dap.bowl
       ::                 [%peers ship.id name.id ~]
-      ::  cor(peers (~(del by peers) id))
+        cor(peers (~(del by peers) id))
       ==
     ::  we've been added to some new event so we add the guests to our peers mip
     ::
