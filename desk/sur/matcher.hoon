@@ -20,9 +20,10 @@
       $%  [%add-peer =ship]       :: add guest to peer list
           [%delete-peer =ship]    :: remove guest from state
           [%show =ship =status]   :: reveal peer status
+          [%subscribe ~]          :: request from host to sub to guest list updates
       ==
   ==
-::  $deed: egalitarian action
+::  $deed: host or guest action
 ::
 +$  deed
   $%  [%edit-profile =term =entry]     :: edit profile

@@ -182,11 +182,11 @@
     =/  =ship  (slav %p i.t.wire)
     ?+    t.t.wire  ~|(bad-wire+wire cor)
         [%add ~]
-      ?~  p.sign  ~&(> "{<ship>} added as peer in %matcher" cor)
+      ?~  p.sign  cor
       ~&(>>> "failed to add {<ship>} as peer in %matcher" cor)
     ::
         [%delete ~]
-      ?~  p.sign  ~&(> "{<ship>} removed from %matcher" cor)
+      ?~  p.sign  cor
       ~&(>>> "failed to remove {<ship>} from %matcher" cor)
     ==
   ::
@@ -651,15 +651,15 @@
       %unregister  (unregister +.act)
       %punch       (punch +.act)
     ==
-    ::  +add-to-matcher: make peer discoverable in %matcher agent
+    ::  +poke-matcher: send a dictum poke to %matcher
     ::
-    ++  add-to-matcher
-      |=  =ship
+    ++  poke-matcher
+      |=  [=wire dict=dictum:matcher]
       ^+  cor
       =/  =cage
-        matcher-dictum+!>(`dictum:matcher`[id [%add-peer ship]])
+        matcher-dictum+!>(`dictum:matcher`dict)
       %-  emit
-      (make-act /matcher/(scot %p ship)/add our.bowl %matcher cage)
+      (make-act wire our.bowl %matcher cage)
     ::  +create: write a new event to state
     ::
     ++  create
@@ -669,7 +669,8 @@
       =?  id  (~(has by events) id)
         [ship.id (append-entropy name.id)]
       =.  events  (~(put by events) id event)
-      =.  cor  (add-to-matcher our.bowl)
+      =.  cor
+        (poke-matcher /matcher/(scot %p our.bowl)/add [id [%add-peer our.bowl]])
       =.  cor  (update-remote-event event)
       update-all-remote-events
     ::  +delete: as host, permanently delete an event; as a guest,
@@ -913,7 +914,9 @@
           (update-event event(latch.info %closed))
         (update-guests get-all-guests)
       =?  cor  ?=(%registered p.status)
-        (add-to-matcher ship)
+        ::  add to %matcher
+        ::
+        (poke-matcher /matcher/(scot %p ship)/add [id [%add-peer ship]])
       :: add or update record
       ::
       ?.  (~(has bi records) id ship)
@@ -981,6 +984,12 @@
       =?  who  ?~(who & ?>(host-call |))
         ?>(guest-call `src.bowl)
       ?.  (is-registered (need who))  cor
+      =.  cor
+        ::  remove from %matcher peers
+        ::
+        %+  poke-matcher
+          /matcher/(scot %p (need who))/delete
+        [id [%delete-peer (need who)]]
       (~(update-status re (need who)) [%unregistered now.bowl])
       ::  +is-registered: check if registered
       ::
