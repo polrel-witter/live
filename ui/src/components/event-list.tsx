@@ -8,13 +8,16 @@ import {
 } from "@/components/ui/card"
 
 import { Event } from "@/backend"
+import { Link } from "react-router-dom"
 
 function makeEventMarkup(evt: Event) {
   return (
     <li>
       <Card>
         <CardHeader>
-          <CardTitle>{evt.name}</CardTitle>
+          <CardTitle>
+            <Link to={`event/${evt.host}/${evt.name}`}> {evt.name} </Link>
+          </CardTitle>
           <CardDescription className="italics">hosted by {evt.host}</CardDescription>
         </CardHeader>
         <CardContent>
