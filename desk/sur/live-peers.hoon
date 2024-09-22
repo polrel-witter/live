@@ -9,6 +9,7 @@
   ==
 ++  wash
   |=  [=rock =wave]
+  ^+  rock
   ?-  -.wave
     %add-peer     (~(put in guests.rock) ship.wave)
     %delete-peer  (~(del in guests.rock) ship.wave)
