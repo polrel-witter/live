@@ -3,7 +3,7 @@ import NavBar from "@/components/navbar"
 import { Outlet, useLoaderData } from 'react-router-dom';
 import { LoaderFunctionArgs, Params } from "react-router-dom";
 
-import { EventContext, EventCtx, newEmptyEvent } from './context';
+import { EventContext, EventCtx, newEmptyCtx } from './context';
 
 import { Backend } from '@/backend'
 
@@ -24,7 +24,7 @@ export function LoadEventParams(): EventParams {
   return useLoaderData() as EventParams
 }
 
-const emptyEvent = newEmptyEvent()
+const emptyEvent = newEmptyCtx()
 
 async function buildContextData({hostShip: host, name }: EventParams, backend: Backend) {
 
@@ -47,7 +47,7 @@ export function EventIndex(props: { backend: Backend }) {
   // useState call and the buildContextData fn above
   // 
   // might refactor into reducer if it becomes annoying
-  const [eventContext, setEventCtx] = useState<EventCtx>(newEmptyEvent())
+  const [eventContext, setEventCtx] = useState<EventCtx>(newEmptyCtx())
 
   buildContextData(eventParams, props.backend).then(setEventCtx);
 
@@ -65,7 +65,7 @@ export function EventIndex(props: { backend: Backend }) {
   return (
     <EventContext.Provider value={eventContext}>
       <div className="grid size-full" >
-        <NavBar eventName={eventContext!.details.name} />
+        <NavBar eventName={eventContext!.details.name} host={eventContext!.details.host} />
         <Outlet />
       </div>
     </EventContext.Provider>

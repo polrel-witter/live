@@ -25,16 +25,17 @@ function formatSessionPanel(panel: string[]): string {
 
 function makeSessionMarkup(session: Session) {
   return (
-    <li>
+    <li key={window.crypto.randomUUID()}>
       <Card>
         <CardHeader>
           <CardTitle className="font-medium hover:font-bold">
             {session.title}
           </CardTitle>
           <CardDescription className="italics">
-            <p>held by {session.mainSpeaker}</p>
-            {session.panel.length !== 0 ? <p className="text-sm">{formatSessionPanel(session.panel)}</p> : ""}
-            <p>from {session.startTime.toTimeString()} to {session.endTime.toTimeString()}</p>
+            held by {session.mainSpeaker}
+            <br />
+            {session.panel.length !== 0 ? <span className="text-sm">{formatSessionPanel(session.panel)}<br /></span> : ""}
+            <span>from {session.startTime.toTimeString()} to {session.endTime.toTimeString()}</span>
           </CardDescription>
         </CardHeader>
         <CardContent>
