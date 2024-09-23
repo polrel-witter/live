@@ -18,6 +18,7 @@ interface Profile {
 
 interface Session {
   title: string;
+  mainSpeaker: string;
   panel: string[];
   location: string;
   about: string;
@@ -55,11 +56,30 @@ function getSchedule(_api: Urbit): () => Promise<Session[]> {
   return async () => Promise.resolve([
     {
       title: "First talk",
-      panel: ["~sampel-palnet"],
+      mainSpeaker: "~sampel-palnet",
+      panel: [],
       location: "anywhere",
       about: "idk just vibes",
       startTime: new Date(1995, 11, 17, 3, 13, 37),
       endTime: new Date(1995, 11, 17, 3, 16, 20),
+    },
+    {
+      title: "Second talk",
+      mainSpeaker: "~sampel-palnet",
+      panel: ["~sampel-palnet", "~sampel-palnet"],
+      location: "anywhere",
+      about: "idk just vibes",
+      startTime: new Date(1995, 11, 17, 3, 13, 37),
+      endTime: new Date(1995, 11, 17, 3, 16, 20),
+    },
+    {
+      title: "Third talk",
+      mainSpeaker: "~sampel-palnet",
+      panel: ["~sampel-palnet", "~sampel-palnet", "~sampel-palnet"],
+      location: "anywhere",
+      about: "idk just vibes",
+      startTime: new Date(1995, 11, 18, 3, 13, 37),
+      endTime: new Date(1995, 11, 18, 3, 16, 20),
     }
   ])
 }
