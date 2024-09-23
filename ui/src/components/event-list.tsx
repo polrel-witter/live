@@ -15,16 +15,16 @@ function makeEventMarkup(evt: Event) {
     <li>
       <Card>
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="font-medium hover:font-bold">
             <Link to={`event/${evt.host}/${evt.name}`}> {evt.name} </Link>
           </CardTitle>
           <CardDescription className="italics">hosted by {evt.host}</CardDescription>
         </CardHeader>
         <CardContent>
-          <p>Card Content</p>
+          <p>Starts on {evt.startDate.toDateString()}</p>
         </CardContent>
         <CardFooter>
-          <p>Card Footer</p>
+          <p>location: {evt.location}</p>
         </CardFooter>
       </Card>
     </li>
