@@ -27,6 +27,6 @@
 ::
 +$  deed
   $%  [%edit-profile =term =entry]     :: edit profile
-      [%shake =id:live =ship =status]  :: initiate a new peer status
+      [%shake =id:live =ship act=?]    :: initiate a new peer status
   ==
 --
