@@ -7,18 +7,18 @@ interface EventCtx {
   schedule: Session[];
 }
 
-function newEmptyContext(): EventCtx {
+function newEmptyCtx(): EventCtx {
   return {
     details: {
-      host: "~sampel-palnet",
-      name: "my-event",
-      location: "atlantis",
+      host: "",
+      name: "",
+      location: "",
       startDate: new Date(0),
       endDate: new Date(0),
       description: "",
-      timezone: "PST",
+      timezone: "",
       kind: "public",
-      group: "~sampel-palnet/my-event",
+      group: "",
       latch: "open"
     }, 
     attendees: [] as string[],
@@ -28,6 +28,6 @@ function newEmptyContext(): EventCtx {
 
 const EventContext = createContext<EventCtx | null>(null)
 
-export { EventContext, newEmptyContext as newEmptyEvent }
+export { EventContext, newEmptyCtx }
 
 export type { EventCtx }  
