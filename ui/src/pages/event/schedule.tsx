@@ -9,6 +9,24 @@ function sliceISODate(d: Date): string {
   return d.toISOString().slice(0, 10)
 }
 
+function getCurrentDate(dates: Map<string, Date>): Date {
+  if (dates.size > 0) {
+    return [...dates.values()]
+      .sort((date1, date2) => date1.getTime() - date2.getTime())[0]
+  } else { return new Date(0) }
+}
+
+function makeDatesMap(sessions: Session[]): Map<string, Date> {
+  const dateStrs = sessions
+    .map(({ startTime }) => sliceISODate(startTime))
+  // keep unique values
+  const uniqDateStrs = [... new Set(dateStrs)]
+  // shape as key value pairs
+  const kvps = uniqDateStrs
+    .map(dateStr => [dateStr, new Date(Date.parse(dateStr))] as [string, Date])
+  return new Map(kvps)
+}
+
 export function SchedulePage() {
   const ctx = useContext(EventContext)
 
@@ -20,33 +38,14 @@ export function SchedulePage() {
   // add useEffect with function that returns unique days (hint use js Set)
   const [dates, setDates] = useState<Map<string, Date>>(new Map())
   const [activeDate, setActiveDate] = useState<Date>(new Date(0))
-  const [activeSessions, setActiveSessions] = useState<Session[]>([])
 
   useEffect(() => {
-    const dateStrs = ctx.schedule
-      .map(({ startTime }) => sliceISODate(startTime))
-    const uniqDateStrs = [... new Set(dateStrs)]
-    const kvps = uniqDateStrs
-      .map(dateStr => [dateStr, new Date(Date.parse(dateStr))] as [string, Date])
-    // we sort kvps and set the earliest date as first value for the select
-    setDates(new Map(kvps))
+    setDates(makeDatesMap(ctx.schedule))
   }, [ctx])
 
-  // this should set activeDate to the earliest date but for some reason
-  // it makes the next effect error, commenting out for now
-  // 
-  // useEffect(() => {
-  //   const sorted = [...dates.values()]
-  //     .sort((date1, date2) => date1.getTime() - date2.getTime())
-  //   console.log(sorted)
-  //   setActiveDate(sorted[0])
-  // }, [dates])
-
   useEffect(() => {
-    setActiveSessions(ctx.schedule.filter(({ startTime }) => startTime.getDay() === activeDate.getDay()))
-  }, [activeDate])
-
-
+    setActiveDate(getCurrentDate(dates))
+  }, [dates])
 
 
   return (
@@ -55,9 +54,9 @@ export function SchedulePage() {
       <SessionDateSelect
         sessionDates={[...dates.values()]}
         changeDate={(newDate: Date) => setActiveDate(dates.get(sliceISODate(newDate))!)}
-        currentDate={activeDate}
+        currentDate={getCurrentDate(dates)}
       />
-      <SessionList sessions={activeSessions} />
+      <SessionList sessions={ctx.schedule.filter(({ startTime }) => startTime.getDay() === activeDate.getDay())} />
     </div>
   )
 }

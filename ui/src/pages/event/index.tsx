@@ -49,9 +49,9 @@ export function EventIndex(props: { backend: Backend }) {
   // might refactor into reducer if it becomes annoying
   const [eventContext, setEventCtx] = useState<EventCtx>(newEmptyCtx())
 
-  buildContextData(eventParams, props.backend).then(setEventCtx);
 
   useEffect(() => {
+    buildContextData(eventParams, props.backend).then(setEventCtx);
 
     const interval = setInterval(async () => {
       console.log("loop")
