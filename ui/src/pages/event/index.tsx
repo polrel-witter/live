@@ -26,7 +26,7 @@ export function LoadEventParams(): EventParams {
 
 const emptyEvent = newEmptyCtx()
 
-async function buildContextData({hostShip: host, name }: EventParams, backend: Backend) {
+async function buildContextData({ hostShip: host, name }: EventParams, backend: Backend) {
 
   const evt = emptyEvent
   // we could also do away with this backend call here
@@ -34,6 +34,12 @@ async function buildContextData({hostShip: host, name }: EventParams, backend: B
   evt.details = await backend.getEvent(host, name)
   evt.schedule = await backend.getSchedule();
   evt.attendees = await backend.getAttendees();
+
+  const profiles = await Promise.all(evt.attendees
+    .map((attendee) => backend.getProfile(attendee)))
+
+  evt.profiles = profiles.filter(profile => profile !== null)
+
 
   return evt
 }
