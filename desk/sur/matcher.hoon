@@ -6,10 +6,7 @@
 |%
 ::  $status: peer matching status
 ::
-+$  status  (unit ?(%match %reach))
-::  $stage: host validation status
-::
-+$  stage  (unit ?(%confirmed %sent))
++$  status  (unit ?(%match %incoming %outgoing))
 ::  $entry: profile field
 ::
 +$  entry  (unit cord)

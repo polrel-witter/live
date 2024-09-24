@@ -10,7 +10,7 @@
 +$  state-0
   $:  %0
       profiles=(mip ship term entry)                   :: contact info
-      peers=(mip id:live ship [stage status])          :: our relation to a peer
+      peers=(mip id:live ship status)                  :: our relation to a peer
       matches=(mip id:live ship (list ship))           :: matched peers
       reaches=(mip id:live ship (list ship))           :: match attempts
       sub-peers=_(mk-subs live-peers ,[%peers @ @ ~])  :: subscriptions
@@ -144,7 +144,20 @@
       [~ %sss %scry-response @ @ @ %peers @ @ ~]
     (sss-pub-peers (tell:du-peers |3:wire sign))
   ::
-     [%profile *]
+      [%shake @ ~]
+    =/  =ship  (slav %p i.t.wire)
+    ?>  ?=(%poke-ack -.sign)
+    ?~  p.sign  cor
+    ~&(>>> "%shake to {<ship>} failed to process on host ship" cor)
+  ::
+      [%show @ @ ~]
+    =/  actor=ship   (slav %p i.t.wire)
+    =/  target=ship  (slav %p i.t.t.wire)
+    ?>  ?=(%poke-ack -.sign)
+    ?~  p.sign  cor
+    ~&(>>> "failed to show {<actor>} their updated status with {<target>}" cor)
+  ::
+      [%profile *]
     ?+    t.wire  ~|(bad-agent-wire+wire !!)
         [%local ~]
       :: TODO handle these properly
@@ -189,16 +202,13 @@
   ::
       %matcher-dictum
     =+  !<(d=dictum vase)
-    ::  only a host can pass a $dictum
-    ::
     ?.  |(=(ship.id.d our.bowl) =(ship.id.d src.bowl))
       ~&(>>> "only the host of {<name.id.d>} can pass a dictum" cor)
     ?-  -.+.d
-        %subscribe    (subscribe id.d)
         %add-peer     ?:((event-exists id.d) ~(add pe id.d ship.d) cor)
         %delete-peer  ?:((event-exists id.d) ~(delete pe id.d ship.d) cor)
-        %show
-      ?:((event-exists id.d) (~(show pe id.d ship.d) status.d) cor)
+        %show         (~(show pe id.d ship.d) status.d)
+        %subscribe    (subscribe id.d)
     ==
   ::
       %sss-to-pub
@@ -225,7 +235,7 @@
       ::  guest list update so we write to our peers mip
       ::
       ?-    -.wave
-          %add-peer     cor(peers (~(put bi peers) id ship.wave ~ ~))
+          %add-peer     cor(peers (~(put bi peers) id ship.wave ~))
           %delete-peer
         ::  if we're removed, we're no longer %registered/%attended so
         ::  we delete the peers for that event and unsubscribe
@@ -249,7 +259,7 @@
     |-
     ?~  new-peers  cor
     =?  peers  ?!(=(our.bowl i.new-peers))
-      (~(put bi peers) id i.new-peers ~ ~)
+      (~(put bi peers) id i.new-peers ~)
     $(new-peers t.new-peers)
   ==
 ::  +make-act: build poke card
@@ -425,7 +435,7 @@
       ?~  sta  ~
       ?.(?=(?(%registered %attended) p.u.sta) ~ `culp)
     ?~  who  cor
-    =:  peers    (~(put bi peers) id u.who ~ ~)
+    =:  peers    (~(put bi peers) id u.who ~)
         matches  (~(put bi matches) id u.who ~)
         reaches  (~(put bi reaches) id u.who ~)
       ==
@@ -470,81 +480,34 @@
   ::
   ++  show
     |=  =status
-    !!
-    :: update status in peers
+    ^+  cor
+    ?.  (~(has bi peers) id culp)  cor
+    cor(peers (~(put bi peers) id culp status))
   ::  +shake: core matching arm
   ::
   ++  shake
     |=  act=?
     |^  ^+  cor
-    ?:  =(our.bowl src.bowl)
-      :: init a new status to a peer
-      ::
-      ?.  (~(has bi peers) id culp)  cor
-      =/  =cage
-        matcher-deed+!>(`deed`[%shake id culp act])
-      %-  emit
-      (make-act /shake/init/(scot %p culp) ship.id dap.bowl cage)
-    :: received from a guest, wanting us, the host, to fwd along
-    ::
-    ?.  =(ship.id our.bowl)  cor
-    ::  both ships in question must be in our peers mip
-    ::
-    ?.  &((~(has bi peers) id src.bowl) (~(has bi peers) id culp))
-      cor
-    ?:(act init-reach remove-reach)
-    ::  +init-reach: a guest is trying to match with another guest
-    ::
-    ++  init-reach
-      ^+  cor
-      ?.  (~(has in (get-ships %reaches culp)) src.bowl)
-        ::  if culp hasn't already added src, add culp to src's reaches list
+        ?:  =(our.bowl src.bowl)
+          :: init a new status to a peer
+          ::
+          ?:  =(our.bowl culp)  cor
+          ?.  (~(has bi peers) id culp)  cor
+          =/  =cage
+            matcher-deed+!>(`deed`[%shake id culp act])
+          %-  emit
+          (make-act /shake/(scot %p culp) ship.id dap.bowl cage)
+        :: received from a guest, wanting us, the host, to fwd along
         ::
-        =.  reaches  (mod-reaches %add src.bowl culp)
-        cor
-        ::(pass-update :-  [src.bowl `%reach]  [culp `%reach])
-      ::  if culp already has src in their reaches, remove src from culp's
-      ::  reaches and add both to each others matches
-      ::
-      =.  reaches  (mod-reaches %del culp src.bowl)
-      =.  matches  (mod-matches %add culp src.bowl)
-      =.  matches  (mod-matches %add src.bowl culp)
-      cor
-      ::(pass-update :-  [src.bowl `%match]  [culp `%match])
-    ::  +remove-reach: a guest has signaled they don't want to match
-    ::  with someone
-    ::
-    ++  remove-reach
-      ^+  cor
-      ?:  (~(has in (get-ships %reaches src.bowl)) culp)
-        ::  if culp is in src's reaches, remove them
+        ?.  =(ship.id our.bowl)  cor
+        ::  they cannot match with themselves
         ::
-        =.  reaches  (mod-reaches %del src.bowl culp)
-        cor
-       :: (pass-update :-  [src.bowl ~]  [culp ~])
-      ::  if culp is not in src's reaches, remove culp from src's matches
-      ::
-      =.  matches  (mod-matches %del src.bowl culp)
-      ::  possilby slot culp's matches and reaches, too
-      ::
-      ?.  (~(has in (get-ships %matches culp)) src.bowl)
-        cor
-        ::(pass-update :-  [src.bowl ~]  [culp ~])
-      ::  remove src from culp's matches and add to culp's reaches
-      ::
-      =.  matches  (mod-matches %del culp src.bowl)
-      =.  reaches  (mod-reaches %add culp src.bowl)
-      cor
-      ::(pass-update :-  [src.bowl ~]  [culp `%reach])
-    ::  +pass-update: send status update to both parties
-    ::
-::    ++  pass-update
-::      |=  [actor=[ship status] target=[ship status]]
-::      ^+  cor
-::      =/  =cage
-::        matcher-deed+!>(`deed`[%shake id culp act])
-::      %-  emit
-::      (make-act /shake/init/(scot %p culp) ship.id dap.bowl cage)
+        ?:  =(src.bowl culp)  cor
+        ::  both ships in question must be in our peers mip
+        ::
+        ?.  &((~(has bi peers) id src.bowl) (~(has bi peers) id culp))
+          cor
+        ?:(act init-reach remove-reach)
     ::  +mod-reaches: modify the reaches mip
     ::
     ++  mod-reaches
@@ -585,18 +548,58 @@
         %add  ~(tap in (~(put in ships) tar))
         %del  ~(tap in (~(del in ships) tar))
       ==
-    --
-    :: check if the act is postive or negative
-    ::   if positive, check if src.bowl is in clup's reaches list
-    ::     if yes, add both ships to matches and remove src.bowl from
-    ::     culp's reaches
-    ::   if no, add culp to src.bowl's reaches list
-    :: if negative, check if culp is in src.bowl's reaches or matches
-    :: list
-    ::   if in matches, remove culp from src.bowl's matches and add
-    ::   src.bowl to culp's reaches
-    :: if in reaches, remove culp from src.bowl's reaches
-    :: pass a %show to culp and src.bowl
+    ::  +pass-update: send status update to both parties
     ::
+    ++  pass-update
+      |=  [actor=[=ship =status] target=[=ship =status]]
+      |^  ^+  cor
+          =.  cor  (send ship.actor status.actor ship.target)
+          (send ship.target status.target ship.actor)
+      ::
+      ++  send
+        |=  [target=ship =status peer=ship]
+        ^+  cor
+        =/  =cage
+          matcher-dictum+!>(`dictum`[id [%show peer status]])
+        %-  emit
+        (make-act /show/(scot %p target)/(scot %p peer) target dap.bowl cage)
+      --
+    ::  +init-reach: a guest is trying to match with another guest
+    ::
+    ++  init-reach
+      ^+  cor
+      ?.  (~(has in (get-ships %reaches culp)) src.bowl)
+        ::  if culp hasn't already added src, add culp to src's reaches list
+        ::
+        =.  reaches  (mod-reaches %add src.bowl culp)
+        (pass-update [src.bowl `%outgoing] [culp `%incoming])
+      ::  if culp already has src in their reaches, remove src from culp's
+      ::  reaches and add both to each others matches
+      ::
+      =.  reaches  (mod-reaches %del culp src.bowl)
+      =.  matches  (mod-matches %add culp src.bowl)
+      =.  matches  (mod-matches %add src.bowl culp)
+      (pass-update [src.bowl `%match] [culp `%match])
+    ::  +remove-reach: a guest has signaled they don't want to match
+    ::  with someone
+    ::
+    ++  remove-reach
+      ^+  cor
+      ?:  ?|  (~(has in (get-ships %reaches src.bowl)) culp)
+              (~(has in (get-ships %reaches culp)) src.bowl)
+          ==
+        ::  remove culp from src's reaches
+        ::
+        =.  reaches  (mod-reaches %del src.bowl culp)
+        ?.  (~(has in (get-ships %reaches culp)) src.bowl)
+          (pass-update [src.bowl ~] [culp ~])
+        (pass-update [src.bowl `%incoming] [culp `%outgoing])
+       ::  remove src from culp's matches and add to culp's reaches
+      ::
+      =.  matches  (mod-matches %del src.bowl culp)
+      =.  matches  (mod-matches %del culp src.bowl)
+      =.  reaches  (mod-reaches %add culp src.bowl)
+      (pass-update [src.bowl `%incoming] [culp `%outgoing])
+    --
   --
 --
