@@ -58,7 +58,7 @@
   ++  on-peek
     |=  =path
     ^-  (unit (unit cage))
-    [~ ~]
+    (peek:cor path)
   ::
   ++  on-agent
     |=  [=wire =sign:agent:gall]
@@ -129,6 +129,52 @@
   ?>  ?=([%0 *] q.vase)
   cor(state !<(state-0 vase))
 ::
+++  arvo
+  |=  [=wire =sign-arvo]
+  ^+  cor
+  ?+    wire  ~|(bad-arvo-wire+wire !!)
+      [%eyre %connect ~]
+    ?.  ?=([%eyre %bound *] sign-arvo)
+      ~|(unexpected-system-response+sign-arvo !!)
+    ~?  !accepted.sign-arvo
+      [dap.bowl 'eyre bind rejected!' binding.sign-arvo]
+    cor
+  ==
+::
+++  peek
+  |=  pol=(pole knot)
+  ^-  (unit (unit cage))
+  =;  =demand
+    ``[%matcher-demand !>(demand)]
+  ?+    pol  ~|(invalid-scry-path+pol !!)
+      [%x %profile ship=@ ~]
+    :-  %profile
+    ?~  mp=(~(get by profiles) (slav %p ship:pol))  ~
+    u.mp
+  ::
+      [%x %peer-status host=@ name=@ ship=@ ~]
+    :-  %peer-status
+    =+  %+  ~(get bi peers)
+          [(slav %p host:pol) (slav %tas name:pol)]
+        (slav %p ship:pol)
+    ?~(- ~ u.-)
+  ::
+      [%x %peers host=@ name=@ ~]
+    :-  %peers
+    ?~  mp=(~(get by peers) (slav %p host:pol) (slav %tas name:pol))  ~
+    u.mp
+  ::
+      [%x %matches host=@ name=@ ~]
+    :-  %matches
+    ?~  mp=(~(get by matches) (slav %p host:pol) (slav %tas name:pol))  ~
+    u.mp
+  ::
+      [%x %reaches host=@ name=@ ~]
+    :-  %reaches
+    ?~  mp=(~(get by reaches) (slav %p host:pol) (slav %tas name:pol))  ~
+    u.mp
+  ==
+::
 ++  agent
   |=  [=wire =sign:agent:gall]
   ^+  cor
@@ -182,18 +228,6 @@
         pass-profile-to-matches
       ==
     ==
-  ==
-::
-++  arvo
-  |=  [=wire =sign-arvo]
-  ^+  cor
-  ?+    wire  ~|(bad-arvo-wire+wire !!)
-      [%eyre %connect ~]
-    ?.  ?=([%eyre %bound *] sign-arvo)
-      ~|(unexpected-system-response+sign-arvo !!)
-    ~?  !accepted.sign-arvo
-      [dap.bowl 'eyre bind rejected!' binding.sign-arvo]
-    cor
   ==
 ::
 ++  poke
