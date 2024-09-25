@@ -10,6 +10,7 @@ interface Backend {
 
 interface Profile {
   patp: string;
+  status: "unmatched" | "sent-request" | "matched"
   github?: string;
   telegram?: string;
   phone?: string;
@@ -40,7 +41,6 @@ interface Event {
 }
 
 function getAttendees(_api: Urbit): () => Promise<string[]> {
-
   return async () => Promise.resolve([
     "~sampel-palnet",
     "~sampel-palnet",
@@ -85,16 +85,18 @@ function getSchedule(_api: Urbit): () => Promise<Session[]> {
 }
 
 const _mockProfiles = (patp: string) => {
-  const sampel = {
+  const sampel: Profile = {
     patp: "~sampel-palnet",
+    status: "sent-request",
     email: "sampel-palnet@foo.bar",
     phone: "1234556799",
     github: "sampel-palnet",
     telegram: "@ sampel-palnet"
   }
 
-  const sorreg = {
+  const sorreg: Profile = {
     patp: "~sorreg-namtyv",
+    status: "unmatched",
   }
 
   if (patp === "~sampel-palnet") {

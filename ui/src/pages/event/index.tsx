@@ -5,7 +5,7 @@ import { LoaderFunctionArgs, Params } from "react-router-dom";
 
 import { EventContext, EventCtx, newEmptyCtx } from './context';
 
-import { Backend } from '@/backend'
+import { Backend, Profile } from '@/backend'
 
 interface EventParams {
   hostShip: string,
@@ -38,7 +38,7 @@ async function buildContextData({ hostShip: host, name }: EventParams, backend: 
   const profiles = await Promise.all(evt.attendees
     .map((attendee) => backend.getProfile(attendee)))
 
-  evt.profiles = profiles.filter(profile => profile !== null)
+  evt.profiles = profiles.filter(profile => profile !== null) as Profile[]
 
 
   return evt
