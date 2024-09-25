@@ -56,6 +56,7 @@
       moment=moment-1
       =timezone
       location=(unit cord)
+      venue-map=(unit cord)
       =group
       =kind
       =latch
@@ -86,9 +87,6 @@
 ::
 +$  record    [=info =secret =status]
 +$  record-1  [info=info-1 =secret =status]
-::  $entry: guest contact field
-::
-+$  entry  (unit cord)
 ::  $dial: non-event-specific actions
 ::
 +$  dial
@@ -97,7 +95,6 @@
       :: can be remote scried (i.e. /=/some/path)
       [%case-request name=(unit term)]
       [%case-response case=(unit @ud) name=(unit term)]
-      [%profile-entry p=term q=entry]           :: edit profile
   ==
 ::  $sub-sesssion: modify a piece of session info
 ::
@@ -123,6 +120,7 @@
       [%moment p=moment-1]
       [%timezone p=timezone]
       [%location p=(unit cord)]
+      [%venue-map p=(unit cord)]
       [%group p=group]
       [%kind p=kind]
       [%latch p=latch]

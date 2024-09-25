@@ -1,4 +1,4 @@
-::  record state replication
+::  %live's state replication
 ::
 /-  *live
 |%

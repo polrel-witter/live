@@ -1,6 +1,6 @@
 ::  %live: event coordination
 ::
-/-  *live, live-records, hark, contacts
+/-  *live, matcher, live-records, hark, contacts
 /+  *sss, *mip, verb, dbug, default-agent
 ::
 |%
@@ -19,7 +19,6 @@
   $:  %1
       events=(map id event-1)                               :: events we host
       records=(mip id ship record-1)                        :: access data
-      profiles=(mip ship term entry)                        :: contact info
       result=$@(@t (map id info-1))                         :: search result
       sub-records=_(mk-subs live-records ,[%record @ @ ~])  :: record subs
       pub-records=_(mk-pubs live-records ,[%record @ @ ~])  :: record pubs
@@ -119,15 +118,8 @@
 ::
 ++  init
   ^+  cor
-  =.  cor
-    %-  emit
-    [%pass /eyre/connect %arvo %e %connect [~ /apps/live] %live]
-  ::  populate our profile with default fields and subscribe to our Tlon
-  ::  profile data
-  ::
-  =.  profiles  set-default-fields
-  =.  cor  (emit (make-watch /profile/local our.bowl %contacts /contact))
-  =.  cor  scry-tlon-fields  cor
+  %-  emit
+  [%pass /eyre/connect %arvo %e %connect [~ /apps/live] %live]
 ::
 ++  load
   |=  =vase
@@ -135,9 +127,6 @@
   =/  ole  !<(versioned-state vase)
   ?-    -.ole
       %0
-    =;  =_cor
-      =.  cor  (emit (make-watch /profile/local our.bowl %contacts /contact))
-      =.  cor  scry-tlon-fields  cor
     %=  cor
       state   :*  %1
                   (~(urn by events.ole) event-0-to-1)
@@ -148,8 +137,6 @@
                     |-
                     ?~  ls  ms
                     $(ls t.ls, ms (~(put bi ms) p.i.ls q.i.ls r.i.ls))
-                  ::
-                  set-default-fields
                   ::
                   ^-  $@(@t (map id info-1))
                   ?@  result.ole
@@ -190,6 +177,19 @@
       [~ %sss %scry-response @ @ @ %record @ @ ~]
     (sss-pub-records (tell:du-records |3:wire sign))
   ::
+      [%matcher @ *]
+    ?>  ?=(%poke-ack -.sign)
+    =/  =ship  (slav %p i.t.wire)
+    ?+    t.t.wire  ~|(bad-wire+wire cor)
+        [%add ~]
+      ?~  p.sign  cor
+      ~&(>>> "failed to add {<ship>} as peer in %matcher" cor)
+    ::
+        [%delete ~]
+      ?~  p.sign  cor
+      ~&(>>> "failed to remove {<ship>} from %matcher" cor)
+    ==
+  ::
       [%case %request @ @ ~]
     =/  =ship  (slav %p i.t.t.wire)
     =/  name=@t  i.t.t.t.wire
@@ -201,24 +201,6 @@
       ~['No events found under' ' ' (scot %p ship)]
     ~[(crip "'{<name>}'") ' not found under ' (scot %p ship)]
   ::
-      [%profile *]
-    ?+    t.wire  ~|(bad-agent-wire+wire !!)
-        [%local ~]
-      :: TODO handle these properly
-      ?-    -.sign
-          %kick  !!
-          %poke-ack  !!
-          %watch-ack
-        ?~  p.sign
-          ~&(> "watching %contacts for updates to our Tlon profile" cor)
-        :: TODO handle the $tang properly
-        ~&(u.p.sign cor)
-      ::
-          %fact
-        =/  =update:contacts  !<(update:contacts q.cage.sign)
-        =.(cor (update-tlon-fields ?~(con.update ~ `con.update)) cor)
-      ==
-    ==
   ==
 ::
 ++  arvo
@@ -333,7 +315,6 @@
         %find           (search +.dial)
         %case-request   (case-request +.dial)
         %case-response  (case-response +.dial)
-        %profile-entry  (~(edit pr p.dial) q.dial)
     ==
   ::
       %sss-to-pub
@@ -423,12 +404,6 @@
   |=  [=wire who=ship app=term =cage]
   ^-  card
   [%pass wire %agent [who app] %poke cage]
-::  +make-watch: build watch card
-::
-++  make-watch
-  |=  [=wire who=ship app=term =path]
-  ^-  card
-  [%pass wire %agent [who app] %watch path]
 ::  +make-operation: produce an $operation cage
 ::
 ++  make-operation
@@ -443,80 +418,6 @@
   %+  slav  %tas
   %-  crip
   :(weld (scow %tas name) "-" (swag [6 4] (scow %uv eny.bowl)))
-::  +scry-tlon-fields: populate Tlon profile via scry
-::
-++  scry-tlon-fields
-  ^+  cor
-  =;  con=(unit contact:contacts)
-    ?~  con  cor
-    (update-tlon-fields con)
-  =/  base-path=path
-    /(scot %p our.bowl)/contacts/(scot %da now.bowl)
-  =/  is-running=?
-    .^(? %gu (weld base-path /$))
-  ?.  is-running
-    ~&(>> "%contacts isn't running, cannot pull our Tlon profile data" ~)
-  %-  some
-  .^  contact:contacts
-    %gx
-    (weld base-path /contact/(scot %p our.bowl)/contact)
-  ==
-::  +update-tlon-fields: populate supported Tlon fields into %live profile
-::
-++  update-tlon-fields
-  |=  con=(unit contact:contacts)
-  ^+  cor
-  =/  ls=(list f=[term entry])
-    ?~  con
-      ~[[%nickname ~] [%bio ~] [%avatar ~]]
-    ~[[%nickname `nickname.u.con] [%bio `bio.u.con] [%avatar avatar.u.con]]
-  |-
-  ?~  ls  cor
-  =.  profiles
-    (~(put bi profiles) our.bowl f.i.ls)
-  $(ls t.ls)
-::  +set-default-fields: create default profile fields
-::
-++  set-default-fields
-  ^+  profiles
-  =;  ms=(map term entry)
-    (~(put by *(mip ship term entry)) our.bowl ms)
-  %-  malt
-  %+  turn
-    ^-  (list term)
-    :~  %nickname
-        %avatar
-        %bio
-        %ens-domain
-        %telegram
-        %github
-        %signal
-        %x
-        %email
-        %phone
-    ==
-  |=  =term
-  [term ~]
-::  +pr: profile handler
-::
-++  pr
-  |_  field-id=term
-  ::  +edit: add/update a profile field entry
-  ::
-  ++  edit
-    |=  update=entry
-    ^+  cor
-    =/  =entry  get-entry
-    ?~  entry  cor
-    cor(profiles (~(put bi profiles) our.bowl field-id update))
-  ::  +get-entry: pull a profile entry
-  ::
-  ++  get-entry
-    ^-  entry
-    ?~  ent=(~(get bi profiles) our.bowl field-id)
-      ~&(>>> "profile field, {<field-id>}, not supported" ~)
-    u.ent
-  --
 ::  +get-our-case: get a remote scry revision number for one of our
 ::  published paths
 ::
@@ -750,6 +651,15 @@
       %unregister  (unregister +.act)
       %punch       (punch +.act)
     ==
+    ::  +poke-matcher: send a dictum poke to %matcher
+    ::
+    ++  poke-matcher
+      |=  [=wire dict=dictum:matcher]
+      ^+  cor
+      =/  =cage
+        matcher-dictum+!>(`dictum:matcher`dict)
+      %-  emit
+      (make-act wire our.bowl %matcher cage)
     ::  +create: write a new event to state
     ::
     ++  create
@@ -759,6 +669,8 @@
       =?  id  (~(has by events) id)
         [ship.id (append-entropy name.id)]
       =.  events  (~(put by events) id event)
+      =.  cor
+        (poke-matcher /matcher/(scot %p our.bowl)/add [id [%add-peer our.bowl]])
       =.  cor  (update-remote-event event)
       update-all-remote-events
     ::  +delete: as host, permanently delete an event; as a guest,
@@ -822,13 +734,14 @@
           /event/(scot %tas name.id)
         (update-guests get-all-guests)
       ?-    -.sub-info
-          %title     event(title.info p.sub-info)
-          %about     event(about.info p.sub-info)
-          %kind      event(kind.info p.sub-info)
-          %location  event(location.info p.sub-info)
-          %group     event(group.info p.sub-info)
-          %moment    event(moment.info p.sub-info)
-          %timezone  event(timezone.info p.sub-info)
+          %title      event(title.info p.sub-info)
+          %about      event(about.info p.sub-info)
+          %kind       event(kind.info p.sub-info)
+          %location   event(location.info p.sub-info)
+          %venue-map  event(venue-map.info p.sub-info)
+          %group      event(group.info p.sub-info)
+          %moment     event(moment.info p.sub-info)
+          %timezone   event(timezone.info p.sub-info)
       ::
           %latch
         :: if limit is reached, prevent host from opening
@@ -863,11 +776,11 @@
         =;  update=session
           event(sessions.info (~(put by sessions.info.event) sid update))
         ?-    -.q.sub-info
-            %title     u.ses(title p.q.sub-info)
-            %panel     u.ses(panel p.q.sub-info)
-            %location  u.ses(location p.q.sub-info)
-            %about     u.ses(about p.q.sub-info)
-            %moment    u.ses(moment p.q.sub-info)
+            %title      u.ses(title p.q.sub-info)
+            %panel      u.ses(panel p.q.sub-info)
+            %location   u.ses(location p.q.sub-info)
+            %about      u.ses(about p.q.sub-info)
+            %moment     u.ses(moment p.q.sub-info)
         ==
       ==
     ::  +change-limit: update register limit
@@ -1000,6 +913,10 @@
         =.  cor
           (update-event event(latch.info %closed))
         (update-guests get-all-guests)
+      =?  cor  ?=(%registered p.status)
+        ::  add to %matcher
+        ::
+        (poke-matcher /matcher/(scot %p ship)/add [id [%add-peer ship]])
       :: add or update record
       ::
       ?.  (~(has bi records) id ship)
@@ -1067,6 +984,12 @@
       =?  who  ?~(who & ?>(host-call |))
         ?>(guest-call `src.bowl)
       ?.  (is-registered (need who))  cor
+      =.  cor
+        ::  remove from %matcher peers
+        ::
+        %+  poke-matcher
+          /matcher/(scot %p (need who))/delete
+        [id [%delete-peer (need who)]]
       (~(update-status re (need who)) [%unregistered now.bowl])
       ::  +is-registered: check if registered
       ::
@@ -1166,7 +1089,7 @@
   =/  [start=(unit time) end=(unit time) =timezone]
     moment.info
   :-  title.info
-  [about.info [start end] timezone ~ ~ kind.info latch.info ~]
+  [about.info [start end] timezone ~ ~ ~ kind.info latch.info ~]
 ++  record-0-to-1
   |=  [k0=id k1=ship v=record]
   ^-  [id ship record-1]
