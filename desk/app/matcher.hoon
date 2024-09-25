@@ -11,8 +11,8 @@
   $:  %0
       profiles=(mip ship term entry)                   :: contact info
       peers=(mip id:live ship status)                  :: our relation to a peer
-      matches=(mip id:live ship (list ship))           :: matched peers
-      reaches=(mip id:live ship (list ship))           :: match attempts
+      matches=(mip id:live ship (list ship))           :: host pov: matches
+      reaches=(mip id:live ship (list ship))           :: host pov: match tries
       sub-peers=_(mk-subs live-peers ,[%peers @ @ ~])  :: subscriptions
       pub-peers=_(mk-pubs live-peers ,[%peers @ @ ~])  :: publications
   ==
@@ -159,6 +159,12 @@
   ::
       [%profile *]
     ?+    t.wire  ~|(bad-agent-wire+wire !!)
+        [%remote @ ~]
+      ?>  ?=(%poke-ack -.sign)
+      ?~  p.sign  cor
+      =/  =ship  (slav %p i.t.wire)
+      ~&(>>> "failed to give updated profile to {<ship>}" cor)
+    ::
         [%local ~]
       :: TODO handle these properly
       ?-    -.sign
@@ -172,7 +178,8 @@
       ::
           %fact
         =/  =update:contacts  !<(update:contacts q.cage.sign)
-        =.(cor (update-tlon-fields ?~(con.update ~ `con.update)) cor)
+        =.  cor  (update-tlon-fields ?~(con.update ~ `con.update))
+        pass-profile-to-matches
       ==
     ==
   ==
@@ -196,8 +203,9 @@
       %matcher-deed
     =+  !<(=deed vase)
     ?-  -.deed
-      %edit-profile  (edit-profile +.deed)
-      %shake         (~(shake pe id.deed ship.deed) act.deed)
+      %edit-profile    (edit-profile term.deed entry.deed)
+      %update-profile  (update-profile p.deed)
+      %shake           (~(shake pe id.deed ship.deed) act.deed)
     ==
   ::
       %matcher-dictum
@@ -311,19 +319,6 @@
    %+  weld  (base-path %live)
    /record/(scot %p ship.id)/(scot %tas name.id)/(scot %p guest)/live-demand
  ==
-::  +edit-profile: add/update a profile field entry
-::
-++  edit-profile
-  |=  [field-id=term update=entry]
-  ^+  cor
-  ?.  =(our.bowl src.bowl)  cor
-  ?.  (~(has bi profiles) our.bowl field-id)
-    ~&(>>> "profile field, {<field-id>}, not supported" cor)
-  :: TODO support editing Tlon fields from %matcher
-  ::
-  ?:  ?=(?(%nickname %bio %avatar) field-id)
-    ~&(>>> "cannot edit Tlon field, {<field-id>}, from %matcher" cor)
-  cor(profiles (~(put bi profiles) our.bowl field-id update))
 ::  +subscribe: a poke received from a host, asking us to subscribe to
 ::  their sss %peers path for guest list updates
 ::
@@ -339,6 +334,57 @@
     ~&(>>> "cannot subscribe to a guest list of which we're the host" cor)
   %-  sss-sub-peers
   (surf:da-peers src.bowl dap.bowl [%peers ship.id name.id ~])
+::  +edit-profile: add/update a profile field entry
+::
+++  edit-profile
+  |=  [field-id=term update=entry]
+  ^+  cor
+  ?.  =(our.bowl src.bowl)  cor
+  ?.  (~(has bi profiles) our.bowl field-id)
+    ~&(>>> "profile field, {<field-id>}, not supported" cor)
+  ?:  ?=(?(%nickname %bio %avatar) field-id)
+    ~&(>>> "cannot edit Tlon field, {<field-id>}, from %matcher" cor)
+  =.  profiles  (~(put bi profiles) our.bowl field-id update)
+  pass-profile-to-matches
+::  +update-profile: receive a profile update from a matched peer
+::
+++  update-profile
+  |=  profile=(map term entry)
+  ^+  cor
+  =/  still=(map term entry)
+    ::  only include supported profile fields
+    ::
+    %-  malt
+    %+  murn  ~(tap by profile)
+    |=  [=term =entry]
+    ?.((~(has in (silt profile-fields)) term) ~ `[term entry])
+  cor(profiles (~(put by profiles) src.bowl still))
+::  +send-profile: send a profile update to a peer
+::
+++  send-profile
+  |=  =ship
+  ^+  cor
+  =/  =cage
+    =/  ms=(map term entry)
+      (~(got by profiles) our.bowl)
+    matcher-deed+!>(`deed`[%update-profile ms])
+  (emit (make-act /profile/remote/(scot %p ship) ship dap.bowl cage))
+::  +pass-profile-to-matches: send profile update to all of our
+::  matched peers
+::
+++  pass-profile-to-matches
+  ^+  cor
+  =/  targets=(set ship)
+    %-  silt
+    %+  murn  ~(tap bi peers)
+    |=  [* =ship =status]
+    ?~(status ~ ?.(?=(%match u.status) ~ `ship))
+  =/  tar=(list ship)
+    ~(tap in targets)
+  |-
+  ?~  tar  cor
+  =.  cor  (send-profile i.tar)
+  $(tar t.tar)
 ::  +scry-tlon-fields: populate Tlon profile via scry
 ::
 ++  scry-tlon-fields
@@ -373,25 +419,26 @@
 ::
 ++  set-default-fields
   ^+  profiles
-  =;  ms=(map term entry)
-    (~(put by *(mip ship term entry)) our.bowl ms)
-  %-  malt
-  %+  turn
-    ^-  (list term)
-    :~  %nickname
-        %avatar
-        %bio
-        %ens-domain
-        %telegram
-        %github
-        %signal
-        %x
-        %email
-        %phone
-    ==
-  |=  =term
-  [term ~]
+  =/  ms=(map term entry)
+    (malt (turn profile-fields |=(=term [term ~])))
+  (~(put by *(mip ship term entry)) our.bowl ms)
+::  +profile-fields: default list of profile fields the profiles mip
+::  accepts
 ::
+++  profile-fields
+  ^-  (list term)
+  :~  %nickname
+      %avatar
+      %bio
+      %ens-domain
+      %telegram
+      %github
+      %signal
+      %x
+      %email
+      %phone
+  ==
+::  +pe: peer operations
 ::
 ++  pe
   |_  [=id:live culp=ship]
@@ -482,6 +529,8 @@
     |=  =status
     ^+  cor
     ?.  (~(has bi peers) id culp)  cor
+    =?  cor  ?~(status | ?=(%match u.status))
+      (send-profile culp)
     cor(peers (~(put bi peers) id culp status))
   ::  +shake: core matching arm
   ::
