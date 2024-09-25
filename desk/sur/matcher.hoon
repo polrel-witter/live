@@ -23,7 +23,17 @@
 ::  $deed: host or guest action
 ::
 +$  deed
-  $%  [%edit-profile =term =entry]     :: edit profile
-      [%shake =id:live =ship act=?]    :: initiate a new peer status
+  $%  [%edit-profile =term =entry]           :: edit profile
+      [%update-profile p=(map term entry)]   :: receive peer profile update
+      [%shake =id:live =ship act=?]          :: initiate a new peer status
+  ==
+::  +demand: scry api
+::
+++  demand
+  $%  [%profile p=(map term entry)]        :: a profile
+      [%peer-status p=status]              :: peer status
+      [%peers p=(map ship status)]         :: peer statuses by event
+      [%matches p=(map ship (list ship))]  :: all matches for an event
+      [%reaches p=(map ship (list ship))]  :: all reaches for an event
   ==
 --
