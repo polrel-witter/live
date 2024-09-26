@@ -30,10 +30,11 @@
 ::  +demand: scry api
 ::
 ++  demand
-  $%  [%profile p=(map term entry)]        :: a profile
-      [%peer-status p=status]              :: peer status
-      [%peers p=(map ship status)]         :: peer statuses by event
-      [%matches p=(map ship (list ship))]  :: all matches for an event
-      [%reaches p=(map ship (list ship))]  :: all reaches for an event
+  $%  [%profile p=(map term entry)]                 :: a profile
+      [%profiles p=(map ship (list [term entry]))]  :: all profiles
+      [%peer-status p=status]                       :: peer status
+      [%peers p=(map ship status)]                  :: peer statuses by event
+      [%matches p=(map ship (list ship))]           :: all matches for an event
+      [%reaches p=(map ship (list ship))]           :: all reaches for an event
   ==
 --
