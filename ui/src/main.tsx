@@ -14,9 +14,22 @@ import { ErrorPage } from '@/pages/error-page';
 // urbit api
 import Urbit from '@urbit/http-api';
 
-const api = new Urbit('', '', window.desk);
-api.ship = window.ship;
-window.urbit = api;
+window.urbit = new Urbit('');
+window.urbit.ship = window.ship
+window.urbit.onOpen = () => console.log('urbit: connected')
+window.urbit.onRetry = () => console.log('urbit: retrying connection')
+window.urbit.onError = () => console.log('urbit: error connecting')
+window.urbit.subscribe({
+  app: "live",
+  path: "updates",
+  event: (evt) => {console.log("%live event: ", evt)},
+  err: (err, _id) => {console.log("%live err: ", err)},
+  quit: (data) => {console.log("%live closed subscription: ", data)}
+})
+window.urbit.scry({
+  app: "live",
+  path: "/records/all",
+})
 
 // backend
 import { newBackend } from '@/backend'
@@ -30,16 +43,17 @@ import { PatpLoader, ProfilePage } from './pages/profile';
 import { EventDetails } from './pages/event/details';
 
 const backend = newBackend(window.urbit)
+const basePath = "/apps/live"
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: basePath + "/",
     element: <Index backend={backend} />,
     errorElement: <ErrorPage />,
     children: [
     ],
   },
   {
-    path: "/event/:hostShip/:name",
+    path: basePath + "/event/:hostShip/:name",
     element: <EventIndex backend={backend} />,
     loader: EventParamsLoader,
     errorElement: <ErrorPage />,
@@ -50,24 +64,24 @@ const router = createBrowserRouter([
         element: <EventDetails />
       },
       {
-        path: "/event/:hostShip/:name/attendees",
+        path: basePath + "/event/:hostShip/:name/attendees",
         loader: EventParamsLoader,
         element: <AttendeesPage />
       },
       {
-        path: "/event/:hostShip/:name/schedule",
+        path: basePath + "/event/:hostShip/:name/schedule",
         loader: EventParamsLoader,
         element: <SchedulePage />
       },
       {
-        path: "/event/:hostShip/:name/map",
+        path: basePath + "/event/:hostShip/:name/map",
         loader: EventParamsLoader,
         element: <MapPage />
       },
     ],
   },
   {
-    path: "/profile/:patp",
+    path: basePath + "/profile/:patp",
     loader: PatpLoader,
     element: <ProfilePage backend={backend} />
   }
