@@ -160,7 +160,10 @@
 ++  watch
   |=  pol=(pole knot)
   ^+  cor
-  cor
+  ?>  (team:title our.bowl src.bowl)
+  ?+  pol  ~|(bad-watch+pol cor)
+    [%updates ~]  cor
+  ==
 ::
 ++  agent
   |=  [=wire =sign:agent:gall]

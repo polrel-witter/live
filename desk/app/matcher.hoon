@@ -75,7 +75,8 @@
   ++  on-watch
     |=  =path
     ^-  (quip card _this)
-    `this
+    =^  cards  state  abet:(watch:cor path)
+    [cards this]
   ::
   ++  on-fail   on-fail:def
   ++  on-leave  on-leave:def
@@ -128,6 +129,14 @@
   ^+  cor
   ?>  ?=([%0 *] q.vase)
   cor(state !<(state-0 vase))
+::
+++  watch
+  |=  pol=(pole knot)
+  ^+  cor
+  ?>  (team:title our.bowl src.bowl)
+  ?+  pol  ~|(bad-watch+pol cor)
+    [%updates ~]  cor
+  ==
 ::
 ++  arvo
   |=  [=wire =sign-arvo]
