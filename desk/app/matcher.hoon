@@ -161,6 +161,18 @@
     ?~  mp=(~(get by profiles) (slav %p ship:pol))  ~
     u.mp
   ::
+      [%x %all %profiles ~]
+    :-  %profiles
+    %-  malt
+    ^-  (list [ship (list [term entry])])
+    =/  peers=(list ship)
+      ~(tap in ~(key by profiles))
+    %+  turn  peers
+    |=  =ship
+    :-  ship
+    ^-  (list [term entry])
+    ~(tap by (~(got by profiles) ship))
+  ::
       [%x %peer-status host=@ name=@ ship=@ ~]
     :-  %peer-status
     =+  %+  ~(get bi peers)
