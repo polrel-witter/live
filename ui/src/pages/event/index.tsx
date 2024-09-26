@@ -5,7 +5,7 @@ import { LoaderFunctionArgs, Params } from "react-router-dom";
 
 import { EventContext, EventCtx, newEmptyCtx } from './context';
 
-import { Backend, Profile } from '@/backend'
+import { Backend, EventId, Profile } from '@/backend'
 
 interface EventParams {
   hostShip: string,
@@ -26,14 +26,15 @@ export function LoadEventParams(): EventParams {
 
 const emptyEvent = newEmptyCtx()
 
-async function buildContextData({ hostShip: host, name }: EventParams, backend: Backend) {
+async function buildContextData({ hostShip, name }: EventParams, backend: Backend) {
 
   const evt = emptyEvent
+  const evtId: EventId = { ship: hostShip, name: name }
   // we could also do away with this backend call here
   // and add a prop to pass EventDetails from the main page
-  evt.details = await backend.getEvent(host, name)
-  evt.schedule = await backend.getSchedule();
-  evt.attendees = await backend.getAttendees();
+  evt.details = await backend.getEvent(evtId)
+  evt.schedule = await backend.getSchedule(evtId);
+  evt.attendees = await backend.getAttendees(evtId);
 
   const profiles = await Promise.all(evt.attendees
     .map((attendee) => backend.getProfile(attendee)))
@@ -71,7 +72,7 @@ export function EventIndex(props: { backend: Backend }) {
   return (
     <EventContext.Provider value={eventContext}>
       <div className="grid size-full" >
-        <NavBar eventName={eventContext!.details.name} host={eventContext!.details.host} />
+        <NavBar eventName={eventContext!.details.id.name} host={eventContext!.details.id.ship} />
         <Outlet />
       </div>
     </EventContext.Provider>

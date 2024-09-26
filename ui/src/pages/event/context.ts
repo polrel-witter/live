@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import { Session , Event, Profile} from "@/backend";
+import { Session, Event, Profile } from "@/backend";
 
 interface EventCtx {
   details: Event
@@ -11,8 +11,10 @@ interface EventCtx {
 function newEmptyCtx(): EventCtx {
   return {
     details: {
-      host: "",
-      name: "",
+      id: {
+        ship: "",
+        name: ""
+      },
       location: "",
       startDate: new Date(0),
       endDate: new Date(0),
@@ -21,7 +23,7 @@ function newEmptyCtx(): EventCtx {
       kind: "public",
       group: "",
       latch: "open"
-    }, 
+    },
     profiles: [],
     attendees: [] as string[],
     schedule: [] as Session[],
