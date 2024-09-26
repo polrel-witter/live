@@ -3,7 +3,8 @@ import reactRefresh from '@vitejs/plugin-react';
 import path from "path"
 import { VitePWA } from 'vite-plugin-pwa'
 
-import { urbitPlugin } from '@urbit/vite-plugin-urbit';
+import { urbitPlugin } from './vendor/vite-urbit-plugin';
+// import { urbitPlugin } from '@urbit/vite-plugin-urbit';
 
 // we pin vite-plugin-rewrite-all to 1.0.1 (it's a dependency of vite-plugin
 // -urbit) because of this:
@@ -17,7 +18,7 @@ export default ({ mode }) => {
 
   return defineConfig({
     plugins: [
-      // urbitPlugin({ base: 'live', target: SHIP_URL, secure: false }),
+      urbitPlugin({ base: 'live', target: SHIP_URL, secure: false }),
       reactRefresh(),
       VitePWA({
         registerType: 'autoUpdate',
