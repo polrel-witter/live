@@ -7,15 +7,12 @@ import {
   CardTitle
 } from "@/components/ui/card"
 
-import { Profile, Session } from "@/backend"
+import { Profile } from "@/backend"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Handshake, Users, ChevronDown, Plus, Ellipsis, X, Check, FileQuestion } from 'lucide-react'
+import { ChevronDown, Plus, Ellipsis, X, Check, FileQuestion } from 'lucide-react'
 import { Button } from "@/components/ui/button"
-import { Children, PropsWithChildren, PropsWithoutRef, useState } from "react"
-import { cn } from "@/lib/utils"
-import { setHeapSnapshotNearHeapLimit } from "v8"
-import { basename } from "path"
-import { text } from "stream/consumers"
+import { PropsWithChildren, useState } from "react"
+import { cn, flipBoolean } from "@/lib/utils"
 
 // very nice component
 function SlideDownAndReveal({ children, show, maxHeight = "max-h-[100px]" }: PropsWithChildren<{ show: boolean, maxHeight?: `max-h-[${number}px]` }>) {
@@ -55,9 +52,11 @@ function SlideRightAndReveal({ children, show, maxWidth = "max-w-[100px]" }: Pro
   )
 }
 
+// TODO: add tooltips to these
 const ConnectionsButton: React.FC<{ profile: Profile }> = ({ profile }) => {
   const [reveal, setReveal] = useState(false)
   const baseClass = "w-8 h-8 p-0 border rounded-full bg-transparent"
+  // const baseClass = "w-7 h-7 p-0 border rounded-full bg-transparent"
   switch (profile.status) {
     case "unmatched":
       return (
@@ -76,15 +75,13 @@ const ConnectionsButton: React.FC<{ profile: Profile }> = ({ profile }) => {
       return (
         <div className="flex">
           <Button
-            onClick={() => setReveal((b) => !b)}
+            onClick={() => setReveal(flipBoolean)}
             className={cn([
               baseClass,
               `bg-orange-200 hover:bg-orange-300`,
               `md:bg-transparent md:hover:bg-orange-200`
             ])}>
             <Ellipsis className={cn(["h-4 w-4", `text-orange-500`])} />
-            {/* <Handshake className="h-4 w-4 opacity-50"/> */}
-            {/* <span className="text-2xl opacity-50">🤝</span> */}
           </Button>
           <SlideRightAndReveal show={reveal}>
             <Button
@@ -95,14 +92,21 @@ const ConnectionsButton: React.FC<{ profile: Profile }> = ({ profile }) => {
                 `md:bg-transparent md:hover:bg-red-200`
               ])}>
               <X className={cn(["h-4 w-4", `text-red-500`])} />
-              {/* <Handshake className="h-4 w-4 opacity-50"/> */}
-              {/* <span className="text-2xl opacity-50">🤝</span> */}
             </Button>
           </SlideRightAndReveal>
         </div>
       )
     case "matched":
-      return (<Button disabled className={cn([baseClass, "bg-grey-500"])}> unexpected state </Button>)
+      return (
+        <Button
+          className={cn([
+            baseClass,
+            `bg-emerald-200 hover:bg-emerald-600`,
+            `md:bg-transparent md:hover:bg-emerald-200`
+          ])}>
+          <Check className={cn(["h-4 w-4", `text-emerald-500`])} />
+        </Button>
+      )
     default:
       return (
         <Button
@@ -112,39 +116,13 @@ const ConnectionsButton: React.FC<{ profile: Profile }> = ({ profile }) => {
             "bg-gray-300"
           ])}>
           <FileQuestion className="h-4 w-4 text-gray-400" />
-          {/* <Handshake className="h-4 w-4 opacity-50"/> */}
-          {/* <span className="text-2xl opacity-50">🤝</span> */}
         </Button>
       )
   }
-
-  return (
-    <Card className="w-24 border-0 rounded p-0.5 w-full">
-      {/*
-      * possile states:
-      * - matched: we show "matched" on green bg, or green check on green bg that says "matched" on hover 
-      * - we sent match request: we show "proposed match" on light blue bg,
-      *   or light blue check on green bg that says "asked match" on hover;
-      *   we also add red cross icon to annull match
-      * - we did nothing: we show blank bg with match icon or "ask to match" text
-      */}
-      {}
-      <CardHeader className="text-xs space-0 p-0.5 text-center"> connections </CardHeader>
-      <CardContent className="p-0.5">
-        <div className="flex justify-around">
-          <span className="h-4 w-4 bg-red-600"> </span>
-          <span className="h-4 w-4 bg-red-600"> </span>
-        </div>
-      </CardContent>
-    </Card>
-  )
 }
 
 const ListItem: React.FC<{ profile: Profile }> = ({ profile }) => {
-  const [showConnections, setShowConnections] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
-  const flipBoolean = (b: boolean) => !b
-  const toggleConnections = () => setShowConnections(flipBoolean)
   const toggleProfile = () => setShowProfile(flipBoolean)
   return (
     <li key={profile.patp}>
@@ -157,8 +135,8 @@ const ListItem: React.FC<{ profile: Profile }> = ({ profile }) => {
               <AvatarImage src="https://github.com/shadcn.png" />
               <AvatarFallback>CN</AvatarFallback>
             </Avatar>
-            <div className="flex flex-col items-center gap-1">
-              <p className="text-sm">{profile.patp}</p>
+            <div className="flex flex-col items-center gap-1 w-2xl">
+              <p className="text-sm text-ellipsis">{profile.patp}</p>
               <Button onClick={() => toggleProfile()} className="h-4 w-4 p-0 border rounded-2xl bg-transparent">
                 <ChevronDown className="h-3 w-3 text-gray-400" />
               </Button>
