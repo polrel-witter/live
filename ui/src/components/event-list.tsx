@@ -10,15 +10,15 @@ import {
 import { Event } from "@/backend"
 import { Link } from "react-router-dom"
 
-function makeEventMarkup(evt: Event) {
+function makeEventMarkup({id: {ship, name}, ...evt}: Event) {
   return (
-    <li>
+    <li key={`${ship}-${name}-${evt.kind}`}>
       <Card>
         <CardHeader>
           <CardTitle className="font-medium hover:font-bold">
-            <Link to={`event/${evt.host}/${evt.name}`}> {evt.name} </Link>
+            <Link to={`event/${ship}/${name}`}> {name} </Link>
           </CardTitle>
-          <CardDescription className="italics">hosted by {evt.host}</CardDescription>
+          <CardDescription className="italics">hosted by {ship}</CardDescription>
         </CardHeader>
         <CardContent>
           <p>Starts on {evt.startDate.toDateString()}</p>

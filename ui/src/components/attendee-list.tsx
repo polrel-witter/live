@@ -13,6 +13,8 @@ import { ChevronDown, Plus, Ellipsis, X, Check, FileQuestion } from 'lucide-reac
 import { Button } from "@/components/ui/button"
 import { PropsWithChildren, useState } from "react"
 import { cn, flipBoolean } from "@/lib/utils"
+import { unzip } from "zlib"
+import { match } from "assert"
 
 // very nice component
 function SlideDownAndReveal({ children, show, maxHeight = "max-h-[100px]" }: PropsWithChildren<{ show: boolean, maxHeight?: `max-h-[${number}px]` }>) {
@@ -121,7 +123,11 @@ const ConnectionsButton: React.FC<{ profile: Profile }> = ({ profile }) => {
   }
 }
 
-const ListItem: React.FC<{ profile: Profile }> = ({ profile }) => {
+const ListItem: React.FC<{
+  profile: Profile
+  match(patp: string): void;
+  unmatch(patp: string): void;
+}> = ({ profile }) => {
   const [showProfile, setShowProfile] = useState(false)
   const toggleProfile = () => setShowProfile(flipBoolean)
   return (
@@ -152,11 +158,16 @@ const ListItem: React.FC<{ profile: Profile }> = ({ profile }) => {
   )
 }
 
-export default function AttendeeList(props: { profiles: Profile[] }) {
+const AttendeeList: React.FC<{
+  profiles: Profile[]
+  match(patp: string): void;
+  unmatch(patp: string): void;
+}> = ({ profiles, ...rest }) => {
   return (
     <ul className="grid gap-6">
-      {props.profiles.map((profile) => <ListItem profile={profile} />)}
+      {profiles.map((profile) => <ListItem profile={profile} unmatch={rest.unmatch} match={rest.match} />)}
     </ul>
   )
 }
 
+export default AttendeeList;

@@ -1,12 +1,17 @@
 import Urbit from "@urbit/http-api";
-import { debug } from "console";
+
+interface EventId { ship: string, name: string };
 
 interface Backend {
   getEvents(): Promise<Event[]>
-  getEvent(ship: string, name: string): Promise<Event>
-  getAttendees(): Promise<string[]>
-  getSchedule(): Promise<Session[]>
+  getEvent(id: EventId): Promise<Event>
+  getAttendees(id: EventId): Promise<string[]>
+  getSchedule(id: EventId): Promise<Session[]>
+
+  // matching stuff
   getProfile(patp: string): Promise<Profile | null>
+  match(patp: string): void;
+  unmatch(patp: string): void;
 }
 
 interface Profile {
@@ -29,8 +34,7 @@ interface Session {
 }
 
 interface Event {
-  host: string;
-  name: string;
+  id: EventId
   location: string;
   startDate: Date;
   endDate: Date;
@@ -134,8 +138,10 @@ function getEvents(_api: Urbit): () => Promise<Event[]> {
   return async () => Promise.resolve(
     [
       {
-        host: "~sampel-palnet",
-        name: "my-event",
+        id: {
+          ship: "~sampel-palnet",
+          name: "my-event",
+        },
         location: "atlantis",
         startDate: new Date(1300000000000),
         endDate: new Date(1400000000000),
@@ -150,11 +156,13 @@ function getEvents(_api: Urbit): () => Promise<Event[]> {
 }
 
 
-function getEvent(_api: Urbit): (ship: string, name: string) => Promise<Event> {
-  return async (_ship: string, _name: string) => Promise.resolve(
+function getEvent(_api: Urbit): (id: EventId) => Promise<Event> {
+  return async (_id: EventId) => Promise.resolve(
     {
-      host: "~sampel-palnet",
-      name: "my-event",
+      id: {
+        ship: "~sampel-palnet",
+        name: "my-event",
+      },
       location: "atlantis",
       startDate: new Date(1300000000000),
       endDate: new Date(1100000000000),
@@ -168,16 +176,27 @@ function getEvent(_api: Urbit): (ship: string, name: string) => Promise<Event> {
   )
 }
 
+function match(_api: Urbit): (patp: string) => Promise<void> {
+  return async (_patp: string) => Promise.resolve()
+}
+
+function unmatch(_api: Urbit): (patp: string) => Promise<void> {
+  return async (_patp: string) => Promise.resolve()
+}
+
 function newBackend(api: Urbit): Backend {
   return {
     getAttendees: getAttendees(api),
     getSchedule: getSchedule(api),
-    getProfile: getProfile(api),
     getEvents: getEvents(api),
-    getEvent: getEvent(api)
+    getEvent: getEvent(api),
+
+    getProfile: getProfile(api),
+    match: match(api),
+    unmatch: unmatch(api),
   }
 }
 
 export { newBackend }
 
-export type { Event, Session, Profile, Backend }
+export type { EventId, Event, Session, Profile, Backend }

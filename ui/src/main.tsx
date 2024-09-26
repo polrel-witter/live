@@ -25,10 +25,15 @@ window.urbit.subscribe({
   event: (evt) => {console.log("%live event: ", evt)},
   err: (err, _id) => {console.log("%live err: ", err)},
   quit: (data) => {console.log("%live closed subscription: ", data)}
+}).catch((err) => {
+  console.error("subscribe failed: ", err)
 })
+
 window.urbit.scry({
   app: "live",
   path: "/records/all",
+}).catch((err) => {
+  console.error("scry failed: ", err)
 })
 
 // backend
@@ -66,7 +71,7 @@ const router = createBrowserRouter([
       {
         path: basePath + "/event/:hostShip/:name/attendees",
         loader: EventParamsLoader,
-        element: <AttendeesPage />
+        element: <AttendeesPage backend={backend} />
       },
       {
         path: basePath + "/event/:hostShip/:name/schedule",
