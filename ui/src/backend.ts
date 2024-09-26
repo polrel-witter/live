@@ -1,4 +1,5 @@
 import Urbit from "@urbit/http-api";
+import { debug } from "console";
 
 interface Backend {
   getEvents(): Promise<Event[]>
@@ -43,11 +44,10 @@ interface Event {
 function getAttendees(_api: Urbit): () => Promise<string[]> {
   return async () => Promise.resolve([
     "~sampel-palnet",
-    "~sampel-palnet",
-    "~sampel-palnet",
-    "~sampel-palnet",
-    "~sampel-palnet",
-    "~sampel-palnet",
+    "~zod",
+    "~bus",
+    "~rus",
+    "~sampel-palnet-sampel-palnet"
   ])
 }
 
@@ -84,29 +84,45 @@ function getSchedule(_api: Urbit): () => Promise<Session[]> {
   ])
 }
 
-const _mockProfiles = (patp: string) => {
-  const sampel: Profile = {
-    patp: "~sampel-palnet",
-    status: "sent-request",
-    email: "sampel-palnet@foo.bar",
-    phone: "1234556799",
-    github: "sampel-palnet",
-    telegram: "@ sampel-palnet"
+const _mockProfiles = (patp: string): Profile | null => {
+
+  switch (patp) {
+    case "~sampel-palnet":
+      return {
+        patp: "~sampel-palnet",
+        status: "matched",
+        email: "sampel-palnet@foo.bar",
+        phone: "1234556799",
+        github: "sampel-palnet",
+        telegram: "@ sampel-palnet"
+      }
+    case "~zod":
+      return {
+        patp: "~zod",
+        status: "unmatched",
+      }
+    case "~rus":
+      return {
+        patp: "~rus",
+        status: "sent-request",
+      }
+    case "~bus":
+      return {
+        patp: "~rus",
+        status: "unmatched",
+      }
+    case "~sampel-palnet-sampel-palnet":
+      return {
+        patp: "~sampel-palnet-sampel-palnet",
+        status: "unmatched",
+      }
+    default:
+      return null
   }
 
-  const sorreg: Profile = {
-    patp: "~sorreg-namtyv",
-    status: "unmatched",
-  }
-
-  if (patp === "~sampel-palnet") {
-    // this is for a matched profile
-    return sampel
-  } else if (patp === "~sorreg-namtyv") {
-    // this is for an unmatched profile
-    return sorreg
-  } else { return null }
 }
+
+
 
 function getProfile(_api: Urbit): (patp: string) => Promise<Profile | null> {
   return async (patp: string) => Promise.resolve(
