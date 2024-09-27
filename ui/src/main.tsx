@@ -19,22 +19,6 @@ window.urbit.ship = window.ship
 window.urbit.onOpen = () => console.log('urbit: connected')
 window.urbit.onRetry = () => console.log('urbit: retrying connection')
 window.urbit.onError = () => console.log('urbit: error connecting')
-window.urbit.subscribe({
-  app: "live",
-  path: "updates",
-  event: (evt) => {console.log("%live event: ", evt)},
-  err: (err, _id) => {console.log("%live err: ", err)},
-  quit: (data) => {console.log("%live closed subscription: ", data)}
-}).catch((err) => {
-  console.error("subscribe failed: ", err)
-})
-
-window.urbit.scry({
-  app: "live",
-  path: "/records/all",
-}).catch((err) => {
-  console.error("scry failed: ", err)
-})
 
 // backend
 import { newBackend } from '@/backend'

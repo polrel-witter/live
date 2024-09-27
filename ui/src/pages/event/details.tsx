@@ -16,11 +16,10 @@ export function EventDetails() {
   return (
     <div className="max-w-2lg space-y-6 py-20 text-center">
       <div className="grid items-justify mx-12 md:mx-24 gap-y-6">
-        <h1 className="text-xl font-semibold"> {ctx.details.name} </h1>
-        <h1 className="text-xl italics"> hosted by {ctx.details.host} </h1>
+        <h1 className="text-xl font-semibold"> {ctx.details.id.name} </h1>
+        <h1 className="text-xl italics"> hosted by {ctx.details.id.ship} </h1>
         <h1 className="text-xl italics"> starts: {ctx.details.startDate.toString()} </h1>
         <h1 className="text-xl italics"> ends: {ctx.details.endDate.toString()} </h1>
-        <h1 className="text-xl italics"> hosted by {ctx.details.host} </h1>
         <h1 className="text-xl text-justify font-normal"> {ctx.details.description} </h1>
         <div className="flex justify-between">
           <Button className="w-fit-content">
