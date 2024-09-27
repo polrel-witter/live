@@ -146,6 +146,11 @@
 ::  $operation: act on an event
 ::
 +$  operation  [=id =action]
+::  $update: subscription updates
+::
++$  update
+  $%  [%record-status =id =ship =status]     :: record status change
+  ==
 ::  $demand: scry api
 ::
 +$  demand
