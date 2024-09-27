@@ -118,8 +118,9 @@
 ::
 ++  init
   ^+  cor
-  %-  emit
-  [%pass /eyre/connect %arvo %e %connect [~ /apps/live] %live]
+  cor
+::  %-  emit
+::  [%pass /eyre/connect %arvo %e %connect [~ /apps/live] %live]
 ::
 ++  load
   |=  =vase
@@ -161,6 +162,8 @@
   |=  pol=(pole knot)
   ^+  cor
   ?>  (team:title our.bowl src.bowl)
+  :: TODO remove
+  ~&  pol
   ?+  pol  ~|(bad-watch+pol cor)
     [%updates ~]  cor
   ==
@@ -231,9 +234,9 @@
       ?.  ?=([%ames %tune *] sign-arvo)
         ~|(unexpected-system-response+sign-arvo !!)
       =/  msg  'No events found'
-      =;  update=_result
-        =?  update  ?~(update & |)  msg
-        cor(result update)
+      =;  rev=_result
+        =?  rev  ?~(rev & |)  msg
+        cor(result rev)
       ?~  roar.sign-arvo  msg
       =/  =roar:ames      u.roar.sign-arvo
       ?~  q.dat.roar      msg
@@ -339,34 +342,39 @@
     ?>  ?=([[%record @ @ ~] *] msg)
     ?>  =(our.bowl `ship`+>-:path.msg)
     =/  name=term  +<:path.msg
-    =/  update=record-1
+    =/  rev=record-1
       ?~(wave.msg rock.msg u.wave.msg)
     :: clear secret if we're not %registered or %attended since it
     :: might diverge otherwise
     ::
-    =?  secret.update  ?=  ?(%invited %requested %unregistered)
-                       p.status.update
+    =?  secret.rev  ?=  ?(%invited %requested %unregistered)
+                    p.status.rev
       ~
     =/  current=(unit record-1)
       (~(get bi records) [src.msg name] our.bowl)
-    =?  cor  (notify current update)
-      (emit (make-hark src.msg title.info.update status.update))
-    cor(records (~(put bi records) [src.msg name] our.bowl update))
+    =.  cor
+      =/  =cage
+        :-  %live-update
+        !>(`update`[%record-status [src.msg name] our.bowl status.rev])
+      (emit [%give %fact ~[/updates] cage])
+    =?  cor  (notify current rev)
+      (emit (make-hark src.msg title.info.rev status.rev))
+    cor(records (~(put bi records) [src.msg name] our.bowl rev))
     ::  +notify: push notification to Landscape, if we've been %invited or our
     ::  status goes from %requested to %registered
     ::
     ++  notify
-      |=  [current=(unit record-1) update=record-1]
+      |=  [current=(unit record-1) rev=record-1]
       ^-  ?
       ?|  ?~  current
-            ?=(%invited p.status.update)
+            ?=(%invited p.status.rev)
               :: if our current status is %invited, don't notify
               ::
-          ?|  ?&  ?=(%invited p.status.update)
+          ?|  ?&  ?=(%invited p.status.rev)
                   ?!(?=(%invited p.status.u.current))
               ==
               ?&  ?=(%requested p.status.u.current)
-                  ?=(%registered p.status.update)
+                  ?=(%registered p.status.rev)
               ==
           ==
       ==
@@ -610,10 +618,10 @@
   ::  +update-event: write an event change to state
   ::
   ++  update-event
-    |=  update=event-1
+    |=  rev=event-1
     ^+  cor
-    =.  events  (~(put by events) id update)
-    =.  cor  (update-remote-event update)
+    =.  events  (~(put by events) id rev)
+    =.  cor  (update-remote-event rev)
     update-all-remote-events
   ::  +update-remote-event: update an event discoverable over remote scry
   ::
@@ -776,8 +784,8 @@
           (~(get by sessions.info.event) sid)
         ?~  ses
           ~&(>>> "no session found for sid {<sid>}" event)
-        =;  update=session
-          event(sessions.info (~(put by sessions.info.event) sid update))
+        =;  rev=session
+          event(sessions.info (~(put by sessions.info.event) sid rev))
         ?-    -.q.sub-info
             %title      u.ses(title p.q.sub-info)
             %panel      u.ses(panel p.q.sub-info)
