@@ -3,15 +3,48 @@ import Urbit from "@urbit/http-api";
 interface EventId { ship: string, name: string };
 
 interface Backend {
-  getEvents(): Promise<Event[]>
-  getEvent(id: EventId): Promise<Event>
-  getAttendees(id: EventId): Promise<string[]>
-  getSchedule(id: EventId): Promise<Session[]>
+  // --- live agent --- //
 
-  // matching stuff
+  // live - scry %all-records
+  getEvents(): Promise<Event[]>
+
+  // live - scry %record
+  getEvent(id: EventId): Promise<Event>
+
+  // live - poke %register
+  register(id: EventId): Promise<void>
+
+  // live - poke %unregister
+  unregister(id: EventId): Promise<void>
+
+  // remove, this is included in an event record
+  // getSchedule(id: EventId): Promise<Session[]>
+
+  // live - TBD
+  subscribeToEventInvite(handler: (id: EventId) => void): void
+
+  // --- matcher agent --- //
+
+  // matcher - scry %profile
   getProfile(patp: string): Promise<Profile | null>
-  match(patp: string): void;
-  unmatch(patp: string): void;
+
+  // matcher - scry %profiles
+  getProfiles(id: EventId): Promise<Profile[]>
+
+  // matcher - scry %peers
+  getAttendees(id: EventId): Promise<string[]>
+
+  // matcher - poke %edit-profile
+  editProfileField(field: string, value: string): Promise<void>
+
+  // matcher - poke %shake y
+  match(patp: string): Promise<void>;
+
+  // matcher - poke %shake n
+  unmatch(patp: string): Promise<void>;
+
+  // matcher - TBD
+  subscribeToMatch(handler: (peerPatp: string, matched:boolean) => void): void
 }
 
 interface Profile {
@@ -43,95 +76,55 @@ interface Event {
   group: string;
   kind: "public" | "private" | "secret";
   latch: "open" | "closed" | "over";
+  sessions: Session[]
 }
 
-function getAttendees(_api: Urbit): () => Promise<string[]> {
-  return async () => Promise.resolve([
-    "~sampel-palnet",
-    "~zod",
-    "~bus",
-    "~rus",
-    "~sampel-palnet-sampel-palnet"
-  ])
-}
+// function getSchedule(_api: Urbit): () => Promise<Session[]> {
+//   return async () => Promise.resolve()
+// }
 
-
-function getSchedule(_api: Urbit): () => Promise<Session[]> {
-  return async () => Promise.resolve([
-    {
-      title: "First talk",
-      mainSpeaker: "~sampel-palnet",
-      panel: [],
-      location: "anywhere",
-      about: "idk just vibes",
-      startTime: new Date(1995, 11, 17, 3, 13, 37),
-      endTime: new Date(1995, 11, 17, 3, 16, 20),
-    },
-    {
-      title: "Second talk",
-      mainSpeaker: "~sampel-palnet",
-      panel: ["~sampel-palnet", "~sampel-palnet"],
-      location: "anywhere",
-      about: "idk just vibes",
-      startTime: new Date(1995, 11, 17, 3, 13, 37),
-      endTime: new Date(1995, 11, 17, 3, 16, 20),
-    },
-    {
-      title: "Third talk",
-      mainSpeaker: "~sampel-palnet",
-      panel: ["~sampel-palnet", "~sampel-palnet", "~sampel-palnet"],
-      location: "anywhere",
-      about: "idk just vibes",
-      startTime: new Date(1995, 11, 18, 3, 13, 37),
-      endTime: new Date(1995, 11, 18, 3, 16, 20),
-    }
-  ])
-}
+const profiles: Profile[] = [
+  {
+    patp: "~sampel-palnet",
+    status: "matched",
+    email: "sampel-palnet@foo.bar",
+    phone: "1234556799",
+    github: "sampel-palnet",
+    telegram: "@ sampel-palnet"
+  },
+  {
+    patp: "~zod",
+    status: "unmatched",
+  },
+  {
+    patp: "~rus",
+    status: "sent-request",
+  },
+  {
+    patp: "~rus",
+    status: "unmatched",
+  },
+  {
+    patp: "~sampel-palnet-sampel-palnet",
+    status: "unmatched",
+  }
+]
 
 const _mockProfiles = (patp: string): Profile | null => {
-
   switch (patp) {
     case "~sampel-palnet":
-      return {
-        patp: "~sampel-palnet",
-        status: "matched",
-        email: "sampel-palnet@foo.bar",
-        phone: "1234556799",
-        github: "sampel-palnet",
-        telegram: "@ sampel-palnet"
-      }
+      return profiles[0]
     case "~zod":
-      return {
-        patp: "~zod",
-        status: "unmatched",
-      }
+      return profiles[1]
     case "~rus":
-      return {
-        patp: "~rus",
-        status: "sent-request",
-      }
+      return profiles[2]
     case "~bus":
-      return {
-        patp: "~rus",
-        status: "unmatched",
-      }
+      return profiles[3]
     case "~sampel-palnet-sampel-palnet":
-      return {
-        patp: "~sampel-palnet-sampel-palnet",
-        status: "unmatched",
-      }
+      return profiles[4]
     default:
       return null
   }
-
-}
-
-
-
-function getProfile(_api: Urbit): (patp: string) => Promise<Profile | null> {
-  return async (patp: string) => Promise.resolve(
-    _mockProfiles(patp)
-  )
 }
 
 function getEvents(_api: Urbit): () => Promise<Event[]> {
@@ -149,12 +142,40 @@ function getEvents(_api: Urbit): () => Promise<Event[]> {
         timezone: "PST",
         kind: "public",
         group: "~sampel-palnet/my-event",
-        latch: "open"
+        latch: "open",
+        sessions: [
+          {
+            title: "First talk",
+            mainSpeaker: "~sampel-palnet",
+            panel: [],
+            location: "anywhere",
+            about: "idk just vibes",
+            startTime: new Date(1995, 11, 17, 3, 13, 37),
+            endTime: new Date(1995, 11, 17, 3, 16, 20),
+          },
+          {
+            title: "Second talk",
+            mainSpeaker: "~sampel-palnet",
+            panel: ["~sampel-palnet", "~sampel-palnet"],
+            location: "anywhere",
+            about: "idk just vibes",
+            startTime: new Date(1995, 11, 17, 3, 13, 37),
+            endTime: new Date(1995, 11, 17, 3, 16, 20),
+          },
+          {
+            title: "Third talk",
+            mainSpeaker: "~sampel-palnet",
+            panel: ["~sampel-palnet", "~sampel-palnet", "~sampel-palnet"],
+            location: "anywhere",
+            about: "idk just vibes",
+            startTime: new Date(1995, 11, 18, 3, 13, 37),
+            endTime: new Date(1995, 11, 18, 3, 16, 20),
+          }
+        ]
       }
     ]
   )
 }
-
 
 function getEvent(_api: Urbit): (id: EventId) => Promise<Event> {
   return async (_id: EventId) => Promise.resolve(
@@ -170,30 +191,106 @@ function getEvent(_api: Urbit): (id: EventId) => Promise<Event> {
       timezone: "PST",
       kind: "public",
       group: "~sampel-palnet/my-event",
-      latch: "open"
+      latch: "open",
+      sessions: [
+        {
+          title: "First talk",
+          mainSpeaker: "~sampel-palnet",
+          panel: [],
+          location: "anywhere",
+          about: "idk just vibes",
+          startTime: new Date(1995, 11, 17, 3, 13, 37),
+          endTime: new Date(1995, 11, 17, 3, 16, 20),
+        },
+        {
+          title: "Second talk",
+          mainSpeaker: "~sampel-palnet",
+          panel: ["~sampel-palnet", "~sampel-palnet"],
+          location: "anywhere",
+          about: "idk just vibes",
+          startTime: new Date(1995, 11, 17, 3, 13, 37),
+          endTime: new Date(1995, 11, 17, 3, 16, 20),
+        },
+        {
+          title: "Third talk",
+          mainSpeaker: "~sampel-palnet",
+          panel: ["~sampel-palnet", "~sampel-palnet", "~sampel-palnet"],
+          location: "anywhere",
+          about: "idk just vibes",
+          startTime: new Date(1995, 11, 18, 3, 13, 37),
+          endTime: new Date(1995, 11, 18, 3, 16, 20),
+        }
+      ]
     }
-
   )
+}
+
+function register(_api: Urbit): (id: EventId) => Promise<void> {
+  return async (_id: EventId) => Promise.resolve()
+}
+
+function unregister(_api: Urbit): (id: EventId) => Promise<void> {
+  return async (_id: EventId) => Promise.resolve()
+}
+
+function subscribeToEventInvite(_api: Urbit): (handler: (id: EventId) => void) => void {
+  return (_handler: (id: EventId) => void) => { }
+}
+
+function getProfile(_api: Urbit): (patp: string) => Promise<Profile | null> {
+  return async (patp: string) => Promise.resolve(
+    _mockProfiles(patp)
+  )
+}
+
+function getProfiles(_api: Urbit): (id: EventId) => Promise<Profile[]> {
+  return async (_id: EventId) => Promise.resolve(profiles)
+}
+
+function getAttendees(_api: Urbit): () => Promise<string[]> {
+  return async () => Promise.resolve([
+    "~sampel-palnet",
+    "~zod",
+    "~bus",
+    "~rus",
+    "~sampel-palnet-sampel-palnet"
+  ])
+}
+
+function editProfileField(_api: Urbit): (field: string, value: string) => Promise<void> {
+  return async (_field: string, _value: string) => Promise.resolve()
 }
 
 function match(_api: Urbit): (patp: string) => Promise<void> {
   return async (_patp: string) => Promise.resolve()
 }
 
+
 function unmatch(_api: Urbit): (patp: string) => Promise<void> {
   return async (_patp: string) => Promise.resolve()
 }
 
+
+function subscribeToMatch(_api: Urbit): (handler: (peerPatp: string, matched:boolean) => void) => void {
+  return (_handler: (peerPatp: string, matched:boolean) => void) => { }
+}
+
 function newBackend(api: Urbit): Backend {
   return {
-    getAttendees: getAttendees(api),
-    getSchedule: getSchedule(api),
+    register: register(api),
+    unregister: unregister(api),
+    // getSchedule: getSchedule(api),
     getEvents: getEvents(api),
     getEvent: getEvent(api),
+    subscribeToEventInvite: subscribeToEventInvite(api),
 
     getProfile: getProfile(api),
+    getProfiles: getProfiles(api),
+    getAttendees: getAttendees(api),
+    editProfileField: editProfileField(api),
     match: match(api),
     unmatch: unmatch(api),
+    subscribeToMatch: subscribeToMatch(api)
   }
 }
 
