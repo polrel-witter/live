@@ -7,12 +7,31 @@ import {
   CardTitle
 } from "@/components/ui/card"
 
-import { Event } from "@/backend"
+import { Backend, Event, EventId } from "@/backend"
 import { Link } from "react-router-dom"
+import { Button } from "./ui/button"
 
-function makeEventMarkup({id: {ship, name}, ...evt}: Event) {
+interface FnProps {
+  register: Backend["register"]
+  unregister: Backend["unregister"]
+}
+
+// TODO:
+const makeEventButtons = (evt: Event) => {
+  switch (evt.status) {
+    case "invited":
+    case "requested":
+    case "registered":
+    case "unregistered":
+    case "attended":
+    default:
+      return (<div>unexpected evt status {evt.status}</div>)
+  }
+}
+
+const ListItem: React.FC<{ event: Event } & FnProps> = ({ event: { id: { ship, name }, ...evt } }) => {
   return (
-    <li key={`${ship}-${name}-${evt.kind}`}>
+    <li className="my-5" key={`${ship}-${name}-${evt.kind}`}>
       <Card>
         <CardHeader>
           <CardTitle className="font-medium hover:font-bold">
@@ -22,20 +41,26 @@ function makeEventMarkup({id: {ship, name}, ...evt}: Event) {
         </CardHeader>
         <CardContent>
           <p>Starts on {evt.startDate.toDateString()}</p>
+          <p>location: {evt.location}</p>
         </CardContent>
         <CardFooter>
-          <p>location: {evt.location}</p>
+          <Button className="p-1 h-auto text-xs"> register </Button>
         </CardFooter>
       </Card>
     </li>
   )
 }
 
-export default function EventList(props: { events: Event[] }) {
+
+const EventList: React.FC<{ events: Event[] } & FnProps> = ({ events, ...fns }) => {
   return (
     <ul>
-      {props.events.map(makeEventMarkup)}
+      {/* this works, but is barely readable */}
+      {/* {events.map((evt) => <ListItem {...{ event: evt, ...fns }} />)} */}
+      {events.map((evt) => <ListItem event={evt} register={fns.register} unregister={fns.unregister} />)}
     </ul>
   )
 }
+
+export default EventList;
 
