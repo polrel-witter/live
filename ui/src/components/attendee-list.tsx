@@ -7,7 +7,7 @@ import {
   CardTitle
 } from "@/components/ui/card"
 
-import { Profile } from "@/backend"
+import { Profile, Backend } from "@/backend"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ChevronDown, Plus, Ellipsis, X, Check, FileQuestion } from 'lucide-react'
 import { Button } from "@/components/ui/button"
@@ -127,7 +127,8 @@ const ListItem: React.FC<{
   profile: Profile
   match(patp: string): void;
   unmatch(patp: string): void;
-}> = ({ profile }) => {
+  editProfileField: Backend["editProfileField"]
+}> = ({ profile, ...fns}) => {
   const [showProfile, setShowProfile] = useState(false)
   const toggleProfile = () => setShowProfile(flipBoolean)
   return (
@@ -151,6 +152,7 @@ const ListItem: React.FC<{
           </div>
           <SlideDownAndReveal show={showProfile}>
             {"foo"}
+            <Button onClick={() => {fns.editProfileField("foo", "bar")}}> edit profile </Button>
           </SlideDownAndReveal>
         </CardContent>
       </Card>
@@ -162,10 +164,11 @@ const AttendeeList: React.FC<{
   profiles: Profile[]
   match(patp: string): void;
   unmatch(patp: string): void;
+  editProfileField: Backend["editProfileField"]
 }> = ({ profiles, ...rest }) => {
   return (
     <ul className="grid gap-6">
-      {profiles.map((profile) => <ListItem profile={profile} unmatch={rest.unmatch} match={rest.match} />)}
+      {profiles.map((profile) => <ListItem profile={profile} unmatch={rest.unmatch} match={rest.match} editProfileField={rest.editProfileField} />)}
     </ul>
   )
 }

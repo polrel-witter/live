@@ -40,7 +40,7 @@ export function SchedulePage() {
   const [activeDate, setActiveDate] = useState<Date>(new Date(0))
 
   useEffect(() => {
-    setDates(makeDatesMap(ctx.schedule))
+    setDates(makeDatesMap(ctx.details.sessions))
   }, [ctx])
 
   useEffect(() => {
@@ -56,7 +56,8 @@ export function SchedulePage() {
         changeDate={(newDate: Date) => setActiveDate(dates.get(sliceISODate(newDate))!)}
         currentDate={getCurrentDate(dates)}
       />
-      <SessionList sessions={ctx.schedule.filter(({ startTime }) => startTime.getDay() === activeDate.getDay())} />
+      <SessionList
+        sessions={ctx.details.sessions.filter(({ startTime }) => startTime.getDay() === activeDate.getDay())} />
     </div>
   )
 }

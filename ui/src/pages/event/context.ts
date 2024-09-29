@@ -5,7 +5,6 @@ interface EventCtx {
   details: Event
   attendees: string[];
   profiles: Profile[];
-  schedule: Session[];
 }
 
 function newEmptyCtx(): EventCtx {
@@ -15,6 +14,7 @@ function newEmptyCtx(): EventCtx {
         ship: "",
         name: ""
       },
+      status: "invited",
       location: "",
       startDate: new Date(0),
       endDate: new Date(0),
@@ -22,11 +22,11 @@ function newEmptyCtx(): EventCtx {
       timezone: "",
       kind: "public",
       group: "",
-      latch: "open"
+      latch: "open",
+      sessions: [] as Session[],
     },
     profiles: [],
     attendees: [] as string[],
-    schedule: [] as Session[],
   }
 }
 
