@@ -1,9 +1,10 @@
-/-  matcher
-::
-|_  =deed:matcher
+/-  *matcher
+/+  *matcher
+|_  de=deed
 ++  grab
   |%
-  ++  noun  deed:matcher
+  ++  noun  de
+  ++  json  (dejs-deed de)
   --
 ::
 ++  grow
