@@ -246,6 +246,10 @@
           %fact
         =/  =update:contacts  !<(update:contacts q.cage.sign)
         =.  cor  (update-tlon-fields ?~(con.update ~ `con.update))
+        =.  cor
+          =/  fields=(list [term entry])
+            ~(tap by (~(got by profiles) our.bowl))
+          (local-update [%profile our.bowl fields])
         pass-profile-to-matches
       ==
     ==
@@ -337,6 +341,12 @@
   |=  [=wire who=ship app=term =path]
   ^-  card
   [%pass wire %agent [who app] %watch path]
+::  +local-update: pass an $update to local subscribers
+::
+++  local-update
+  |=  upd=update
+  ^+  cor
+  (emit [%give %fact ~[/updates] matcher-update+!>(`update`upd)])
 ::  +base-path: prepend to local scries
 ::
 ++  base-path
@@ -392,14 +402,18 @@
 ::  +edit-profile: add/update a profile field entry
 ::
 ++  edit-profile
-  |=  [field-id=term update=entry]
+  |=  field=[p=term q=entry]
   ^+  cor
   ?.  =(our.bowl src.bowl)  cor
-  ?.  (~(has bi profiles) our.bowl field-id)
-    ~&(>>> "profile field, {<field-id>}, not supported" cor)
-  ?:  ?=(?(%nickname %bio %avatar) field-id)
-    ~&(>>> "cannot edit Tlon field, {<field-id>}, from %matcher" cor)
-  =.  profiles  (~(put bi profiles) our.bowl field-id update)
+  ?.  (~(has bi profiles) our.bowl p.field)
+    ~&(>>> "profile field, {<p.field>}, not supported" cor)
+  ?:  ?=(?(%nickname %bio %avatar) p.field)
+    ~&(>>> "cannot edit Tlon field, {<p.field>}, from %matcher" cor)
+  =.  profiles  (~(put bi profiles) our.bowl field)
+  =.  cor
+    =/  fields=(list [term entry])
+      ~(tap by (~(got by profiles) our.bowl))
+    (local-update [%profile our.bowl fields])
   pass-profile-to-matches
 ::  +update-profile: receive a profile update from a matched peer
 ::
@@ -413,7 +427,8 @@
     %+  murn  ~(tap by profile)
     |=  [=term =entry]
     ?.((~(has in (silt profile-fields)) term) ~ `[term entry])
-  cor(profiles (~(put by profiles) src.bowl still))
+  =.  profiles  (~(put by profiles) src.bowl still)
+  (local-update [%profile our.bowl `(list [term entry])`~(tap by still)])
 ::  +send-profile: send a profile update to a peer
 ::
 ++  send-profile
@@ -579,6 +594,7 @@
     ~&  >  "removed {<culp>} from peers"
     =.  cor  block-sss-peers
     (publish [%delete-peer culp])
+  ::  +show: updated peer status, coming from host
   ::
   ++  show
     |=  =status
@@ -586,6 +602,11 @@
     ?.  (~(has bi peers) id culp)  cor
     =?  cor  ?~(status | ?=(%match u.status))
       (send-profile culp)
+    =/  ver=?
+      ?~  status  |
+      ?:(?=(%match u.status) & |)
+    =.  cor
+      (local-update [%match ver])
     cor(peers (~(put bi peers) id culp status))
   ::  +shake: core matching arm
   ::
