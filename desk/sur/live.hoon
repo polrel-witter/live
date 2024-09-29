@@ -149,8 +149,7 @@
 ::  $update: local subscription changes
 ::
 +$  update
-  $%  [%record =id =ship =record-1]            :: record change
-  ==
+  $%([%record =id =ship record=record-1])      :: record change
 ::  $demand: scry api
 ::
 +$  demand
