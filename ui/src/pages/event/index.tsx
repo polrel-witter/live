@@ -33,7 +33,6 @@ async function buildContextData({ hostShip, name }: EventParams, backend: Backen
   // we could also do away with this backend call here
   // and add a prop to pass EventDetails from the main page
   evt.details = await backend.getEvent(evtId)
-  evt.schedule = await backend.getSchedule(evtId);
   evt.attendees = await backend.getAttendees(evtId);
 
   const profiles = await Promise.all(evt.attendees
@@ -60,13 +59,17 @@ export function EventIndex(props: { backend: Backend }) {
   useEffect(() => {
     buildContextData(eventParams, props.backend).then(setEventCtx);
 
-    const interval = setInterval(async () => {
-      console.log("loop")
-      const ctxData = await buildContextData(eventParams, props.backend)
-      setEventCtx(ctxData)
-    }, 1000);
+    // const interval = setInterval(async () => {
+    //   console.log("loop")
+    //   const ctxData = await buildContextData(eventParams, props.backend)
+    //   setEventCtx(ctxData)
+    // }, 1000);
 
-    return () => clearInterval(interval);
+      console.log("loop")
+      buildContextData(eventParams, props.backend).then(data =>setEventCtx(data))
+      
+
+    // return () => clearInterval(interval);
   }, [])
 
   return (

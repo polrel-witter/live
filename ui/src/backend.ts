@@ -130,9 +130,17 @@ const _mockProfiles = (patp: string): Profile | null => {
   }
 }
 
-function getEvents(_api: Urbit): () => Promise<Event[]> {
-  return async () => Promise.resolve(
-    [
+function getEvents(api: Urbit): () => Promise<Event[]> {
+  return async () => {
+    const events = api.scry({
+      app: "live",
+      path: "/records/all"
+    }).then((res) => {
+      // console.log(res)
+    })
+
+
+    return [
       {
         id: {
           ship: "~sampel-palnet",
@@ -177,7 +185,7 @@ function getEvents(_api: Urbit): () => Promise<Event[]> {
           }
         ]
       },
-{
+      {
         id: {
           ship: "~sampel-palnet",
           name: "my-event-2",
@@ -222,16 +230,26 @@ function getEvents(_api: Urbit): () => Promise<Event[]> {
         ]
       }
     ]
-  )
+  }
 }
 
-function getEvent(_api: Urbit): (id: EventId) => Promise<Event> {
-  return async (_id: EventId) => Promise.resolve(
-    {
+function getEvent(api: Urbit): (id: EventId) => Promise<Event> {
+  return async (id: EventId) => {
+    const events = api.scry({
+      app: "live",
+      // in agent file it says host/name/ship ??
+      // pass guest ship
+      path: `/record/${id.ship}/${id.name}`
+    }).then((res) => {
+      // console.log(res)
+    })
+
+    return {
       id: {
         ship: "~sampel-palnet",
         name: "my-event",
       },
+      status: "invited",
       location: "atlantis",
       startDate: new Date(1300000000000),
       endDate: new Date(1100000000000),
@@ -270,15 +288,33 @@ function getEvent(_api: Urbit): (id: EventId) => Promise<Event> {
         }
       ]
     }
-  )
+  }
 }
 
 function register(_api: Urbit): (id: EventId) => Promise<void> {
-  return async (_id: EventId) => Promise.resolve()
+  return async (_id: EventId) => {
+    _api.poke({
+      app: "live",
+      // mark?????
+      mark: "live-?",
+      // why do we need the [ ~ ~bel ]
+      json: [[_id.ship, _id.name], ["%register", ["~", "~bel"]]]
+    })
+  }
 }
 
+// o={{'ship':'~zod', 'name':'even-name'}, {'register':<'~bus' null>}}
+
 function unregister(_api: Urbit): (id: EventId) => Promise<void> {
-  return async (_id: EventId) => Promise.resolve()
+  return async (_id: EventId) => {
+    _api.poke({
+      app: "live",
+      // mark?????
+      mark: "live-operation",
+      // why do we need the [ ~ ~bel ]
+      json: [[_id.ship, _id.name], ["%register", ["~", "~bel"]]]
+    })
+  }
 }
 
 function subscribeToEventInvite(_api: Urbit): (handler: (id: EventId) => void) => void {
@@ -306,7 +342,14 @@ function getAttendees(_api: Urbit): () => Promise<string[]> {
 }
 
 function editProfileField(_api: Urbit): (field: string, value: string) => Promise<void> {
-  return async (_field: string, _value: string) => Promise.resolve()
+  return async (field: string, value: string) => {
+    const num = await _api.poke({
+      app: "matcher",
+      mark: "matcher-deed",
+      json: { "edit-profile": { term: field, entry: value } },
+    })
+    console.log(num)
+  }
 }
 
 function match(_api: Urbit): (patp: string) => Promise<void> {
