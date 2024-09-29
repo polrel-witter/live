@@ -1,9 +1,11 @@
-/-  live
+/-  *live
+/+  *live
 ::
-|_  =demand:live
+|_  dem=demand
 ++  grab
   |%
-  ++  noun  demand:live
+  ++  noun  dem
+  ++  json  (enjs-demand dem)
   --
 ::
 ++  grow
