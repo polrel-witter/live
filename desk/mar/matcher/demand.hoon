@@ -1,9 +1,11 @@
-/-  matcher
+/-  *matcher
+/+  *matcher
 ::
-|_  =demand:matcher
+|_  dem=demand
 ++  grab
   |%
-  ++  noun  demand:matcher
+  ++  noun  dem
+  ++  json  (enjs-demand dem)
   --
 ::
 ++  grow
