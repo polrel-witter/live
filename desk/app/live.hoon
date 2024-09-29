@@ -355,7 +355,7 @@
     =.  cor
       =/  =cage
         :-  %live-update
-        !>(`update`[%record-status [src.msg name] our.bowl status.rev])
+        !>(`update`[%record [src.msg name] our.bowl rev])
       (emit [%give %fact ~[/updates] cage])
     =?  cor  (notify current rev)
       (emit (make-hark src.msg title.info.rev status.rev))

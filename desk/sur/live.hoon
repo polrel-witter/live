@@ -131,25 +131,25 @@
 ::  $action: event api
 ::
 +$  action
-  $%  [%create =event-1]                     :: create an event
-      [%delete ~]                            :: delete an event
-      [%info =sub-info-1]                    :: change event info
-      [%secret =secret]                      :: change event secret
-      [%limit =limit]                        :: change event limit
+  $%  [%create =event-1]                       :: create an event
+      [%delete ~]                              :: delete an event
+      [%info =sub-info-1]                      :: change event info
+      [%secret =secret]                        :: change event secret
+      [%limit =limit]                          :: change event limit
     ::
-      [%subscribe ~]                         :: subscribe to record updates
-      [%invite ships=(list ship)]            :: invite ships to an event
-      [%register who=(unit ship)]            :: register to an event
-      [%unregister who=(unit ship)]          :: unregister from an event
-      [%punch ?(%verify %revoke) =ship]      :: validate or revoke attendance
+      [%subscribe ~]                           :: subscribe to record updates
+      [%invite ships=(list ship)]              :: invite ships to an event
+      [%register who=(unit ship)]              :: register to an event
+      [%unregister who=(unit ship)]            :: unregister from an event
+      [%punch ?(%verify %revoke) =ship]        :: validate or revoke attendance
   ==
 ::  $operation: act on an event
 ::
 +$  operation  [=id =action]
-::  $update: subscription updates
+::  $update: local subscription changes
 ::
 +$  update
-  $%  [%record-status =id =ship =status]     :: record status change
+  $%  [%record =id =ship =record-1]            :: record change
   ==
 ::  $demand: scry api
 ::
