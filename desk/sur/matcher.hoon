@@ -16,7 +16,7 @@
   $:  =id:live
       $%  [%add-peer =ship]       :: add guest to peer list
           [%delete-peer =ship]    :: remove guest from state
-          [%show =ship =status]   :: reveal peer status
+          [%show =ship =status]   :: updated peer status; from host
           [%subscribe ~]          :: request from host to sub to guest list updates
       ==
   ==
@@ -27,9 +27,15 @@
       [%update-profile p=(map term entry)]   :: receive peer profile update
       [%shake =id:live =ship act=?]          :: initiate a new peer status
   ==
-::  +demand: scry api
+::  $update: local subscription changes
 ::
-++  demand
++$  update
+  $%  [%match match=?]                             :: match change
+      [%profile =ship fields=(list [term entry])]  :: profile change
+  ==
+::  $demand: scry api
+::
++$  demand
   $%  [%profile p=(map term entry)]                 :: a profile
       [%profiles p=(map ship (list [term entry]))]  :: all profiles
       [%peer-status p=status]                       :: peer status
