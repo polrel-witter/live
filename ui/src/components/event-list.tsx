@@ -7,7 +7,7 @@ import {
   CardTitle
 } from "@/components/ui/card"
 
-import { Backend, Event, EventId } from "@/backend"
+import { Backend, Event } from "@/backend"
 import { Link } from "react-router-dom"
 import { Button } from "./ui/button"
 
@@ -16,20 +16,47 @@ interface FnProps {
   unregister: Backend["unregister"]
 }
 
-// TODO:
-const makeEventButtons = (evt: Event) => {
+const makeEventButtons = (evt: Event, fns: FnProps) => {
   switch (evt.status) {
     case "invited":
+      return (
+        <div className="flex-auto">
+          <Button
+            className="h-full w-full"
+            onClick={
+              () => {
+                fns.register(evt.id)
+              }}
+          > register </Button>
+        </div>
+      )
     case "requested":
     case "registered":
+      // TODO: add a slide-out thingy that says: arte you sure?
+      return (
+        <div className="flex-auto">
+          <Button
+            className="h-full w-full hover:bg-red-900"
+            onClick={() => {
+              fns.unregister(evt.id).then(() => {
+                console.log("unregistered from event: ", evt.id)
+              })
+            }}
+          > unregister </Button>
+        </div>
+      )
     case "unregistered":
     case "attended":
     default:
-      return (<div>unexpected evt status {evt.status}</div>)
+      console.error(`unexpected evt status: ${evt.status}`)
+      return (<div></div>)
   }
 }
 
-const ListItem: React.FC<{ event: Event } & FnProps> = ({ event: { id: { ship, name }, ...evt } }) => {
+const ListItem: React.FC<{ event: Event } & FnProps> = ({ event: evt, ...fns }) => {
+  const { id: { ship, name } } = evt
+  // TODO: on mobile it's not clear that you can click the title to navigate
+  // forward, add an icon in a button
   return (
     <li className="my-5" key={`${ship}-${name}-${evt.kind}`}>
       <Card>
@@ -44,7 +71,7 @@ const ListItem: React.FC<{ event: Event } & FnProps> = ({ event: { id: { ship, n
           <p>location: {evt.location}</p>
         </CardContent>
         <CardFooter>
-          <Button className="p-1 h-auto text-xs"> register </Button>
+          {makeEventButtons(evt, fns)}
         </CardFooter>
       </Card>
     </li>

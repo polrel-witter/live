@@ -3,9 +3,7 @@ import EventList from "@/components/event-list";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { useEffect, useState } from "react";
 
-export function Index(props: { backend: Backend }) {
-
-
+const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
   const [subEvent, setSubEvent] = useState({});
   const [latestUpdate, setLatestUpdate] = useState(null);
 
@@ -26,12 +24,12 @@ export function Index(props: { backend: Backend }) {
 
   const init = () => {
     subscribe()
-    .then((result) => {
-      console.log("successfully subscribed", result)
-    })
-    .catch((err) => {
-      console.error("subscribe failed: ", err)
-    })
+      .then((result) => {
+        console.log("successfully subscribed", result)
+      })
+      .catch((err) => {
+        console.error("subscribe failed: ", err)
+      })
 
     getRecords().then(
       (result) => {
@@ -47,9 +45,8 @@ export function Index(props: { backend: Backend }) {
   const [events, setEvents] = useState<Event[]>([])
 
   useEffect(() => {
-
-    props.backend.getEvents().then(setEvents)
-    init()
+    backend.getEvents().then(setEvents)
+    // init()
 
   }, [])
 
@@ -63,8 +60,15 @@ export function Index(props: { backend: Backend }) {
 
       <div className="grid justify-center w-full space-y-6 py-20 text-center">
         <h1 className="text-3xl italic">*events*</h1>
-        <EventList events={events} />
+        <EventList
+          events={events}
+          register={backend.register}
+          unregister={backend.unregister}
+        />
       </div>
     </div>
   )
+
 }
+
+export { Index };
