@@ -251,7 +251,7 @@ function getEvent(api: Urbit): (id: EventId) => Promise<Event> {
       app: "live",
       // in agent file it says host/name/ship ??
       // pass guest ship
-      path: `/record/${id.ship}/${id.name}`
+      path: `/record/${id.ship}/${id.name}/~zod`
     }).then((res) => {
       // console.log(res)
     })
