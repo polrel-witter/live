@@ -7,14 +7,14 @@ import {
   CardTitle
 } from "@/components/ui/card"
 
+import ProfileForm from "@/components/profile-form"
+
 import { Profile, Backend } from "@/backend"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ChevronDown, Plus, Ellipsis, X, Check, FileQuestion } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { PropsWithChildren, useState } from "react"
 import { cn, flipBoolean } from "@/lib/utils"
-import { unzip } from "zlib"
-import { match } from "assert"
 
 // very nice component
 function SlideDownAndReveal({ children, show, maxHeight = "max-h-[100px]" }: PropsWithChildren<{ show: boolean, maxHeight?: `max-h-[${number}px]` }>) {
@@ -128,7 +128,7 @@ const ListItem: React.FC<{
   match(patp: string): void;
   unmatch(patp: string): void;
   editProfileField: Backend["editProfileField"]
-}> = ({ profile, ...fns}) => {
+}> = ({ profile, ...fns }) => {
   const [showProfile, setShowProfile] = useState(false)
   const toggleProfile = () => setShowProfile(flipBoolean)
   return (
@@ -150,9 +150,12 @@ const ListItem: React.FC<{
             </div>
             <ConnectionsButton profile={profile} />
           </div>
-          <SlideDownAndReveal show={showProfile}>
-            {"foo"}
-            <Button onClick={() => {fns.editProfileField("foo", "bar")}}> edit profile </Button>
+          <SlideDownAndReveal show={showProfile} maxHeight="max-h-[1000px]">
+            <ProfileForm 
+            profileFields={profile}
+            editProfileField={fns.editProfileField} 
+            />
+            <Button onClick={() => { fns.editProfileField("foo", "bar") }}> edit profile </Button>
           </SlideDownAndReveal>
         </CardContent>
       </Card>
