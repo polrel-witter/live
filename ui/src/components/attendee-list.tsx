@@ -9,7 +9,7 @@ import {
 
 import ProfileForm from "@/components/profile-form"
 
-import { Profile, Backend } from "@/backend"
+import { Profile, Backend, EditableProfileFields } from "@/backend"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ChevronDown, Plus, Ellipsis, X, Check, FileQuestion } from 'lucide-react'
 import { Button } from "@/components/ui/button"
@@ -151,11 +151,34 @@ const ListItem: React.FC<{
             <ConnectionsButton profile={profile} />
           </div>
           <SlideDownAndReveal show={showProfile} maxHeight="max-h-[1000px]">
-            <ProfileForm 
-            profileFields={profile}
-            editProfileField={fns.editProfileField} 
-            />
-            <Button onClick={() => { fns.editProfileField("foo", "bar") }}> edit profile </Button>
+            {/* TODO: this should be in dedicated page and in a pop-up
+              on own profile in attenees list
+
+              <ProfileForm 
+              profileFields={profile}
+              editProfileField={fns.editProfileField} 
+              />
+            */}
+
+            {
+              profile.status === "matched"
+                ?
+                <Card className="mt-4">
+                  <CardHeader className="p-4 font-semibold"> profile details</CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    {
+                      Object.entries(profile.editableFields).map(([field, val]) => {
+                        return (<p>{`${field}: ${val}`}</p>)
+                      })
+                    }
+                  </CardContent>
+                </Card>
+                :
+                <Card className="mt-4">
+                  <CardHeader className="p-4 font-sm"> not matched with this user</CardHeader>
+                </Card>
+            }
+
           </SlideDownAndReveal>
         </CardContent>
       </Card>
@@ -171,7 +194,14 @@ const AttendeeList: React.FC<{
 }> = ({ profiles, ...rest }) => {
   return (
     <ul className="grid gap-6">
-      {profiles.map((profile) => <ListItem profile={profile} unmatch={rest.unmatch} match={rest.match} editProfileField={rest.editProfileField} />)}
+      {
+        profiles.map((profile) => <ListItem
+          profile={profile}
+          unmatch={rest.unmatch}
+          match={rest.match}
+          editProfileField={rest.editProfileField}
+        />)
+      }
     </ul>
   )
 }
