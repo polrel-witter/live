@@ -50,17 +50,19 @@ interface Backend {
 }
 
 
-type EditableProfileFields = {
-  github?: string;
-  telegram?: string;
-  phone?: string;
-  email?: string;
-}
 
 type Profile = {
   patp: string;
-  status: "unmatched" | "sent-request" | "matched"
-} & EditableProfileFields
+  status: "unmatched" | "sent-request" | "matched";
+  editableFields: {
+    github?: string;
+    telegram?: string;
+    phone?: string;
+    email?: string;
+  }
+}
+
+type EditableProfileFields = Profile["editableFields"]
 
 type Session = {
   title: string;
@@ -94,26 +96,32 @@ const profiles: Profile[] = [
   {
     patp: "~sampel-palnet",
     status: "matched",
-    email: "sampel-palnet@foo.bar",
-    phone: "1234556799",
-    github: "sampel-palnet",
-    telegram: "@ sampel-palnet"
+    editableFields: {
+      email: "sampel-palnet@foo.bar",
+      phone: "1234556799",
+      github: "sampel-palnet",
+      telegram: "@ sampel-palnet"
+    }
   },
   {
     patp: "~zod",
     status: "unmatched",
+    editableFields: {}
   },
   {
     patp: "~rus",
     status: "sent-request",
+    editableFields: {}
   },
   {
     patp: "~rus",
     status: "unmatched",
+    editableFields: {}
   },
   {
     patp: "~sampel-palnet-sampel-palnet",
     status: "unmatched",
+    editableFields: {}
   }
 ]
 
