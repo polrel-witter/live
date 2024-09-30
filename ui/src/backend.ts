@@ -49,16 +49,20 @@ interface Backend {
   subscribeToMatch(handler: (peerPatp: string, matched: boolean) => void): void
 }
 
-interface Profile {
-  patp: string;
-  status: "unmatched" | "sent-request" | "matched"
+
+type EditableProfileFields = {
   github?: string;
   telegram?: string;
   phone?: string;
   email?: string;
 }
 
-interface Session {
+type Profile = {
+  patp: string;
+  status: "unmatched" | "sent-request" | "matched"
+} & EditableProfileFields
+
+type Session = {
   title: string;
   mainSpeaker: string;
   panel: string[];
@@ -68,7 +72,7 @@ interface Session {
   endTime: Date;
 }
 
-interface Event {
+type Event = {
   id: EventId;
   status: EventStatus;
   location: string;
@@ -341,8 +345,8 @@ function getAttendees(_api: Urbit): () => Promise<string[]> {
   ])
 }
 
-function editProfileField(_api: Urbit): (field: string, value: string) => Promise<void> {
-  return async (field: string, value: string) => {
+function editProfileField(_api: Urbit): (field: keyof EditableProfileFields, value: string) => Promise<void> {
+  return async (field: keyof EditableProfileFields, value: string) => {
     const num = await _api.poke({
       app: "matcher",
       mark: "matcher-deed",
@@ -386,4 +390,4 @@ function newBackend(api: Urbit): Backend {
 
 export { newBackend }
 
-export type { EventId, Event, Session, Profile, Backend }
+export type { EventId, Event, Session, Profile, EditableProfileFields, Backend }
