@@ -2,6 +2,23 @@ import { Backend, Event } from "@/backend";
 import EventList from "@/components/event-list";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { useEffect, useState } from "react";
+import { newEmptyIndexCtx, IndexContext, IndexCtx } from "./context";
+
+const emptyCtx = newEmptyIndexCtx()
+
+async function buildContextData(ourShip: string, backend: Backend) {
+
+  const ctx = emptyCtx
+  ctx.events = await backend.getEvents()
+
+  ctx.patp = ourShip
+  const profile = await backend.getProfile(ourShip)
+  if (profile) {
+    ctx.profile = profile.editableFields
+  }
+
+  return ctx
+}
 
 const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
   const [subEvent, setSubEvent] = useState({});
@@ -42,16 +59,21 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
     })
   }
 
-  const [events, setEvents] = useState<Event[]>([])
+  const [ctx, setCtx] = useState<IndexCtx>(newEmptyIndexCtx())
 
   useEffect(() => {
-    backend.getEvents().then(setEvents)
-    // init()
+    buildContextData(window.ship, backend).then(setCtx);
+
+    // const interval = setInterval(async () => {
+    //   console.log("loop")
+    //   const ctxData = await buildContextData(eventParams, props.backend)
+    //   setEventCtx(ctxData)
+    // }, 1000);
 
   }, [])
 
   return (
-    <div>
+    <IndexContext.Provider value={ctx}>
       <NavigationMenu >
         <NavigationMenuList>
           <NavigationMenuItem className="p-5 font-medium text-xl"> %live </NavigationMenuItem>
@@ -61,12 +83,12 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
       <div className="grid justify-center w-full space-y-6 py-20 text-center">
         <h1 className="text-3xl italic">*events*</h1>
         <EventList
-          events={events}
+          events={ctx.events}
           register={backend.register}
           unregister={backend.unregister}
         />
       </div>
-    </div>
+    </IndexContext.Provider>
   )
 
 }

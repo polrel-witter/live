@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import NavBar from "@/components/navbar"
 import { Outlet, useLoaderData } from 'react-router-dom';
 import { LoaderFunctionArgs, Params } from "react-router-dom";
 
 import { EventContext, EventCtx, newEmptyCtx } from './context';
+import { IndexContext, IndexCtx, newEmptyIndexCtx } from '../context';
 
 import { Backend, EventId, Profile } from '@/backend'
 
@@ -22,6 +23,23 @@ export async function EventParamsLoader(params: LoaderFunctionArgs<any>):
 
 export function LoadEventParams(): EventParams {
   return useLoaderData() as EventParams
+}
+
+
+const emptyIndexCtx = newEmptyIndexCtx()
+
+async function buildIndexContextData(ourShip: string, backend: Backend) {
+
+  const ctx = emptyIndexCtx
+  ctx.events = await backend.getEvents()
+
+  ctx.patp = ourShip
+  const profile = await backend.getProfile(ourShip)
+  if (profile) {
+    ctx.profile = profile.editableFields
+  }
+
+  return ctx
 }
 
 const emptyEvent = newEmptyCtx()
@@ -54,9 +72,12 @@ export function EventIndex(props: { backend: Backend }) {
   // 
   // might refactor into reducer if it becomes annoying
   const [eventContext, setEventCtx] = useState<EventCtx>(newEmptyCtx())
+  const [indexCtx, setIndexCtx] = useState<IndexCtx>(newEmptyIndexCtx())
 
+  const ctx = useContext(IndexContext)
 
   useEffect(() => {
+    buildIndexContextData("~sampel-palnet", props.backend).then(setIndexCtx)
     buildContextData(eventParams, props.backend).then(setEventCtx);
 
     // const interval = setInterval(async () => {
@@ -65,19 +86,26 @@ export function EventIndex(props: { backend: Backend }) {
     //   setEventCtx(ctxData)
     // }, 1000);
 
-      console.log("loop")
-      buildContextData(eventParams, props.backend).then(data =>setEventCtx(data))
-      
+    console.log("loop")
+    buildContextData(eventParams, props.backend).then(data => setEventCtx(data))
+
 
     // return () => clearInterval(interval);
   }, [])
 
   return (
-    <EventContext.Provider value={eventContext}>
-      <div className="grid size-full" >
-        <NavBar eventName={eventContext!.details.id.name} host={eventContext!.details.id.ship} />
-        <Outlet />
-      </div>
-    </EventContext.Provider>
+    <IndexContext.Provider value={indexCtx}>
+      <EventContext.Provider value={eventContext}>
+        <div className="grid size-full" >
+          <NavBar
+            eventName={eventContext!.details.id.name}
+            host={eventContext!.details.id.ship}
+            profile={indexCtx!.profile}
+            editProfileField={props.backend.editProfileField}
+          />
+          <Outlet />
+        </div>
+      </EventContext.Provider>
+    </IndexContext.Provider>
   );
 }
