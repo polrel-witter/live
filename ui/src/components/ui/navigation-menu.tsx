@@ -14,7 +14,7 @@ const NavigationMenu = React.forwardRef<
     className={cn(
       // original
       // "relative z-10 flex max-w-max flex-1 items-center justify-end",
-      "relative z-10 flex  flex-1 items-center",
+      "relative z-10 flex flex-1 items-center py-3",
       // "relative right-0",
       className
     )}
