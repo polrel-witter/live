@@ -4,14 +4,14 @@ import { Link } from "react-router-dom"
 export default function NavBar(props: { eventName: string, host: string }) {
   return (
     <NavigationMenu >
-      <NavigationMenuList>
+      <NavigationMenuList className="static">
         <NavigationMenuItem className="grow text-center"> {props.eventName || "event"} </NavigationMenuItem>
-        <NavigationMenuItem >
+        <NavigationMenuItem className="fixed right-0">
           <NavigationMenuTrigger />
           <NavigationMenuContent>
             <ul className="grid gap-3 p-4  md:w-[400px] lg:w-[500px] ">
               <li className="row row-span-3">
-                <Link reloadDocument to={ `/event/${props.host}/${props.eventName}` }> event home </Link>
+                <Link reloadDocument to={`/event/${props.host}/${props.eventName}`}> event home </Link>
               </li>
               <li className="row row-span-3">
                 <Link reloadDocument to="attendees"> attendees </Link>
