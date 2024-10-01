@@ -101,6 +101,7 @@ export function EventIndex(props: { backend: Backend }) {
             eventName={eventContext!.details.id.name}
             host={eventContext!.details.id.ship}
             profile={indexCtx!.profile}
+            patp={window.ship}
             editProfileField={props.backend.editProfileField}
           />
           <Outlet />
