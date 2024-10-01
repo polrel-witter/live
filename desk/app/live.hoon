@@ -560,6 +560,9 @@
   ::
   ++  host-call
     ^-  ?
+    =;  ver=?
+      ?:  ver  &
+      ~&(>>> "{<ship.id>} is the host of this event" |)
     ?&  =(src our):bowl
         =(our.bowl ship.id)
     ==
