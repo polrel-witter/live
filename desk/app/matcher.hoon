@@ -614,10 +614,14 @@
     |=  act=?
     |^  ^+  cor
         ?:  =(our.bowl src.bowl)
-          :: init a new status to a peer
-          ::
           ?:  =(our.bowl culp)  cor
           ?.  (~(has bi peers) id culp)  cor
+          ?:  =(ship.id our.bowl)
+            ::  as host
+            ::
+            ?:(act init-reach remove-reach)
+          ::  as a guest
+          ::
           =/  =cage
             matcher-deed+!>(`deed`[%shake id culp act])
           %-  emit
