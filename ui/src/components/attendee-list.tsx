@@ -15,44 +15,7 @@ import { ChevronDown, Plus, Ellipsis, X, Check, FileQuestion } from 'lucide-reac
 import { Button } from "@/components/ui/button"
 import { PropsWithChildren, useState } from "react"
 import { cn, flipBoolean } from "@/lib/utils"
-
-// very nice component
-function SlideDownAndReveal({ children, show, maxHeight = "max-h-[100px]" }: PropsWithChildren<{ show: boolean, maxHeight?: `max-h-[${number}px]` }>) {
-  // for some reason there's a minimum max height we need in order for the transition to work; seems to be like 100px
-  return (
-    <div
-      className={cn([
-        "overflow-hidden transition-[max-height] duration-1000 linear",
-        // we can only transition between max-height values expressed in the
-        // same way (px and px, rem and rem) but there isn't a "0 rem"
-        // option, so have to define it in px
-        { [maxHeight]: show },
-        { "max-h-0": !show },
-      ])}
-    >
-      {children}
-    </div>
-  )
-}
-
-
-function SlideRightAndReveal({ children, show, maxWidth = "max-w-[100px]" }: PropsWithChildren<{ show: boolean, maxWidth?: `max-w-[${number}px]` }>) {
-  // for some reason there's a minimum max height we need in order for the transition to work; seems to be like 100px
-  return (
-    <div
-      className={cn([
-        "overflow-hidden transition-[max-width] duration-1000 linear",
-        // we can only transition between max-height values expressed in the
-        // same way (px and px, rem and rem) but there isn't a "0 rem"
-        // option, so have to define it in px
-        { [maxWidth]: show },
-        { "max-w-0": !show },
-      ])}
-    >
-      {children}
-    </div>
-  )
-}
+import { SlideDownAndReveal, SlideRightAndReveal } from "./sliders"
 
 // TODO: add tooltips to these
 const ConnectionsButton: React.FC<{ profile: Profile }> = ({ profile }) => {
