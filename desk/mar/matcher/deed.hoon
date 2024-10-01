@@ -3,13 +3,13 @@
 |_  de=deed
 ++  grab
   |%
-  ++  noun  de
-  ++  json  (dejs-deed de)
+  ++  noun  deed
+  ++  json  dejs-deed
   --
 ::
 ++  grow
   |%
-  ++  noun  deed
+  ++  noun  de
   --
 ::
 ++  grad  %noun

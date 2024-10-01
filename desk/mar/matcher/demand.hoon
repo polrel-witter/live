@@ -4,13 +4,13 @@
 |_  dem=demand
 ++  grab
   |%
-  ++  noun  dem
-  ++  json  (enjs-demand dem)
+  ++  noun  demand
   --
 ::
 ++  grow
   |%
-  ++  noun  demand
+  ++  noun  dem
+  ++  json  (enjs-demand dem)
   --
 ::
 ++  grad  %noun

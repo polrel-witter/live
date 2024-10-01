@@ -1,14 +1,14 @@
-/-  live
+/-  *live
 ::
-|_  =dial:live
+|_  di=dial
 ++  grab
   |%
-  ++  noun  dial:live
+  ++  noun  dial
   --
 ::
 ++  grow
   |%
-  ++  noun  dial
+  ++  noun  di
   --
 ::
 ++  grad  %noun
