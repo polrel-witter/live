@@ -1,6 +1,111 @@
 /-  *live
 /+  *mip
 |%
+::
+++  dejs-operation
+  =,  dejs:format
+  |=  jon=json
+  |^  ^-  operation
+  %.  jon
+  %-  ot
+  :~  id+(ot ~[ship+(se %p) name+(se %tas)])
+      action+de-action
+  ==
+  ::
+  ++  de-action
+    ^-  $-(json action)
+    %-  of
+    :~  create+de-event-1
+        delete+ul
+        info+de-sub-info-1
+        secret+de-unit-cord
+        limit+ni:dejs-soft:format
+        subscribe+ul
+        invite+(ar (se %p))
+        register+de-unit-ship
+        unregister+de-unit-ship
+        punch+de-punch
+    ==
+  ::
+  ++  de-unit-ship
+    ^-  $-(json (unit ship))
+    (su:dejs-soft:format ;~(pfix sig fed:ag))
+  ::
+  ++  de-punch
+    %-  ot
+    :~  act+(su (perk %verify %revoke ~))
+        ship+(se %p)
+    ==
+  ::
+  ++  de-kind  (su (perk %public %private %secret ~))
+  ::
+  ++  de-latch  (su (perk %open %closed %over ~))
+  ::
+  ++  de-sub-info-1
+    ^-  $-(json sub-info-1)
+    %-  of
+    :~  title+so
+        about+de-unit-cord
+        moment+de-moment-1
+        timezone+(ot ~[p+bo q+(se %ud)])
+        location+de-unit-cord
+        venue-map+de-unit-cord
+        group+ul :: TODO de-group
+        kind+de-kind
+        latch+de-latch
+        create-session+(ot dl-session)
+        edit-session+(ot ~[p+(se %tas) q+(of dl-session)])
+        delete-session+(se %tas)
+    ==
+  ::
+  ++  de-info-1
+    ^-  $-(json info-1)
+    %-  ot
+    :~  title+so
+        about+de-unit-cord
+        moment+de-moment-1
+        timezone+(ot ~[p+bo q+(se %ud)])
+        location+de-unit-cord
+        venue-map+de-unit-cord
+        group+ul  :: TODO de-group
+        kind+de-kind
+        latch+de-latch
+        sessions+(op sym ^-($-(json session) (ot dl-session)))
+    ==
+  ::
+  ++  de-unit-cord  so:dejs-soft:format
+  ::
+  ++  de-moment-1
+    ^-  $-(json moment-1)
+    %-  ot
+    :~  start+da:dejs-soft:format
+        end+da:dejs-soft:format
+    ==
+  ::
+  ++  de-group
+    :: ^-  $-(json group)
+    :: %-  ot:dejs-soft:format
+    :~  p+(se %p)
+        q+(se %tas)
+    ==
+  ::
+  ++  dl-session
+    :~  title+so
+        panel+de-unit-cord
+        location+de-unit-cord
+        about+de-unit-cord
+        moment+de-moment-1
+    ==
+  ::
+  ++  de-event-1
+    ^-  $-(json event-1)
+    %-  ot
+    :~  info+de-info-1
+        secret+de-unit-cord
+        limit+ni:dejs-soft:format
+    ==
+  --
+::
 ++  enjs-update
   =,  enjs:format
   |=  upd=update
@@ -46,7 +151,6 @@
 ++  en-all-records
   |=  a=(mip id ship record-1)
   ^-  json
-  ?~  a  ~
   =/  ids=(list id)
     ~(tap in ~(key by a))
   :-  %o
@@ -86,7 +190,7 @@
     ^-  ^json
     %-  pairs
     :~  ['p' s+(scot %tas p.a)]
-        ['q' s+(sect q.a)]
+        ['q' (sect q.a)]
     ==
   ::
   ++  en-info-1
@@ -133,7 +237,6 @@
     ++  en-all-sessions
       |=  a=(map term session)
       ^-  json
-      ?~  a  ~
       :-  %o
       %-  malt
       ^-  (list [cord ^json])

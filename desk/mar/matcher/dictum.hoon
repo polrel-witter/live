@@ -1,14 +1,14 @@
-/-  matcher
+/-  *matcher
 ::
-|_  =dictum:matcher
+|_  dic=dictum
 ++  grab
   |%
-  ++  noun  dictum:matcher
+  ++  noun  dictum
   --
 ::
 ++  grow
   |%
-  ++  noun  dictum
+  ++  noun  dic
   --
 ::
 ++  grad  %noun

@@ -1,14 +1,15 @@
-/-  live
-::
-|_  =operation:live
+/-  *live
+/+  *live
+|_  op=operation
 ++  grab
   |%
-  ++  noun  operation:live
+  ++  noun  operation
+  ++  json  dejs-operation
   --
 ::
 ++  grow
   |%
-  ++  noun  operation
+  ++  noun  op
   --
 ::
 ++  grad  %noun
