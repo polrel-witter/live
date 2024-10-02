@@ -562,7 +562,7 @@
     ^-  ?
     =;  ver=?
       ?:  ver  &
-      ~&(>>> "{<ship.id>} is the host of this event" |)
+      ~&(>>> "bad call on event: {<id>}" |)
     ?&  =(src our):bowl
         =(our.bowl ship.id)
     ==
