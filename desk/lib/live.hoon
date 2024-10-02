@@ -121,24 +121,25 @@
 ::
 ++  enjs-demand
   =,  enjs:format
-  |=  dem=demand
+  |=  =demand
   ^-  ^json
-  ~|  "{<(scot %tas -.dem)>} conversion not supported"
-  ?-    -.dem
+  ~|  "{<-.demand>} conversion not supported"
+  ?-    -.demand
       %event-exists   !!
       %record-exists  !!
       %event          !!
       %counts         !!
-      %all-events     !!
       %event-records  !!
       %remote-events  !!
-      %all-records  (frond ['allRecords' (en-all-records p.dem)])
-      %record
-    %-  frond
-    :-  'record'
-    ?~  p.dem  ~
-    (en-record u.p.dem)
+      %all-events   (frond ['allEvents' (en-all-events p.demand)])
+      %all-records  (frond ['allRecords' (en-all-records p.demand)])
+      %record       (frond ['record' ?~(p.demand ~ (en-record u.p.demand))])
   ==
+::
+++  en-unit-cord
+  |=  a=(unit cord)
+  ^-  json
+  ?~(a ~ s+u.a)
 ::
 ++  en-id
   |=  a=id
@@ -147,6 +148,47 @@
   :~  ['ship' s+(scot %p ship.a)]
       ['name' s+(scot %tas name.a)]
   ==
+::
+++  en-record
+  =,  enjs:format
+  |=  a=record-1
+  |^  ^-  ^json
+  %-  pairs
+  :~  ['info' (en-info-1 info.a)]
+      ['secret' (en-unit-cord secret.a)]
+      ['status' (en-status status.a)]
+  ==
+  ::
+  ++  en-status
+    |=  a=status
+    ^-  ^json
+    %-  pairs
+    :~  ['p' s+(scot %tas p.a)]
+        ['q' (time q.a)]
+    ==
+  --
+::
+++  en-all-events
+  |=  a=(map id event-1)
+  |^  ^-  json
+  :-  %o
+  %-  malt
+  ^-  (list [cord ^json])
+  %+  turn  ~(tap by a)
+  |=  [=id eve=event-1]
+  :-  (crip :(weld (scow %p ship.id) "/" (scow %tas name.id)))
+  (frond:enjs:format ['event' (en-event eve)])
+  ::
+  ++  en-event
+    =,  enjs:format
+    |=  a=event-1
+    ^-  ^json
+    %-  pairs
+    :~  ['info' (en-info-1 info.a)]
+        ['secret' (en-unit-cord secret.a)]
+        ['limit' `json`?~(limit.a ~ (numb u.limit.a))]
+    ==
+  --
 ::
 ++  en-all-records
   |=  a=(mip id ship record-1)
@@ -161,7 +203,7 @@
   ::  convert the id to a single cord for the object map, and nest
   ::  the records map as an object within
   ::
-  :-  (crip :(weld (scow %p ship.id) " " (scow %tas name.id)))
+  :-  (crip :(weld (scow %p ship.id) "/" (scow %tas name.id)))
   :-  %o
   %-  malt
   ^-  (list [cord ^json])
@@ -170,91 +212,68 @@
   :-  (scot %p ship)
   (frond:enjs:format ['record' (en-record rec)])
 ::
-++  en-record
+++  en-info-1
   =,  enjs:format
-  |=  a=record-1
+  |=  a=info-1
   |^  ^-  ^json
   %-  pairs
-  :~  ['info' (en-info-1 info.a)]
-      ['secret' (en-unit-cord secret.a)]
-      ['status' (en-status status.a)]
+  :~  ['title' s+title.a]
+      ['about' (en-unit-cord about.a)]
+      ['moment' (en-moment-1 moment.a)]
+      ['timezone' (en-timezone timezone.a)]
+      ['location' (en-unit-cord location.a)]
+      ['venue-map' (en-unit-cord venue-map.a)]
+      ['group' (en-group group.a)]
+      ['kind' s+(scot %tas kind.a)]
+      ['latch' s+(scot %tas latch.a)]
+      ['sessions' (en-all-sessions sessions.a)]
   ==
   ::
-  ++  en-unit-cord
-    |=  a=(unit cord)
+  ++  en-group
+    |=  a=group
     ^-  json
-    ?~(a ~ s+u.a)
+    ?~  a  ~
+    %-  pairs
+    :~  ['ship' s+(scot %p p.u.a)]
+        ['term' s+(scot %tas q.u.a)]
+    ==
   ::
-  ++  en-status
-    |=  a=status
+  ++  en-timezone
+    |=  a=timezone
     ^-  ^json
     %-  pairs
-    :~  ['p' s+(scot %tas p.a)]
-        ['q' (sect q.a)]
+    :~  ['p' b+p.a]
+        ['q' (numb q.a)]
     ==
   ::
-  ++  en-info-1
-    |=  a=info-1
-    |^  ^-  ^json
+  ++  en-moment-1
+    |=  a=moment-1
+    ^-  ^json
+    %-  pairs
+    :~  ['start' ?~(start.a ~ (sect u.start.a))]
+        ['end' ?~(end.a ~ (sect u.end.a))]
+    ==
+  ::
+  ++  en-all-sessions
+    |=  a=(map term session)
+    ^-  json
+    :-  %o
+    %-  malt
+    ^-  (list [cord ^json])
+    %+  turn  ~(tap by a)
+    |=  [=term =session]
+    :-  (scot %tas term)
+    (frond:enjs:format ['session' (en-session session)])
+  ::
+  ++  en-session
+    |=  a=session
+    ^-  ^json
     %-  pairs
     :~  ['title' s+title.a]
+        ['panel' (en-unit-cord panel.a)]
+        ['location' (en-unit-cord location.a)]
         ['about' (en-unit-cord about.a)]
         ['moment' (en-moment-1 moment.a)]
-        ['timezone' (en-timezone timezone.a)]
-        ['location' (en-unit-cord location.a)]
-        ['venue-map' (en-unit-cord venue-map.a)]
-        ['group' (en-group group.a)]
-        ['kind' s+(scot %tas kind.a)]
-        ['latch' s+(scot %tas latch.a)]
-        ['sessions' (en-all-sessions sessions.a)]
     ==
-    ::
-    ++  en-group
-      |=  a=group
-      ^-  json
-      ?~  a  ~
-      %-  pairs
-      :~  ['ship' s+(scot %p p.u.a)]
-          ['term' s+(scot %tas q.u.a)]
-      ==
-    ::
-    ++  en-timezone
-      |=  a=timezone
-      ^-  ^json
-      %-  pairs
-      :~  ['p' b+p.a]
-          ['q' (numb q.a)]
-      ==
-    ::
-    ++  en-moment-1
-      |=  a=moment-1
-      ^-  ^json
-      %-  pairs
-      :~  ['start' ?~(start.a ~ (sect u.start.a))]
-          ['end' ?~(end.a ~ (sect u.end.a))]
-      ==
-    ::
-    ++  en-all-sessions
-      |=  a=(map term session)
-      ^-  json
-      :-  %o
-      %-  malt
-      ^-  (list [cord ^json])
-      %+  turn  ~(tap by a)
-      |=  [=term =session]
-      :-  (scot %tas term)
-      (frond:enjs:format ['session' (en-session session)])
-    ::
-    ++  en-session
-      |=  a=session
-      ^-  ^json
-      %-  pairs
-      :~  ['title' s+title.a]
-          ['panel' (en-unit-cord panel.a)]
-          ['location' (en-unit-cord location.a)]
-          ['about' (en-unit-cord about.a)]
-          ['moment' (en-moment-1 moment.a)]
-      ==
-    --
   --
 --
