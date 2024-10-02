@@ -1,4 +1,4 @@
-import { Backend, EditableProfileFields, Event } from "@/backend";
+import { Backend, EditableProfileFields, Event, eventIdsEqual } from "@/backend";
 import EventList from "@/components/event-list";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { useEffect, useState } from "react";
@@ -7,6 +7,7 @@ import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProfileDialog from "@/components/profile-dialog";
 import { flipBoolean } from "@/lib/utils";
+import { unsubscribe } from "diagnostics_channel";
 
 const emptyCtx = newEmptyIndexCtx()
 
@@ -30,40 +31,68 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
   const [openProfile, setOpenProfile] = useState(false)
 
 
+
+
+
+  // window.urbit.subscribe({
+  //   app: "live",
+  //   path: "/updates",
+  //   event: (evt) => { console.log("%live event: ", evt) },
+  //   err: (err, _id) => { console.log("%live err: ", err) },
+  //   quit: (data) => { console.log("%live closed subscription: ", data) }
+  // }).then(() => {console.log("subscribed to live")})
+
   useEffect(() => {
     backend.getEvents().then(setEvents);
 
     console.log("trying match")
 
-    window.urbit.poke({
-      app: "matcher",
-      mark: "matcher-deed",
-      // why do we need the [ ~ ~bel ]
-      // this is the guest ship
-      // json: [[_id.ship, _id.name], ["%register", ["~", "~bel"]]]
-      // json: { "id": { "ship": <string>, "name": <string> }, "action": { "register": <string or null> } }
-      json: {
-        "shake": {
-          "id": { "ship": "~bus", "name": "event" },
-          "ship": "~bus",
-          "act": true
-        }
-      }
-    }).then(() => { console.log("match") })
+    // window.urbit.poke({
+    //   app: "matcher",
+    //   mark: "matcher-deed",
+    //   // why do we need the [ ~ ~bel ]
+    //   // this is the guest ship
+    //   // json: [[_id.ship, _id.name], ["%register", ["~", "~bel"]]]
+    //   // json: { "id": { "ship": <string>, "name": <string> }, "action": { "register": <string or null> } }
+    //   json: {
+    //     "shake": {
+    //       "id": { "ship": "~bus", "name": "event" },
+    //       "ship": "~bus",
+    //       "act": true
+    //     }
+    //   }
+    // }).then(() => { console.log("match") })
+    let liveSubId: number
 
-    window.urbit.subscribe({
-      app: "live",
-      path: "/updates",
-      event: (evt) => { console.log("%live event: ", evt) },
-      err: (err, _id) => { console.log("%live err: ", err) },
-      quit: (data) => { console.log("%live closed subscription: ", data) }
-    }).then(() => {console.log("subscribed to live")})
+    backend.subscribeToLiveEvents({
+      onEvent: (evt) => {
+        console.log("%live event: ", evt)
+        setEvents((oldEvts) => {
+          return oldEvts.map((oldEvt) => {
+            if (eventIdsEqual(evt.event.id, oldEvt.id)) {
+              console.log("found")
+              return evt.event
+            }
+            return oldEvt
+          })
+        })
+      },
+      onError: (err, _id) => { console.log("%live err: ", err) },
+      onQuit: (data) => { console.log("%live closed subscription: ", data) }
+    }).then((id) => { liveSubId = id })
 
     backend.getProfile(window.ship).then((profile) => {
-      setOwnProfileFields({
-
-      })
+      if (!profile) {
+        console.error(`profile for ${window.ship} not found`)
+      } else {
+        setOwnProfileFields(profile.editableFields)
+      }
     })
+
+
+    return () => {
+      backend.unsubscribeFromEvent(liveSubId).then()
+    }
 
     // const interval = setInterval(async () => {
     //   console.log("loop")

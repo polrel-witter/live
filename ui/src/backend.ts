@@ -1,7 +1,11 @@
 import Urbit from "@urbit/http-api";
-import { z } from "zod" // this is an object validation library
+import { number, z } from "zod" // this is an object validation library
 
 interface EventId { ship: string, name: string };
+
+function eventIdsEqual(id1: EventId, id2: EventId): boolean {
+return id1.ship === id2.ship && id1.name === id2.name
+}
 
 type EventStatus = "invited" | "requested" | "registered" | "unregistered" | "attended"
 
@@ -24,7 +28,11 @@ interface Backend {
   // getSchedule(id: EventId): Promise<Session[]>
 
   // live - TBD
-  subscribeToEventInvite(handler: (id: EventId) => void): void
+  subscribeToLiveEvents(handlers: {
+    onEvent: (e: LiveUpdateEvent) => void
+    onError: (err: any, id: string) => void,
+    onQuit: (data: any) => void,
+  }): Promise<number>
 
   // --- matcher agent --- //
 
@@ -48,6 +56,9 @@ interface Backend {
 
   // matcher - TBD
   subscribeToMatch(handler: (peerPatp: string, matched: boolean) => void): void
+
+  // unsubscribe
+  unsubscribeFromEvent(id: number): Promise<void>
 }
 
 
@@ -87,6 +98,11 @@ type Event = {
   kind: "public" | "private" | "secret";
   latch: "open" | "closed" | "over";
   sessions: Session[]
+}
+
+type LiveUpdateEvent = {
+  ship: string,
+  event: Event,
 }
 
 // function getSchedule(_api: Urbit): () => Promise<Session[]> {
@@ -303,7 +319,6 @@ const allRecordsSchema = z.object({
 //
 
 function backendRecordToEvent(eventId: EventId, record: z.infer<typeof recordSchema>): Event {
-
   const {
     info: {
       moment: { start, end },
@@ -462,8 +477,38 @@ function unregister(_api: Urbit): (id: EventId) => Promise<void> {
   }
 }
 
-function subscribeToEventInvite(_api: Urbit): (handler: (id: EventId) => void) => void {
-  return (_handler: (id: EventId) => void) => { }
+const liveUpdateEventSchema = z.object({
+  id: z.object({
+    name: z.string(),
+    ship: z.string(),
+  }),
+  ship: z.string(),
+  record: recordSchema,
+})
+
+
+
+function subscribeToLiveEvents(_api: Urbit): (handlers: {
+  onEvent: (e: LiveUpdateEvent) => void
+  onError: (err: any, id: string) => void,
+  onQuit: (data: any) => void,
+}) => Promise<number> {
+  return async ({ onEvent, onError, onQuit }) => {
+    return window.urbit.subscribe({
+      app: "live",
+      path: "/updates",
+      event: (evt) => {
+        console.log("here is one vent ", evt)
+        const updateEvent = liveUpdateEventSchema.parse(evt)
+        onEvent({
+          event: backendRecordToEvent(updateEvent.id, updateEvent.record),
+          ship: updateEvent.ship
+        })
+      },
+      err: (err, id) => onError(err, id),
+      quit: (data) => onQuit(data)
+    })
+  }
 }
 
 function getProfile(_api: Urbit): (patp: string) => Promise<Profile | null> {
@@ -479,7 +524,6 @@ function getProfile(_api: Urbit): (patp: string) => Promise<Profile | null> {
     })
     return _mockProfiles(patp)
   }
-
 }
 
 function getProfiles(_api: Urbit): (id: EventId) => Promise<Profile[]> {
@@ -559,7 +603,7 @@ function newBackend(api: Urbit, ship: string): Backend {
     // getSchedule: getSchedule(api),
     getEvents: getEvents(api, ship),
     getEvent: getEvent(api, ship),
-    subscribeToEventInvite: subscribeToEventInvite(api),
+    subscribeToLiveEvents: subscribeToLiveEvents(api),
 
     getProfile: getProfile(api),
     getProfiles: getProfiles(api),
@@ -567,10 +611,14 @@ function newBackend(api: Urbit, ship: string): Backend {
     editProfileField: editProfileField(api),
     match: match(api),
     unmatch: unmatch(api),
-    subscribeToMatch: subscribeToMatch(api)
+    subscribeToMatch: subscribeToMatch(api),
+
+    unsubscribeFromEvent: (id) => {
+      return api.unsubscribe(id)
+    }
   }
 }
 
-export { newBackend }
+export { newBackend, eventIdsEqual}
 
 export type { EventId, Event, Session, Profile, EditableProfileFields, Backend }
