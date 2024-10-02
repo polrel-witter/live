@@ -73,6 +73,7 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfileField }) => {
         {fields.map(([fieldName, placeholder]) => {
           return (
             <FormField
+              key={fieldName}
               control={form.control}
               name={fieldName}
               render={({ field }) => (

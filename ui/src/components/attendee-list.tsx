@@ -16,9 +16,14 @@ import { Button } from "@/components/ui/button"
 import { PropsWithChildren, useState } from "react"
 import { cn, flipBoolean } from "@/lib/utils"
 import { SlideDownAndReveal, SlideRightAndReveal } from "./sliders"
+import { match } from "assert"
 
 // TODO: add tooltips to these
-const ConnectionsButton: React.FC<{ profile: Profile }> = ({ profile }) => {
+const ConnectionsButton: React.FC<{
+  profile: Profile
+  match(patp: string): void;
+  unmatch(patp: string): void;
+}> = ({ profile, ...fns }) => {
   const [reveal, setReveal] = useState(false)
   const baseClass = "w-8 h-8 p-0 border rounded-full bg-transparent"
   // const baseClass = "w-7 h-7 p-0 border rounded-full bg-transparent"
@@ -26,6 +31,7 @@ const ConnectionsButton: React.FC<{ profile: Profile }> = ({ profile }) => {
     case "unmatched":
       return (
         <Button
+          onClick={() => { fns.match(profile.patp) }}
           className={cn([
             baseClass,
             `bg-sky-200 hover:bg-sky-600`,
@@ -40,7 +46,7 @@ const ConnectionsButton: React.FC<{ profile: Profile }> = ({ profile }) => {
       return (
         <div className="flex">
           <Button
-            onClick={() => setReveal(flipBoolean)}
+            onClick={() => { setReveal(flipBoolean); fns.unmatch(profile.patp) }}
             className={cn([
               baseClass,
               `bg-orange-200 hover:bg-orange-300`,
@@ -64,6 +70,7 @@ const ConnectionsButton: React.FC<{ profile: Profile }> = ({ profile }) => {
     case "matched":
       return (
         <Button
+          onClick={() => { fns.match(profile.patp) }}
           className={cn([
             baseClass,
             `bg-emerald-200 hover:bg-emerald-600`,
@@ -111,7 +118,11 @@ const ListItem: React.FC<{
                 <ChevronDown className="h-3 w-3 text-gray-400" />
               </Button>
             </div>
-            <ConnectionsButton profile={profile} />
+            <ConnectionsButton
+              profile={profile}
+              match={fns.match}
+              unmatch={fns.unmatch}
+            />
           </div>
           <SlideDownAndReveal show={showProfile} maxHeight="max-h-[1000px]">
             {/* TODO: this should be in dedicated page and in a pop-up

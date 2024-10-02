@@ -16,9 +16,10 @@ interface FnProps {
   unregister: Backend["unregister"]
 }
 
-const makeEventButtons = (evt: Event, fns: FnProps) => {
+const EventButtons: React.FC<{ event: Event } & FnProps> = ({ event: evt, ...fns }) => {
   switch (evt.status) {
     case "invited":
+    case "unregistered":
       return (
         <div className="flex-auto">
           <Button
@@ -30,7 +31,6 @@ const makeEventButtons = (evt: Event, fns: FnProps) => {
           > register </Button>
         </div>
       )
-    case "requested":
     case "registered":
       // TODO: add a slide-out thingy that says: arte you sure?
       return (
@@ -45,8 +45,8 @@ const makeEventButtons = (evt: Event, fns: FnProps) => {
           > unregister </Button>
         </div>
       )
-    case "unregistered":
     case "attended":
+    case "requested":
     default:
       console.error(`unexpected evt status: ${evt.status}`)
       return (<div></div>)
@@ -58,7 +58,7 @@ const ListItem: React.FC<{ event: Event } & FnProps> = ({ event: evt, ...fns }) 
   // TODO: on mobile it's not clear that you can click the title to navigate
   // forward, add an icon in a button
   return (
-    <li className="my-5" key={`${ship}-${name}-${evt.kind}`}>
+    <li className="my-5">
       <Card>
         <CardHeader>
           <CardTitle className="font-medium hover:font-bold">
@@ -71,7 +71,11 @@ const ListItem: React.FC<{ event: Event } & FnProps> = ({ event: evt, ...fns }) 
           <p>location: {evt.location}</p>
         </CardContent>
         <CardFooter>
-          {makeEventButtons(evt, fns)}
+          <EventButtons
+            event={evt}
+            register={fns.register}
+            unregister={fns.unregister}
+          />
         </CardFooter>
       </Card>
     </li>
@@ -84,7 +88,13 @@ const EventList: React.FC<{ events: Event[] } & FnProps> = ({ events, ...fns }) 
     <ul>
       {/* this works, but is barely readable */}
       {/* {events.map((evt) => <ListItem {...{ event: evt, ...fns }} />)} */}
-      {events.map((evt) => <ListItem event={evt} register={fns.register} unregister={fns.unregister} />)}
+      {events.map((evt) =>
+        <ListItem
+          key={`${evt.id.ship}-${evt.id.name}`}
+          event={evt}
+          register={fns.register}
+          unregister={fns.unregister}
+        />)}
     </ul>
   )
 }

@@ -33,6 +33,32 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
   useEffect(() => {
     backend.getEvents().then(setEvents);
 
+    console.log("trying match")
+
+    window.urbit.poke({
+      app: "matcher",
+      mark: "matcher-deed",
+      // why do we need the [ ~ ~bel ]
+      // this is the guest ship
+      // json: [[_id.ship, _id.name], ["%register", ["~", "~bel"]]]
+      // json: { "id": { "ship": <string>, "name": <string> }, "action": { "register": <string or null> } }
+      json: {
+        "shake": {
+          "id": { "ship": "~bus", "name": "event" },
+          "ship": "~bus",
+          "act": true
+        }
+      }
+    }).then(() => { console.log("match") })
+
+    window.urbit.subscribe({
+      app: "live",
+      path: "/updates",
+      event: (evt) => { console.log("%live event: ", evt) },
+      err: (err, _id) => { console.log("%live err: ", err) },
+      quit: (data) => { console.log("%live closed subscription: ", data) }
+    }).then(() => {console.log("subscribed to live")})
+
     backend.getProfile(window.ship).then((profile) => {
       setOwnProfileFields({
 
