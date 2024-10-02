@@ -21,8 +21,8 @@ export function AttendeesPage(props: { backend: Backend }) {
       <div className="text-bold">event attendees</div>
       <AttendeeList
         profiles={ctx.profiles}
-        match={props.backend.match}
-        unmatch={props.backend.unmatch}
+        match={(patp: string) => {return props.backend.match(ctx.details.id, patp).then(()=>{console.log("foo")})}}
+        unmatch={(patp: string) => {return props.backend.unmatch(ctx.details.id, patp).then(()=>{console.log("foo")})}}
         editProfileField={props.backend.editProfileField}
       />
     </div>

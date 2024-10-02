@@ -31,22 +31,23 @@ export default ({ mode }) => {
           icons: []
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg}']
-          //   clientsClaim: false,
-          //   runtimeCaching: [
-          //     {
-          //       urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.match(/^\/~\/scry\/journal\/entries.*/i),
-          //       handler: "StaleWhileRevalidate",
-          //       options: {
-          //         cacheName: "scry-cache",
-          //         expiration: {
-          //           maxEntries: 10,
-          //           maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
-          //         },
-          //         cacheableResponse: { statuses: [0, 200], }
-          //       },
-          //     }
-          //   ],
+          globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          // this makes it so it controls already open web pages
+          clientsClaim: false,
+          runtimeCaching: [
+            {
+              urlPattern: ({ url, sameOrigin }) => url.pathname.match(/^\/~\/.*/i),
+              handler: "NetworkFirst",
+              options: {
+                cacheName: "scry-cache",
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
+                },
+                cacheableResponse: { statuses: [0, 200], }
+              },
+            }
+          ],
         },
         devOptions: {
           enabled: process.env.NODE_ENV === 'development'

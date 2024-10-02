@@ -31,7 +31,7 @@ import { MapPage } from './pages/event/map';
 import { PatpLoader, ProfilePage } from './pages/profile';
 import { EventDetails } from './pages/event/details';
 
-const backend = newBackend(window.urbit)
+const backend = newBackend(window.urbit, window.ship)
 const basePath = "/apps/live"
 const router = createBrowserRouter([
   {
