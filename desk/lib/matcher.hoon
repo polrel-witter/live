@@ -48,28 +48,28 @@
 ::
 ++  enjs-demand
   =,  enjs:format
-  |=  dem=demand
+  |=  =demand
   |^  ^-  ^json
-  ~|  "{<(scot %tas -.dem)>} conversion not supported"
-  ?-    -.dem
+  ~|  "{<-.demand>} conversion not supported"
+  ?-    -.demand
       %peer-status  !!
       %matches      !!
       %reaches      !!
-      %peers     !! :: (frond ['peers' (en-peers p.dem)])
-      %profile   (frond ['profile' (en-profile p.dem)])
-      %profiles  !! :: (frond ['allProfiles' (en-all-profiles p.dem)])
+      %peers     (frond ['peers' (en-peers p.demand)])
+      %profile   (frond ['profile' (en-profile p.demand)])
+      %profiles  (frond ['allProfiles' (en-all-profiles p.demand)])
   ==
   ::
-::  ++  en-peers
-::    |=  a=(map ship status)
-::    ^-  json
-::    :-  %o
-::    %-  malt
-::    ^-  (list [cord ^json])
-::    %+  turn  ~(tap by a)
-::    |=  [=ship =status]
-::    :-  (scot %p ship)
-::    (frond ['status' ?~(status ~ s+(scot %tas u.status))])
+  ++  en-peers
+    |=  a=(map @p status)
+    ^-  json
+    :-  %o
+    %-  malt
+    ^-  (list [cord ^json])
+    %+  turn  ~(tap by a)
+    |=  [who=@p =status]
+    :-  (scot %p who)
+    (frond ['status' ?~(status ~ s+(scot %tas u.status))])
   ::
   ++  en-profile
     |=  a=(map term entry)
@@ -82,15 +82,15 @@
     :-  (scot %tas term)
     (frond ['entry' `json`?~(entry ~ s+u.entry)])
   ::
-::  ++  en-all-profiles
-::    |=  a=(map ship (list [term entry]))
-::    ^-  json
-::    :-  %o
-::    %-  malt
-::    ^-  (list [cord ^json])
-::    %+  turn  ~(tap by a)
-::    |=  [=ship fields=(list [term entry])]
-::    :-  (scot %p ship)
-::    (en-fields fields)
+  ++  en-all-profiles
+    |=  a=(map @p (list [term entry]))
+    ^-  json
+    :-  %o
+    %-  malt
+    ^-  (list [cord ^json])
+    %+  turn  ~(tap by a)
+    |=  [who=@p fields=(list [term entry])]
+    :-  (scot %p who)
+    (en-fields fields)
   --
 --
