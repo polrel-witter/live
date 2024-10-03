@@ -1,4 +1,4 @@
-import htmlPlugin  from "vite-plugin-html-config";
+import htmlPlugin from "vite-plugin-html-config";
 import rewriteAll from "vite-plugin-rewrite-all";
 import { ProxyOptions } from "vite";
 
@@ -14,6 +14,12 @@ export interface UrbitPluginConfig extends ProxyOptions {
    * @example `"http://localhost:8080"`
    */
   target: string;
+  /**
+   * Whether we're in development or not
+   *
+   * @example false
+   */
+  development: boolean;
 }
 
 const UrbitProxyPlugin = ({ base, target, ...options }: UrbitPluginConfig) => {
@@ -44,10 +50,19 @@ const UrbitProxyPlugin = ({ base, target, ...options }: UrbitPluginConfig) => {
  */
 export const urbitPlugin = (config: UrbitPluginConfig) => {
   const htmlPluginOpt = {
-    headScripts: [
-      { src: `${config.target}/apps/${config.base}/desk.js` },
-      { src: `${config.target}/session.js` },
-    ],
+    headScripts: (
+      config.development
+        ?
+        [
+          { src: `${config.target}/apps/${config.base}/desk.js` },
+          { src: `${config.target}/session.js` },
+        ]
+        :
+        [
+          { src: `/apps/${config.base}/desk.js` },
+          { src: `/session.js` },
+        ]
+    )
   };
 
   // not sure why this ignore is needed, but the package won't build otherwise

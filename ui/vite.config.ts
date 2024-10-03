@@ -16,9 +16,11 @@ export default ({ mode }) => {
   const SHIP_URL = process.env.SHIP_URL || process.env.VITE_SHIP_URL || 'http://localhost:8080';
   console.log(SHIP_URL);
 
+  const inDev = process.env.NODE_ENV === 'development';
+
   return defineConfig({
     plugins: [
-      urbitPlugin({ base: 'live', target: SHIP_URL, secure: false }),
+      urbitPlugin({ base: 'live', target: SHIP_URL, development: inDev }),
       reactRefresh(),
       VitePWA({
         registerType: 'autoUpdate',
@@ -36,7 +38,8 @@ export default ({ mode }) => {
           clientsClaim: false,
           runtimeCaching: [
             {
-              urlPattern: ({ url, sameOrigin }) => url.pathname.match(/^\/~\/.*/i),
+              // is sameOrigin important?
+              urlPattern: ({ url, sameOrigin: _sameOrigin }) => url.pathname.match(/^\/~\/.*/i),
               handler: "StaleWhileRevalidate",
               options: {
                 cacheName: "scry-cache",
@@ -50,7 +53,7 @@ export default ({ mode }) => {
           ],
         },
         devOptions: {
-          enabled: process.env.NODE_ENV === 'development'
+          enabled: inDev
         },
       }),
     ],
