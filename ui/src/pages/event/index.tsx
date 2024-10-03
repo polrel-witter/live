@@ -6,7 +6,7 @@ import { LoaderFunctionArgs, Params } from "react-router-dom";
 import { EventContext, EventCtx, newEmptyCtx } from './context';
 import { IndexContext, IndexCtx, newEmptyIndexCtx } from '../context';
 
-import { Backend, EditableProfileFields, EventId, eventIdsEqual, Profile } from '@/backend'
+import { Backend, EventId, eventIdsEqual, Profile } from '@/backend'
 import { resolve } from 'path';
 
 interface EventParams {
@@ -43,21 +43,20 @@ export function LoadEventParams(): EventParams {
 //   return ctx
 // }
 
-const emptyEvent = newEmptyCtx()
+async function buildContextData({ hostShip, name }: EventParams, backend: Backend): Promise<EventCtx> {
 
-async function buildContextData({ hostShip, name }: EventParams, backend: Backend) {
-
-  const evt = emptyEvent
+  const evt: any = {}
   const evtId: EventId = { ship: hostShip, name: name }
   // we could also do away with this backend call here
   // and add a prop to pass EventDetails from the main page
   evt.details = await backend.getEvent(evtId)
   evt.attendees = await backend.getAttendees(evtId);
+  evt.profiles = await backend.getProfiles(evtId);
 
-  const profiles = await Promise.all(evt.attendees
-    .map((attendee) => backend.getProfile(attendee)))
+  // const profiles = await Promise.all(evt.attendees
+  //   .map((attendee) => backend.getProfile(attendee)))
 
-  evt.profiles = profiles.filter(profile => profile !== null) as Profile[]
+  // evt.profiles = profiles.filter(profile => profile !== null) as Profile[]
 
 
   return evt
@@ -73,51 +72,55 @@ export function EventIndex(props: { backend: Backend }) {
   // 
   // might refactor into reducer if it becomes annoying
   const [eventContext, setEventCtx] = useState<EventCtx>(newEmptyCtx())
-  const [ownProfileFields, setOwnProfileFields] = useState<EditableProfileFields>({})
+  const [ownProfileFields, setOwnProfileFields] = useState<Profile>({})
   // const [indexCtx, setIndexCtx] = useState<IndexCtx>(newEmptyIndexCtx())
 
   // const ctx = useContext(IndexContext)
 
   useEffect(() => {
-    // buildIndexContextData("~sampel-palnet", props.backend).then(setIndexCtx)
-    buildContextData(eventParams, props.backend).then(setEventCtx);
-
     // const interval = setInterval(async () => {
     //   console.log("loop")
     //   const ctxData = await buildContextData(eventParams, props.backend)
     //   setEventCtx(ctxData)
     // }, 1000);
+    let liveSubId: number
 
     console.log("loop")
-    buildContextData(eventParams, props.backend).then(data => setEventCtx(data))
+    buildContextData(eventParams, props.backend).then(data => {
+      setEventCtx(data)
 
-    let liveSubId: number
-    props.backend.subscribeToLiveEvents({
-      onEvent: (evt) => {
-        console.log("%live event: ", evt)
+      return props.backend.subscribeToLiveEvents({
+        onEvent: (evt) => {
+          console.log("%live event: ", evt)
 
-        setEventCtx(({ details: _details, ...rest }) => {
-          if (eventIdsEqual(eventContext.details.id, evt.event.id)) {
-            return {
-              details: evt.event,
-              ...rest
+          setEventCtx(({ details: _details, ...rest }) => {
+            if (eventIdsEqual(eventContext.details.id, evt.event.id)) {
+              return {
+                details: evt.event,
+                ...rest
+              }
             }
-          }
-          return { details: _details, ...rest }
-        })
+            return { details: _details, ...rest }
+          })
 
-      },
-      onError: (err, _id) => { console.log("%live err: ", err) },
-      onQuit: (data) => { console.log("%live closed subscription: ", data) }
-    }).then((id) => { liveSubId = id })
-
-    props.backend.getProfile(window.ship).then((profile) => {
-      if (!profile) {
-        console.error(`profile for ${window.ship} not found`)
-      } else {
-        setOwnProfileFields(profile.editableFields)
-      }
+        },
+        onError: (err, _id) => { console.log("%live err: ", err) },
+        onQuit: (data) => { console.log("%live closed subscription: ", data) }
+      })
     })
+      .then((id) => {
+        liveSubId = id
+
+        props.backend.getProfile(window.ship).then((profile) => {
+          if (!profile) {
+            console.error(`profile for ${window.ship} not found`)
+          } else {
+            setOwnProfileFields(profile)
+          }
+        })
+      })
+    console.log(eventContext)
+
 
 
     return () => {
@@ -130,8 +133,8 @@ export function EventIndex(props: { backend: Backend }) {
     <EventContext.Provider value={eventContext}>
       <div className="grid size-full" >
         <NavBar
-          eventName={eventContext!.details.id.name}
-          host={eventContext!.details.id.ship}
+          eventName={eventContext.details.id.name}
+          host={eventContext.details.id.ship}
           profile={ownProfileFields}
           patp={window.ship}
           editProfileField={props.backend.editProfileField}

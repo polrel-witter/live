@@ -5,11 +5,11 @@ import { useEffect, useState } from "react"
 import { Button } from "./ui/button"
 import { ChevronLeft, ChevronLeftSquare, ChevronUp, Edit, Menu, User, Users } from "lucide-react"
 import { flipBoolean } from "@/lib/utils"
-import { Backend, EditableProfileFields, } from "@/backend"
+import { Backend, Profile, } from "@/backend"
 import { SlideDownAndReveal } from "./sliders"
 
 
-export default function NavBar(props: { eventName: string, host: string, patp: string, profile: EditableProfileFields, editProfileField: Backend["editProfileField"] }) {
+export default function NavBar(props: { eventName: string, host: string, patp: string, profile: Profile, editProfileField: Backend["editProfileField"] }) {
   const [openProfile, setOpenProfile] = useState(false)
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openMenu, setOpenMenu] = useState(false);

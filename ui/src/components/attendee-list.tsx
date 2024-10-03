@@ -7,23 +7,20 @@ import {
   CardTitle
 } from "@/components/ui/card"
 
-import ProfileForm from "@/components/profile-form"
-
-import { Profile, Backend, EditableProfileFields } from "@/backend"
+import { Profile, Backend, Attendee } from "@/backend"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ChevronDown, Plus, Ellipsis, X, Check, FileQuestion } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { PropsWithChildren, useState } from "react"
 import { cn, flipBoolean } from "@/lib/utils"
 import { SlideDownAndReveal, SlideRightAndReveal } from "./sliders"
-import { match } from "assert"
 
 // TODO: add tooltips to these
 const ConnectionsButton: React.FC<{
-  profile: Profile
+  attendee: Attendee
   match(patp: string): void;
   unmatch(patp: string): void;
-}> = ({ profile, ...fns }) => {
+}> = ({ attendee: profile, ...fns }) => {
   const [reveal, setReveal] = useState(false)
   const baseClass = "w-8 h-8 p-0 border rounded-full bg-transparent"
   // const baseClass = "w-7 h-7 p-0 border rounded-full bg-transparent"
@@ -94,15 +91,15 @@ const ConnectionsButton: React.FC<{
 }
 
 const ListItem: React.FC<{
-  profile: Profile
+  attendee: Attendee
   match(patp: string): void;
   unmatch(patp: string): void;
   editProfileField: Backend["editProfileField"]
-}> = ({ profile, ...fns }) => {
+}> = ({ attendee: profile, ...fns }) => {
   const [showProfile, setShowProfile] = useState(false)
   const toggleProfile = () => setShowProfile(flipBoolean)
   return (
-    <li key={profile.patp}>
+    <li >
       <Card >
         <CardContent
           className={
@@ -119,7 +116,7 @@ const ListItem: React.FC<{
               </Button>
             </div>
             <ConnectionsButton
-              profile={profile}
+              attendee={profile}
               match={fns.match}
               unmatch={fns.unmatch}
             />
@@ -141,7 +138,7 @@ const ListItem: React.FC<{
                   <CardHeader className="p-4 font-semibold"> profile details</CardHeader>
                   <CardContent className="p-4 pt-0">
                     {
-                      Object.entries(profile.editableFields).map(([field, val]) => {
+                      Object.entries(profile).map(([field, val]) => {
                         return (<p>{`${field}: ${val}`}</p>)
                       })
                     }
@@ -161,16 +158,18 @@ const ListItem: React.FC<{
 }
 
 const AttendeeList: React.FC<{
+  attendees: Attendee[]
   profiles: Profile[]
   match(patp: string): void;
   unmatch(patp: string): void;
   editProfileField: Backend["editProfileField"]
-}> = ({ profiles, ...rest }) => {
+}> = ({ attendees, ...rest }) => {
   return (
     <ul className="grid gap-6">
       {
-        profiles.map((profile) => <ListItem
-          profile={profile}
+        attendees.map((attendee) => <ListItem
+          key={attendee.patp}
+          attendee={attendee}
           unmatch={rest.unmatch}
           match={rest.match}
           editProfileField={rest.editProfileField}

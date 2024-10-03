@@ -6,13 +6,13 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import ProfileForm from "./profile-form";
-import { Backend, EditableProfileFields } from "@/backend";
+import { Backend, Profile } from "@/backend";
 
 type Props = {
   open: boolean;
   patp: string;
   onOpenChange: (b: boolean) => void;
-  profileFields: EditableProfileFields;
+  profileFields: Profile;
   editProfileField: Backend["editProfileField"]
 }
 

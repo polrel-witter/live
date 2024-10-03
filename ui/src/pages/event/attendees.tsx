@@ -20,9 +20,10 @@ export function AttendeesPage(props: { backend: Backend }) {
     <div className="grid m-6 md:mx-96 space-y-12 justify-items-center">
       <div className="text-bold">event attendees</div>
       <AttendeeList
+        attendees={ctx.attendees}
         profiles={ctx.profiles}
-        match={(patp: string) => {return props.backend.match(ctx.details.id, patp).then(()=>{console.log("foo")})}}
-        unmatch={(patp: string) => {return props.backend.unmatch(ctx.details.id, patp).then(()=>{console.log("foo")})}}
+        match={async (patp: string) => await props.backend.match(ctx.details.id, patp)}
+        unmatch={async (patp: string) => await props.backend.unmatch(ctx.details.id, patp)}
         editProfileField={props.backend.editProfileField}
       />
     </div>

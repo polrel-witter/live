@@ -25,7 +25,7 @@ export function ProfilePage(props: { backend: Backend }) {
       <CardContent>
         <div className="flex justify-center">
           <ProfileForm
-            profileFields={profile!.editableFields}
+            profileFields={profile!}
             editProfileField={props.backend.editProfileField}
           />
         </div>

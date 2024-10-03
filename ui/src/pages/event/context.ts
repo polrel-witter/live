@@ -1,9 +1,9 @@
 import { createContext } from "react";
-import { Session, Event, Profile } from "@/backend";
+import { Session, Event, Profile, Attendee } from "@/backend";
 
 interface EventCtx {
   details: Event
-  attendees: string[];
+  attendees: Attendee[];
   profiles: Profile[];
 }
 
@@ -25,8 +25,8 @@ function newEmptyCtx(): EventCtx {
       latch: "open",
       sessions: [] as Session[],
     },
-    profiles: [],
-    attendees: [] as string[],
+    profiles: [] as Profile[],
+    attendees: [] as Attendee[],
   }
 }
 

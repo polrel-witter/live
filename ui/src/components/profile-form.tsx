@@ -15,7 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Backend, EditableProfileFields } from "@/backend"
+import { Backend, Profile } from "@/backend"
 
 // TODO: do proper validation
 // reuse types across schemas
@@ -35,7 +35,7 @@ const formSchema = z.object({
 })
 
 type Props = {
-  profileFields: EditableProfileFields;
+  profileFields: Profile;
   editProfileField: Backend["editProfileField"]
 }
 
@@ -60,7 +60,7 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfileField }) => {
     entries.forEach(([field, val]) => { editProfileField(field, val) })
   }
 
-  const fields: [keyof EditableProfileFields, string][] = [
+  const fields: [keyof Profile, string][] = [
     ['github', "github username or email ..."],
     ['telegram', 'placeholder'],
     ['phone', 'placeholder'],

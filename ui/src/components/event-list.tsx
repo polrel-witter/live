@@ -55,6 +55,7 @@ const EventButtons: React.FC<{ event: Event } & FnProps> = ({ event: evt, ...fns
 
 const ListItem: React.FC<{ event: Event } & FnProps> = ({ event: evt, ...fns }) => {
   const { id: { ship, name } } = evt
+  console.log("e ", evt)
   // TODO: on mobile it's not clear that you can click the title to navigate
   // forward, add an icon in a button
   return (

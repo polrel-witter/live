@@ -1,10 +1,10 @@
 import { createContext } from "react";
-import { Event, EditableProfileFields } from "@/backend";
+import { Event, Profile } from "@/backend";
 
 interface IndexCtx {
   events: Event[]
   patp: string;
-  profile: EditableProfileFields;
+  profile: Profile;
 }
 
 function newEmptyIndexCtx(): IndexCtx {
