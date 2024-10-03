@@ -1,7 +1,5 @@
 import Urbit from "@urbit/http-api";
-import { profile } from "console";
-import { parse } from "path";
-import { number, z, ZodError } from "zod" // this is an object validation library
+import { z, ZodError } from "zod" // this is an object validation library
 
 interface EventId { ship: string, name: string };
 
@@ -101,6 +99,23 @@ type Event = {
   kind: "public" | "private" | "secret";
   latch: "open" | "closed" | "over";
   sessions: Session[]
+}
+
+const emptyEvent: Event = {
+  id: {
+    ship: "",
+    name: "",
+  },
+  status: "invited",
+  location: "",
+  startDate: new Date(0),
+  endDate: new Date(0),
+  description: "",
+  timezone: "",
+  kind: "public",
+  group: "",
+  latch: "open",
+  sessions: []
 }
 
 type LiveUpdateEvent = {
@@ -349,11 +364,18 @@ function getEvents(api: Urbit, ship: string): () => Promise<Event[]> {
         map(([idString, records]): Event => {
           const [hostShip, eventName] = idString.split("/")
           const eventId = { ship: hostShip, name: eventName }
-          if (Object.keys(records).length > 1) {
-            console.error("records has more than one key: ", records)
+
+          if (Object.keys(records).length < 1) {
+            console.error("records has less than one key: ", records)
+            return emptyEvent
           }
 
-          return backendRecordToEvent(eventId, records[`~${ship}`].record)
+          if (Object.keys(records).length > 1) {
+            console.error("records has more than one key: ", records)
+            return emptyEvent
+          }
+          const record = Object.values(records)[0]
+          return backendRecordToEvent(eventId, record.record)
         })
       // console.log(allRecords)
       return allRecords
@@ -375,22 +397,7 @@ function getEvent(api: Urbit, ship: string): (id: EventId) => Promise<Event> {
 
 
     if (!record) {
-      return Promise.resolve({
-        id: {
-          ship: "",
-          name: "",
-        },
-        status: "invited",
-        location: "",
-        startDate: new Date(0),
-        endDate: new Date(0),
-        description: "",
-        timezone: "",
-        kind: "public",
-        group: "",
-        latch: "open",
-        sessions: []
-      })
+      return Promise.resolve(emptyEvent)
     }
 
     return backendRecordToEvent(id, record.record)
