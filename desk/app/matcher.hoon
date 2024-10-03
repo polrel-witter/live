@@ -250,7 +250,7 @@
           =/  fields=(list [term entry])
             ~(tap by (~(got by profiles) our.bowl))
           (local-update [%profile our.bowl fields])
-        pass-profile-to-matches
+        pass-in-bulk
       ==
     ==
   ==
@@ -299,10 +299,15 @@
     ~&  wave.msg
     ?^  wave.msg
       =/  =wave:live-peers  (need wave.msg)
-      ::  guest list update so we write to our peers mip
+      ::  guest list update so we write to our peers mip and pass the
+      ::  public poriton of our profile
       ::
       ?-    -.wave
-          %add-peer     cor(peers (~(put bi peers) id ship.wave ~))
+          %add-peer
+        =.  peers  (~(put bi peers) id ship.wave ~)
+        ?:  =(our.bowl ship.wave)  cor
+        (send-profile %part ship.wave)
+      ::
           %delete-peer
         ::  if we're removed, we're no longer %registered/%attended so
         ::  we delete the peers for that event and unsubscribe
@@ -319,14 +324,17 @@
       ::                 [%peers ship.id name.id ~]
         cor(peers (~(del by peers) id))
       ==
-    ::  we've been added to some new event so we add the guests to our peers mip
+    ::  we've been added to some new event so we add the guests to our
+    ::  peers mip and send the public portion of our profile
     ::
     =/  new-peers=(list ship)
       ~(tap in guests.rock.msg)
     |-
     ?~  new-peers  cor
-    =?  peers  ?!(=(our.bowl i.new-peers))
-      (~(put bi peers) id i.new-peers ~)
+    =?  cor  ?!(=(our.bowl i.new-peers))
+      =.  peers  (~(put bi peers) id i.new-peers ~)
+      ?:  =(our.bowl i.new-peers)  cor
+      (send-profile %part i.new-peers)
     $(new-peers t.new-peers)
   ==
 ::  +make-act: build poke card
@@ -414,7 +422,7 @@
     =/  fields=(list [term entry])
       ~(tap by (~(got by profiles) our.bowl))
     (local-update [%profile our.bowl fields])
-  pass-profile-to-matches
+  pass-in-bulk
 ::  +update-profile: receive a profile update from a matched peer
 ::
 ++  update-profile
@@ -432,29 +440,43 @@
 ::  +send-profile: send a profile update to a peer
 ::
 ++  send-profile
-  |=  =ship
-  ^+  cor
+  |=  [share=?(%whole %part) =ship]
+  |^  ^+  cor
   =/  =cage
-    =/  ms=(map term entry)
-      (~(got by profiles) our.bowl)
-    matcher-deed+!>(`deed`[%update-profile ms])
+    =;  (map term entry)
+      matcher-deed+!>(`deed`[%update-profile -])
+    ?-  share
+      %whole  (~(got by profiles) our.bowl)
+      %part   (pull-tlon-fields our.bowl)
+    ==
   (emit (make-act /profile/remote/(scot %p ship) ship dap.bowl cage))
-::  +pass-profile-to-matches: send profile update to all of our
-::  matched peers
+  ::
+  ++  pull-tlon-fields
+    |=  who=_ship
+    ^-  (map term entry)
+    %-  malt
+    %+  murn  ~(tap by (~(got by profiles) who))
+    |=  [=term =entry]
+    ?.(?=(?(%bio %avatar %nickname) term) ~ `[term entry])
+  --
+::  +pass-in-bulk: send profile update to many ships
 ::
-++  pass-profile-to-matches
-  ^+  cor
-  =/  targets=(set ship)
-    %-  silt
-    %+  murn  ~(tap bi peers)
-    |=  [* =ship =status]
-    ?~(status ~ ?.(?=(%match u.status) ~ `ship))
-  =/  tar=(list ship)
-    ~(tap in targets)
-  |-
-  ?~  tar  cor
-  =.  cor  (send-profile i.tar)
-  $(tar t.tar)
+++  pass-in-bulk
+  |^  ^+  cor
+  =.  cor  (mail %part (murn ~(tap bi peers) |=([* =ship *] `ship)))
+  %+  mail  %whole
+  %+  murn  ~(tap bi peers)
+  |=  [* =ship =status]
+  ?~(status ~ ?.(?=(%match u.status) ~ `ship))
+  ::
+  ++  mail
+    |=  [share=?(%whole %part) tar=(list ship)]
+    |-  ^+  cor
+    ?~  tar  cor
+    =?  cor  ?!(=(our.bowl i.tar))
+      (send-profile share i.tar)
+    $(tar t.tar)
+  --
 ::  +scry-tlon-fields: populate Tlon profile via scry
 ::
 ++  scry-tlon-fields
@@ -560,13 +582,14 @@
     ::  if we're being added, i.e. which means we're the host, then init
     ::  the sss peers path and publish an update
     ::
-    ::  otherwise give the culp access to the sss peers path, ask them
-    ::  to subscribe to it, and publish an update
+    ::    otherwise give the culp access to the sss peers path, ask them
+    ::    to subscribe to it, and publish an update
     ::
     =?  cor  =(our.bowl u.who)
       init-sss-peers
     ?:  =(our.bowl u.who)
       (publish [%add-peer u.who])
+    =.  cor  (send-profile %part u.who)
     =.  cor  allow-sss-peers
     =/  =cage
       matcher-dictum+!>(`dictum`[id [%subscribe ~]])
@@ -601,7 +624,7 @@
     ^+  cor
     ?.  (~(has bi peers) id culp)  cor
     =?  cor  ?~(status | ?=(%match u.status))
-      (send-profile culp)
+      (send-profile %whole culp)
     =/  ver=?
       ?~  status  |
       ?:(?=(%match u.status) & |)
@@ -614,8 +637,10 @@
     |=  act=?
     |^  ^+  cor
         ?:  =(our.bowl src.bowl)
-          ?:  =(our.bowl culp)  cor
-          ?.  (~(has bi peers) id culp)  cor
+          ?:  =(our.bowl culp)
+            ~&(>>> "cannot match with ourselves" cor)
+          ?.  (~(has bi peers) id culp)
+            ~&(>>> "{<culp>} is not on the guest list for event {<id>}" cor)
           ?:  =(ship.id our.bowl)
             ::  as host
             ::
