@@ -46,7 +46,23 @@ const EventButtons: React.FC<{ event: Event } & FnProps> = ({ event: evt, ...fns
         </div>
       )
     case "attended":
+      return (
+        <div className="flex-auto">
+          <Button
+            className="h-full w-full hover:bg-emerald-900"
+            disabled
+          > attended </Button>
+        </div>
+      )
     case "requested":
+      return (
+        <div className="flex-auto">
+          <Button
+            disabled
+            className="h-full w-full hover:bg-stone-900"
+          > requested </Button>
+        </div>
+      )
     default:
       console.error(`unexpected evt status: ${evt.status}`)
       return (<div></div>)

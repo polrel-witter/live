@@ -3,22 +3,34 @@ import reactRefresh from '@vitejs/plugin-react';
 import path from "path"
 import { VitePWA } from 'vite-plugin-pwa'
 
-import { urbitPlugin } from './vendor/vite-urbit-plugin';
-// import { urbitPlugin } from '@urbit/vite-plugin-urbit';
-
 // we pin vite-plugin-rewrite-all to 1.0.1 (it's a dependency of vite-plugin
 // -urbit) because of this:
 // https://github.com/RDFLib/prez-ui/issues/161#issuecomment-2185944740
+// we vendored from a PR that makes it work with vite3
+import { urbitPlugin } from './vendor/vite-urbit-plugin';
+// import { urbitPlugin } from '@urbit/vite-plugin-urbit';
+
 
 // https://vitejs.dev/config/
-export default ({ mode }) => {
-  Object.assign(process.env, loadEnv(mode, process.cwd()));
-  const SHIP_URL = process.env.SHIP_URL || process.env.VITE_SHIP_URL || 'http://localhost:8080';
-  console.log(SHIP_URL);
+/** @type {import('vite').UserConfig} */
+export default defineConfig(({ mode, ...rest }) => {
+  const env = loadEnv(mode, process.cwd(), '')
 
-  return defineConfig({
+  const SHIP_URL = env.VITE_SHIP_URL;
+
+  if (!SHIP_URL) {
+    throw new Error("env var VITE_SHIP_URL not set! set it in the .env file to the url of your urbit ship; see .env.template")
+  }
+
+  if (mode === "development") {
+    console.log("using urbit http api at: ", SHIP_URL);
+  }
+
+  console.log(mode, rest)
+  const inDev = process.env.NODE_ENV === 'development';
+  return {
     plugins: [
-      urbitPlugin({ base: 'live', target: SHIP_URL, secure: false }),
+      urbitPlugin({ base: 'live', target: SHIP_URL, development: inDev }),
       reactRefresh(),
       VitePWA({
         registerType: 'autoUpdate',
@@ -33,11 +45,12 @@ export default ({ mode }) => {
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
           // this makes it so it controls already open web pages
-          clientsClaim: false,
+          clientsClaim: true,
           runtimeCaching: [
             {
-              urlPattern: ({ url, sameOrigin }) => url.pathname.match(/^\/~\/.*/i),
-              handler: "StaleWhileRevalidate",
+              // is sameOrigin important?
+              urlPattern: ({ url, sameOrigin: _sameOrigin }) => url.pathname.match(/^\/~\/.*/i),
+              handler: "NetworkFirst",
               options: {
                 cacheName: "scry-cache",
                 expiration: {
@@ -50,7 +63,7 @@ export default ({ mode }) => {
           ],
         },
         devOptions: {
-          enabled: process.env.NODE_ENV === 'development'
+          enabled: inDev
         },
       }),
     ],
@@ -59,5 +72,5 @@ export default ({ mode }) => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
-  });
-};
+  }
+});

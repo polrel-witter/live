@@ -361,6 +361,11 @@ function getEvents(api: Urbit, ship: string): () => Promise<Event[]> {
 
       const allRecords = Object.
         entries(records.allRecords).
+        filter(([idString,]) => {
+          console.log(idString, ship)
+          const [hostShip,] = idString.split("/")
+          return hostShip !== "~" + ship
+        }).
         map(([idString, records]): Event => {
           const [hostShip, eventName] = idString.split("/")
           const eventId = { ship: hostShip, name: eventName }
@@ -374,6 +379,7 @@ function getEvents(api: Urbit, ship: string): () => Promise<Event[]> {
             console.error("records has more than one key: ", records)
             return emptyEvent
           }
+
           const record = Object.values(records)[0]
           return backendRecordToEvent(eventId, record.record)
         })
