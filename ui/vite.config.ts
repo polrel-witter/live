@@ -45,12 +45,12 @@ export default defineConfig(({ mode, ...rest }) => {
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
           // this makes it so it controls already open web pages
-          clientsClaim: false,
+          clientsClaim: true,
           runtimeCaching: [
             {
               // is sameOrigin important?
               urlPattern: ({ url, sameOrigin: _sameOrigin }) => url.pathname.match(/^\/~\/.*/i),
-              handler: "StaleWhileRevalidate",
+              handler: "NetworkFirst",
               options: {
                 cacheName: "scry-cache",
                 expiration: {
