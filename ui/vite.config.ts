@@ -37,7 +37,7 @@ export default ({ mode }) => {
           runtimeCaching: [
             {
               urlPattern: ({ url, sameOrigin }) => url.pathname.match(/^\/~\/.*/i),
-              handler: "NetworkFirst",
+              handler: "StaleWhileRevalidate",
               options: {
                 cacheName: "scry-cache",
                 expiration: {

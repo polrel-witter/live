@@ -1,4 +1,4 @@
-import { Backend, EditableProfileFields, Event, eventIdsEqual } from "@/backend";
+import { Backend, Profile, Event, eventIdsEqual } from "@/backend";
 import EventList from "@/components/event-list";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { useEffect, useState } from "react";
@@ -19,7 +19,7 @@ async function buildContextData(ourShip: string, backend: Backend) {
   ctx.patp = ourShip
   const profile = await backend.getProfile(ourShip)
   if (profile) {
-    ctx.profile = profile.editableFields
+    ctx.profile = profile
   }
 
   return ctx
@@ -27,7 +27,7 @@ async function buildContextData(ourShip: string, backend: Backend) {
 
 const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
   const [events, setEvents] = useState<Event[]>([])
-  const [ownProfileFields, setOwnProfileFields] = useState<EditableProfileFields>({})
+  const [ownProfileFields, setOwnProfileFields] = useState<Profile>({})
   const [openProfile, setOpenProfile] = useState(false)
 
 
@@ -85,7 +85,7 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
       if (!profile) {
         console.error(`profile for ${window.ship} not found`)
       } else {
-        setOwnProfileFields(profile.editableFields)
+        setOwnProfileFields(profile)
       }
     })
 

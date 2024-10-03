@@ -1,10 +1,12 @@
 import Urbit from "@urbit/http-api";
-import { number, z } from "zod" // this is an object validation library
+import { profile } from "console";
+import { parse } from "path";
+import { number, z, ZodError } from "zod" // this is an object validation library
 
 interface EventId { ship: string, name: string };
 
 function eventIdsEqual(id1: EventId, id2: EventId): boolean {
-return id1.ship === id2.ship && id1.name === id2.name
+  return id1.ship === id2.ship && id1.name === id2.name
 }
 
 type EventStatus = "invited" | "requested" | "registered" | "unregistered" | "attended"
@@ -43,7 +45,7 @@ interface Backend {
   getProfiles(id: EventId): Promise<Profile[]>
 
   // matcher - scry %peers
-  getAttendees(id: EventId): Promise<string[]>
+  getAttendees(id: EventId): Promise<Attendee[]>
 
   // matcher - poke %edit-profile
   editProfileField(field: string, value: string): Promise<void>
@@ -62,19 +64,20 @@ interface Backend {
 }
 
 
+type MatchStatus = "unmatched" | "sent-request" | "matched";
 
-type Profile = {
-  patp: string;
-  status: "unmatched" | "sent-request" | "matched";
-  editableFields: {
-    github?: string;
-    telegram?: string;
-    phone?: string;
-    email?: string;
-  }
+type Attendee = {
+  patp: string,
+  status: MatchStatus,
 }
 
-type EditableProfileFields = Profile["editableFields"]
+type Profile = {
+  github?: string;
+  telegram?: string;
+  phone?: string;
+  email?: string;
+
+}
 
 type Session = {
   title: string;
@@ -108,56 +111,6 @@ type LiveUpdateEvent = {
 // function getSchedule(_api: Urbit): () => Promise<Session[]> {
 //   return async () => Promise.resolve()
 // }
-
-const profiles: Profile[] = [
-  {
-    patp: "~sampel-palnet",
-    status: "matched",
-    editableFields: {
-      email: "sampel-palnet@foo.bar",
-      phone: "1234556799",
-      github: "sampel-palnet",
-      telegram: "@ sampel-palnet"
-    }
-  },
-  {
-    patp: "~zod",
-    status: "unmatched",
-    editableFields: {}
-  },
-  {
-    patp: "~rus",
-    status: "sent-request",
-    editableFields: {}
-  },
-  {
-    patp: "~rus",
-    status: "unmatched",
-    editableFields: {}
-  },
-  {
-    patp: "~sampel-palnet-sampel-palnet",
-    status: "unmatched",
-    editableFields: {}
-  }
-]
-
-const _mockProfiles = (patp: string): Profile | null => {
-  switch (patp) {
-    case "~sampel-palnet":
-      return profiles[0]
-    case "~zod":
-      return profiles[1]
-    case "~rus":
-      return profiles[2]
-    case "~bus":
-      return profiles[3]
-    case "~sampel-palnet-sampel-palnet":
-      return profiles[4]
-    default:
-      return null
-  }
-}
 
 const eventStatusSchema = z.enum([
   "invited",
@@ -371,7 +324,6 @@ function backendRecordToEvent(eventId: EventId, record: z.infer<typeof recordSch
       }
     ],
     ...infoRest
-
   }
 }
 
@@ -395,7 +347,7 @@ function getEvents(api: Urbit, ship: string): () => Promise<Event[]> {
       const allRecords = Object.
         entries(records.allRecords).
         map(([idString, records]): Event => {
-          const [hostShip, eventName] = idString.split(" ")
+          const [hostShip, eventName] = idString.split("/")
           const eventId = { ship: hostShip, name: eventName }
           if (Object.keys(records).length > 1) {
             console.error("records has more than one key: ", records)
@@ -511,37 +463,168 @@ function subscribeToLiveEvents(_api: Urbit): (handlers: {
   }
 }
 
+const entrySchema = z.object({ entry: z.string().nullable() })
+const getProfileSchema = z
+  .object({ profile: z.object({}).catchall(entrySchema) })
+
+// ['x', 'ens-domain', 'email', 'avatar', 'github', 'bio', 'nickname', 'telegram', 'signal', 'phone']
+function backendProfileToProfile(fields: Record<string, z.infer<typeof entrySchema>>): Profile {
+  const p: Profile = {
+  }
+
+  if (fields?.github?.entry) {
+    p.github = fields.github.entry
+  }
+
+  if (fields?.telegram?.entry) {
+    p.telegram = fields.telegram.entry
+  }
+
+  if (fields?.phone?.entry) {
+    p.phone = fields.phone.entry
+  }
+
+  if (fields?.email?.entry) {
+    p.email = fields.email.entry
+  }
+
+  return p
+}
+
+
 function getProfile(_api: Urbit): (patp: string) => Promise<Profile | null> {
   return async (patp: string) => {
-    const events = _api.scry({
+    const profileFields = await _api.scry({
       app: "matcher",
       // in agent file it says host/name/ship ??
       // pass guest ship
-      path: `/profile/${patp}`
+      path: `/profile/~${patp}`
       // path: `/record/${id.ship}/${id.name}/~zod`
-    }).then((res) => {
-      // console.log(res)
     })
-    return _mockProfiles(patp)
+      .then(getProfileSchema.parse)
+      .catch((err: ZodError) => { console.error("error during getProfile api call", err.errors) })
+
+    if (!profileFields) {
+      return null
+    }
+
+    return backendProfileToProfile(profileFields.profile)
   }
 }
 
-function getProfiles(_api: Urbit): (id: EventId) => Promise<Profile[]> {
-  return async (_id: EventId) => Promise.resolve(profiles)
+const entry1Schema = z.object({
+  term: z.string(),
+  entry: z.string().nullable()
+})
+
+const getProfilesSchema = z.object({
+  allProfiles: z.record(z.array(entry1Schema))
+})
+
+// ['x', 'ens-domain', 'email', 'avatar', 'github', 'bio', 'nickname', 'telegram', 'signal', 'phone']
+function getProfilesConvertResult(fields: z.infer<typeof entry1Schema>[]): Profile {
+  const p: Profile = {
+  }
+
+  fields.forEach((field) => {
+    if (field.term === "github") { p.github = field.entry! }
+
+    if (field.term === "telegram") { p.telegram = field.entry! }
+
+    if (field.term === "phone") { p.phone = field.entry! }
+
+    if (field.term === "email") { p.email = field.entry! }
+  })
+
+
+
+  return p
 }
 
-function getAttendees(_api: Urbit): () => Promise<string[]> {
-  return async () => Promise.resolve([
-    "~sampel-palnet",
-    "~zod",
-    "~bus",
-    "~rus",
-    "~sampel-palnet-sampel-palnet"
-  ])
+function getProfiles(_api: Urbit): () => Promise<Profile[]> {
+  return async () => {
+    const profileFields = await _api.scry({
+      app: "matcher",
+      // in agent file it says host/name/ship ??
+      // pass guest ship
+      path: "/all/profiles"
+      // path: `/record/${id.ship}/${id.name}/~zod`
+    })
+      .then(getProfilesSchema.parse)
+      .catch((err) => { console.error("error during getProfiles api call", err.errors) })
+
+    if (!profileFields) {
+      return []
+    }
+
+    const profiles = Object.entries(profileFields.allProfiles)
+      .map(([_patp, arrs]) => getProfilesConvertResult(arrs))
+
+    console.log("profileFields ", profileFields)
+
+    return profiles
+  }
 }
 
-function editProfileField(_api: Urbit): (field: keyof EditableProfileFields, value: string) => Promise<void> {
-  return async (field: keyof EditableProfileFields, value: string) => {
+const backendMatchStatusSchema = z.enum(["match", "incoming", "outgoing"]).nullable()
+
+const getAttendeesSchema = z.object({
+  peers: z
+    .record(z
+      .object({
+        status: backendMatchStatusSchema
+      }))
+})
+
+function backendMatchStatusToMatchStatus(s: z.infer<typeof backendMatchStatusSchema>): MatchStatus {
+  switch (s) {
+    case "match":
+      return "matched"
+    case "outgoing":
+      return "unmatched"
+    case "incoming":
+    case null:
+      return "unmatched"
+    default:
+      console.error("unexpected match status: ", s)
+      return "unmatched"
+  }
+}
+
+function getAttendees(_api: Urbit): (eventId: EventId) => Promise<Attendee[]> {
+  return async (eventId) => {
+    const profileFields = await _api.scry({
+      app: "matcher",
+      // in agent file it says host/name/ship ??
+      // pass guest ship
+      path: `/peers/${eventId.ship}/${eventId.name}`
+      // path: `/record/${id.ship}/${id.name}/~zod`
+    })
+      // .then(console.log)
+      .then(getAttendeesSchema.parse)
+      .catch((err) => { console.error("error during getPeers api call", err) })
+
+    if (!profileFields) {
+      return []
+    }
+
+    const attendees: Attendee[] = Object.entries(profileFields.peers)
+      .map(([patp, status]) => {
+        return {
+          patp: patp,
+          status: backendMatchStatusToMatchStatus(status.status)
+        }
+      })
+    console.log(attendees)
+
+    return attendees
+
+  }
+}
+
+
+function editProfileField(_api: Urbit): (field: keyof Profile, value: string) => Promise<void> {
+  return async (field: keyof Profile, value: string) => {
     const num = await _api.poke({
       app: "matcher",
       mark: "matcher-deed",
@@ -619,6 +702,6 @@ function newBackend(api: Urbit, ship: string): Backend {
   }
 }
 
-export { newBackend, eventIdsEqual}
+export { newBackend, eventIdsEqual }
 
-export type { EventId, Event, Session, Profile, EditableProfileFields, Backend }
+export type { EventId, Event, Session, Attendee, Profile, Backend }
