@@ -7,61 +7,28 @@ import {
   CardTitle
 } from "@/components/ui/card"
 
-import { Profile, Session } from "@/backend"
+import { Profile, Backend, Attendee } from "@/backend"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Handshake, Users, ChevronDown, Plus, Ellipsis, X, Check, FileQuestion } from 'lucide-react'
+import { ChevronDown, Plus, Ellipsis, X, Check, FileQuestion } from 'lucide-react'
 import { Button } from "@/components/ui/button"
-import { Children, PropsWithChildren, PropsWithoutRef, useState } from "react"
-import { cn } from "@/lib/utils"
-import { setHeapSnapshotNearHeapLimit } from "v8"
-import { basename } from "path"
-import { text } from "stream/consumers"
+import { PropsWithChildren, useState } from "react"
+import { cn, flipBoolean } from "@/lib/utils"
+import { SlideDownAndReveal, SlideRightAndReveal } from "./sliders"
 
-// very nice component
-function SlideDownAndReveal({ children, show, maxHeight = "max-h-[100px]" }: PropsWithChildren<{ show: boolean, maxHeight?: `max-h-[${number}px]` }>) {
-  // for some reason there's a minimum max height we need in order for the transition to work; seems to be like 100px
-  return (
-    <div
-      className={cn([
-        "overflow-hidden transition-[max-height] duration-1000 linear",
-        // we can only transition between max-height values expressed in the
-        // same way (px and px, rem and rem) but there isn't a "0 rem"
-        // option, so have to define it in px
-        { [maxHeight]: show },
-        { "max-h-0": !show },
-      ])}
-    >
-      {children}
-    </div>
-  )
-}
-
-
-function SlideRightAndReveal({ children, show, maxWidth = "max-w-[100px]" }: PropsWithChildren<{ show: boolean, maxWidth?: `max-w-[${number}px]` }>) {
-  // for some reason there's a minimum max height we need in order for the transition to work; seems to be like 100px
-  return (
-    <div
-      className={cn([
-        "overflow-hidden transition-[max-width] duration-1000 linear",
-        // we can only transition between max-height values expressed in the
-        // same way (px and px, rem and rem) but there isn't a "0 rem"
-        // option, so have to define it in px
-        { [maxWidth]: show },
-        { "max-w-0": !show },
-      ])}
-    >
-      {children}
-    </div>
-  )
-}
-
-const ConnectionsButton: React.FC<{ profile: Profile }> = ({ profile }) => {
+// TODO: add tooltips to these
+const ConnectionsButton: React.FC<{
+  attendee: Attendee
+  match(patp: string): void;
+  unmatch(patp: string): void;
+}> = ({ attendee: profile, ...fns }) => {
   const [reveal, setReveal] = useState(false)
   const baseClass = "w-8 h-8 p-0 border rounded-full bg-transparent"
+  // const baseClass = "w-7 h-7 p-0 border rounded-full bg-transparent"
   switch (profile.status) {
     case "unmatched":
       return (
         <Button
+          onClick={() => { fns.match(profile.patp) }}
           className={cn([
             baseClass,
             `bg-sky-200 hover:bg-sky-600`,
@@ -76,15 +43,13 @@ const ConnectionsButton: React.FC<{ profile: Profile }> = ({ profile }) => {
       return (
         <div className="flex">
           <Button
-            onClick={() => setReveal((b) => !b)}
+            onClick={() => { setReveal(flipBoolean); fns.unmatch(profile.patp) }}
             className={cn([
               baseClass,
               `bg-orange-200 hover:bg-orange-300`,
               `md:bg-transparent md:hover:bg-orange-200`
             ])}>
             <Ellipsis className={cn(["h-4 w-4", `text-orange-500`])} />
-            {/* <Handshake className="h-4 w-4 opacity-50"/> */}
-            {/* <span className="text-2xl opacity-50">🤝</span> */}
           </Button>
           <SlideRightAndReveal show={reveal}>
             <Button
@@ -95,14 +60,22 @@ const ConnectionsButton: React.FC<{ profile: Profile }> = ({ profile }) => {
                 `md:bg-transparent md:hover:bg-red-200`
               ])}>
               <X className={cn(["h-4 w-4", `text-red-500`])} />
-              {/* <Handshake className="h-4 w-4 opacity-50"/> */}
-              {/* <span className="text-2xl opacity-50">🤝</span> */}
             </Button>
           </SlideRightAndReveal>
         </div>
       )
     case "matched":
-      return (<Button disabled className={cn([baseClass, "bg-grey-500"])}> unexpected state </Button>)
+      return (
+        <Button
+          onClick={() => { fns.match(profile.patp) }}
+          className={cn([
+            baseClass,
+            `bg-emerald-200 hover:bg-emerald-600`,
+            `md:bg-transparent md:hover:bg-emerald-200`
+          ])}>
+          <Check className={cn(["h-4 w-4", `text-emerald-500`])} />
+        </Button>
+      )
     default:
       return (
         <Button
@@ -112,42 +85,21 @@ const ConnectionsButton: React.FC<{ profile: Profile }> = ({ profile }) => {
             "bg-gray-300"
           ])}>
           <FileQuestion className="h-4 w-4 text-gray-400" />
-          {/* <Handshake className="h-4 w-4 opacity-50"/> */}
-          {/* <span className="text-2xl opacity-50">🤝</span> */}
         </Button>
       )
   }
-
-  return (
-    <Card className="w-24 border-0 rounded p-0.5 w-full">
-      {/*
-      * possile states:
-      * - matched: we show "matched" on green bg, or green check on green bg that says "matched" on hover 
-      * - we sent match request: we show "proposed match" on light blue bg,
-      *   or light blue check on green bg that says "asked match" on hover;
-      *   we also add red cross icon to annull match
-      * - we did nothing: we show blank bg with match icon or "ask to match" text
-      */}
-      {}
-      <CardHeader className="text-xs space-0 p-0.5 text-center"> connections </CardHeader>
-      <CardContent className="p-0.5">
-        <div className="flex justify-around">
-          <span className="h-4 w-4 bg-red-600"> </span>
-          <span className="h-4 w-4 bg-red-600"> </span>
-        </div>
-      </CardContent>
-    </Card>
-  )
 }
 
-const ListItem: React.FC<{ profile: Profile }> = ({ profile }) => {
-  const [showConnections, setShowConnections] = useState(false)
+const ListItem: React.FC<{
+  attendee: Attendee
+  match(patp: string): void;
+  unmatch(patp: string): void;
+  editProfileField: Backend["editProfileField"]
+}> = ({ attendee: profile, ...fns }) => {
   const [showProfile, setShowProfile] = useState(false)
-  const flipBoolean = (b: boolean) => !b
-  const toggleConnections = () => setShowConnections(flipBoolean)
   const toggleProfile = () => setShowProfile(flipBoolean)
   return (
-    <li key={profile.patp}>
+    <li >
       <Card >
         <CardContent
           className={
@@ -157,16 +109,47 @@ const ListItem: React.FC<{ profile: Profile }> = ({ profile }) => {
               <AvatarImage src="https://github.com/shadcn.png" />
               <AvatarFallback>CN</AvatarFallback>
             </Avatar>
-            <div className="flex flex-col items-center gap-1">
-              <p className="text-sm">{profile.patp}</p>
+            <div className="flex flex-col items-center gap-1 w-2xl">
+              <p className="text-sm text-ellipsis">{profile.patp}</p>
               <Button onClick={() => toggleProfile()} className="h-4 w-4 p-0 border rounded-2xl bg-transparent">
                 <ChevronDown className="h-3 w-3 text-gray-400" />
               </Button>
             </div>
-            <ConnectionsButton profile={profile} />
+            <ConnectionsButton
+              attendee={profile}
+              match={fns.match}
+              unmatch={fns.unmatch}
+            />
           </div>
-          <SlideDownAndReveal show={showProfile}>
-            {"foo"}
+          <SlideDownAndReveal show={showProfile} maxHeight="max-h-[1000px]">
+            {/* TODO: this should be in dedicated page and in a pop-up
+              on own profile in attenees list
+
+              <ProfileForm 
+              profileFields={profile}
+              editProfileField={fns.editProfileField} 
+              />
+            */}
+
+            {
+              profile.status === "matched"
+                ?
+                <Card className="mt-4">
+                  <CardHeader className="p-4 font-semibold"> profile details</CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    {
+                      Object.entries(profile).map(([field, val]) => {
+                        return (<p>{`${field}: ${val}`}</p>)
+                      })
+                    }
+                  </CardContent>
+                </Card>
+                :
+                <Card className="mt-4">
+                  <CardHeader className="p-4 font-sm"> not matched with this user</CardHeader>
+                </Card>
+            }
+
           </SlideDownAndReveal>
         </CardContent>
       </Card>
@@ -174,11 +157,26 @@ const ListItem: React.FC<{ profile: Profile }> = ({ profile }) => {
   )
 }
 
-export default function AttendeeList(props: { profiles: Profile[] }) {
+const AttendeeList: React.FC<{
+  attendees: Attendee[]
+  profiles: Profile[]
+  match(patp: string): void;
+  unmatch(patp: string): void;
+  editProfileField: Backend["editProfileField"]
+}> = ({ attendees, ...rest }) => {
   return (
     <ul className="grid gap-6">
-      {props.profiles.map((profile) => <ListItem profile={profile} />)}
+      {
+        attendees.map((attendee) => <ListItem
+          key={attendee.patp}
+          attendee={attendee}
+          unmatch={rest.unmatch}
+          match={rest.match}
+          editProfileField={rest.editProfileField}
+        />)
+      }
     </ul>
   )
 }
 
+export default AttendeeList;

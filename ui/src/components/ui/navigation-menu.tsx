@@ -14,7 +14,7 @@ const NavigationMenu = React.forwardRef<
     className={cn(
       // original
       // "relative z-10 flex max-w-max flex-1 items-center justify-end",
-      "relative z-10 flex  flex-1 items-center",
+      "relative z-10 flex flex-1 items-center py-3",
       // "relative right-0",
       className
     )}
@@ -44,7 +44,7 @@ NavigationMenuList.displayName = NavigationMenuPrimitive.List.displayName
 const NavigationMenuItem = NavigationMenuPrimitive.Item
 
 const navigationMenuTriggerStyle = cva(
-  "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+  "group inline-flex h-10 w-max items-center justify-center rounded-full bg-background p-3 m-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
 )
 
 // prevent pointer events from triggering the menu, see:
@@ -61,7 +61,7 @@ const NavigationMenuTrigger = React.forwardRef<
   >
     {children}{" "}
     <Menu
-      className="relative top-[1px] ml-1 h-4 w-4 transition duration-450 group-data-[state=open]:rotate-90"
+      className="relative text-black top-[1px] h-4 w-4 transition duration-450 group-data-[state=open]:rotate-90"
       aria-hidden="true"
     />
   </NavigationMenuPrimitive.Trigger>

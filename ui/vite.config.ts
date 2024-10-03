@@ -3,7 +3,8 @@ import reactRefresh from '@vitejs/plugin-react';
 import path from "path"
 import { VitePWA } from 'vite-plugin-pwa'
 
-import { urbitPlugin } from '@urbit/vite-plugin-urbit';
+import { urbitPlugin } from './vendor/vite-urbit-plugin';
+// import { urbitPlugin } from '@urbit/vite-plugin-urbit';
 
 // we pin vite-plugin-rewrite-all to 1.0.1 (it's a dependency of vite-plugin
 // -urbit) because of this:
@@ -17,7 +18,7 @@ export default ({ mode }) => {
 
   return defineConfig({
     plugins: [
-      // urbitPlugin({ base: 'live', target: SHIP_URL, secure: false }),
+      urbitPlugin({ base: 'live', target: SHIP_URL, secure: false }),
       reactRefresh(),
       VitePWA({
         registerType: 'autoUpdate',
@@ -30,22 +31,23 @@ export default ({ mode }) => {
           icons: []
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg}']
-          //   clientsClaim: false,
-          //   runtimeCaching: [
-          //     {
-          //       urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.match(/^\/~\/scry\/journal\/entries.*/i),
-          //       handler: "StaleWhileRevalidate",
-          //       options: {
-          //         cacheName: "scry-cache",
-          //         expiration: {
-          //           maxEntries: 10,
-          //           maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
-          //         },
-          //         cacheableResponse: { statuses: [0, 200], }
-          //       },
-          //     }
-          //   ],
+          globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          // this makes it so it controls already open web pages
+          clientsClaim: false,
+          runtimeCaching: [
+            {
+              urlPattern: ({ url, sameOrigin }) => url.pathname.match(/^\/~\/.*/i),
+              handler: "StaleWhileRevalidate",
+              options: {
+                cacheName: "scry-cache",
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
+                },
+                cacheableResponse: { statuses: [0, 200], }
+              },
+            }
+          ],
         },
         devOptions: {
           enabled: process.env.NODE_ENV === 'development'

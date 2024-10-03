@@ -1,8 +1,9 @@
 import { useContext, useEffect, useState } from "react";
 import { EventContext } from './context'
 import AttendeeList from "@/components/attendee-list";
+import { Backend } from "@/backend";
 
-export function AttendeesPage() {
+export function AttendeesPage(props: { backend: Backend }) {
   const ctx = useContext(EventContext)
 
   if (!ctx) {
@@ -18,7 +19,13 @@ export function AttendeesPage() {
   return (
     <div className="grid m-6 md:mx-96 space-y-12 justify-items-center">
       <div className="text-bold">event attendees</div>
-      <AttendeeList profiles={ctx.profiles} />
+      <AttendeeList
+        attendees={ctx.attendees}
+        profiles={ctx.profiles}
+        match={async (patp: string) => await props.backend.match(ctx.details.id, patp)}
+        unmatch={async (patp: string) => await props.backend.unmatch(ctx.details.id, patp)}
+        editProfileField={props.backend.editProfileField}
+      />
     </div>
   )
 }

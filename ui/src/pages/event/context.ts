@@ -1,18 +1,20 @@
 import { createContext } from "react";
-import { Session , Event, Profile} from "@/backend";
+import { Session, Event, Profile, Attendee } from "@/backend";
 
 interface EventCtx {
   details: Event
-  attendees: string[];
+  attendees: Attendee[];
   profiles: Profile[];
-  schedule: Session[];
 }
 
 function newEmptyCtx(): EventCtx {
   return {
     details: {
-      host: "",
-      name: "",
+      id: {
+        ship: "",
+        name: ""
+      },
+      status: "invited",
       location: "",
       startDate: new Date(0),
       endDate: new Date(0),
@@ -20,11 +22,11 @@ function newEmptyCtx(): EventCtx {
       timezone: "",
       kind: "public",
       group: "",
-      latch: "open"
-    }, 
-    profiles: [],
-    attendees: [] as string[],
-    schedule: [] as Session[],
+      latch: "open",
+      sessions: [] as Session[],
+    },
+    profiles: [] as Profile[],
+    attendees: [] as Attendee[],
   }
 }
 

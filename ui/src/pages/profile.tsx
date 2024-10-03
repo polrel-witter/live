@@ -1,6 +1,8 @@
 import { LoaderFunctionArgs, Params, useLoaderData } from "react-router-dom";
 import { Backend, Profile } from "@/backend";
 import { useEffect, useState } from "react";
+import ProfileForm from "@/components/profile-form";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export async function PatpLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> { return { patp: params.params.patp! } }
@@ -18,9 +20,16 @@ export function ProfilePage(props: { backend: Backend }) {
   }, [])
 
   return (
-    <div className="max-w-2lg space-y-6 py-20 text-center">
-      <div className="text-bold">I am profile {patp}, here are my deets:</div>
-      <div className="text-bold">{profile ? JSON.stringify(profile) : "no profile"} </div>
-    </div>
+    <Card className="m-4">
+      <CardHeader className="text-center">Your Profile</CardHeader>
+      <CardContent>
+        <div className="flex justify-center">
+          <ProfileForm
+            profileFields={profile!}
+            editProfileField={props.backend.editProfileField}
+          />
+        </div>
+      </CardContent>
+    </Card>
   )
 }
