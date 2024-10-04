@@ -6,7 +6,7 @@
 |%
 ::  $status: peer matching status
 ::
-+$  status  (unit ?(%match %incoming %outgoing))
++$  status  (unit ?(%match %reach))
 ::  $entry: profile field
 ::
 +$  entry  (unit cord)
@@ -30,7 +30,7 @@
 ::  $update: local subscription changes
 ::
 +$  update
-  $%  [%match match=?]                             :: match change
+  $%  [%match =status]                             :: match change
       [%profile =ship fields=(list [term entry])]  :: profile change
   ==
 ::  $demand: scry api
