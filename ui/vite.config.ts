@@ -12,23 +12,14 @@ import { urbitPlugin } from './vendor/vite-urbit-plugin';
 
 
 // https://vitejs.dev/config/
-/** @type {import('vite').UserConfig} */
-export default defineConfig(({ mode, ...rest }) => {
-  const env = loadEnv(mode, process.cwd(), '')
+export default ({ mode }) => {
+  Object.assign(process.env, loadEnv(mode, process.cwd()));
+  const SHIP_URL = process.env.SHIP_URL || process.env.VITE_SHIP_URL || 'http://localhost:8080';
+  console.log(SHIP_URL);
 
-  const SHIP_URL = env.VITE_SHIP_URL;
-
-  if (!SHIP_URL) {
-    throw new Error("env var VITE_SHIP_URL not set! set it in the .env file to the url of your urbit ship; see .env.template")
-  }
-
-  if (mode === "development") {
-    console.log("using urbit http api at: ", SHIP_URL);
-  }
-
-  console.log(mode, rest)
   const inDev = process.env.NODE_ENV === 'development';
-  return {
+
+  return defineConfig({
     plugins: [
       urbitPlugin({ base: 'live', target: SHIP_URL, development: inDev }),
       reactRefresh(),
@@ -72,5 +63,5 @@ export default defineConfig(({ mode, ...rest }) => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
-  }
-});
+  });
+};
