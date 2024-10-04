@@ -628,11 +628,8 @@
     ?.  (~(has bi peers) id culp)  cor
     =?  cor  ?~(status | ?=(%match u.status))
       (send-profile %whole culp)
-    =/  ver=?
-      ?~  status  |
-      ?:(?=(%match u.status) & |)
     =.  cor
-      (local-update [%match ver])
+      (local-update [%match status])
     cor(peers (~(put bi peers) id culp status))
   ::  +shake: core matching arm
   ::
@@ -643,7 +640,7 @@
           ?:  =(our.bowl culp)
             ~&(>>> "cannot match with ourselves" cor)
           ?.  (~(has bi peers) id culp)
-            ~&(>>> "{<culp>} is not on the guest list for event {<id>}" cor)
+            ~&(>>> "{<culp>} is not on the guest list for event: {<id>}" cor)
           ?:  =(ship.id our.bowl)
             ::  as host
             ::
@@ -729,14 +726,14 @@
         ::  if culp hasn't already added src, add culp to src's reaches list
         ::
         =.  reaches  (mod-reaches %add src.bowl culp)
-        (pass-update [src.bowl `%outgoing] [culp `%incoming])
+        (pass-update [src.bowl `%reach] [culp ~ |])
       ::  if culp already has src in their reaches, remove src from culp's
       ::  reaches and add both to each others matches
       ::
       =.  reaches  (mod-reaches %del culp src.bowl)
       =.  matches  (mod-matches %add culp src.bowl)
       =.  matches  (mod-matches %add src.bowl culp)
-      (pass-update [src.bowl `%match] [culp `%match])
+      (pass-update [src.bowl `%match] [culp `%match &])
     ::  +remove-reach: a guest has signaled they don't want to match
     ::  with someone
     ::
@@ -749,14 +746,14 @@
         ::
         =.  reaches  (mod-reaches %del src.bowl culp)
         ?.  (~(has in (get-ships %reaches culp)) src.bowl)
-          (pass-update [src.bowl ~] [culp ~])
-        (pass-update [src.bowl `%incoming] [culp `%outgoing])
-       ::  remove src from culp's matches and add to culp's reaches
+          (pass-update [src.bowl ~] [culp ~ &])
+        (pass-update [src.bowl ~] [culp `%reach &])
+      ::  remove src from culp's matches and add to culp's reaches
       ::
       =.  matches  (mod-matches %del src.bowl culp)
       =.  matches  (mod-matches %del culp src.bowl)
       =.  reaches  (mod-reaches %add culp src.bowl)
-      (pass-update [src.bowl `%incoming] [culp `%outgoing])
+      (pass-update [src.bowl ~] [culp `%reach &])
     --
   --
 --

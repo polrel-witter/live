@@ -37,7 +37,8 @@
   ^-  ^json
   ?-    -.upd
       %match
-    (frond ['match' b+match.upd])
+    %-  frond
+    ['match' ?~(status.upd ~ s+(scot %tas u.status.upd))]
   ::
       %profile
     %-  pairs
