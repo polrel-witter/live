@@ -263,7 +263,7 @@
     =+  !<(=deed vase)
     ?-  -.deed
       %edit-profile    (edit-profile term.deed entry.deed)
-      %update-profile  (update-profile p.deed)
+      %profile-diff    (update-peer-profile p.deed)
       %shake           (~(shake pe id.deed ship.deed) act.deed)
     ==
   ::
@@ -423,11 +423,13 @@
       ~(tap by (~(got by profiles) our.bowl))
     (local-update [%profile our.bowl fields])
   pass-in-bulk
-::  +update-profile: receive a profile update from a matched peer
+::  +update-peer-profile: modify a peer's profile
 ::
-++  update-profile
+++  update-peer-profile
   |=  profile=(map term entry)
   ^+  cor
+  ?:  =(our.bowl src.bowl)
+    ~&(>>> "cannot pass %profile-diff locally; use %edit-profile instead" cor)
   =/  still=(map term entry)
     ::  only include supported profile fields
     ::
@@ -435,8 +437,9 @@
     %+  murn  ~(tap by profile)
     |=  [=term =entry]
     ?.((~(has in (silt profile-fields)) term) ~ `[term entry])
-  =.  profiles  (~(put by profiles) src.bowl still)
-  (local-update [%profile our.bowl `(list [term entry])`~(tap by still)])
+  ?~  still  cor
+  =.  profiles  (~(put by profiles) src.bowl u.still)
+  (local-update [%profile our.bowl `(list [term entry])`~(tap by u.still)])
 ::  +send-profile: send a profile update to a peer
 ::
 ++  send-profile
@@ -444,7 +447,7 @@
   |^  ^+  cor
   =/  =cage
     =;  (map term entry)
-      matcher-deed+!>(`deed`[%update-profile -])
+      matcher-deed+!>(`deed`[%profile-diff -])
     ?-  share
       %whole  (~(got by profiles) our.bowl)
       %part   (pull-tlon-fields our.bowl)

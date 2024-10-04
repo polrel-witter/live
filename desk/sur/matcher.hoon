@@ -23,8 +23,8 @@
 ::  $deed: host or guest action
 ::
 +$  deed
-  $%  [%edit-profile =term =entry]           :: edit profile
-      [%update-profile p=(map term entry)]   :: receive peer profile update
+  $%  [%profile-diff p=(map term entry)]     :: update peer profile
+      [%edit-profile =term =entry]           :: edit profile
       [%shake =id:live =ship act=?]          :: initiate a new peer status
   ==
 ::  $update: local subscription changes
