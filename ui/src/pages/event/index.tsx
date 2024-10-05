@@ -7,7 +7,6 @@ import { EventContext, EventCtx, newEmptyCtx } from './context';
 import { IndexContext, IndexCtx, newEmptyIndexCtx } from '../context';
 
 import { Backend, EventId, eventIdsEqual, Profile } from '@/backend'
-import { resolve } from 'path';
 
 interface EventParams {
   hostShip: string,
@@ -49,7 +48,8 @@ async function buildContextData({ hostShip, name }: EventParams, backend: Backen
   const evtId: EventId = { ship: hostShip, name: name }
   // we could also do away with this backend call here
   // and add a prop to pass EventDetails from the main page
-  evt.details = await backend.getEvent(evtId)
+  evt.details = await backend.getRecord(evtId)
+  console.log(evt.details)
   evt.attendees = await backend.getAttendees(evtId);
   evt.profiles = await backend.getProfiles(evtId);
 
@@ -93,14 +93,14 @@ export function EventIndex(props: { backend: Backend }) {
         onEvent: (evt) => {
           console.log("%live event: ", evt)
 
-          setEventCtx(({ details: _details, ...rest }) => {
-            if (eventIdsEqual(eventContext.details.id, evt.event.id)) {
+          setEventCtx(({ event: { details, ...restEvent }, ...rest }) => {
+            if (eventIdsEqual(eventContext.event.details.id, evt.event.id)) {
               return {
-                details: evt.event,
+                event: { details: evt.event, ...restEvent },
                 ...rest
               }
             }
-            return { details: _details, ...rest }
+            return { event: { details, ...restEvent }, ...rest }
           })
 
         },
@@ -119,7 +119,7 @@ export function EventIndex(props: { backend: Backend }) {
           }
         })
       })
-    console.log(eventContext)
+    console.log("ctx",eventContext)
 
 
 
@@ -133,8 +133,8 @@ export function EventIndex(props: { backend: Backend }) {
     <EventContext.Provider value={eventContext}>
       <div className="grid size-full" >
         <NavBar
-          eventName={eventContext.details.id.name}
-          host={eventContext.details.id.ship}
+          eventName={eventContext.event!.details.id.name}
+          host={eventContext.event!.details.id.ship}
           profile={ownProfileFields}
           patp={window.ship}
           editProfileField={props.backend.editProfileField}

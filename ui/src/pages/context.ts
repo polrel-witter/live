@@ -1,8 +1,8 @@
 import { createContext } from "react";
-import { Event, Profile } from "@/backend";
+import { Event, EventDetails, Profile } from "@/backend";
 
 interface IndexCtx {
-  events: Event[]
+  events: EventDetails[]
   patp: string;
   profile: Profile;
 }

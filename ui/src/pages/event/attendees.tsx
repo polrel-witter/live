@@ -22,8 +22,8 @@ export function AttendeesPage(props: { backend: Backend }) {
       <AttendeeList
         attendees={ctx.attendees}
         profiles={ctx.profiles}
-        match={async (patp: string) => await props.backend.match(ctx.details.id, patp)}
-        unmatch={async (patp: string) => await props.backend.unmatch(ctx.details.id, patp)}
+        match={async (patp: string) => await props.backend.match(ctx.event.details.id, patp)}
+        unmatch={async (patp: string) => await props.backend.unmatch(ctx.event.details.id, patp)}
         editProfileField={props.backend.editProfileField}
       />
     </div>

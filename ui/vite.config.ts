@@ -11,17 +11,25 @@ import { urbitPlugin } from './vendor/vite-urbit-plugin';
 // import { urbitPlugin } from '@urbit/vite-plugin-urbit';
 
 
+
 // https://vitejs.dev/config/
-export default ({ mode }) => {
-  Object.assign(process.env, loadEnv(mode, process.cwd()));
-  const SHIP_URL = process.env.SHIP_URL || process.env.VITE_SHIP_URL || 'http://localhost:8080';
-  console.log(SHIP_URL);
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, '')
 
-  const inDev = process.env.NODE_ENV === 'development';
+  const SHIP_URL = env.SHIP_URL || env.VITE_SHIP_URL || 'http://localhost:8080';
+  const flags = {
+    inDev: mode === 'development',
+    enablePwa: env.ENABLE_PWA_IN_DEV === "true"
+  }
 
-  return defineConfig({
+  if (flags.inDev) {
+    console.log("running with env: ", env)
+    console.log("flags: ", flags)
+  }
+
+  return {
     plugins: [
-      urbitPlugin({ base: 'live', target: SHIP_URL, development: inDev }),
+      urbitPlugin({ base: 'live', target: SHIP_URL, development: flags.inDev }),
       reactRefresh(),
       VitePWA({
         registerType: 'autoUpdate',
@@ -54,7 +62,7 @@ export default ({ mode }) => {
           ],
         },
         devOptions: {
-          enabled: inDev
+          enabled: flags.inDev && flags.enablePwa
         },
       }),
     ],
@@ -63,5 +71,5 @@ export default ({ mode }) => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
-  });
-};
+  }
+});

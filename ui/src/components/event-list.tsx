@@ -7,17 +7,22 @@ import {
   CardTitle
 } from "@/components/ui/card"
 
-import { Backend, Event } from "@/backend"
+import { Backend, EventAsGuest, EventDetails } from "@/backend"
 import { Link } from "react-router-dom"
 import { Button } from "./ui/button"
 
-interface FnProps {
+
+
+type FnProps = {
   register: Backend["register"]
   unregister: Backend["unregister"]
 }
 
-const EventButtons: React.FC<{ event: Event } & FnProps> = ({ event: evt, ...fns }) => {
-  switch (evt.status) {
+const EventButtons: React.FC<
+  { event: EventAsGuest; }
+  & FnProps
+> = ({ event: { details: { id: eventId }, status, secret: _secret }, ...fns }) => {
+  switch (status) {
     case "invited":
     case "unregistered":
       return (
@@ -26,7 +31,7 @@ const EventButtons: React.FC<{ event: Event } & FnProps> = ({ event: evt, ...fns
             className="h-full w-full"
             onClick={
               () => {
-                fns.register(evt.id)
+                fns.register(eventId)
               }}
           > register </Button>
         </div>
@@ -38,8 +43,8 @@ const EventButtons: React.FC<{ event: Event } & FnProps> = ({ event: evt, ...fns
           <Button
             className="h-full w-full hover:bg-red-900"
             onClick={() => {
-              fns.unregister(evt.id).then(() => {
-                console.log("unregistered from event: ", evt.id)
+              fns.unregister(eventId).then(() => {
+                console.log("unregistered from event: ", eventId)
               })
             }}
           > unregister </Button>
@@ -64,14 +69,15 @@ const EventButtons: React.FC<{ event: Event } & FnProps> = ({ event: evt, ...fns
         </div>
       )
     default:
-      console.error(`unexpected evt status: ${evt.status}`)
+      console.error(`unexpected evt status: ${status}`)
       return (<div></div>)
   }
 }
 
-const ListItem: React.FC<{ event: Event } & FnProps> = ({ event: evt, ...fns }) => {
-  const { id: { ship, name } } = evt
-  console.log("e ", evt)
+const ListItem: React.FC<
+  { details: EventDetails }
+  & FnProps
+> = ({ details: { id: { ship, name }, startDate, location, ...restDetails }, ...fns }) => {
   // TODO: on mobile it's not clear that you can click the title to navigate
   // forward, add an icon in a button
   return (
@@ -84,15 +90,19 @@ const ListItem: React.FC<{ event: Event } & FnProps> = ({ event: evt, ...fns }) 
           <CardDescription className="italics">hosted by {ship}</CardDescription>
         </CardHeader>
         <CardContent>
-          <p>Starts on {evt.startDate.toDateString()}</p>
-          <p>location: {evt.location}</p>
+          <p>Starts on {startDate.toDateString()}</p>
+          <p>location: {location}</p>
         </CardContent>
         <CardFooter>
-          <EventButtons
-            event={evt}
+          {/*          <EventButtons
+            event={{
+              details:
+                { id: { ship, name }, startDate, location, ...restDetails },
+              ...restEvent
+            }}
             register={fns.register}
             unregister={fns.unregister}
-          />
+          /> */}
         </CardFooter>
       </Card>
     </li>
@@ -100,7 +110,10 @@ const ListItem: React.FC<{ event: Event } & FnProps> = ({ event: evt, ...fns }) 
 }
 
 
-const EventList: React.FC<{ events: Event[] } & FnProps> = ({ events, ...fns }) => {
+const EventList: React.FC<
+  { details: EventDetails[] }
+  & FnProps
+> = ({ details: events, ...fns }) => {
   return (
     <ul>
       {/* this works, but is barely readable */}
@@ -108,7 +121,7 @@ const EventList: React.FC<{ events: Event[] } & FnProps> = ({ events, ...fns }) 
       {events.map((evt) =>
         <ListItem
           key={`${evt.id.ship}-${evt.id.name}`}
-          event={evt}
+          details={evt}
           register={fns.register}
           unregister={fns.unregister}
         />)}
