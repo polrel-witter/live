@@ -274,7 +274,7 @@
     ?-  -.+.d
         %add-peer     ?:((event-exists id.d) ~(add pe id.d ship.d) cor)
         %delete-peer  ?:((event-exists id.d) ~(delete pe id.d ship.d) cor)
-        %show         (~(show pe id.d ship.d) status.d)
+        %show         (~(ingest-show pe id.d ship.d) status.d)
         %subscribe    (subscribe id.d)
     ==
   ::
@@ -437,9 +437,12 @@
     %+  murn  ~(tap by profile)
     |=  [=term =entry]
     ?.((~(has in (silt profile-fields)) term) ~ `[term entry])
-  ?~  still  cor
-  =.  profiles  (~(put by profiles) src.bowl u.still)
-  (local-update [%profile our.bowl `(list [term entry])`~(tap by u.still)])
+  =.  profiles
+    %+  ~(put by profiles)
+      src.bowl
+    ?:  &(?=(~ profile) ?=(~ still))  ~
+    ?^(`(map term entry)`still still ~)
+  (local-update [%profile our.bowl `(list [term entry])`~(tap by still)])
 ::  +send-profile: send a profile update to a peer
 ::
 ++  send-profile
@@ -620,11 +623,27 @@
     ~&  >  "removed {<culp>} from peers"
     =.  cor  block-sss-peers
     (publish [%delete-peer culp])
-  ::  +show: updated peer status, coming from host
+  ::  +ingest-show: process a %show poke from event host
+  ::
+  ++  ingest-show
+    |=  =status
+    ^+  cor
+    ?.  &(=(src.bowl our.bowl) =(ship.id our.bowl))
+      (show status)
+    ~&  >>>
+    %+  weld  "%show is a result of a %shake poke; cannot pass directly as the"
+    " host of: {<id>}"
+    cor
+  ::  +show: update peer status and send profile details
   ::
   ++  show
     |=  =status
     ^+  cor
+    =.  culp
+      :: if culp is us, the host, we need to operate on the src
+      ::
+      ?:  &(=(culp our.bowl) =(ship.id our.bowl))  src.bowl
+      culp
     ?.  (~(has bi peers) id culp)  cor
     =?  cor  ?~(status | ?=(%match u.status))
       (send-profile %whole culp)
@@ -704,15 +723,28 @@
       ==
     ::  +pass-update: send status update to both parties
     ::
+    ::    we only notify the target ship when they're matched with the
+    ::    actor
+    ::
     ++  pass-update
-      |=  [actor=[=ship =status] target=[=ship =status]]
+      |=  [actor=[=ship =status] target=[=ship =status notify=?]]
       |^  ^+  cor
+          :: in this case show would process locally, if host is actor
+          :: (i.e. src)
+          ::
           =.  cor  (send ship.actor status.actor ship.target)
+          ?.  notify.target  cor
+          :: in this case show would be sent as poke to the target (i.e. culp)
+          ::
           (send ship.target status.target ship.actor)
       ::
       ++  send
         |=  [target=ship =status peer=ship]
         ^+  cor
+        ?:  &(=(target our.bowl) =(ship.id our.bowl))
+          ::  if the target is us, the host, just process the update locally
+          ::
+          (show status)
         =/  =cage
           matcher-dictum+!>(`dictum`[id [%show peer status]])
         %-  emit
@@ -746,14 +778,22 @@
         ::
         =.  reaches  (mod-reaches %del src.bowl culp)
         ?.  (~(has in (get-ships %reaches culp)) src.bowl)
-          (pass-update [src.bowl ~] [culp ~ &])
+          (pass-update [src.bowl ~] [culp ~ |])
+        (pass-update [src.bowl ~] [culp `%reach |])
+      ?:  (~(has in (get-ships %matches src.bowl)) culp)
+        ::  remove src from culp's matches and add to culp's reaches
+        ::
+        =.  matches  (mod-matches %del src.bowl culp)
+        =.  matches  (mod-matches %del culp src.bowl)
+        =.  reaches  (mod-reaches %add culp src.bowl)
         (pass-update [src.bowl ~] [culp `%reach &])
-      ::  remove src from culp's matches and add to culp's reaches
+      ::  set src status to ~ and keep culp's status the same as it was;
+      ::  i.e. nothing's changed
       ::
-      =.  matches  (mod-matches %del src.bowl culp)
-      =.  matches  (mod-matches %del culp src.bowl)
-      =.  reaches  (mod-reaches %add culp src.bowl)
-      (pass-update [src.bowl ~] [culp `%reach &])
+      %+  pass-update  [src.bowl ~]
+      :-  culp
+      ?.  (~(has in (get-ships %reaches culp)) src.bowl)  [~ |]
+      [`%reach &]
     --
   --
 --
