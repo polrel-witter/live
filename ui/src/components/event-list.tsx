@@ -17,20 +17,23 @@ const ListItem: React.FC<
   // forward, add an icon in a button
   return (
     <li className="my-5">
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-medium hover:font-bold">
-            <Link to={`event/${ship}/${name}`}> {name} </Link>
-          </CardTitle>
-          <CardDescription className="italics">hosted by {ship}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p>Starts on {startDate.toDateString()}</p>
-          <p>location: {location}</p>
-        </CardContent>
-        <CardFooter>
-        </CardFooter>
-      </Card>
+
+      <Link to={`event/${ship}/${name}`}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-medium hover:font-bold">
+              {name}
+            </CardTitle>
+            <CardDescription className="italics">hosted by {ship}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>Starts on {startDate.toDateString()}</p>
+            <p>location: {location}</p>
+          </CardContent>
+          <CardFooter>
+          </CardFooter>
+        </Card>
+      </Link>
     </li>
   )
 }

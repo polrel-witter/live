@@ -64,16 +64,14 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
     let liveSubId: number
 
     backend.subscribeToLiveEvents({
-      onEvent: (evt) => {
-        console.log("%live event: ", evt)
+      onEvent: (updateEvent) => {
         // TODO: do we get updates on host events too?
         setEventsAsGuest((oldEvts) => {
-          return oldEvts.map(({ details, ...rest }) => {
-            if (eventIdsEqual(evt.event.id, details.id)) {
-              console.log("found")
-              return { details: evt.event, ...rest }
+          return oldEvts.map((oldEvt) => {
+            if (eventIdsEqual(updateEvent.event.details.id, oldEvt.details.id)) {
+              return updateEvent.event
             }
-            return { details, ...rest }
+            return oldEvt
           })
         })
       },
