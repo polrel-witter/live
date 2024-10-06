@@ -307,63 +307,6 @@ const allRecordsSchema = z.object({
     ))
 }).transform((response) => response.allRecords)
 
-
-function backendRecordToEvent(eventId: EventId, record: z.infer<typeof backendRecordSchema>): Event {
-  const {
-    info: {
-      moment: { start, end },
-      about,
-      location: _location,
-      timezone,
-      group: _group,
-      sessions: _sessions,
-      ...infoRest
-    },
-    status: { p: eventStatus, q: _inviteTime },
-    secret: _ } = record
-
-  return {
-    id: eventId,
-    description: (about ? about : "no event description"),
-    startDate: (start ? new Date(start) : new Date(0)),
-    endDate: (end ? new Date(end) : new Date(0)),
-    status: eventStatus,
-    location: (_location ? _location : "no location"),
-    group: (_group ? _group : "no group"),
-    timezone: "TBD",
-    sessions: [
-      {
-        title: "first talk",
-        mainSpeaker: "~sampel-palnet",
-        panel: [],
-        location: "anywhere",
-        about: "idk just vibes",
-        startTime: new Date(1995, 11, 17, 3, 13, 37),
-        endTime: new Date(1995, 11, 17, 3, 16, 20),
-      },
-      {
-        title: "second talk",
-        mainSpeaker: "~sampel-palnet",
-        panel: ["~sampel-palnet", "~sampel-palnet"],
-        location: "anywhere",
-        about: "idk just vibes",
-        startTime: new Date(1995, 11, 17, 3, 13, 37),
-        endTime: new Date(1995, 11, 17, 3, 16, 20),
-      },
-      {
-        title: "third talk",
-        mainSpeaker: "~sampel-palnet",
-        panel: ["~sampel-palnet", "~sampel-palnet", "~sampel-palnet"],
-        location: "anywhere",
-        about: "idk just vibes",
-        startTime: new Date(1995, 11, 18, 3, 13, 37),
-        endTime: new Date(1995, 11, 18, 3, 16, 20),
-      }
-    ],
-    ...infoRest
-  }
-}
-
 function getRecords(api: Urbit, ship: string): () => Promise<EventAsGuest[]> {
   return async () => {
     const allRecords = await api.scry({
