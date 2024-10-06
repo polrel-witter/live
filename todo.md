@@ -45,21 +45,23 @@ key:
 # Backend
 
 ## Refinements
-	- State upgrades
-	- When someone unmatches us we should delete their private info and wipe from frontend. We do this bc if we rematch later, we'd get new info.
+	+ State upgrades
+  - Respect calm engine settings
 	- Backend > Frontend error handling (e.g. if a poke doesn't succeed, send feedback to user)
 	- Handle tangs so src ship gets feedback on what happened after poke.
+	- When someone unmatches us we should delete their private info and wipe from frontend. We do this bc if we rematch later, we'd get new info.
 	- Restrict a session's $moment to only happen within the bounds of its event $moment
-	- Prepend agent name in frontd of all printifs
+	- Prepend agent name in front of all printifs
 	- Can we serve frontend over http instead of ames?
 
 ## Bugs
 	- group JSON decoding isnt working
 	- Problem with frontend when we upgrade the agent; it sends a %handle-http-request to the agent instead of Eyre
-	- If we register, unregister, and then register again - if the event is private - we're added back to the peers mip even though our status is %requested
 	- problem with unsubing and resubbing to peers mip, see %sss-on-rock branch in %matcher
 		- when we initially sub to the %peers sss path, we get all waves, but should only get the latest rock to avoid complications.
 		- also when registering, unregistering, then reregistring, we don't get the latest peers mip - the host needs to send the full rock
+	- If we register, unregister, and then register again - if the event is private - we're added back to the peers mip even though our status is %requested
+  - restore missing subscriptions; currently being stubbed
 
 ## Features
 	- Event-level tagging in %pals
