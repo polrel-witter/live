@@ -1,15 +1,31 @@
-import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, } from "@/components/ui/navigation-menu"
+import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuList, NavigationMenuTrigger, } from "@/components/ui/navigation-menu"
 import { Link } from "react-router-dom"
 import ProfileDialog from "./profile-dialog"
 import { useEffect, useState } from "react"
 import { Button } from "./ui/button"
-import { ChevronLeft, ChevronLeftSquare, ChevronUp, Edit, Menu, User, Users } from "lucide-react"
+import { ChevronLeft, User, } from "lucide-react"
 import { flipBoolean } from "@/lib/utils"
-import { Backend, Profile, } from "@/backend"
+import { Backend, EventAsGuest, Profile } from "@/backend"
 import { SlideDownAndReveal } from "./sliders"
+import EventStatusButtons from "./event-status-buttons"
 
+type Props = {
+  event: EventAsGuest,
+  patp: string,
+  profile: Profile,
+  editProfileField: Backend["editProfileField"]
+  register: Backend["register"]
+  unregister: Backend["unregister"]
+}
 
-export default function NavBar(props: { eventName: string, host: string, patp: string, profile: Profile, editProfileField: Backend["editProfileField"] }) {
+const NavBar: React.FC<Props> = (
+  {
+    event: { details: { id: { name: eventName, ship: eventHost } }, status: eventStatus, ...eventRest },
+    patp,
+    profile,
+    ...fns
+  }) => {
+
   const [openProfile, setOpenProfile] = useState(false)
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openMenu, setOpenMenu] = useState(false);
@@ -39,12 +55,21 @@ export default function NavBar(props: { eventName: string, host: string, patp: s
           <ProfileDialog
             onOpenChange={setOpenProfile}
             open={openProfile}
-            patp={props.patp}
-            profileFields={props.profile}
-            editProfileField={props.editProfileField}
+            patp={patp}
+            profileFields={profile}
+            editProfileField={fns.editProfileField}
           />
         </NavigationMenuItem>
-        <NavigationMenuItem className="grow text-center"> {props.eventName || "event"} </NavigationMenuItem>
+        <NavigationMenuItem className="fixed left-12">
+          <EventStatusButtons
+            id={{ ship: eventHost, name: eventName }}
+            status={eventStatus}
+            register={fns.register}
+            unregister={fns.unregister}
+
+          />
+        </NavigationMenuItem>
+        <NavigationMenuItem className="grow text-center"> {eventName || "event"} </NavigationMenuItem>
         {
           isMobile
             ?
@@ -57,7 +82,7 @@ export default function NavBar(props: { eventName: string, host: string, patp: s
                 <ul className="grid gap-3 m-2 justify-items-end">
                   <li className="row row-span-3">
                     <Button>
-                      <Link to={`/apps/live/event/${props.host}/${props.eventName}`}> event home </Link>
+                      <Link to={`/apps/live/event/${eventHost}/${eventName}`}> event home </Link>
                     </Button>
                   </li>
                   <li className="row row-span-3">
@@ -97,7 +122,7 @@ export default function NavBar(props: { eventName: string, host: string, patp: s
               <NavigationMenuContent>
                 <ul className="grid gap-3 p-4  md:w-[400px] lg:w-[500px] ">
                   <li className="row row-span-3">
-                    <Link to={`/apps/live/event/${props.host}/${props.eventName}`}> event home </Link>
+                    <Link to={`/apps/live/event/${eventHost}/${eventName}`}> event home </Link>
                   </li>
                   <li className="row row-span-3">
                     <Link to="attendees"> attendees </Link>
@@ -117,9 +142,5 @@ export default function NavBar(props: { eventName: string, host: string, patp: s
     </NavigationMenu >
   )
 }
-//   <NavigationMenuItem>
-//     <NavigationMenuTrigger>Item One</NavigationMenuTrigger>
-//     <NavigationMenuContent>
-//       <NavigationMenuLink>Link</NavigationMenuLink>
-//     </NavigationMenuContent>
-//   </NavigationMenuItem>
+
+export default NavBar;

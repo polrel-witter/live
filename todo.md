@@ -10,7 +10,7 @@ key:
 ## Refinements
 	+ Don't show attendees button unless their guest status is either %registered or %attended, or they're the host. Also we should rename the buttons to "guest list"
 	+ Timeline: visually distinguish between record and event
-	- Should see our record status on event page and include the status change button in here instead of on the timeline card.
+	+ Should see our record status on event page and include the status change button in here instead of on the timeline card.
 		- The entire event/record tiles on the Timeline page should be clickable, opening the event details.
 	- Remove matching functions from guest list
 	- General button feedback so user knows when an action succeeds/fails (e.g. when the profile is updated, the form closes; if it fails they get an error message)

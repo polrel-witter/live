@@ -1,4 +1,4 @@
-import { Backend, Profile, Event, eventIdsEqual, EventAsHost, EventAsGuest } from "@/backend";
+import { Backend, Profile, eventIdsEqual, EventAsHost, EventAsGuest } from "@/backend";
 import EventList from "@/components/event-list";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { useEffect, useState } from "react";
@@ -137,15 +137,11 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
           <TabsContent value="eventsAsHost">
             <EventList
               details={eventsAsHost.map((evt) => evt.details)}
-              register={backend.register}
-              unregister={backend.unregister}
             />
           </TabsContent>
           <TabsContent value="eventsAsGuest">
             <EventList
               details={eventsAsGuest.map((evt) => evt.details)}
-              register={backend.register}
-              unregister={backend.unregister}
             />
           </TabsContent>
         </Tabs>

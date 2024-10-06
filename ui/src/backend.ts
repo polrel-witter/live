@@ -172,7 +172,7 @@ const emptyEventAsHost: EventAsHost = {
 
 type LiveUpdateEvent = {
   ship: string,
-  event: EventDetails,
+  event: EventAsGuest,
 }
 
 // function getSchedule(_api: Urbit): () => Promise<Session[]> {
@@ -568,10 +568,9 @@ function subscribeToLiveEvents(_api: Urbit): (handlers: {
       app: "live",
       path: "/updates",
       event: (evt) => {
-        console.log("here is one vent ", evt)
         const updateEvent = liveUpdateEventSchema.parse(evt)
         onEvent({
-          event: backendRecordToEvent(updateEvent.id, updateEvent.record),
+          event: backendRecordToEventAsGuest(updateEvent.id, updateEvent.record),
           ship: updateEvent.ship
         })
       },
@@ -824,4 +823,4 @@ function newBackend(api: Urbit, ship: string): Backend {
 
 export { newBackend, eventIdsEqual }
 
-export type { EventId, Event, EventAsGuest, EventAsHost, EventDetails, Session, Attendee, Profile, Backend }
+export type { EventId, Event, EventStatus, EventAsGuest, EventAsHost, EventDetails, Session, Attendee, Profile, Backend }

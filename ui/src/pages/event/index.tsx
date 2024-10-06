@@ -44,22 +44,16 @@ export function LoadEventParams(): EventParams {
 
 async function buildContextData({ hostShip, name }: EventParams, backend: Backend): Promise<EventCtx> {
 
-  const evt: any = {}
   const evtId: EventId = { ship: hostShip, name: name }
-  // we could also do away with this backend call here
-  // and add a prop to pass EventDetails from the main page
-  evt.details = await backend.getRecord(evtId)
-  console.log(evt.details)
-  evt.attendees = await backend.getAttendees(evtId);
-  evt.profiles = await backend.getProfiles(evtId);
-
-  // const profiles = await Promise.all(evt.attendees
-  //   .map((attendee) => backend.getProfile(attendee)))
 
   // evt.profiles = profiles.filter(profile => profile !== null) as Profile[]
-
-
-  return evt
+  return {
+    // we could also do away with this backend call here
+    // and add a prop to pass EventDetails from the main page
+    event: await backend.getRecord(evtId),
+    profiles: await backend.getProfiles(evtId),
+    attendees: await backend.getAttendees(evtId),
+  }
 }
 
 export function EventIndex(props: { backend: Backend }) {
@@ -85,43 +79,32 @@ export function EventIndex(props: { backend: Backend }) {
     // }, 1000);
     let liveSubId: number
 
-    console.log("loop")
-    buildContextData(eventParams, props.backend).then(data => {
-      setEventCtx(data)
-
-      return props.backend.subscribeToLiveEvents({
-        onEvent: (evt) => {
-          console.log("%live event: ", evt)
-
-          setEventCtx(({ event: { details, ...restEvent }, ...rest }) => {
-            if (eventIdsEqual(eventContext.event.details.id, evt.event.id)) {
-              return {
-                event: { details: evt.event, ...restEvent },
-                ...rest
-              }
+    buildContextData(eventParams, props.backend).then(setEventCtx)
+    props.backend.subscribeToLiveEvents({
+      onEvent: (updateEvent) => {
+        // console.log("%live update event: ", updateEvent)
+        setEventCtx(({ event: { details, ...restEvent }, ...rest }) => {
+          if (eventIdsEqual(details.id, updateEvent.event.details.id)) {
+            return {
+              event: updateEvent.event,
+              ...rest
             }
-            return { event: { details, ...restEvent }, ...rest }
-          })
-
-        },
-        onError: (err, _id) => { console.log("%live err: ", err) },
-        onQuit: (data) => { console.log("%live closed subscription: ", data) }
-      })
-    })
-      .then((id) => {
-        liveSubId = id
-
-        props.backend.getProfile(window.ship).then((profile) => {
-          if (!profile) {
-            console.error(`profile for ${window.ship} not found`)
-          } else {
-            setOwnProfileFields(profile)
           }
+          return { event: { details, ...restEvent }, ...rest }
         })
-      })
-    console.log("ctx",eventContext)
 
+      },
+      onError: (err, _id) => { console.log("%live err: ", err) },
+      onQuit: (data) => { console.log("%live closed subscription: ", data) }
+    }).then((id) => { liveSubId = id })
 
+    props.backend.getProfile(window.ship).then((profile) => {
+      if (!profile) {
+        console.error(`profile for ${window.ship} not found`)
+      } else {
+        setOwnProfileFields(profile)
+      }
+    })
 
     return () => {
       props.backend.unsubscribeFromEvent(liveSubId).then()
@@ -129,15 +112,17 @@ export function EventIndex(props: { backend: Backend }) {
 
   }, [])
 
+  // add skeleton component while this loads
   return (
     <EventContext.Provider value={eventContext}>
       <div className="grid size-full" >
         <NavBar
-          eventName={eventContext.event!.details.id.name}
-          host={eventContext.event!.details.id.ship}
+          event={eventContext.event}
           profile={ownProfileFields}
           patp={window.ship}
           editProfileField={props.backend.editProfileField}
+          register={props.backend.register}
+          unregister={props.backend.unregister}
         />
         <Outlet />
       </div>

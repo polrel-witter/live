@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import { Session, Event, Profile, Attendee, EventAsGuest } from "@/backend";
+import { Session, Profile, Attendee, EventAsGuest } from "@/backend";
 
 interface EventCtx {
   event: EventAsGuest
