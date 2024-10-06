@@ -98,6 +98,7 @@
 ++  emit  |=(=card cor(cards [card cards]))
 ++  emil  |=(caz=(list card) cor(cards (weld (flop caz) cards)))
 ++  abet  ^-((quip card _state) [(flop cards) state])
+++  bran  |=(=tape (weld "%live: " tape))
 ::  +sss-pub-records: update +cor cards and pub-records state
 ::
 ::   sss library produces a (quip card _pubs) so we need to split it
@@ -204,8 +205,6 @@
   |=  pol=(pole knot)
   ^+  cor
   ?>  (team:title our.bowl src.bowl)
-  :: TODO remove
-  ~&  pol
   ?+  pol  ~|(bad-watch+pol cor)
     [%updates ~]  cor
   ==
@@ -231,11 +230,11 @@
     ?+    t.t.wire  ~|(bad-wire+wire cor)
         [%add ~]
       ?~  p.sign  cor
-      ~&(>>> "failed to add {<ship>} as peer in %matcher" cor)
+      ~&(>>> (bran "failed to add {<ship>} as peer in %matcher") cor)
     ::
         [%delete ~]
       ?~  p.sign  cor
-      ~&(>>> "failed to remove {<ship>} from %matcher" cor)
+      ~&(>>> (bran "failed to remove {<ship>} from %matcher") cor)
     ==
   ::
       [%case %request @ @ ~]
@@ -613,7 +612,7 @@
     ^-  ?
     =;  ver=?
       ?:  ver  &
-      ~&(>>> "bad call on event: {<id>}" |)
+      ~&(>>> (bran "bad call on event: {<id>}") |)
     ?&  =(src our):bowl
         =(our.bowl ship.id)
     ==
@@ -830,7 +829,7 @@
         =/  ses=(unit session)
           (~(get by sessions.info.event) sid)
         ?~  ses
-          ~&(>>> "no session found for sid {<sid>}" event)
+          ~&(>>> (bran "no session found for sid {<sid>}") event)
         =;  rev=session
           event(sessions.info (~(put by sessions.info.event) sid rev))
         ?-    -.q.sub-info

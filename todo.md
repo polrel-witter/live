@@ -46,12 +46,12 @@ key:
 
 ## Refinements
 	+ State upgrades
+	+ Prepend agent name in front of all printifs
   - Respect calm engine settings
 	- Backend > Frontend error handling (e.g. if a poke doesn't succeed, send feedback to user)
 	- Handle tangs so src ship gets feedback on what happened after poke.
 	- When someone unmatches us we should delete their private info and wipe from frontend. We do this bc if we rematch later, we'd get new info.
 	- Restrict a session's $moment to only happen within the bounds of its event $moment
-	- Prepend agent name in front of all printifs
 	- Can we serve frontend over http instead of ames?
 
 ## Bugs
