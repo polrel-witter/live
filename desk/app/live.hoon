@@ -1,6 +1,6 @@
 ::  %live: event coordination
 ::
-/-  *live, matcher, live-records, hark, contacts
+/-  *live, matcher, lr=live-records, hark, contacts
 /+  *sss, *mip, verb, dbug, default-agent
 ::
 |%
@@ -9,19 +9,19 @@
 ::
 +$  state-0
   $:  %0
-      events=(map id event)                                 :: events we host
-      records=(mip id ship record)                          :: guests & passes
-      result=$@(@t (map id info))                           :: search result
-      sub-records=_(mk-subs live-records ,[%record @ @ ~])  :: record subs
-      pub-records=_(mk-pubs live-records ,[%record @ @ ~])  :: record pubs
+      events=(map id event)                               :: events we host
+      records=(mip id ship record)                        :: guests & passes
+      result=$@(@t (map id info))                         :: search result
+      sub-records=_(mk-subs records:lr ,[%record @ @ ~])  :: record subs
+      pub-records=_(mk-pubs records:lr ,[%record @ @ ~])  :: record pubs
   ==
 +$  state-1
   $:  %1
       events=(map id event-1)                               :: events we host
       records=(mip id ship record-1)                        :: access data
       result=$@(@t (map id info-1))                         :: search result
-      sub-records=_(mk-subs live-records ,[%record @ @ ~])  :: record subs
-      pub-records=_(mk-pubs live-records ,[%record @ @ ~])  :: record pubs
+      sub-records=_(mk-subs records-1:lr ,[%record @ @ ~])  :: record subs
+      pub-records=_(mk-pubs records-1:lr ,[%record @ @ ~])  :: record pubs
   ==
 ::
 ::
@@ -29,7 +29,7 @@
 ::
 --
 ::
-%+  verb  |
+%+  verb  &
 %-  agent:dbug
 =|  state-1
 =*  state  -
@@ -90,9 +90,9 @@
 =|  cards=(list card)
 |_  =bowl:gall
 +*  cor  .
-    du-records    =/  du  (du live-records ,[%record @ @ ~])
+    du-records    =/  du  (du records-1:lr ,[%record @ @ ~])
                   (du pub-records bowl -:!>(*result:du))
-    da-records    =/  da  (da live-records ,[%record @ @ ~])
+    da-records    =/  da  (da records-1:lr ,[%record @ @ ~])
                   (da sub-records bowl -:!>(*result:da) -:!>(*from:da) -:!>(*fail:da))
 ::
 ++  emit  |=(=card cor(cards [card cards]))
@@ -116,28 +116,48 @@
   =.  sub-records  s
   (emil c)
 ::
-++  init
-  ^+  cor
-  cor
-::  %-  emit
-::  [%pass /eyre/connect %arvo %e %connect [~ /apps/live] %live]
+++  init  ^+(cor cor)
 ::
 ++  load
   |=  =vase
-  ^+  cor
-  =/  ole  !<(versioned-state vase)
+  |^  ^+  cor
+  =+  !<(ole=versioned-state vase)
   ?-    -.ole
+      %1  cor(state ole)
       %0
     %=  cor
       state   :*  %1
-                  (~(urn by events.ole) event-0-to-1)
+                  ::  convert events and add them to %matcher
+                  ::
+                  =/  morphed=(map id event-1)
+                    (~(urn by events.ole) event-0-to-1)
+                  =/  ml=(list [=id event-1])
+                    ~(tap by morphed)
+                  |-  ^+  morphed
+                  ?~  ml  morphed
+                  =.  cor
+                    %+  poke-matcher
+                      /matcher/(scot %p our.bowl)/add
+                    [id.i.ml [%add-peer our.bowl]]
+                  $(ml t.ml)
+                  ::  convert records and add guests to %matcher with a
+                  ::  %registered or %attended status
                   ::
                   ^-  (mip id ship record-1)
-                  =/  ls  `(list (trel id ship record-1))`(turn ~(tap bi records.ole) record-0-to-1)
-                    =|  ms=(mip id ship record-1)
-                    |-
-                    ?~  ls  ms
-                    $(ls t.ls, ms (~(put bi ms) p.i.ls q.i.ls r.i.ls))
+                  =/  ls
+                    ^-  (list (trel id ship record-1))
+                    (turn ~(tap bi records.ole) record-0-to-1)
+                  =|  ms=(mip id ship record-1)
+                  |-
+                  ?~  ls  ms
+                  =?  cor  ?&  =(our.bowl ship.p.i.ls)
+                               ?=(?(%registered %attended) p.status.r.i.ls)
+                           ==
+                    %+  poke-matcher
+                      /matcher/(scot %p q.i.ls)/add
+                    [p.i.ls [%add-peer q.i.ls]]
+                  $(ls t.ls, ms (~(put bi ms) p.i.ls q.i.ls r.i.ls))
+                  ::  convert result
                   ::
                   ^-  $@(@t (map id info-1))
                   ?@  result.ole
@@ -148,15 +168,37 @@
                   =/  ls=(list [id info])  ~(tap by ;;((map id info) result.ole))
                   ^-  (list [id info-1])
                   %+  turn  `(list [id info])`ls  result-0-to-1
-                  ::  TODO
-                  :: (~(urn by result.ole) result-0-to-1)
                   ::
-                  sub-records.ole
-                  pub-records.ole
+                  *_sub-records
+                  *_pub-records
     ==        ==
-      %1
-    cor(state ole)
   ==
+  ::
+  ++  event-0-to-1
+    |=  [k=id v=event]
+    ^-  event-1
+    [(info-0-to-1 info.v) secret.v limit.v]
+  ::
+  ++  result-0-to-1
+    |=  [k=id v=info]
+    ^-  [id info-1]
+    [k (info-0-to-1 v)]
+  ::
+  ++  info-0-to-1
+    |=  =info
+    ^-  info-1
+    =/  [start=(unit time) end=(unit time) =timezone]
+      moment.info
+    :-  title.info
+    [about.info [start end] timezone ~ ~ ~ kind.info latch.info ~]
+  ::
+  ++  record-0-to-1
+    |=  [k0=id k1=ship v=record]
+    ^-  [id ship record-1]
+    :+  k0
+      k1
+    [(info-0-to-1 info.v) secret.v status.v]
+  --
 ::
 ++  watch
   |=  pol=(pole knot)
@@ -327,7 +369,7 @@
     =/  msg  !<(into:du-records (fled vase))
     (sss-pub-records (apply:du-records msg))
   ::
-      %sss-live-records
+      %sss-live-records-1
     =/  msg  !<(into:da-records (fled vase))
     (sss-sub-records (apply:da-records msg))
   ::
@@ -421,6 +463,15 @@
   |=  [=id =action]
   ^-  cage
   live-operation+!>(`operation`[id action])
+::  +poke-matcher: send a dictum poke to %matcher
+::
+++  poke-matcher
+  |=  [=wire dict=dictum:matcher]
+  ^+  cor
+  =/  =cage
+    matcher-dictum+!>(`dictum:matcher`dict)
+  %-  emit
+  (make-act wire our.bowl %matcher cage)
 ::  +append-entropy: add random characters to a name for uniqueness
 ::
 ++  append-entropy
@@ -665,15 +716,6 @@
       %unregister  (unregister +.act)
       %punch       (punch +.act)
     ==
-    ::  +poke-matcher: send a dictum poke to %matcher
-    ::
-    ++  poke-matcher
-      |=  [=wire dict=dictum:matcher]
-      ^+  cor
-      =/  =cage
-        matcher-dictum+!>(`dictum:matcher`dict)
-      %-  emit
-      (make-act wire our.bowl %matcher cage)
     ::  +create: write a new event to state
     ::
     ++  create
@@ -684,7 +726,9 @@
         [ship.id (append-entropy name.id)]
       =.  events  (~(put by events) id event)
       =.  cor
-        (poke-matcher /matcher/(scot %p our.bowl)/add [id [%add-peer our.bowl]])
+        %+  poke-matcher
+          /matcher/(scot %p our.bowl)/add
+        [id [%add-peer our.bowl]]
       =.  cor  (update-remote-event event)
       update-all-remote-events
     ::  +delete: as host, permanently delete an event; as a guest,
@@ -1089,25 +1133,4 @@
       (~(publish re ship) record)
     --
   --
-++  event-0-to-1
-  |=  [k=id v=event]
-  ^-  event-1
-  [(info-0-to-1 info.v) secret.v limit.v]
-++  result-0-to-1
-  |=  [k=id v=info]
-  ^-  [id info-1]
-  [k (info-0-to-1 v)]
-++  info-0-to-1
-  |=  =info
-  ^-  info-1
-  =/  [start=(unit time) end=(unit time) =timezone]
-    moment.info
-  :-  title.info
-  [about.info [start end] timezone ~ ~ ~ kind.info latch.info ~]
-++  record-0-to-1
-  |=  [k0=id k1=ship v=record]
-  ^-  [id ship record-1]
-  :+  k0
-    k1
-  [(info-0-to-1 info.v) secret.v status.v]
 --
