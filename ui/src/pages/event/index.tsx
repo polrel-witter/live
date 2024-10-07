@@ -66,7 +66,7 @@ export function EventIndex(props: { backend: Backend }) {
   // 
   // might refactor into reducer if it becomes annoying
   const [eventContext, setEventCtx] = useState<EventCtx>(newEmptyCtx())
-  const [ownProfileFields, setOwnProfileFields] = useState<Profile>({})
+  const [ownProfileFields, setOwnProfileFields] = useState<Profile>({patp: window.ship})
   // const [indexCtx, setIndexCtx] = useState<IndexCtx>(newEmptyIndexCtx())
 
   // const ctx = useContext(IndexContext)

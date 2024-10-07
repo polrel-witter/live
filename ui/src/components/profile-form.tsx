@@ -17,22 +17,48 @@ import {
 import { Input } from "@/components/ui/input"
 import { Backend, Profile } from "@/backend"
 
-// TODO: do proper validation
-// reuse types across schemas
-const formSchema = z.object({
-  // either @username or email
-  github: z.string().min(2, { message: "Username must be at least 2 characters.", }),
-  // either @username or number
-  telegram: z.string().min(2, { message: "Username must be at least 2 characters.", }),
-  // phone number
-  phone: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
-  }),
-  // email
-  email: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
-  }),
-})
+const usernameWithAtSchema = z.string().startsWith("@")
+const emailSchema = z.string().email()
+const phoneNumberSchema = z.number().int().finite().transform((num) => num.toString())
+
+const schemasAndPlaceHoldersForFields = {
+  github: {
+    schema: usernameWithAtSchema.or(emailSchema),
+    placeholder: "your github username or email",
+  },
+  telegram: {
+    schema: usernameWithAtSchema.or(phoneNumberSchema),
+    placeholder: "your telegram @ or phone number",
+  },
+  phone: {
+    schema: phoneNumberSchema,
+    placeholder: "your phone number",
+  },
+  email: {
+    schema: emailSchema,
+    placeholder: "your email",
+  },
+  x: {
+    schema: usernameWithAtSchema,
+    placeholder: "your X @",
+  },
+  ensDomain: {
+    schema: z.string().includes(".", {
+      message:
+        "Must include a dot"
+    }),
+    placeholder: "your ens domain",
+  },
+  signal: {
+    schema: usernameWithAtSchema.or(phoneNumberSchema),
+    placeholder: "your signal @ or phone number",
+  },
+}
+
+const formSchema = z.object(Object
+  .fromEntries(Object
+    .entries(schemasAndPlaceHoldersForFields)
+    .map(([key, val]) => [key, val.schema])))
 
 type Props = {
   profileFields: Profile;
@@ -60,16 +86,15 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfileField }) => {
     entries.forEach(([field, val]) => { editProfileField(field, val) })
   }
 
-  const fields: [keyof Profile, string][] = [
-    ['github', "github username or email ..."],
-    ['telegram', 'placeholder'],
-    ['phone', 'placeholder'],
-    ['email', 'placeholder']
-  ]
+  type _editableFields = Exclude<keyof Profile, "patp" | "nickname" | "avatar" | "bio">
+  const fields: [string, string][] = Object
+    .entries(schemasAndPlaceHoldersForFields)
+    .map(([key, val]) => [key, val.placeholder])
 
+    // add static fields from tlon, saying we're importing from tlon
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {fields.map(([fieldName, placeholder]) => {
           return (
             <FormField
@@ -78,13 +103,15 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfileField }) => {
               name={fieldName}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>{fieldName}</FormLabel>
                   <FormControl>
                     <Input placeholder={placeholder} {...field} />
                   </FormControl>
-                  <FormDescription>
-                    This is your public display name.
-                  </FormDescription>
+                  {/*
+                      <FormDescription>
+                      This is your public display name.
+                      </FormDescription>
+                    */}
                   <FormMessage />
                 </FormItem>
 
@@ -92,7 +119,7 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfileField }) => {
             />
           )
         })}
-        <div className="w-full flex justify-center">
+        <div className="pt-8 w-full flex justify-center">
           <Button type="submit" className="p-2 w-24 h-auto">Submit</Button>
         </div>
       </form>

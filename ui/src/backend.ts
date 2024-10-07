@@ -75,12 +75,21 @@ type Attendee = {
   status: MatchStatus,
 }
 
+
 type Profile = {
+  patp: string;
+  // these are always fetched from tlon
+  avatar?: string;
+  bio?: string;
+  nickname?: string;
+  // these are available only when we match
+  x?: string;
+  ensDomain?: string;
+  email?: string;
   github?: string;
   telegram?: string;
+  signal?: string;
   phone?: string;
-  email?: string;
-
 }
 
 type Session = {
@@ -581,22 +590,37 @@ const getProfilesSchema = z.object({
   allProfiles: z.record(z.array(entry1Schema))
 })
 
-// ['x', 'ens-domain', 'email', 'avatar', 'github', 'bio', 'nickname', 'telegram', 'signal', 'phone']
-function getProfilesConvertResult(fields: z.infer<typeof entry1Schema>[]): Profile {
+function getProfilesConvertResult(patp: string, fields: z.infer<typeof entry1Schema>[]): Profile {
   const p: Profile = {
+    patp: patp
   }
 
   fields.forEach((field) => {
-    if (field.term === "github") { p.github = field.entry! }
-
-    if (field.term === "telegram") { p.telegram = field.entry! }
-
-    if (field.term === "phone") { p.phone = field.entry! }
-
-    if (field.term === "email") { p.email = field.entry! }
+    switch (field.term) {
+      case "avatar":
+        p.avatar = field.entry!
+      case "bio":
+        p.bio = field.entry!
+      case "nickname":
+        p.nickname = field.entry!
+      case "x":
+        p.x = field.entry!
+      case "ens-domain":
+        p.ensDomain = field.entry!
+      case "email":
+        p.email = field.entry!
+      case "github":
+        p.github = field.entry!
+      case "telegram":
+        p.telegram = field.entry!
+      case "signal":
+        p.signal = field.entry!
+      case "phone":
+        p.phone = field.entry!
+      default:
+        console.warn(`unexpected profile term: '${field.term}'`)
+    }
   })
-
-
 
   return p
 }
@@ -618,7 +642,7 @@ function getProfiles(_api: Urbit): () => Promise<Profile[]> {
     }
 
     const profiles = Object.entries(profileFields.allProfiles)
-      .map(([_patp, arrs]) => getProfilesConvertResult(arrs))
+      .map(([patp, arrs]) => getProfilesConvertResult(patp, arrs))
 
     console.log("profileFields ", profileFields)
 
@@ -766,4 +790,4 @@ function newBackend(api: Urbit, ship: string): Backend {
 
 export { newBackend, eventIdsEqual }
 
-export type { EventId, Event, EventStatus, EventAsGuest, EventAsHost, EventDetails, Session, Attendee, Profile, Backend }
+export type { EventId, Event, EventStatus, MatchStatus, EventAsGuest, EventAsHost, EventDetails, Session, Attendee, Profile, Backend }
