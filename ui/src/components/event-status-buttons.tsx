@@ -20,10 +20,7 @@ const ButtonSwitch: React.FC<
         <div className="flex-auto">
           <Button
             className="h-full w-full"
-            onClick={
-              () => {
-                fns.register(id)
-              }}
+            onClick={() => { fns.register(id) }}
           > register </Button>
         </div>
       )
@@ -33,11 +30,7 @@ const ButtonSwitch: React.FC<
         <div className="flex-auto">
           <Button
             className="h-full w-full hover:bg-red-900"
-            onClick={() => {
-              fns.unregister(id).then(() => {
-                console.log("unregistered from event: ", id)
-              })
-            }}
+            onClick={() => { fns.unregister(id) }}
           > unregister </Button>
         </div>
       )

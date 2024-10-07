@@ -20,7 +20,11 @@ type Props = {
 
 const NavBar: React.FC<Props> = (
   {
-    event: { details: { id: { name: eventName, ship: eventHost } }, status: eventStatus, ...eventRest },
+    event: {
+      details: { id: { name: eventName, ship: eventHost } },
+      status: eventStatus,
+      ...eventRest
+    },
     patp,
     profile,
     ...fns
