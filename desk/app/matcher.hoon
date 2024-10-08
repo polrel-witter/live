@@ -299,44 +299,25 @@
     ?>  ?=([[%peers @ @ ~] *] msg)
     =/  =id:live
       [`ship`+<:path.msg `term`+>-:path.msg]
-    ~&  wave.msg
-    ?^  wave.msg
-      =/  =wave:live-peers  (need wave.msg)
-      ::  guest list update so we write to our peers mip and pass the
-      ::  public poriton of our profile
+    ?:  stale.msg
+      ::  subscription state is stale so we unsub and remove the event;
+      ::  means we no longer have a %registered/%attended status in
+      ::  %live
       ::
-      ?-    -.wave
-          %add-peer
-        =.  peers  (~(put bi peers) id ship.wave ~)
-        ?:  =(our.bowl ship.wave)  cor
-        (send-profile %part ship.wave)
-      ::
-          %delete-peer
-        ::  if we're removed, we're no longer %registered/%attended so
-        ::  we delete the peers for that event and unsubscribe
-        ::
-        ?.  =(ship.wave our.bowl)
-          cor(peers (~(del bi peers) id ship.wave))
-      :: TODO problem with unsubscribing at this point; we get mixed
-      :: results when it comes to state changes from the host. Thinking
-      :: we should run a check on our local peers state and if null just
-      :: write the rock to state and nothing more
-      ::
-      ::  =.  sub-peers  %^  quit:da-peers  ship.id
-      ::                   dap.bowl
-      ::                 [%peers ship.id name.id ~]
-        cor(peers (~(del by peers) id))
-      ==
-    ::  we've been added to some new event so we add the guests to our
-    ::  peers mip and send the public portion of our profile
+      =.  sub-peers  %^  quit:da-peers  ship.id
+                       dap.bowl
+                     [%peers ship.id name.id ~]
+      cor(peers (~(del by peers) id))
+    ::  subscription state is active so we overwrite our peers mip to match
+    ::  the latest rock
     ::
     =/  new-peers=(list ship)
       ~(tap in guests.rock.msg)
+    =.  peers  (~(del by peers) id)
     |-
     ?~  new-peers  cor
     =?  cor  ?!(=(our.bowl i.new-peers))
       =.  peers  (~(put bi peers) id i.new-peers ~)
-      ?:  =(our.bowl i.new-peers)  cor
       (send-profile %part i.new-peers)
     $(new-peers t.new-peers)
   ==
@@ -553,16 +534,22 @@
   ::
   ++  init-sss-peers
     ^+  cor
+    =.  pub-peers
+      (rule:du-peers path [~ 1] 1)
     (sss-pub-peers (secret:du-peers [path]~))
   ::  +allow-sss: give culp access to the sss peers path
   ::
   ++  allow-sss-peers
     ^+  cor
+    =.  pub-peers
+      (wipe:du-peers path)
     (sss-pub-peers (allow:du-peers [culp]~ [path]~))
   ::  +block-sss-peers: revoke sss peers path access
   ::
   ++  block-sss-peers
     ^+  cor
+    =.  pub-peers
+      (wipe:du-peers path)
     (sss-pub-peers (block:du-peers ~[culp] [path]~))
   ::  +publish: push an sss update to our peers
   ::
