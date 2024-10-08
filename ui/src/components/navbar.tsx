@@ -11,7 +11,6 @@ import EventStatusButtons from "./event-status-buttons"
 
 type Props = {
   event: EventAsGuest,
-  patp: string,
   profile: Profile,
   editProfileField: Backend["editProfileField"]
   register: Backend["register"]
@@ -25,7 +24,6 @@ const NavBar: React.FC<Props> = (
       status: eventStatus,
       ...eventRest
     },
-    patp,
     profile,
     ...fns
   }) => {
@@ -59,7 +57,7 @@ const NavBar: React.FC<Props> = (
           <ProfileDialog
             onOpenChange={setOpenProfile}
             open={openProfile}
-            patp={patp}
+            patp={profile.patp}
             profileFields={profile}
             editProfileField={fns.editProfileField}
           />

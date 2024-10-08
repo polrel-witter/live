@@ -6,10 +6,6 @@ import './index.css';
 // urbit api
 import Urbit from '@urbit/http-api';
 
-window.urbit = new Urbit('');
-window.urbit.onOpen = () => console.log('urbit: connected')
-window.urbit.onRetry = () => console.log('urbit: retrying connection')
-window.urbit.onError = () => console.log('urbit: error connecting')
 
 // backend
 import { newBackend } from '@/backend'
@@ -19,7 +15,16 @@ import RootComponent from './root';
 // this component returns the router
 import AppRouter from './router';
 
-const backend = newBackend(window.urbit, window.ship)
+const newUrbitApi = (): Urbit => {
+  window.urbit = new Urbit('');
+  window.urbit.onOpen = () => console.log('urbit: connected')
+  window.urbit.onRetry = () => console.log('urbit: retrying connection')
+  window.urbit.onError = () => console.log('urbit: error connecting')
+
+  return window.urbit
+}
+
+const backend = newBackend(newUrbitApi(), window.ship)
 
 const container = document.getElementById('app');
 

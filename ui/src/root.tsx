@@ -1,6 +1,6 @@
 import { PropsWithChildren, useEffect, useState } from "react"
 import { createContext } from "react";
-import { Backend, EventAsGuest, EventAsHost, Profile } from "@/backend";
+import { Backend, EventAsGuest, EventAsHost, eventIdsEqual, LiveUpdateEvent, Profile } from "@/backend";
 
 interface GlobalCtx {
   profile: Profile;
@@ -55,10 +55,39 @@ type Props = {
 }
 
 const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }) => {
-  const [indexCtx, setCtx] = useState(newEmptyIndexCtx(window.ship))
+  const [indexCtx, setCtx] = useState(newEmptyIndexCtx(""))
+
 
   useEffect(() => {
-    buildIndexCtx(backend, indexCtx.profile.patp).then(setCtx)
+    let liveSubId: number;
+
+    buildIndexCtx(backend, window.ship).then(setCtx)
+
+    // subscribe to event to update state dynamically
+    backend.subscribeToLiveEvents({
+      onEvent: (updateEvent: LiveUpdateEvent) => {
+        // TODO: do we get updates on host events too?
+        setCtx(({ eventsAsGuest: oldEventsAsGuest, ...restCtx }) => {
+          return {
+            eventsAsGuest: oldEventsAsGuest
+              .map((evt) => {
+                if (eventIdsEqual(updateEvent.event.details.id, evt.details.id)) {
+                  return updateEvent.event
+                }
+                return evt
+              }), ...restCtx
+          }
+
+        })
+      },
+      onError: (err, _id) => { console.log("%live err: ", err) },
+      onQuit: (data) => { console.log("%live closed subscription: ", data) }
+    }).then((id) => { liveSubId = id })
+
+    return () => {
+      backend.unsubscribeFromEvent(liveSubId).then()
+    }
+
   }, [])
 
   return (
@@ -69,3 +98,5 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
 }
 
 export default RootComponent;
+export { GlobalContext }
+export type { GlobalCtx }

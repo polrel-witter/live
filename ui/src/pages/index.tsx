@@ -1,34 +1,23 @@
-import { Backend, Profile, eventIdsEqual, EventAsHost, EventAsGuest } from "@/backend";
+import { Backend, Profile } from "@/backend";
 import EventList from "@/components/event-list";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
-import { useEffect, useState } from "react";
-import { newEmptyIndexCtx, IndexContext, IndexCtx } from "./context";
+import { useContext, useEffect, useState } from "react";
 import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProfileDialog from "@/components/profile-dialog";
 import { flipBoolean } from "@/lib/utils";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
-
-const emptyCtx = newEmptyIndexCtx()
-
-async function buildContextData(ourShip: string, backend: Backend) {
-
-  const ctx = emptyCtx
-  ctx.events = await backend.getRecords()
-    .then((events) => events.map(evt => evt.details))
-
-  ctx.patp = ourShip
-  const profile = await backend.getProfile(ourShip)
-  if (profile) {
-    ctx.profile = profile
-  }
-
-  return ctx
-}
+import { GlobalContext } from "@/root";
 
 const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
-  const [eventsAsGuest, setEventsAsGuest] = useState<EventAsGuest[]>([])
-  const [eventsAsHost, setEventsAsHost] = useState<EventAsHost[]>([])
+  const globalContext = useContext(GlobalContext)
+
+  if (!globalContext) {
+    console.error("globalContext is not set")
+    return
+  }
+
+
   const [ownProfileFields, setOwnProfileFields] = useState<Profile | null>(null)
   const [openProfile, setOpenProfile] = useState(false)
 
@@ -41,9 +30,6 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
   // }).then(() => {console.log("subscribed to live")})
 
   useEffect(() => {
-    backend.getRecords().then(setEventsAsGuest);
-    backend.getEvents().then(setEventsAsHost);
-
     console.log("trying match")
 
     // window.urbit.poke({
@@ -62,22 +48,6 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
     //   }
     // }).then(() => { console.log("match") })
     let liveSubId: number
-
-    backend.subscribeToLiveEvents({
-      onEvent: (updateEvent) => {
-        // TODO: do we get updates on host events too?
-        setEventsAsGuest((oldEvts) => {
-          return oldEvts.map((oldEvt) => {
-            if (eventIdsEqual(updateEvent.event.details.id, oldEvt.details.id)) {
-              return updateEvent.event
-            }
-            return oldEvt
-          })
-        })
-      },
-      onError: (err, _id) => { console.log("%live err: ", err) },
-      onQuit: (data) => { console.log("%live closed subscription: ", data) }
-    }).then((id) => { liveSubId = id })
 
     backend.getProfile(window.ship).then((profile) => {
       if (!profile) {
@@ -134,12 +104,12 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
           </TabsList>
           <TabsContent value="eventsAsHost">
             <EventList
-              details={eventsAsHost.map((evt) => evt.details)}
+              details={globalContext.eventsAsHost.map((evt) => evt.details)}
             />
           </TabsContent>
           <TabsContent value="eventsAsGuest">
             <EventList
-              details={eventsAsGuest.map((evt) => evt.details)}
+              details={globalContext.eventsAsGuest.map((evt) => evt.details)}
             />
           </TabsContent>
         </Tabs>
