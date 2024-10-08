@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import {
@@ -21,7 +21,7 @@ window.urbit.onRetry = () => console.log('urbit: retrying connection')
 window.urbit.onError = () => console.log('urbit: error connecting')
 
 // backend
-import { newBackend } from '@/backend'
+import { EventAsGuest, newBackend, Profile } from '@/backend'
 
 // event
 import { EventParamsLoader, EventIndex } from './pages/event';
@@ -30,6 +30,7 @@ import { SchedulePage } from './pages/event/schedule';
 import { MapPage } from './pages/event/map';
 import { PatpLoader, ProfilePage } from './pages/profile';
 import { EventDetails } from './pages/event/details';
+import { IndexContext, IndexCtx, newEmptyIndexCtx } from './pages/context';
 
 const backend = newBackend(window.urbit, window.ship)
 const basePath = "/apps/live"
@@ -76,11 +77,44 @@ const router = createBrowserRouter([
   }
 ]);
 
+async function buildIndexCtx(patp: string): Promise<IndexCtx> {
+
+  const ctx = newEmptyIndexCtx(patp)
+
+  const ownProfile = await backend.getProfile(patp)
+
+  if (ownProfile) {
+    ctx.profile = ownProfile
+  } else {
+    console.error(`profile for ${patp} not found`)
+  }
+
+  ctx.eventsAsGuest = await backend.getRecords()
+  ctx.eventsAsHost = await backend.getEvents()
+
+
+  return ctx
+}
+
+const RootComponent: React.FC = () => {
+  const [indexCtx, setCtx] = useState(newEmptyIndexCtx(window.ship))
+
+  useEffect(() => {
+    buildIndexCtx(indexCtx.profile.patp).then(setCtx)
+  }, [])
+
+  return (
+    <IndexContext.Provider value={indexCtx!}>
+      <RouterProvider router={router} />
+    </IndexContext.Provider>
+  )
+}
+
 // needs null check ("!") to work
 const container = document.getElementById('app')!;
 createRoot(container).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <RootComponent />
   </React.StrictMode>
 );
 

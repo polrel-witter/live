@@ -1,17 +1,29 @@
 import { createContext } from "react";
-import { Event, EventDetails, Profile } from "@/backend";
+import { Event, EventAsGuest, EventAsHost, EventDetails, Profile } from "@/backend";
 
 interface IndexCtx {
-  events: EventDetails[]
-  patp: string;
   profile: Profile;
+  eventsAsGuest: EventAsGuest[]
+  eventsAsHost: EventAsHost[]
 }
 
-function newEmptyIndexCtx(): IndexCtx {
+function newEmptyIndexCtx(patp: string): IndexCtx {
   return {
-    profile: {},
-    patp: "",
-    events: [] as Event[],
+    profile: {
+      patp: patp,
+      avatar: null,
+      bio: null,
+      nickname: null,
+      x: null,
+      ensDomain: null,
+      email: null,
+      github: null,
+      telegram: null,
+      signal: null,
+      phone: null,
+    },
+    eventsAsGuest: [] as EventAsGuest[],
+    eventsAsHost: [] as EventAsHost[],
   }
 }
 
