@@ -175,6 +175,7 @@
                   =/  ls=(list [id info])  ~(tap by ;;((map id info) result.ole))
                   ^-  (list [id info-1])
                   %+  turn  `(list [id info])`ls  result-0-to-1
+                  ::  TODO stubbed for now
                   ::
                   *_sub-records
                   *_pub-records
