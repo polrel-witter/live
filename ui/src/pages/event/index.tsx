@@ -133,8 +133,7 @@ export function EventIndex(props: { backend: Backend }) {
     <EventContext.Provider value={eventContext}>
       <div className="grid size-full" >
         <NavBar
-          eventName={eventContext.details.id.name}
-          host={eventContext.details.id.ship}
+          event={eventContext.details}
           profile={ownProfileFields}
           patp={window.ship}
           editProfileField={props.backend.editProfileField}

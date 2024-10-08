@@ -5,11 +5,18 @@ import { useEffect, useState } from "react"
 import { Button } from "./ui/button"
 import { ChevronLeft, ChevronLeftSquare, ChevronUp, Edit, Menu, User, Users } from "lucide-react"
 import { flipBoolean } from "@/lib/utils"
-import { Backend, Profile, } from "@/backend"
+import { Backend, Profile, Event } from "@/backend"
 import { SlideDownAndReveal } from "./sliders"
+import { eventNames } from "process"
 
+type Props = {
+  event: Event,
+  patp: string,
+  profile: Profile,
+  editProfileField: Backend["editProfileField"]
+}
 
-export default function NavBar(props: { eventName: string, host: string, patp: string, profile: Profile, editProfileField: Backend["editProfileField"] }) {
+const NavBar: React.FC<Props> = ({ event: { id: { name: eventName, ship: eventHost }, ...event }, ...props }) => {
   const [openProfile, setOpenProfile] = useState(false)
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openMenu, setOpenMenu] = useState(false);
@@ -24,6 +31,8 @@ export default function NavBar(props: { eventName: string, host: string, patp: s
     }
   }, []);
 
+  // TODO: when i have global context do away with window.ship here
+  const showGuestList = event.status === "registered" || event.status === "attended" || eventHost === window.ship
   const isMobile = width <= 768;
 
   return (
@@ -44,7 +53,7 @@ export default function NavBar(props: { eventName: string, host: string, patp: s
             editProfileField={props.editProfileField}
           />
         </NavigationMenuItem>
-        <NavigationMenuItem className="grow text-center"> {props.eventName || "event"} </NavigationMenuItem>
+        <NavigationMenuItem className="grow text-center"> {eventName || "event"} </NavigationMenuItem>
         {
           isMobile
             ?
@@ -57,14 +66,19 @@ export default function NavBar(props: { eventName: string, host: string, patp: s
                 <ul className="grid gap-3 m-2 justify-items-end">
                   <li className="row row-span-3">
                     <Button>
-                      <Link to={`/apps/live/event/${props.host}/${props.eventName}`}> event home </Link>
+                      <Link to={`/apps/live/event/${eventHost}/${eventName}`}> event home </Link>
                     </Button>
                   </li>
-                  <li className="row row-span-3">
-                    <Button>
-                      <Link to="attendees"> attendees </Link>
-                    </Button>
-                  </li>
+
+                  {
+                    showGuestList
+                      ?
+                      <li className="row row-span-3">
+                        <Link to="attendees"> guest list </Link>
+                      </li>
+                      :
+                      ""
+                  }
                   <li className="row row-span-3">
                     <Button>
                       <Link to="schedule"> schedule </Link>
@@ -97,11 +111,17 @@ export default function NavBar(props: { eventName: string, host: string, patp: s
               <NavigationMenuContent>
                 <ul className="grid gap-3 p-4  md:w-[400px] lg:w-[500px] ">
                   <li className="row row-span-3">
-                    <Link to={`/apps/live/event/${props.host}/${props.eventName}`}> event home </Link>
+                    <Link to={`/apps/live/event/${eventHost}/${eventName}`}> event home </Link>
                   </li>
-                  <li className="row row-span-3">
-                    <Link to="attendees"> attendees </Link>
-                  </li>
+                  {
+                    showGuestList
+                      ?
+                      <li className="row row-span-3">
+                        <Link to="attendees"> guest list </Link>
+                      </li>
+                      :
+                      ""
+                  }
                   <li className="row row-span-3">
                     <Link to="schedule"> schedule </Link>
                   </li>
@@ -117,9 +137,5 @@ export default function NavBar(props: { eventName: string, host: string, patp: s
     </NavigationMenu >
   )
 }
-//   <NavigationMenuItem>
-//     <NavigationMenuTrigger>Item One</NavigationMenuTrigger>
-//     <NavigationMenuContent>
-//       <NavigationMenuLink>Link</NavigationMenuLink>
-//     </NavigationMenuContent>
-//   </NavigationMenuItem>
+
+export default NavBar;
