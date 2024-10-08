@@ -67,14 +67,12 @@ interface Backend {
   unsubscribeFromEvent(id: number): Promise<void>
 }
 
-
 type MatchStatus = "unmatched" | "sent-request" | "matched";
 
 type Attendee = {
   patp: string,
   status: MatchStatus,
 }
-
 
 type Profile = {
   patp: string;
@@ -101,12 +99,6 @@ type Session = {
   startTime: Date;
   endTime: Date;
 }
-
-// TODO:
-// split into:
-// EventDetails: current event
-// EventAsGuest: EventDetails & EventStatus & {secret: string}
-// EventAsHost: EventDetails & {secret: string | null, limit: number | null}
 
 type Event = {
   id: EventId;
