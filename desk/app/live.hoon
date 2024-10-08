@@ -126,6 +126,12 @@
   ?-    -.ole
       %1  cor(state ole)
       %0
+    =.  cor
+      ::  unbind URL path; %live 1.0 was handling http-requests directly
+      ::  whereas 2.0 uses Eyre channels
+      ::
+      %-  emit
+      [%pass /eyre/connect %arvo %e %disconnect [~ /apps/live]]
     %=  cor
       state   :*  %1
                   ::  convert events and add them to %matcher
