@@ -23,12 +23,12 @@ const phoneNumberSchema = z.number().int().finite().transform((num) => num.toStr
 
 const schemasAndPlaceHoldersForFields = {
   github: {
-    schema: usernameWithAtSchema.or(emailSchema),
-    placeholder: "your github username or email",
+    schema: z.string().min(1, { message: "can't use empty string as username" }),
+    placeholder: "your github username",
   },
   telegram: {
-    schema: usernameWithAtSchema.or(phoneNumberSchema),
-    placeholder: "your telegram @ or phone number",
+    schema: usernameWithAtSchema,
+    placeholder: "your telegram @",
   },
   phone: {
     schema: phoneNumberSchema,
@@ -67,19 +67,21 @@ type Props = {
 
 const ProfileForm: React.FC<Props> = ({ profileFields, editProfileField }) => {
 
+  const pf = Object
+    .fromEntries(Object
+      .entries(profileFields)
+      .map(([field, val]) => [field, (val ? val : '')]))
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: profileFields,
-    // defaultValues: {
-    //   email: undefined,
-    // },
+    mode: "onChange",
+    defaultValues: pf,
   })
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
-    console.log(values)
-
+    
     // TODO: diff between previous values and only send poke for diff ones
 
     const entries = Object.entries(values)
@@ -91,10 +93,14 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfileField }) => {
     .entries(schemasAndPlaceHoldersForFields)
     .map(([key, val]) => [key, val.placeholder])
 
-    // add static fields from tlon, saying we're importing from tlon
+  // add static fields from tlon, saying we're importing from tlon
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form
+        aria-description="A form containing updatable profile entries"
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4"
+      >
         {fields.map(([fieldName, placeholder]) => {
           return (
             <FormField

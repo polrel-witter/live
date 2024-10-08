@@ -22,8 +22,13 @@ const ProfileDialog: React.FC<Props> = ({ open, onOpenChange, profileFields, edi
 
   return (
     <div>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent >
+      <Dialog
+        open={open}
+        onOpenChange={onOpenChange}
+      >
+        <DialogContent
+          aria-description="Contains profile fields and a form to update them"
+        >
           <DialogHeader>
             <DialogTitle>Your Profile</DialogTitle>
             <ProfileForm
