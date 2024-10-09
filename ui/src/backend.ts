@@ -715,10 +715,20 @@ function getAttendees(_api: Urbit): (eventId: EventId) => Promise<Attendee[]> {
 
 function editProfileField(_api: Urbit): (field: keyof Profile, value: string) => Promise<void> {
   return async (field: keyof Profile, value: string) => {
+    let actualField: string = field;
+
+    // TODO: add Promise<boolean> pattern
+
+    // the backend expects "ens-domain" but the Profile type is keyed in
+    // camelCase because otherwise i need to quote the key and it's annoying
+    if (field === "ensDomain") {
+      actualField = "ens-domain"
+    }
+
     const num = await _api.poke({
       app: "matcher",
       mark: "matcher-deed",
-      json: { "edit-profile": { term: field, entry: value } },
+      json: { "edit-profile": { term: actualField, entry: value } },
     })
     // TODO: do something with this promise result
     console.log(num)
