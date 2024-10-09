@@ -62,13 +62,13 @@ const ProfileCard: React.FC<Props> = ({ patp, status, profile, showHeader, unmat
               case "nickname":
                 const fieldVal = (val ? val : "not set in tlon")
                 return (
-                  <div>
+                  <div key={field}>
                     <span>{field}: </span>
                     <span className={val ? "" : "font-bold"}>{fieldVal}</span>
                   </div>
                 )
               default:
-                return (val ? <p>{`${field}: ${val}`}</p> : "")
+                return (val ? <p key={field}>{`${field}: ${val}`}</p> : "")
             }
           })
         }

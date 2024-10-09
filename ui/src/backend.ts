@@ -67,14 +67,12 @@ interface Backend {
   unsubscribeFromEvent(id: number): Promise<void>
 }
 
-
 type MatchStatus = "unmatched" | "sent-request" | "matched";
 
 type Attendee = {
   patp: string,
   status: MatchStatus,
 }
-
 
 type Profile = {
   patp: string;
@@ -101,12 +99,6 @@ type Session = {
   startTime: Date;
   endTime: Date;
 }
-
-// TODO:
-// split into:
-// EventDetails: current event
-// EventAsGuest: EventDetails & EventStatus & {secret: string}
-// EventAsHost: EventDetails & {secret: string | null, limit: number | null}
 
 type Event = {
   id: EventId;
@@ -336,7 +328,6 @@ function getRecords(api: Urbit, ship: string): () => Promise<EventAsGuest[]> {
       const allRecords = Object.
         entries(records).
         filter(([idString,]) => {
-          console.log(idString, ship)
           const [hostShip,] = idString.split("/")
           return hostShip !== "~" + ship
         }).
@@ -423,8 +414,6 @@ function getEvents(api: Urbit): () => Promise<EventAsHost[]> {
     if (!allEvents) {
       return Promise.resolve([])
     }
-
-    console.log("parsed events: ", allEvents)
 
     const allBackendEventsToEvents = (events: z.infer<typeof allEventsSchema>): EventAsHost[] => {
 
@@ -541,7 +530,7 @@ const profileEntryObjSchema = z.object({
 const getProfilesSchema = z.object({
   allProfiles: z.record(z.array(profileEntryObjSchema))
 })
-.transform(result => result.allProfiles)
+  .transform(result => result.allProfiles)
 
 function entryArrayToProfile(patp: string, fields: z.infer<typeof profileEntryObjSchema>[]): Profile {
   const p: Profile = {
@@ -622,8 +611,10 @@ function getProfiles(_api: Urbit): () => Promise<Profile[]> {
 }
 
 const getProfileSchema = z
-  .object({ profile: z
-          .record(z.string(), z.object({ entry: z.string().nullable() })) })
+  .object({
+    profile: z
+      .record(z.string(), z.object({ entry: z.string().nullable() }))
+  })
   .transform((entry) => {
     // here we make the response's shape like the one in getProfiles
     // so i can reuse the same transform function
@@ -790,6 +781,6 @@ function newBackend(api: Urbit, ship: string): Backend {
   }
 }
 
-export { newBackend, eventIdsEqual }
+export { emptyEventAsGuest, emptyEventAsHost, newBackend, eventIdsEqual }
 
-export type { EventId, Event, EventStatus, MatchStatus, EventAsGuest, EventAsHost, EventDetails, Session, Attendee, Profile, Backend }
+export type { EventId, Event, EventStatus, MatchStatus, EventAsGuest, EventAsHost, EventDetails, Session, Attendee, Profile, LiveUpdateEvent, Backend }
