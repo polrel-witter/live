@@ -1,6 +1,7 @@
 import { PropsWithChildren, useEffect, useState } from "react"
 import { createContext } from "react";
 import { Backend, EventAsGuest, EventAsHost, eventIdsEqual, LiveUpdateEvent, Profile } from "@/backend";
+import { Toaster } from "./components/ui/toaster";
 
 interface GlobalCtx {
   profile: Profile;
@@ -93,6 +94,7 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
   return (
     <GlobalContext.Provider value={indexCtx!}>
       {children}
+      <Toaster />
     </GlobalContext.Provider>
   )
 }
