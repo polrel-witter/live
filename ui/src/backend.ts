@@ -13,10 +13,16 @@ interface Backend {
   // --- live agent --- //
 
   // live - scry %all-records
-  getEvents(): Promise<Event[]>
+  getRecords(): Promise<EventAsGuest[]>
 
   // live - scry %record
-  getEvent(id: EventId): Promise<Event>
+  getRecord(id: EventId): Promise<EventAsGuest>
+
+  // live - scry %all-events
+  getEvents(): Promise<EventAsHost[]>
+
+  // live - scry %event
+  getEvent(id: EventId): Promise<EventAsHost>
 
   // live - poke %register
   register(id: EventId): Promise<void>
@@ -87,6 +93,12 @@ type Session = {
   endTime: Date;
 }
 
+// TODO:
+// split into:
+// EventDetails: current event
+// EventAsGuest: EventDetails & EventStatus & {secret: string}
+// EventAsHost: EventDetails & {secret: string | null, limit: number | null}
+
 type Event = {
   id: EventId;
   status: EventStatus;  // we also have invitation date if we want
@@ -101,7 +113,34 @@ type Event = {
   sessions: Session[]
 }
 
-const emptyEvent: Event = {
+
+type EventDetails = {
+  id: EventId;
+  location: string;
+  startDate: Date;
+  endDate: Date;
+  timezone: string;
+  description: string;
+  group: string;
+  kind: "public" | "private" | "secret";
+  latch: "open" | "closed" | "over";
+  sessions: Session[]
+}
+
+type EventAsHost = {
+  secret: string | null,
+  limit: number | null,
+  details: EventDetails
+}
+
+type EventAsGuest = {
+  secret: string | null,
+  status: EventStatus,
+  details: EventDetails
+}
+
+
+const emptyEventDetails: Event = {
   id: {
     ship: "",
     name: "",
@@ -118,9 +157,22 @@ const emptyEvent: Event = {
   sessions: []
 }
 
+
+const emptyEventAsGuest: EventAsGuest = {
+  secret: "",
+  status: "" as EventStatus,
+  details: emptyEventDetails
+}
+
+const emptyEventAsHost: EventAsHost = {
+  secret: "",
+  limit: 0,
+  details: emptyEventDetails
+}
+
 type LiveUpdateEvent = {
   ship: string,
-  event: Event,
+  event: EventAsGuest,
 }
 
 // function getSchedule(_api: Urbit): () => Promise<Session[]> {
@@ -149,163 +201,36 @@ const eventLatchSchema = z.enum([
 
 const timeSchema = z.number()
 
-const recordSchema = z.object({
-  info: z.object({
-    about: z.string().nullable(),
-    group: z.string().nullable(),
-    kind: eventVisibilitySchema,
-    latch: eventLatchSchema,
-    location: z.string().nullable(),
-    moment: z.object({ start: timeSchema.nullable(), end: timeSchema.nullable() }),
-    sessions: z.object({}).catchall(z.any()),
-    timezone: z.object({ p: z.boolean(), q: z.number() }),
-    title: z.string(),
-    ["venue-map"]: z.string().nullable(),
-  }),
-  secret: z.string().nullable(),
-  status: z.object({
-    p: eventStatusSchema,
-    q: timeSchema
-  })
+const backendInfo1Schema = z.object({
+  about: z.string().nullable(),
+  group: z.string().nullable(),
+  kind: eventVisibilitySchema,
+  latch: eventLatchSchema,
+  location: z.string().nullable(),
+  moment: z.object({ start: timeSchema.nullable(), end: timeSchema.nullable() }),
+  sessions: z.object({}).catchall(z.any()),
+  timezone: z.object({ p: z.boolean(), q: z.number() }),
+  title: z.string(),
+  ["venue-map"]: z.string().nullable(),
 })
 
-// const allRecordsSchema = z.object({
-//   allRecords: z.object({})    
-//     .catchall(z.object({})
-//       .catchall(z.object({
-//         record: recordSchema
-//       })))
-// })
 
-const allRecordsSchema = z.object({
-  allRecords: z.record(
-    z.string(), // this is going to be `${hostShip} ${eventName}`
-    z.record(
-      z.string(), // this is `${guesShip}`
-      z.object({ record: recordSchema })
-    ))
-})
-
-// const events = api.scry({
-//   app: "live",
-//   path: "/events/all"
-// }).then((res) => {
-//   // const result = allRecordsSchema.parse(res)
-//   // console.log("parsed records: ",result)
-// })
-//
-//[
-//      {
-//        id: {
-//          ship: "~sampel-palnet",
-//          name: "my-event",
-//        },
-//        status: "invited",
-//        location: "atlantis",
-//        startDate: new Date(1300000000000),
-//        endDate: new Date(1400000000000),
-//        description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam posuere ultrices porttitor. Curabitur interdum, ante nec pellentesque aliquam, mi ante facilisis ex, et condimentum quam sapien sit amet arcu. Praesent gravida iaculis auctor. Maecenas convallis eu magna lacinia tincidunt. Curabitur eget vehicula lorem, non elementum est. Fusce nec tristique lectus. Aenean nisi elit, suscipit nec bibendum iaculis, porttitor quis purus. Proin fermentum nunc nec massa facilisis pretium. Nulla fermentum ultrices sapien, vel facilisis nisi consequat et. Pellentesque sagittis nunc ligula, nec lacinia mauris egestas vel. Donec eu tincidunt erat. Etiam facilisis consectetur consectetur. Aliquam erat volutpat. Suspendisse condimentum at neque nec aliquam. Nunc malesuada feugiat arcu vitae accumsan. Phasellus id sapien quam. Donec eu lorem lobortis, ullamcorper nisl in, tempor ante. Etiam rhoncus luctus metus ac mattis. Pellentesque ullamcorper erat id diam vestibulum porta suscipit non erat. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec dapibus, lectus sit amet facilisis mollis, sapien mi suscipit metus, ut egestas metus nunc eget ipsum. Nulla in feugiat ante. Vestibulum vitae tellus eu dolor efficitur pretium sed vitae massa. Nullam quis vehicula nisl, sed tempus dolor. Mauris tristique arcu nec sagittis tincidunt. Aenean commodo urna blandit nulla vulputate porttitor. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec ipsum turpis, tristique vitae nisl facilisis, pretium facilisis nibh. Maecenas aliquet dignissim bibendum. Cras non aliquet ipsum. Donec pulvinar varius neque, sed feugiat eros aliquet quis. Donec non lacinia lorem. ",
-//        timezone: "PST",
-//        kind: "public",
-//        group: "~sampel-palnet/my-event",
-//        latch: "open",
-//        sessions: [
-//          {
-//            title: "First talk",
-//            mainSpeaker: "~sampel-palnet",
-//            panel: [],
-//            location: "anywhere",
-//            about: "idk just vibes",
-//            startTime: new Date(1995, 11, 17, 3, 13, 37),
-//            endTime: new Date(1995, 11, 17, 3, 16, 20),
-//          },
-//          {
-//            title: "Second talk",
-//            mainSpeaker: "~sampel-palnet",
-//            panel: ["~sampel-palnet", "~sampel-palnet"],
-//            location: "anywhere",
-//            about: "idk just vibes",
-//            startTime: new Date(1995, 11, 17, 3, 13, 37),
-//            endTime: new Date(1995, 11, 17, 3, 16, 20),
-//          },
-//          {
-//            title: "Third talk",
-//            mainSpeaker: "~sampel-palnet",
-//            panel: ["~sampel-palnet", "~sampel-palnet", "~sampel-palnet"],
-//            location: "anywhere",
-//            about: "idk just vibes",
-//            startTime: new Date(1995, 11, 18, 3, 13, 37),
-//            endTime: new Date(1995, 11, 18, 3, 16, 20),
-//          }
-//        ]
-//      },
-//      {
-//        id: {
-//          ship: "~sampel-palnet",
-//          name: "my-event-2",
-//        },
-//        status: "registered",
-//        location: "atlantis",
-//        startDate: new Date(1300000000000),
-//        endDate: new Date(1400000000000),
-//        description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam posuere ultrices porttitor. Curabitur interdum, ante nec pellentesque aliquam, mi ante facilisis ex, et condimentum quam sapien sit amet arcu. Praesent gravida iaculis auctor. Maecenas convallis eu magna lacinia tincidunt. Curabitur eget vehicula lorem, non elementum est. Fusce nec tristique lectus. Aenean nisi elit, suscipit nec bibendum iaculis, porttitor quis purus. Proin fermentum nunc nec massa facilisis pretium. Nulla fermentum ultrices sapien, vel facilisis nisi consequat et. Pellentesque sagittis nunc ligula, nec lacinia mauris egestas vel. Donec eu tincidunt erat. Etiam facilisis consectetur consectetur. Aliquam erat volutpat. Suspendisse condimentum at neque nec aliquam. Nunc malesuada feugiat arcu vitae accumsan. Phasellus id sapien quam. Donec eu lorem lobortis, ullamcorper nisl in, tempor ante. Etiam rhoncus luctus metus ac mattis. Pellentesque ullamcorper erat id diam vestibulum porta suscipit non erat. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec dapibus, lectus sit amet facilisis mollis, sapien mi suscipit metus, ut egestas metus nunc eget ipsum. Nulla in feugiat ante. Vestibulum vitae tellus eu dolor efficitur pretium sed vitae massa. Nullam quis vehicula nisl, sed tempus dolor. Mauris tristique arcu nec sagittis tincidunt. Aenean commodo urna blandit nulla vulputate porttitor. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec ipsum turpis, tristique vitae nisl facilisis, pretium facilisis nibh. Maecenas aliquet dignissim bibendum. Cras non aliquet ipsum. Donec pulvinar varius neque, sed feugiat eros aliquet quis. Donec non lacinia lorem. ",
-//        timezone: "PST",
-//        kind: "public",
-//        group: "~sampel-palnet/my-event",
-//        latch: "open",
-//        sessions: [
-//          {
-//            title: "First talk",
-//            mainSpeaker: "~sampel-palnet",
-//            panel: [],
-//            location: "anywhere",
-//            about: "idk just vibes",
-//            startTime: new Date(1995, 11, 17, 3, 13, 37),
-//            endTime: new Date(1995, 11, 17, 3, 16, 20),
-//          },
-//          {
-//            title: "Second talk",
-//            mainSpeaker: "~sampel-palnet",
-//            panel: ["~sampel-palnet", "~sampel-palnet"],
-//            location: "anywhere",
-//            about: "idk just vibes",
-//            startTime: new Date(1995, 11, 17, 3, 13, 37),
-//            endTime: new Date(1995, 11, 17, 3, 16, 20),
-//          },
-//          {
-//            title: "Third talk",
-//            mainSpeaker: "~sampel-palnet",
-//            panel: ["~sampel-palnet", "~sampel-palnet", "~sampel-palnet"],
-//            location: "anywhere",
-//            about: "idk just vibes",
-//            startTime: new Date(1995, 11, 18, 3, 13, 37),
-//            endTime: new Date(1995, 11, 18, 3, 16, 20),
-//          }
-//        ]
-//      }
-//    ]
-//
-
-function backendRecordToEvent(eventId: EventId, record: z.infer<typeof recordSchema>): Event {
+function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof backendInfo1Schema>): EventDetails {
   const {
-    info: {
-      moment: { start, end },
-      about,
-      location: _location,
-      timezone,
-      group: _group,
-      sessions: _sessions,
-      ...infoRest
-    },
-    status: { p: eventStatus, q: _inviteTime },
-    secret: _ } = record
+    moment: { start, end },
+    about,
+    location: _location,
+    timezone,
+    group: _group,
+    sessions: _sessions,
+    ...infoRest
+  } = info1
 
   return {
     id: eventId,
     description: (about ? about : "no event description"),
     startDate: (start ? new Date(start) : new Date(0)),
     endDate: (end ? new Date(end) : new Date(0)),
-    status: eventStatus,
     location: (_location ? _location : "no location"),
     group: (_group ? _group : "no group"),
     timezone: "TBD",
@@ -342,14 +267,54 @@ function backendRecordToEvent(eventId: EventId, record: z.infer<typeof recordSch
   }
 }
 
-function getEvents(api: Urbit, ship: string): () => Promise<Event[]> {
+const backendRecordSchema = z.object({
+  info: backendInfo1Schema,
+  secret: z.string().nullable(),
+  status: z.object({
+    p: eventStatusSchema,
+    q: timeSchema
+  })
+})
+
+function backendRecordToEventAsGuest(eventId: EventId, record: z.infer<typeof backendRecordSchema>): EventAsGuest {
+  const {
+    info,
+    status: { p: eventStatus, q: _inviteTime },
+    secret: _
+  } = record
+
+  return {
+    secret: "",
+    status: eventStatus,
+    details: backendInfo1ToEventDetails(eventId, info)
+  }
+}
+
+// const allRecordsSchema = z.object({
+//   allRecords: z.object({})    
+//     .catchall(z.object({})
+//       .catchall(z.object({
+//         record: recordSchema
+//       })))
+// })
+
+const allRecordsSchema = z.object({
+  allRecords: z.record(
+    z.string(), // this is going to be `${hostShip}/${eventName}`
+    z.record(
+      z.string(), // this is `${guestShip}`
+      z.object({ record: backendRecordSchema })
+    ))
+}).transform((response) => response.allRecords)
+
+function getRecords(api: Urbit, ship: string): () => Promise<EventAsGuest[]> {
   return async () => {
     const allRecords = await api.scry({
       app: "live",
       path: "/records/all"
     })
       .then(allRecordsSchema.parse)
-      .catch((err) => { console.error("error during getEvents api call", err) })
+      .catch((err) => { console.error("error during getRecords api call", err) })
 
     if (!allRecords) {
       return Promise.resolve([])
@@ -357,31 +322,30 @@ function getEvents(api: Urbit, ship: string): () => Promise<Event[]> {
 
     // console.log("parsed records: ", allRecords)
 
-    const allRecordsToEvents = (records: z.infer<typeof allRecordsSchema>): Event[] => {
+    const allRecordsToEvents = (records: z.infer<typeof allRecordsSchema>): EventAsGuest[] => {
 
       const allRecords = Object.
-        entries(records.allRecords).
+        entries(records).
         filter(([idString,]) => {
           console.log(idString, ship)
           const [hostShip,] = idString.split("/")
           return hostShip !== "~" + ship
         }).
-        map(([idString, records]): Event => {
+        map(([idString, records]): EventAsGuest => {
           const [hostShip, eventName] = idString.split("/")
           const eventId = { ship: hostShip, name: eventName }
 
           if (Object.keys(records).length < 1) {
             console.error("records has less than one key: ", records)
-            return emptyEvent
+            return emptyEventAsGuest
           }
 
           if (Object.keys(records).length > 1) {
             console.error("records has more than one key: ", records)
-            return emptyEvent
+            return emptyEventAsGuest
           }
 
-          const record = Object.values(records)[0]
-          return backendRecordToEvent(eventId, record.record)
+          return backendRecordToEventAsGuest(eventId, Object.values(records)[0].record)
         })
       // console.log(allRecords)
       return allRecords
@@ -392,21 +356,105 @@ function getEvents(api: Urbit, ship: string): () => Promise<Event[]> {
   }
 }
 
-function getEvent(api: Urbit, ship: string): (id: EventId) => Promise<Event> {
+function getRecord(api: Urbit, ship: string): (id: EventId) => Promise<EventAsGuest> {
   return async (id: EventId) => {
     const record = await api.scry({
       app: "live",
       path: `/record/${id.ship}/${id.name}/~${ship}`
     })
-      .then(z.object({ record: recordSchema }).parse)
-      .catch((err) => { console.error("error during getEvent api call", err) })
+      .then(z.object({ record: backendRecordSchema }).parse)
+      .catch((err) => { console.error("error during getRecord api call", err) })
 
 
     if (!record) {
-      return Promise.resolve(emptyEvent)
+      return Promise.resolve(emptyEventAsGuest)
     }
 
-    return backendRecordToEvent(id, record.record)
+    return backendRecordToEventAsGuest(id, record.record)
+  }
+}
+
+
+const backendEventSchema = z.object({
+  info: backendInfo1Schema,
+  secret: z.string().nullable(),
+  limit: z.number().nullable(),
+})
+
+function backendEventToEventAsHost(eventId: EventId, event: z.infer<typeof backendEventSchema>): EventAsHost {
+  const {
+    info,
+    limit,
+    secret
+  } = event
+
+  return {
+    details: backendInfo1ToEventDetails(eventId, info),
+    secret,
+    limit
+  }
+}
+
+const allEventsSchema = z.object({
+  allEvents: z.record(
+    z.string(), // this is going to be `${hostShip}/${eventName}`
+    z.object({ event: backendEventSchema }))
+}).transform(({ allEvents }) => allEvents)
+
+
+function getEvents(api: Urbit): () => Promise<EventAsHost[]> {
+  return async () => {
+    const allEvents = await api.scry({
+      app: "live",
+      path: "/events/all"
+    })
+      .then(allEventsSchema.parse)
+      .catch((err) => { console.error("error during getEvents api call", err) })
+
+    if (!allEvents) {
+      return Promise.resolve([])
+    }
+
+    console.log("parsed events: ", allEvents)
+
+    const allBackendEventsToEvents = (events: z.infer<typeof allEventsSchema>): EventAsHost[] => {
+
+      const allRecords = Object.
+        entries(events).
+        // filter(([idString,]) => {
+        //   console.log(idString, ship)
+        //   const [hostShip,] = idString.split("/")
+        //   return hostShip !== "~" + ship
+        // }).
+        map(([idString, { event }]): EventAsHost => {
+          const [hostShip, eventName] = idString.split("/")
+          const eventId = { ship: hostShip, name: eventName }
+
+          return backendEventToEventAsHost(eventId, event)
+        })
+      // console.log(allRecords)
+      return allRecords
+    }
+
+
+    return allBackendEventsToEvents(allEvents)
+  }
+}
+
+function getEvent(api: Urbit): (id: EventId) => Promise<EventAsHost> {
+  return async (id: EventId) => {
+    const event = await api.scry({
+      app: "live",
+      path: `/event/${id.ship}/${id.name}`
+    })
+      .then(z.object({ event: backendEventSchema }).parse)
+      .catch((err) => { console.error("error during getEvent api call", err) })
+
+    if (!event) {
+      return Promise.resolve(emptyEventAsHost)
+    }
+
+    return backendEventToEventAsHost(id, event.event)
   }
 }
 
@@ -448,7 +496,7 @@ const liveUpdateEventSchema = z.object({
     ship: z.string(),
   }),
   ship: z.string(),
-  record: recordSchema,
+  record: backendRecordSchema,
 })
 
 
@@ -463,10 +511,9 @@ function subscribeToLiveEvents(_api: Urbit): (handlers: {
       app: "live",
       path: "/updates",
       event: (evt) => {
-        console.log("here is one vent ", evt)
         const updateEvent = liveUpdateEventSchema.parse(evt)
         onEvent({
-          event: backendRecordToEvent(updateEvent.id, updateEvent.record),
+          event: backendRecordToEventAsGuest(updateEvent.id, updateEvent.record),
           ship: updateEvent.ship
         })
       },
@@ -697,8 +744,10 @@ function newBackend(api: Urbit, ship: string): Backend {
     register: register(api),
     unregister: unregister(api),
     // getSchedule: getSchedule(api),
-    getEvents: getEvents(api, ship),
-    getEvent: getEvent(api, ship),
+    getRecords: getRecords(api, ship),
+    getRecord: getRecord(api, ship),
+    getEvents: getEvents(api),
+    getEvent: getEvent(api),
     subscribeToLiveEvents: subscribeToLiveEvents(api),
 
     getProfile: getProfile(api),
@@ -717,4 +766,4 @@ function newBackend(api: Urbit, ship: string): Backend {
 
 export { newBackend, eventIdsEqual }
 
-export type { EventId, Event, Session, Attendee, Profile, Backend }
+export type { EventId, Event, EventStatus, EventAsGuest, EventAsHost, EventDetails, Session, Attendee, Profile, Backend }

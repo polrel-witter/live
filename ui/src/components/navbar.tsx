@@ -1,22 +1,36 @@
-import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, } from "@/components/ui/navigation-menu"
+import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuList, NavigationMenuTrigger, } from "@/components/ui/navigation-menu"
 import { Link } from "react-router-dom"
 import ProfileDialog from "./profile-dialog"
 import { useEffect, useState } from "react"
 import { Button } from "./ui/button"
-import { ChevronLeft, ChevronLeftSquare, ChevronUp, Edit, Menu, User, Users } from "lucide-react"
+import { ChevronLeft, User, } from "lucide-react"
 import { flipBoolean } from "@/lib/utils"
-import { Backend, Profile, Event } from "@/backend"
+import { Backend, EventAsGuest, Profile } from "@/backend"
 import { SlideDownAndReveal } from "./sliders"
-import { eventNames } from "process"
+import EventStatusButtons from "./event-status-buttons"
 
 type Props = {
-  event: Event,
+  event: EventAsGuest,
   patp: string,
   profile: Profile,
   editProfileField: Backend["editProfileField"]
+  register: Backend["register"]
+  unregister: Backend["unregister"]
 }
 
-const NavBar: React.FC<Props> = ({ event: { id: { name: eventName, ship: eventHost }, ...event }, ...props }) => {
+const NavBar: React.FC<Props> = (
+  {
+    event: {
+      details: { id: { name: eventName, ship: eventHost } },
+      status: eventStatus,
+      ...eventRest
+    },
+    patp,
+    profile,
+    ...fns
+  }) => {
+
+
   const [openProfile, setOpenProfile] = useState(false)
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openMenu, setOpenMenu] = useState(false);
@@ -48,9 +62,18 @@ const NavBar: React.FC<Props> = ({ event: { id: { name: eventName, ship: eventHo
           <ProfileDialog
             onOpenChange={setOpenProfile}
             open={openProfile}
-            patp={props.patp}
-            profileFields={props.profile}
-            editProfileField={props.editProfileField}
+            patp={patp}
+            profileFields={profile}
+            editProfileField={fns.editProfileField}
+          />
+        </NavigationMenuItem>
+        <NavigationMenuItem className="fixed left-12">
+          <EventStatusButtons
+            id={{ ship: eventHost, name: eventName }}
+            status={eventStatus}
+            register={fns.register}
+            unregister={fns.unregister}
+
           />
         </NavigationMenuItem>
         <NavigationMenuItem className="grow text-center"> {eventName || "event"} </NavigationMenuItem>
@@ -67,6 +90,12 @@ const NavBar: React.FC<Props> = ({ event: { id: { name: eventName, ship: eventHo
                   <li className="row row-span-3">
                     <Button>
                       <Link to={`/apps/live/event/${eventHost}/${eventName}`}> event home </Link>
+                    </Button>
+                  </li>
+                  <li className="row row-span-3">
+                    <Button>
+                      <Link to="attendees"> attendees </Link>
+
                     </Button>
                   </li>
 
@@ -112,6 +141,10 @@ const NavBar: React.FC<Props> = ({ event: { id: { name: eventName, ship: eventHo
                 <ul className="grid gap-3 p-4  md:w-[400px] lg:w-[500px] ">
                   <li className="row row-span-3">
                     <Link to={`/apps/live/event/${eventHost}/${eventName}`}> event home </Link>
+                  </li>
+                  <li className="row row-span-3">
+                    <Link to="attendees"> attendees </Link>
+
                   </li>
                   {
                     showGuestList

@@ -1,4 +1,4 @@
-import { Backend, Profile, Event, eventIdsEqual } from "@/backend";
+import { Backend, Profile, eventIdsEqual, EventAsHost, EventAsGuest } from "@/backend";
 import EventList from "@/components/event-list";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { useEffect, useState } from "react";
@@ -7,14 +7,15 @@ import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProfileDialog from "@/components/profile-dialog";
 import { flipBoolean } from "@/lib/utils";
-import { unsubscribe } from "diagnostics_channel";
+import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 
 const emptyCtx = newEmptyIndexCtx()
 
 async function buildContextData(ourShip: string, backend: Backend) {
 
   const ctx = emptyCtx
-  ctx.events = await backend.getEvents()
+  ctx.events = await backend.getRecords()
+    .then((events) => events.map(evt => evt.details))
 
   ctx.patp = ourShip
   const profile = await backend.getProfile(ourShip)
@@ -26,13 +27,10 @@ async function buildContextData(ourShip: string, backend: Backend) {
 }
 
 const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
-  const [events, setEvents] = useState<Event[]>([])
+  const [eventsAsGuest, setEventsAsGuest] = useState<EventAsGuest[]>([])
+  const [eventsAsHost, setEventsAsHost] = useState<EventAsHost[]>([])
   const [ownProfileFields, setOwnProfileFields] = useState<Profile>({})
   const [openProfile, setOpenProfile] = useState(false)
-
-
-
-
 
   // window.urbit.subscribe({
   //   app: "live",
@@ -43,7 +41,8 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
   // }).then(() => {console.log("subscribed to live")})
 
   useEffect(() => {
-    backend.getEvents().then(setEvents);
+    backend.getRecords().then(setEventsAsGuest);
+    backend.getEvents().then(setEventsAsHost);
 
     console.log("trying match")
 
@@ -65,13 +64,12 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
     let liveSubId: number
 
     backend.subscribeToLiveEvents({
-      onEvent: (evt) => {
-        console.log("%live event: ", evt)
-        setEvents((oldEvts) => {
+      onEvent: (updateEvent) => {
+        // TODO: do we get updates on host events too?
+        setEventsAsGuest((oldEvts) => {
           return oldEvts.map((oldEvt) => {
-            if (eventIdsEqual(evt.event.id, oldEvt.id)) {
-              console.log("found")
-              return evt.event
+            if (eventIdsEqual(updateEvent.event.details.id, oldEvt.details.id)) {
+              return updateEvent.event
             }
             return oldEvt
           })
@@ -128,12 +126,24 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
       </NavigationMenu>
 
       <div className="grid justify-center w-full space-y-6 py-20 text-center">
-        <h1 className="text-3xl italic">*events*</h1>
-        <EventList
-          events={events}
-          register={backend.register}
-          unregister={backend.unregister}
-        />
+        <h1 className="text-3xl italic">events</h1>
+        <Tabs defaultValue="eventsAsGuest" className="w-[400px]">
+          <TabsList>
+            <TabsTrigger value="eventsAsHost">you're hosting</TabsTrigger>
+            <TabsTrigger value="eventsAsGuest">you can participate</TabsTrigger>
+          </TabsList>
+          <TabsContent value="eventsAsHost">
+            <EventList
+              details={eventsAsHost.map((evt) => evt.details)}
+            />
+          </TabsContent>
+          <TabsContent value="eventsAsGuest">
+            <EventList
+              details={eventsAsGuest.map((evt) => evt.details)}
+            />
+          </TabsContent>
+        </Tabs>
+
       </div>
     </div>
   )

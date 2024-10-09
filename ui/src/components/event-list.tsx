@@ -7,100 +7,41 @@ import {
   CardTitle
 } from "@/components/ui/card"
 
-import { Backend, Event } from "@/backend"
+import { EventDetails } from "@/backend"
 import { Link } from "react-router-dom"
-import { Button } from "./ui/button"
 
-interface FnProps {
-  register: Backend["register"]
-  unregister: Backend["unregister"]
-}
-
-const EventButtons: React.FC<{ event: Event } & FnProps> = ({ event: evt, ...fns }) => {
-  switch (evt.status) {
-    case "invited":
-    case "unregistered":
-      return (
-        <div className="flex-auto">
-          <Button
-            className="h-full w-full"
-            onClick={
-              () => {
-                fns.register(evt.id)
-              }}
-          > register </Button>
-        </div>
-      )
-    case "registered":
-      // TODO: add a slide-out thingy that says: arte you sure?
-      return (
-        <div className="flex-auto">
-          <Button
-            className="h-full w-full hover:bg-red-900"
-            onClick={() => {
-              fns.unregister(evt.id).then(() => {
-                console.log("unregistered from event: ", evt.id)
-              })
-            }}
-          > unregister </Button>
-        </div>
-      )
-    case "attended":
-      return (
-        <div className="flex-auto">
-          <Button
-            className="h-full w-full hover:bg-emerald-900"
-            disabled
-          > attended </Button>
-        </div>
-      )
-    case "requested":
-      return (
-        <div className="flex-auto">
-          <Button
-            disabled
-            className="h-full w-full hover:bg-stone-900"
-          > requested </Button>
-        </div>
-      )
-    default:
-      console.error(`unexpected evt status: ${evt.status}`)
-      return (<div></div>)
-  }
-}
-
-const ListItem: React.FC<{ event: Event } & FnProps> = ({ event: evt, ...fns }) => {
-  const { id: { ship, name } } = evt
-  console.log("e ", evt)
+const ListItem: React.FC<
+  { details: EventDetails }
+> = ({ details: { id: { ship, name }, startDate, location, ...restDetails } }) => {
   // TODO: on mobile it's not clear that you can click the title to navigate
   // forward, add an icon in a button
   return (
     <li className="my-5">
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-medium hover:font-bold">
-            <Link to={`event/${ship}/${name}`}> {name} </Link>
-          </CardTitle>
-          <CardDescription className="italics">hosted by {ship}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p>Starts on {evt.startDate.toDateString()}</p>
-          <p>location: {evt.location}</p>
-        </CardContent>
-        <CardFooter>
-          <EventButtons
-            event={evt}
-            register={fns.register}
-            unregister={fns.unregister}
-          />
-        </CardFooter>
-      </Card>
+
+      <Link to={`event/${ship}/${name}`}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-medium hover:font-bold">
+              {name}
+            </CardTitle>
+            <CardDescription className="italics">hosted by {ship}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>Starts on {startDate.toDateString()}</p>
+            <p>location: {location}</p>
+          </CardContent>
+          <CardFooter>
+          </CardFooter>
+        </Card>
+      </Link>
     </li>
   )
 }
 
 
-const EventList: React.FC<{ events: Event[] } & FnProps> = ({ events, ...fns }) => {
+const EventList: React.FC<
+  { details: EventDetails[] }
+> = ({ details: events }) => {
   return (
     <ul>
       {/* this works, but is barely readable */}
@@ -108,9 +49,7 @@ const EventList: React.FC<{ events: Event[] } & FnProps> = ({ events, ...fns }) 
       {events.map((evt) =>
         <ListItem
           key={`${evt.id.ship}-${evt.id.name}`}
-          event={evt}
-          register={fns.register}
-          unregister={fns.unregister}
+          details={evt}
         />)}
     </ul>
   )
