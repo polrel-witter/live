@@ -60,8 +60,8 @@ key:
 	+ problem with unsubing and resubbing to peers mip, see %sss-on-rock branch in %matcher
 		+ when we initially sub to the %peers sss path, we get all waves, but should only get the latest rock to avoid complications.
 		+ also when registering, unregistering, then reregistring, we don't get the latest peers mip - the host needs to send the full rock
-	- If we register, unregister, and then register again - if the event is private - we're added back to the peers mip even though our status is %requested
-  - host adds themselves to the peers mip; need to filter out
+	+ If we register, unregister, and then register again - if the event is private - we're added back to the peers mip even though our status is %requested
+  + host adds themselves to the peers mip; need to filter out
   - restore subs and pubs; currently being stubbed. just establish new ones for each event and record
 
 ## Features

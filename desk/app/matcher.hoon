@@ -316,8 +316,8 @@
     =.  peers  (~(del by peers) id)
     |-
     ?~  new-peers  cor
+    =.  peers  (~(put bi peers) id i.new-peers ~)
     =?  cor  ?!(=(our.bowl i.new-peers))
-      =.  peers  (~(put bi peers) id i.new-peers ~)
       (send-profile %part i.new-peers)
     $(new-peers t.new-peers)
   ==
