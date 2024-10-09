@@ -47,8 +47,9 @@ key:
 ## Refinements
 	+ State upgrades
 	+ Prepend agent name in front of all printifs
-  - Respect calm engine settings
+  - Add group chat channel id
 	- Backend > Frontend error handling (e.g. if a poke doesn't succeed, send feedback to user)
+  - Respect calm engine settings
 	- Handle tangs so src ship gets feedback on what happened after poke.
 	- When someone unmatches us we should delete their private info and wipe from frontend. We do this bc if we rematch later, we'd get new info.
 	- Restrict a session's $moment to only happen within the bounds of its event $moment
