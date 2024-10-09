@@ -30,6 +30,7 @@ const NavBar: React.FC<Props> = (
     ...fns
   }) => {
 
+
   const [openProfile, setOpenProfile] = useState(false)
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openMenu, setOpenMenu] = useState(false);
@@ -44,6 +45,8 @@ const NavBar: React.FC<Props> = (
     }
   }, []);
 
+  // TODO: when i have global context do away with window.ship here
+  const showGuestList = event.status === "registered" || event.status === "attended" || eventHost === window.ship
   const isMobile = width <= 768;
 
   return (
@@ -92,8 +95,19 @@ const NavBar: React.FC<Props> = (
                   <li className="row row-span-3">
                     <Button>
                       <Link to="attendees"> attendees </Link>
+
                     </Button>
                   </li>
+
+                  {
+                    showGuestList
+                      ?
+                      <li className="row row-span-3">
+                        <Link to="attendees"> guest list </Link>
+                      </li>
+                      :
+                      ""
+                  }
                   <li className="row row-span-3">
                     <Button>
                       <Link to="schedule"> schedule </Link>
@@ -130,7 +144,17 @@ const NavBar: React.FC<Props> = (
                   </li>
                   <li className="row row-span-3">
                     <Link to="attendees"> attendees </Link>
+
                   </li>
+                  {
+                    showGuestList
+                      ?
+                      <li className="row row-span-3">
+                        <Link to="attendees"> guest list </Link>
+                      </li>
+                      :
+                      ""
+                  }
                   <li className="row row-span-3">
                     <Link to="schedule"> schedule </Link>
                   </li>
