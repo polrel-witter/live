@@ -75,12 +75,21 @@ type Attendee = {
   status: MatchStatus,
 }
 
-type Profile = {
-  github?: string;
-  telegram?: string;
-  phone?: string;
-  email?: string;
 
+type Profile = {
+  patp: string;
+  // these are always fetched from tlon
+  avatar: string | null;
+  bio: string | null;
+  nickname: string | null;
+  // these are available only when we match
+  x: string | null;
+  ensDomain: string | null;
+  email: string | null;
+  github: string | null;
+  telegram: string | null;
+  signal: string | null;
+  phone: string | null;
 }
 
 type Session = {
@@ -523,80 +532,68 @@ function subscribeToLiveEvents(_api: Urbit): (handlers: {
   }
 }
 
-const entrySchema = z.object({ entry: z.string().nullable() })
-const getProfileSchema = z
-  .object({ profile: z.object({}).catchall(entrySchema) })
 
-// ['x', 'ens-domain', 'email', 'avatar', 'github', 'bio', 'nickname', 'telegram', 'signal', 'phone']
-function backendProfileToProfile(fields: Record<string, z.infer<typeof entrySchema>>): Profile {
-  const p: Profile = {
-  }
-
-  if (fields?.github?.entry) {
-    p.github = fields.github.entry
-  }
-
-  if (fields?.telegram?.entry) {
-    p.telegram = fields.telegram.entry
-  }
-
-  if (fields?.phone?.entry) {
-    p.phone = fields.phone.entry
-  }
-
-  if (fields?.email?.entry) {
-    p.email = fields.email.entry
-  }
-
-  return p
-}
-
-
-function getProfile(_api: Urbit): (patp: string) => Promise<Profile | null> {
-  return async (patp: string) => {
-    const profileFields = await _api.scry({
-      app: "matcher",
-      // in agent file it says host/name/ship ??
-      // pass guest ship
-      path: `/profile/~${patp}`
-      // path: `/record/${id.ship}/${id.name}/~zod`
-    })
-      .then(getProfileSchema.parse)
-      .catch((err: ZodError) => { console.error("error during getProfile api call", err.errors) })
-
-    if (!profileFields) {
-      return null
-    }
-
-    return backendProfileToProfile(profileFields.profile)
-  }
-}
-
-const entry1Schema = z.object({
+const profileEntryObjSchema = z.object({
   term: z.string(),
   entry: z.string().nullable()
 })
 
 const getProfilesSchema = z.object({
-  allProfiles: z.record(z.array(entry1Schema))
+  allProfiles: z.record(z.array(profileEntryObjSchema))
 })
+.transform(result => result.allProfiles)
 
-// ['x', 'ens-domain', 'email', 'avatar', 'github', 'bio', 'nickname', 'telegram', 'signal', 'phone']
-function getProfilesConvertResult(fields: z.infer<typeof entry1Schema>[]): Profile {
+function entryArrayToProfile(patp: string, fields: z.infer<typeof profileEntryObjSchema>[]): Profile {
   const p: Profile = {
+    patp: patp,
+    avatar: null,
+    bio: null,
+    nickname: null,
+    x: null,
+    ensDomain: null,
+    email: null,
+    github: null,
+    telegram: null,
+    signal: null,
+    phone: null,
   }
 
   fields.forEach((field) => {
-    if (field.term === "github") { p.github = field.entry! }
-
-    if (field.term === "telegram") { p.telegram = field.entry! }
-
-    if (field.term === "phone") { p.phone = field.entry! }
-
-    if (field.term === "email") { p.email = field.entry! }
+    switch (field.term) {
+      case "avatar":
+        p.avatar = field.entry!
+        break
+      case "bio":
+        p.bio = field.entry!
+        break
+      case "nickname":
+        p.nickname = field.entry!
+        break
+      case "x":
+        p.x = field.entry!
+        break
+      case "ens-domain":
+        p.ensDomain = field.entry!
+        break
+      case "email":
+        p.email = field.entry!
+        break
+      case "github":
+        p.github = field.entry!
+        break
+      case "telegram":
+        p.telegram = field.entry!
+        break
+      case "signal":
+        p.signal = field.entry!
+        break
+      case "phone":
+        p.phone = field.entry!
+        break
+      default:
+        console.warn(`unexpected profile term: '${field.term}'`)
+    }
   })
-
-
 
   return p
 }
@@ -617,12 +614,42 @@ function getProfiles(_api: Urbit): () => Promise<Profile[]> {
       return []
     }
 
-    const profiles = Object.entries(profileFields.allProfiles)
-      .map(([_patp, arrs]) => getProfilesConvertResult(arrs))
-
-    console.log("profileFields ", profileFields)
+    const profiles = Object.entries(profileFields)
+      .map(([patp, arrs]) => entryArrayToProfile(patp, arrs))
 
     return profiles
+  }
+}
+
+const getProfileSchema = z
+  .object({ profile: z
+          .record(z.string(), z.object({ entry: z.string().nullable() })) })
+  .transform((entry) => {
+    // here we make the response's shape like the one in getProfiles
+    // so i can reuse the same transform function
+    return Object
+      .entries(entry.profile)
+      .map(([term, { entry }]) => [term, { term: term, entry: entry }] as const)
+      .map(([_, obj]) => obj)
+  })
+
+function getProfile(_api: Urbit): (patp: string) => Promise<Profile | null> {
+  return async (patp: string) => {
+    const profileFields = await _api.scry({
+      app: "matcher",
+      // in agent file it says host/name/ship ??
+      // pass guest ship
+      path: `/profile/~${patp}`
+      // path: `/record/${id.ship}/${id.name}/~zod`
+    })
+      .then(getProfileSchema.parse)
+      .catch((err: ZodError) => { console.error("error during getProfile api call", err.errors) })
+
+    if (!profileFields) {
+      return null
+    }
+
+    return entryArrayToProfile(patp, profileFields)
   }
 }
 
@@ -675,10 +702,8 @@ function getAttendees(_api: Urbit): (eventId: EventId) => Promise<Attendee[]> {
           status: backendMatchStatusToMatchStatus(status.status)
         }
       })
-    console.log(attendees)
 
     return attendees
-
   }
 }
 
@@ -690,6 +715,7 @@ function editProfileField(_api: Urbit): (field: keyof Profile, value: string) =>
       mark: "matcher-deed",
       json: { "edit-profile": { term: field, entry: value } },
     })
+    // TODO: do something with this promise result
     console.log(num)
   }
 }
@@ -766,4 +792,4 @@ function newBackend(api: Urbit, ship: string): Backend {
 
 export { newBackend, eventIdsEqual }
 
-export type { EventId, Event, EventStatus, EventAsGuest, EventAsHost, EventDetails, Session, Attendee, Profile, Backend }
+export type { EventId, Event, EventStatus, MatchStatus, EventAsGuest, EventAsHost, EventDetails, Session, Attendee, Profile, Backend }

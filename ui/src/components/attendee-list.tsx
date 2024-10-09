@@ -1,22 +1,15 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card"
-
-import { Profile, Backend, Attendee } from "@/backend"
+import { Card, CardContent, } from "@/components/ui/card"
+import { Profile, Attendee } from "@/backend"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ChevronDown, Plus, Ellipsis, X, Check, FileQuestion } from 'lucide-react'
+import { Plus, Ellipsis, X, Check, FileQuestion } from 'lucide-react'
 import { Button } from "@/components/ui/button"
-import { PropsWithChildren, useState } from "react"
+import { useState } from "react"
 import { cn, flipBoolean } from "@/lib/utils"
 import { SlideDownAndReveal, SlideRightAndReveal } from "./sliders"
+import ProfileCard from "./profile-card"
+import UrbitSigil from "@urbit/sigil-js"
 
-// TODO: add tooltips to these
-const ConnectionsButton: React.FC<{
+const _connectionsButton: React.FC<{
   attendee: Attendee
   match(patp: string): void;
   unmatch(patp: string): void;
@@ -92,63 +85,60 @@ const ConnectionsButton: React.FC<{
 
 const ListItem: React.FC<{
   attendee: Attendee
-  match(patp: string): void;
+  profile?: Profile,
+  // match(patp: string): void;
   unmatch(patp: string): void;
-  editProfileField: Backend["editProfileField"]
-}> = ({ attendee: profile, ...fns }) => {
+}> = ({ attendee, profile = { patp: attendee.patp }, ...fns }) => {
   const [showProfile, setShowProfile] = useState(false)
   const toggleProfile = () => setShowProfile(flipBoolean)
+
+  const isMoon = attendee.patp.length > 14
+  const isComet = attendee.patp.length > 28
+
   return (
     <li >
-      <Card >
+      <Card className="hover:bg-stone-100" onClick={() => toggleProfile()} >
         <CardContent
           className={
             "px-6 py-3 content-center"}>
           <div className="flex gap-4 gap-x-10 items-center pb-1">
             <Avatar>
-              <AvatarImage src="https://github.com/shadcn.png" />
-              <AvatarFallback>CN</AvatarFallback>
+              {
+                isMoon || isComet
+                  ?
+                  <AvatarFallback className="text-xs bg-stone-200">{isMoon ? "moon" : "comet"}</AvatarFallback>
+                  :
+                  <UrbitSigil {...{
+                    point: `${attendee.patp}`, // or 'zod'
+                    size: 348,
+                    background: '#010101',
+                    foreground: 'yellow',
+                    detail: 'none',
+                    space: 'none',
+                  }} />
+              }
             </Avatar>
             <div className="flex flex-col items-center gap-1 w-2xl">
-              <p className="text-sm text-ellipsis">{profile.patp}</p>
-              <Button onClick={() => toggleProfile()} className="h-4 w-4 p-0 border rounded-2xl bg-transparent">
-                <ChevronDown className="h-3 w-3 text-gray-400" />
-              </Button>
+              <p className="text-sm">{attendee.patp}</p>
             </div>
-            <ConnectionsButton
-              attendee={profile}
-              match={fns.match}
-              unmatch={fns.unmatch}
-            />
           </div>
           <SlideDownAndReveal show={showProfile} maxHeight="max-h-[1000px]">
             {/* TODO: this should be in dedicated page and in a pop-up
-              on own profile in attenees list
+              on own attendee in attenees list
 
               <ProfileForm 
-              profileFields={profile}
+              attendeeFields={profile}
               editProfileField={fns.editProfileField} 
               />
             */}
 
-            {
-              profile.status === "matched"
-                ?
-                <Card className="mt-4">
-                  <CardHeader className="p-4 font-semibold"> profile details</CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    {
-                      Object.entries(profile).map(([field, val]) => {
-                        return (<p>{`${field}: ${val}`}</p>)
-                      })
-                    }
-                  </CardContent>
-                </Card>
-                :
-                <Card className="mt-4">
-                  <CardHeader className="p-4 font-sm"> not matched with this user</CardHeader>
-                </Card>
-            }
+            <ProfileCard
+              patp={attendee.patp}
+              status={attendee.status}
+              profile={profile}
+              unmatch={(patp) => { fns.unmatch(patp) }}
+              showHeader
+            />
 
           </SlideDownAndReveal>
         </CardContent>
@@ -160,19 +150,18 @@ const ListItem: React.FC<{
 const AttendeeList: React.FC<{
   attendees: Attendee[]
   profiles: Profile[]
-  match(patp: string): void;
+  // match(patp: string): void;
   unmatch(patp: string): void;
-  editProfileField: Backend["editProfileField"]
-}> = ({ attendees, ...rest }) => {
+}> = ({ attendees, profiles, ...rest }) => {
   return (
     <ul className="grid gap-6">
       {
         attendees.map((attendee) => <ListItem
           key={attendee.patp}
           attendee={attendee}
+          profile={profiles.find((profile) => profile.patp === attendee.patp)}
           unmatch={rest.unmatch}
-          match={rest.match}
-          editProfileField={rest.editProfileField}
+        // match={rest.match}
         />)
       }
     </ul>
