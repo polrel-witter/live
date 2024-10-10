@@ -73,7 +73,7 @@ export function EventIndex(props: { backend: Backend }) {
 
   useEffect(() => {
     // TODO: add skeleton component
-    if (globalContext.profile.patp !== "") {
+    if (globalContext.fetched) {
       // const interval = setInterval(async () => {
       //   console.log("loop")
       //   const ctxData = await buildContextData(eventParams, props.backend)
@@ -91,6 +91,7 @@ export function EventIndex(props: { backend: Backend }) {
     <EventContext.Provider value={eventContext}>
       <div className="grid size-full" >
         <NavBar
+          fetchedContext={globalContext.fetched}
           event={eventContext.event}
           profile={globalContext.profile}
           editProfileField={props.backend.editProfileField}

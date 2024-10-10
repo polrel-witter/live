@@ -10,6 +10,7 @@ import { SlideDownAndReveal } from "./sliders"
 import EventStatusButtons from "./event-status-buttons"
 
 type Props = {
+  fetchedContext: boolean;
   event: EventAsGuest,
   profile: Profile,
   editProfileField: Backend["editProfileField"]
@@ -19,6 +20,7 @@ type Props = {
 
 const NavBar: React.FC<Props> = (
   {
+    fetchedContext,
     event: {
       details: { id: { name: eventName, ship: eventHost } },
       status: eventStatus,
@@ -67,6 +69,7 @@ const NavBar: React.FC<Props> = (
         </NavigationMenuItem>
         <NavigationMenuItem className="fixed left-12">
           <EventStatusButtons
+            fetchedContext={fetchedContext}
             id={{ ship: eventHost, name: eventName }}
             status={eventStatus}
             register={fns.register}

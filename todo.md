@@ -13,7 +13,10 @@ key:
 	+ Should see our record status on event page and include the status change button in here instead of on the timeline card.
 		+ The entire event/record tiles on the Timeline page should be clickable, opening the event details.
 	+ Remove matching functions from guest list
-	- General button feedback so user knows when an action succeeds/fails (e.g. when the profile is updated, the form closes; if it fails they get an error message)
+	+ General button feedback so user knows when an action succeeds/fails (e.g. when the profile is updated, the form closes; if it fails they get an error message)
+      + feedback for profile update
+      + feedback for unmatch on atteneed page
+      + feedback for regiister
 	- Mobile menu button adjustments (see ~sarlev's feedback)
 	- Need timeline home button, or back button
 	- Event title should be the only header text at the top of an event page.
@@ -32,6 +35,7 @@ key:
 	- Profile button doesn't work within event home page; does work on timeline page
 
 ## Features
+    - test schedule with live data
 	- Tinderfy the matching feature
 	- Button to open group chat and DM; no deep linking, just need to open the corresponding URL for the Tlon app
 		- Path for group: https://<ship url>/apps/groups/groups/<group host ship>/<group name>/channels/chat/<chat channel id>

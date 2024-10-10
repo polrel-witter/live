@@ -17,40 +17,45 @@ import {
 import { Input } from "@/components/ui/input"
 import { Backend, Profile } from "@/backend"
 
+
+const emptyStringSchema = z.literal("")
 const usernameWithAtSchema = z.string().startsWith("@")
 const emailSchema = z.string().email()
-const phoneNumberSchema = z.number().int().finite().transform((num) => num.toString())
+const phoneNumberSchema = z.custom<`${number}`>((data: string) => {
+  return /^\d+$/.test(data)
+}, "phone number must contain only digits")
 
 const schemasAndPlaceHoldersForFields = {
   github: {
-    schema: z.string().min(1, { message: "can't use empty string as username" }),
+    schema: emptyStringSchema
+      .or(z.string().min(1, { message: "can't use empty string as username" })),
     placeholder: "your github username",
   },
   telegram: {
-    schema: usernameWithAtSchema,
+    schema: emptyStringSchema.or(usernameWithAtSchema),
     placeholder: "your telegram @",
   },
   phone: {
-    schema: phoneNumberSchema,
+    schema: emptyStringSchema.or(phoneNumberSchema),
     placeholder: "your phone number",
   },
   email: {
-    schema: emailSchema,
+    schema: emptyStringSchema.or(emailSchema),
     placeholder: "your email",
   },
   x: {
-    schema: usernameWithAtSchema,
+    schema: emptyStringSchema.or(usernameWithAtSchema),
     placeholder: "your X @",
   },
   ensDomain: {
-    schema: z.string().includes(".", {
-      message:
-        "Must include a dot"
-    }),
+    schema: emptyStringSchema
+      .or(z.string().includes(".", { message: "Must include a dot" })),
     placeholder: "your ens domain",
   },
   signal: {
-    schema: usernameWithAtSchema.or(phoneNumberSchema),
+    schema: emptyStringSchema
+      .or(usernameWithAtSchema
+        .or(phoneNumberSchema)),
     placeholder: "your signal @ or phone number",
   },
 }
@@ -81,11 +86,13 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfileField }) => {
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
-    
+
     // TODO: diff between previous values and only send poke for diff ones
 
     const entries = Object.entries(values)
-    entries.forEach(([field, val]) => { editProfileField(field, val) })
+    entries.forEach(([field, val]) => {
+      editProfileField(field, val)
+    })
   }
 
   type _editableFields = Exclude<keyof Profile, "patp" | "nickname" | "avatar" | "bio">

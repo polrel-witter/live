@@ -1,4 +1,5 @@
 import Urbit from "@urbit/http-api";
+
 import { z, ZodError } from "zod" // this is an object validation library
 
 interface EventId { ship: string, name: string };
@@ -25,10 +26,10 @@ interface Backend {
   getEvent(id: EventId): Promise<EventAsHost>
 
   // live - poke %register
-  register(id: EventId): Promise<void>
+  register(id: EventId): Promise<boolean>
 
   // live - poke %unregister
-  unregister(id: EventId): Promise<void>
+  unregister(id: EventId): Promise<boolean>
 
   // remove, this is included in an event record
   // getSchedule(id: EventId): Promise<Session[]>
@@ -456,9 +457,10 @@ function getEvent(api: Urbit): (id: EventId) => Promise<EventAsHost> {
   }
 }
 
-function register(_api: Urbit): (id: EventId) => Promise<void> {
+function register(_api: Urbit): (id: EventId) => Promise<boolean> {
   return async (_id: EventId) => {
-    _api.poke({
+    let success = false;
+    const _poke = await _api.poke({
       app: "live",
       mark: "live-operation",
       json: {
@@ -467,14 +469,20 @@ function register(_api: Urbit): (id: EventId) => Promise<void> {
         // a host might specify a ship name there to register/unregister
         // guests from his events
         "action": { "register": null }
+      },
+      onSuccess: () => { success = true },
+      onError: (err) => {
+        console.error("error during register poke: ", err)
       }
     })
+    return Promise.resolve(success)
   }
 }
 
-function unregister(_api: Urbit): (id: EventId) => Promise<void> {
+function unregister(_api: Urbit): (id: EventId) => Promise<boolean> {
   return async (_id: EventId) => {
-    _api.poke({
+    let success = false;
+    const _poke = await _api.poke({
       app: "live",
       mark: "live-operation",
       json: {
@@ -483,8 +491,13 @@ function unregister(_api: Urbit): (id: EventId) => Promise<void> {
         // a host might specify a ship name there to register/unregister
         // guests from his events
         "action": { "unregister": null }
+      },
+      onSuccess: () => { success = true },
+      onError: (err) => {
+        console.error("error during unregister poke: ", err)
       }
     })
+    return Promise.resolve(success)
   }
 }
 
@@ -646,9 +659,10 @@ function getProfile(_api: Urbit): (patp: string) => Promise<Profile | null> {
 
 const backendMatchStatusSchema = z.enum(["match", "incoming", "outgoing"]).nullable()
 
+// !!! the peers object's keys are patps with ~ 
 const getAttendeesSchema = z.object({
   peers: z
-    .record(z
+    .record(z.string().startsWith("~"), z
       .object({
         status: backendMatchStatusSchema
       }))
@@ -689,7 +703,7 @@ function getAttendees(_api: Urbit): (eventId: EventId) => Promise<Attendee[]> {
     const attendees: Attendee[] = Object.entries(profileFields.peers)
       .map(([patp, status]) => {
         return {
-          patp: patp,
+          patp: patp.split("~")[1],
           status: backendMatchStatusToMatchStatus(status.status)
         }
       })
@@ -701,10 +715,20 @@ function getAttendees(_api: Urbit): (eventId: EventId) => Promise<Attendee[]> {
 
 function editProfileField(_api: Urbit): (field: keyof Profile, value: string) => Promise<void> {
   return async (field: keyof Profile, value: string) => {
+    let actualField: string = field;
+
+    // TODO: add Promise<boolean> pattern
+
+    // the backend expects "ens-domain" but the Profile type is keyed in
+    // camelCase because otherwise i need to quote the key and it's annoying
+    if (field === "ensDomain") {
+      actualField = "ens-domain"
+    }
+
     const num = await _api.poke({
       app: "matcher",
       mark: "matcher-deed",
-      json: { "edit-profile": { term: field, entry: value } },
+      json: { "edit-profile": { term: actualField, entry: value } },
     })
     // TODO: do something with this promise result
     console.log(num)

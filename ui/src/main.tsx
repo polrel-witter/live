@@ -15,16 +15,13 @@ import RootComponent from './root';
 // this component returns the router
 import AppRouter from './router';
 
-const newUrbitApi = (): Urbit => {
-  window.urbit = new Urbit('');
-  window.urbit.onOpen = () => console.log('urbit: connected')
-  window.urbit.onRetry = () => console.log('urbit: retrying connection')
-  window.urbit.onError = () => console.log('urbit: error connecting')
+window.urbit = new Urbit('');
+window.urbit.ship = window.ship
+window.urbit.onOpen = () => console.log('urbit: connected')
+window.urbit.onRetry = () => console.log('urbit: retrying connection')
+window.urbit.onError = () => console.log('urbit: error connecting')
 
-  return window.urbit
-}
-
-const backend = newBackend(newUrbitApi(), window.ship)
+const backend = newBackend(window.urbit, window.ship)
 
 const container = document.getElementById('app');
 
@@ -39,7 +36,3 @@ if (container) {
 } else {
   console.error("couldn't find an element with 'app' id to mount the React app")
 }
-
-
-
-

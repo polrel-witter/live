@@ -3,16 +3,29 @@ import { Backend, MatchStatus, Profile, } from '@/backend'
 import { Card, CardContent, CardHeader, } from '@/components/ui/card'
 import { Ellipsis } from "lucide-react"
 import { Button, buttonVariants } from "./ui/button"
+import { useEffect, useState } from "react"
+import { SpinningButton } from "./spinning-button"
 
 type Props = {
   patp: string,
   status: MatchStatus,
   profile: Profile,
   showHeader: boolean,
-  unmatch: (patp:string) => void
+  unmatch: (patp: string) => void
 }
 
-const ProfileCard: React.FC<Props> = ({ patp, status, profile, showHeader, unmatch}) => {
+const ProfileCard: React.FC<Props> = ({ patp, status, profile, showHeader, unmatch }) => {
+
+  const [spin, setSpin] = useState(false)
+
+  useEffect(() => {
+    if (!spin) { return }
+
+    setSpin(false)
+
+  }, [status])
+
+
   return (
     <Card className="mt-4">
       {
@@ -31,16 +44,17 @@ const ProfileCard: React.FC<Props> = ({ patp, status, profile, showHeader, unmat
                     <DropdownMenuLabel> match status: {status}</DropdownMenuLabel>
                     <div>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem    >
-                        <Button
+                      <DropdownMenuItem>
+                        <SpinningButton
+                          spin={spin}
                           className="w-full h-6 text-black"
                           disabled={status === "unmatched"}
                           variant={status === "unmatched" ? "ghost" : "destructive"}
-                          onClick={status === "unmatched" ? (_) => {}: (_) => {unmatch(patp)}}
+                          onClick={status === "unmatched" ? (_) => { } : (_) => { setSpin(false); unmatch(patp) }}
 
                         >
                           unmatch
-                        </Button>
+                        </SpinningButton>
                       </DropdownMenuItem>
                     </div>
 
