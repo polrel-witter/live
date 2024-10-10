@@ -70,6 +70,21 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
 
   }, [])
 
+
+  // TODO: copied fn from navbar, unify code
+  const editProfile = async (fields: Record<string, string>): Promise<void> => {
+    const _ = await Promise.all(Object
+      .entries(fields)
+      .map(([field, val]) => {
+        // TODO: diff between previous values and only send poke for diff ones
+        return backend.editProfileField(field, val)
+      }))
+
+    setOpenProfile(false)
+
+    return Promise.resolve()
+  }
+
   return (
     <div>
       <NavigationMenu >
@@ -86,9 +101,8 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
             <ProfileDialog
               onOpenChange={setOpenProfile}
               open={openProfile}
-              patp={window.ship}
               profileFields={ownProfileFields!}
-              editProfileField={backend.editProfileField}
+              editProfile={editProfile}
             />
           </NavigationMenuItem>
           <NavigationMenuItem className="font-medium text-xl"> %live </NavigationMenuItem>

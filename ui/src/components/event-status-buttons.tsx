@@ -1,14 +1,9 @@
 import { Backend, EventId, EventStatus } from "@/backend"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { cn, flipBoolean } from "@/lib/utils"
-import { debug } from "console"
-import { LoaderCircle } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
-import { set } from "zod"
+import { cn } from "@/lib/utils"
+import { useEffect, useState } from "react"
 import { SpinningButton } from "./spinning-button"
-import { SlideDownAndReveal } from "./sliders"
-import { useSubmit } from "react-router-dom"
 
 const ButtonSwitch: React.FC<
   {

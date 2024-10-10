@@ -72,6 +72,19 @@ const NavBar: React.FC<Props> = (
     },
   ]
 
+  const editProfile = async (fields: Record<string, string>): Promise<void> => {
+    const _ = await Promise.all(Object
+      .entries(fields)
+      .map(([field, val]) => {
+        // TODO: diff between previous values and only send poke for diff ones
+        return fns.editProfileField(field, val)
+      }))
+
+    setOpenProfile(false)
+
+    return Promise.resolve()
+  }
+
   return (
     <NavigationMenu >
       <NavigationMenuList className="static">
@@ -84,13 +97,6 @@ const NavBar: React.FC<Props> = (
               />
             </Link>
           </Button>
-          <ProfileDialog
-            onOpenChange={setOpenProfile}
-            open={openProfile}
-            patp={profile.patp}
-            profileFields={profile}
-            editProfileField={fns.editProfileField}
-          />
         </NavigationMenuItem>
         <NavigationMenuItem className="fixed left-12">
           <EventStatusButtons
@@ -99,7 +105,6 @@ const NavBar: React.FC<Props> = (
             status={eventStatus}
             register={fns.register}
             unregister={fns.unregister}
-
           />
         </NavigationMenuItem>
         <NavigationMenuItem className="grow text-center"> {eventName || "event"} </NavigationMenuItem>
@@ -155,7 +160,7 @@ const NavBar: React.FC<Props> = (
             </NavigationMenuItem>
         }
 
-        <NavigationMenuItem className="fixed right-0">
+        <NavigationMenuItem className="fixed right-0 sm:right-10">
           <Button className="p-3 m-1 rounded-3xl">
             <User
               onClick={() => { setOpenProfile(flipBoolean) }}
@@ -165,9 +170,8 @@ const NavBar: React.FC<Props> = (
           <ProfileDialog
             onOpenChange={setOpenProfile}
             open={openProfile}
-            patp={profile.patp}
             profileFields={profile}
-            editProfileField={fns.editProfileField}
+            editProfile={editProfile}
           />
         </NavigationMenuItem>
       </NavigationMenuList>

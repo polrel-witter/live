@@ -10,13 +10,12 @@ import { Backend, Profile } from "@/backend";
 
 type Props = {
   open: boolean;
-  patp: string;
   onOpenChange: (b: boolean) => void;
   profileFields: Profile;
-  editProfileField: Backend["editProfileField"]
+  editProfile: (fields: Record<string, string>) => Promise<void>
 }
 
-const ProfileDialog: React.FC<Props> = ({ open, onOpenChange, profileFields, editProfileField }) => {
+const ProfileDialog: React.FC<Props> = ({ open, onOpenChange, profileFields, editProfile }) => {
 
   // TODO: add disclaimer somewhere that explains how this info is shared
 
@@ -33,7 +32,7 @@ const ProfileDialog: React.FC<Props> = ({ open, onOpenChange, profileFields, edi
             <DialogTitle>Your Profile</DialogTitle>
             <ProfileForm
               profileFields={profileFields}
-              editProfileField={editProfileField}
+              editProfile={editProfile}
             />
           </DialogHeader>
         </DialogContent>

@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Backend, Profile } from "@/backend"
+import { SpinningButton } from "./spinning-button"
+import { useState, useSyncExternalStore } from "react"
 
 
 const emptyStringSchema = z.literal("")
@@ -67,10 +69,12 @@ const formSchema = z.object(Object
 
 type Props = {
   profileFields: Profile;
-  editProfileField: Backend["editProfileField"]
+  editProfile: (fields: Record<string, string>) => Promise<void>
 }
 
-const ProfileForm: React.FC<Props> = ({ profileFields, editProfileField }) => {
+const ProfileForm: React.FC<Props> = ({ profileFields, editProfile }) => {
+
+  const [spin, setSpin] = useState(false)
 
   const pf = Object
     .fromEntries(Object
@@ -87,12 +91,8 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfileField }) => {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
 
-    // TODO: diff between previous values and only send poke for diff ones
-
-    const entries = Object.entries(values)
-    entries.forEach(([field, val]) => {
-      editProfileField(field, val)
-    })
+    setSpin(true)
+    editProfile(values).then(() => setSpin(false))
   }
 
   type _editableFields = Exclude<keyof Profile, "patp" | "nickname" | "avatar" | "bio">
@@ -102,7 +102,7 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfileField }) => {
 
   // add static fields from tlon, saying we're importing from tlon
   return (
-    <Form {...form}>
+    <Form  {...form}>
       <form
         aria-description="A form containing updatable profile entries"
         onSubmit={form.handleSubmit(onSubmit)}
@@ -133,7 +133,12 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfileField }) => {
           )
         })}
         <div className="pt-8 w-full flex justify-center">
-          <Button type="submit" className="p-2 w-24 h-auto">Submit</Button>
+          <SpinningButton
+            spin={spin}
+            type="submit"
+            className="p-2 w-24 h-auto">
+            Submit
+          </SpinningButton>
         </div>
       </form>
     </Form>
