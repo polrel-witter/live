@@ -90,7 +90,9 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfileField }) => {
     // TODO: diff between previous values and only send poke for diff ones
 
     const entries = Object.entries(values)
-    entries.forEach(([field, val]) => { editProfileField(field, val) })
+    entries.forEach(([field, val]) => {
+      editProfileField(field, val)
+    })
   }
 
   type _editableFields = Exclude<keyof Profile, "patp" | "nickname" | "avatar" | "bio">
