@@ -2,9 +2,9 @@ import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMe
 import { Link } from "react-router-dom"
 import ProfileDialog from "./profile-dialog"
 import { useEffect, useState } from "react"
-import { Button } from "./ui/button"
-import { ChevronLeft, User, } from "lucide-react"
-import { flipBoolean } from "@/lib/utils"
+import { Button, buttonVariants } from "./ui/button"
+import { ArrowLeft, ChevronLeft, ChevronUp, User, } from "lucide-react"
+import { cn, flipBoolean } from "@/lib/utils"
 import { Backend, EventAsGuest, Profile } from "@/backend"
 import { SlideDownAndReveal } from "./sliders"
 import EventStatusButtons from "./event-status-buttons"
@@ -49,15 +49,40 @@ const NavBar: React.FC<Props> = (
   const showGuestList = event.status === "registered" || event.status === "attended" || eventHost === window.ship
   const isMobile = width <= 768;
 
+  const eventRoutingLinks = [
+    {
+      to: `/apps/live/event/${eventHost}/${eventName}`,
+      text: "event home"
+    },
+    {
+      to: "attendees",
+      text: "attendees"
+    },
+    {
+      to: "schedule",
+      text: "schedule"
+    },
+    {
+      to: "map",
+      text: "map"
+    },
+    {
+      to: "connections",
+      text: "connections"
+    },
+  ]
+
   return (
     <NavigationMenu >
       <NavigationMenuList className="static">
         <NavigationMenuItem className="fixed left-0">
           <Button className="p-3 m-1 rounded-3xl">
-            <User
-              onClick={() => { setOpenProfile(flipBoolean) }}
-              className="w-4 h-4 text-white"
-            />
+            <Link to="/apps/live">
+              <ArrowLeft
+                onClick={() => { setOpenProfile(flipBoolean) }}
+                className="w-4 h-4 text-white"
+              />
+            </Link>
           </Button>
           <ProfileDialog
             onOpenChange={setOpenProfile}
@@ -81,56 +106,36 @@ const NavBar: React.FC<Props> = (
         {
           isMobile
             ?
-            <div className="flex-0 fixed right-0 bottom-24">
+            <div className="flex-0 fixed right-0 bottom-20">
               <SlideDownAndReveal
                 show={openMenu}
                 maxHeight="max-h-[1000px]"
                 duration="duration-1000"
               >
-                <ul className="grid gap-3 m-2 justify-items-end">
-                  <li className="row row-span-3">
-                    <Button>
-                      <Link to={`/apps/live/event/${eventHost}/${eventName}`}> event home </Link>
-                    </Button>
-                  </li>
-                  <li className="row row-span-3">
-                    <Button>
-                      <Link to="attendees"> attendees </Link>
-
-                    </Button>
-                  </li>
-
-                  {
-                    showGuestList
-                      ?
-                      <li className="row row-span-3">
-                        <Link to="attendees"> guest list </Link>
-                      </li>
-                      :
-                      ""
-                  }
-                  <li className="row row-span-3">
-                    <Button>
-                      <Link to="schedule"> schedule </Link>
-                    </Button>
-                  </li>
-                  <li className="row row-span-3">
-                    <Button>
-                      <Link to="map"> map </Link>
-                    </Button>
-                  </li>
+                <ul className="grid gap-3 m-6">
+                  {eventRoutingLinks.map(({ to, text }) =>
+                    <li key={to} className="">
+                      <Link
+                        onClick={() => { console.log("click"); setOpenMenu(false) }}
+                        className={cn([
+                          buttonVariants({ variant: "default" }),
+                          // "bg-stone-800",
+                          "w-full"
+                        ])}
+                        to={to}> {text} </Link>
+                    </li>
+                  )}
                 </ul>
               </SlideDownAndReveal>
               <Button
-                className="p-2 h-8 m-2 rounded-full fixed right-0 bottom-0"
+                className="p-2 w-10 h-10 m-6 rounded-full fixed right-0 bottom-0 hover:bg-black"
                 onClick={() => { setOpenMenu(flipBoolean) }}
               >
-                <ChevronLeft className={
-                  openMenu
-                    ?
-                    "w-4 h-4 text-accent transition duration-450 rotate-90"
-                    :
-                    "w-4 h-4 text-accent transition duration-450"
+                <ChevronUp className={
+                  cn([
+                    "w-5 h-5 text-accent transition duration-700",
+                    { "-rotate-180": openMenu },
+                  ])
 
                 } />
               </Button>
@@ -140,33 +145,31 @@ const NavBar: React.FC<Props> = (
               <NavigationMenuTrigger />
               <NavigationMenuContent>
                 <ul className="grid gap-3 p-4  md:w-[400px] lg:w-[500px] ">
-                  <li className="row row-span-3">
-                    <Link to={`/apps/live/event/${eventHost}/${eventName}`}> event home </Link>
-                  </li>
-                  <li className="row row-span-3">
-                    <Link to="attendees"> attendees </Link>
-
-                  </li>
-                  {
-                    showGuestList
-                      ?
-                      <li className="row row-span-3">
-                        <Link to="attendees"> guest list </Link>
-                      </li>
-                      :
-                      ""
-                  }
-                  <li className="row row-span-3">
-                    <Link to="schedule"> schedule </Link>
-                  </li>
-                  <li className="row row-span-3">
-                    <Link to="map"> map </Link>
-                  </li>
-                  <li className="row row-span-3"> Connections </li>
+                  {eventRoutingLinks.map(({ to, text }) =>
+                    <li key={to} className="row row-span-3">
+                      <Link to={to}> {text} </Link>
+                    </li>
+                  )}
                 </ul>
               </NavigationMenuContent>
             </NavigationMenuItem>
         }
+
+        <NavigationMenuItem className="fixed right-0">
+          <Button className="p-3 m-1 rounded-3xl">
+            <User
+              onClick={() => { setOpenProfile(flipBoolean) }}
+              className="w-4 h-4 text-white"
+            />
+          </Button>
+          <ProfileDialog
+            onOpenChange={setOpenProfile}
+            open={openProfile}
+            patp={profile.patp}
+            profileFields={profile}
+            editProfileField={fns.editProfileField}
+          />
+        </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu >
   )
