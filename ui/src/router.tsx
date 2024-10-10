@@ -9,7 +9,6 @@ import { EventParamsLoader, EventIndex } from '@/pages/event';
 import { AttendeesPage } from '@/pages/event/attendees';
 import { SchedulePage } from '@/pages/event/schedule';
 import { MapPage } from '@/pages/event/map';
-import { PatpLoader, ProfilePage } from '@/pages/profile';
 import { EventDetails } from '@/pages/event/details';
 
 
@@ -51,11 +50,6 @@ const makeRouter = (backend: Backend) => {
         },
       ],
     },
-    {
-      path: basePath + "/profile/:patp",
-      loader: PatpLoader,
-      element: <ProfilePage backend={backend} />
-    }
   ])
 };
 
