@@ -63,7 +63,7 @@ key:
 		+ also when registering, unregistering, then reregistring, we don't get the latest peers mip - the host needs to send the full rock
 	+ If we register, unregister, and then register again - if the event is private - we're added back to the peers mip even though our status is %requested
   + host adds themselves to the peers mip; need to filter out
-  - restore subs and pubs; currently being stubbed. just establish new ones for each event and record
+  + restore subs and pubs; currently being stubbed. just establish new ones for each event and record
 
 ## Features
 	- Event-level tagging in %pals

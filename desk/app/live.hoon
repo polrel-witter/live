@@ -172,13 +172,14 @@
                   ^-  (map id info-1)
                   %-  malt
                   ^-  (list [id info-1])
-                  =/  ls=(list [id info])  ~(tap by ;;((map id info) result.ole))
+                  =/  ls=(list [id info])
+                    ~(tap by ;;((map id info) result.ole))
                   ^-  (list [id info-1])
                   %+  turn  `(list [id info])`ls  result-0-to-1
-                  ::  TODO stubbed for now
+                  ::  convert subscription and publication state
                   ::
-                  *_sub-records
-                  *_pub-records
+                  (sub-records-0-to-1 sub-records.ole)
+                  (pub-records-0-to-1 pub-records.ole)
     ==        ==
   ==
   ::
@@ -206,6 +207,65 @@
     :+  k0
       k1
     [(info-0-to-1 info.v) secret.v status.v]
+  ::
+  ++  sub-records-0-to-1
+    |=  subs=_(mk-subs records:lr ,[%record @ @ ~])
+    ^+  sub-records
+    =|  key=[ship dude [%record @ @ ~]]
+    =|  val=(unit [aeon=@ud stale=? fail=? =rock:records:lr])
+    :-  %0
+    %-  malt
+    ^-  (list [_key (unit [@ud ? ? rock:records-1:lr])])
+    %+  turn  ~(tap by `(map _key _val)`+.subs)
+    |=  [k=_key v=_val]
+    ^-  [_key (unit [@ud ? ? rock:records-1:lr])]
+    ?~  v  [k ~]
+    =/  r=record
+      record.rock.u.v
+    :-  k
+    `[aeon.u.v stale.u.v fail.u.v [(info-0-to-1 info.r) secret.r status.r]]
+  ::
+  +$  trok  ((mop aeon rock:records-1:lr) gte)
+  +$  twav  ((mop aeon wave:records-1:lr) lte)
+  +$  tide
+    $:  rok=((mop aeon rock:records:lr) gte)
+        wav=((mop aeon wave:records:lr) lte)
+        rul=[horizon=(unit @ud) frequency=@ud]
+        mem=(jug ship dude)
+    ==
+  +$  buoy  [tid=$~(*tide $@(aeon tide)) alo=(unit (set ship))]
+  ::
+  ++  pub-records-0-to-1
+    |=  pubs=_(mk-pubs records:lr ,[%record @ @ ~])
+    |^  ^+  pub-records
+    ?:  =(~ +.pubs)      *_pub-records
+    ?.  ?=([%1 ^] pubs)  *_pub-records
+    =|  paths=[%record @ @ ~]
+    =<  -
+    %+  ~(rib by `(map _paths buoy)`+.pubs)
+      *_pub-records
+    |=  [[k=_paths v=_q.n.+.pubs] acc=_pub-records]
+    ?>  ?=(^ v)
+    ?>  ?=(%1 -.acc)
+    :_  [k v]
+    :-  -.acc
+    %+  ~(put by +.acc)  k
+    :_  `(unit (set ship))`alo.v
+    ?@  tid.v  `@ud`tid.v
+    ^-  [trok twav [(unit @ud) @ud] (jug ship term)]
+    =/  rok=trok
+      %+  gas:((on aeon rock:records-1:lr) gte)  *trok
+      (turn (tap:((on aeon rock:records:lr) gte) rok.tid.v) srec)
+    =/  wav=twav
+      %+  gas:((on aeon wave:records-1:lr) lte)  *twav
+      (turn (tap:((on aeon wave:records:lr) lte) wav.tid.v) srec)
+    [rok wav rul.tid.v mem.tid.v]
+    ::
+    ++  srec
+      |=  [k=aeon v=record]
+      :-  k
+      [(info-0-to-1 info.v) secret.v status.v]
+    --
   --
 ::
 ++  watch
@@ -893,11 +953,11 @@
         %-  sss-sub-records
         (surf:da-records ship dap.bowl [%record name.id our.bowl ~])
       :: if we're are the source and not the host, sub to the host
-      ?:  &(=(our src):bowl ?!(=(our.bowl ship.id)))
-        ship.id
-      :: if the source is the host and we are not the host, sub to the source
-      ?>  &(=(src.bowl ship.id) ?!(=(our.bowl ship.id)))
-      src.bowl
+      ::
+      ?:  &(=(our src):bowl ?!(=(our.bowl ship.id)))  ship.id
+      :: if the source is the host, which is not us, sub to the source
+      ::
+      ?>  &(=(src.bowl ship.id) ?!(=(our.bowl ship.id)))  src.bowl
     ::  +invite: send an event invite to a list of ships
     ::
     ++  invite
