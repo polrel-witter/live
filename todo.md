@@ -2,6 +2,7 @@
 ordered by priority
 key:
 + complete task
+- incomplete task
 
 
 # Frontend
@@ -12,10 +13,10 @@ key:
 	+ Should see our record status on event page and include the status change button in here instead of on the timeline card.
 		+ The entire event/record tiles on the Timeline page should be clickable, opening the event details.
 	+ Remove matching functions from guest list
-	- General button feedback so user knows when an action succeeds/fails (e.g. when the profile is updated, the form closes; if it fails they get an error message)
-      - feedback for profile update
-      - feedback for unmatch on atteneed page
-      - feedback for regiister
+	+ General button feedback so user knows when an action succeeds/fails (e.g. when the profile is updated, the form closes; if it fails they get an error message)
+      + feedback for profile update
+      + feedback for unmatch on atteneed page
+      + feedback for regiister
 	- Mobile menu button adjustments (see ~sarlev's feedback)
 	- Need timeline home button, or back button
 	- Event title should be the only header text at the top of an event page.

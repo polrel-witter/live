@@ -88,7 +88,7 @@ const ListItem: React.FC<{
   profile?: Profile,
   // match(patp: string): void;
   unmatch(patp: string): void;
-}> = ({ attendee, profile = { patp: attendee.patp }, ...fns }) => {
+}> = ({ attendee, profile, ...fns }) => {
   const [showProfile, setShowProfile] = useState(false)
   const toggleProfile = () => setShowProfile(flipBoolean)
 
@@ -132,13 +132,19 @@ const ListItem: React.FC<{
               />
             */}
 
-            <ProfileCard
-              patp={attendee.patp}
-              status={attendee.status}
-              profile={profile}
-              unmatch={(patp) => { fns.unmatch(patp) }}
-              showHeader
-            />
+            {
+              profile
+                ?
+                <ProfileCard
+                  patp={attendee.patp}
+                  status={attendee.status}
+                  profile={profile}
+                  unmatch={(patp) => { fns.unmatch(patp) }}
+                  showHeader
+                />
+                :
+                <p>no profile found</p>
+            }
 
           </SlideDownAndReveal>
         </CardContent>
@@ -159,7 +165,9 @@ const AttendeeList: React.FC<{
         attendees.map((attendee) => <ListItem
           key={attendee.patp}
           attendee={attendee}
-          profile={profiles.find((profile) => profile.patp === attendee.patp)}
+          profile={
+            profiles.find((profile) => profile.patp === attendee.patp)
+          }
           unmatch={rest.unmatch}
         // match={rest.match}
         />)

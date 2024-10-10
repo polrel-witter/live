@@ -4,15 +4,17 @@ import { Backend, EventAsGuest, EventAsHost, eventIdsEqual, LiveUpdateEvent, Pro
 import { Toaster } from "./components/ui/toaster";
 
 interface GlobalCtx {
+  fetched: boolean;
   profile: Profile;
   eventsAsGuest: EventAsGuest[]
   eventsAsHost: EventAsHost[]
 }
 
-function newEmptyIndexCtx(patp: string): GlobalCtx {
+function newEmptyIndexCtx(): GlobalCtx {
   return {
+    fetched: false,
     profile: {
-      patp: patp,
+      patp: "",
       avatar: null,
       bio: null,
       nickname: null,
@@ -34,7 +36,7 @@ const GlobalContext = createContext<GlobalCtx | null>(null)
 
 async function buildIndexCtx(backend: Backend, patp: string): Promise<GlobalCtx> {
 
-  const ctx = newEmptyIndexCtx(patp)
+  const ctx = newEmptyIndexCtx()
 
   const ownProfile = await backend.getProfile(patp)
 
@@ -47,6 +49,7 @@ async function buildIndexCtx(backend: Backend, patp: string): Promise<GlobalCtx>
   ctx.eventsAsGuest = await backend.getRecords()
   ctx.eventsAsHost = await backend.getEvents()
 
+  ctx.fetched = true;
 
   return ctx
 }
@@ -56,7 +59,7 @@ type Props = {
 }
 
 const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }) => {
-  const [indexCtx, setCtx] = useState(newEmptyIndexCtx(""))
+  const [indexCtx, setCtx] = useState(newEmptyIndexCtx())
 
 
   useEffect(() => {

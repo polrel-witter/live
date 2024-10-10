@@ -1,9 +1,14 @@
 import { Backend, EventId, EventStatus } from "@/backend"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { cn } from "@/lib/utils"
+import { cn, flipBoolean } from "@/lib/utils"
+import { debug } from "console"
 import { LoaderCircle } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
+import { set } from "zod"
+import { SpinningButton } from "./spinning-button"
+import { SlideDownAndReveal } from "./sliders"
+import { useSubmit } from "react-router-dom"
 
 const ButtonSwitch: React.FC<
   {
@@ -14,56 +19,70 @@ const ButtonSwitch: React.FC<
     unregister: (id: EventId) => void
   }
 > = ({ id, status, spin, ...fns }) => {
-  const spinner = <LoaderCircle className="animate-spin w-4 h-4" />
   const baseClass = "w-26 h-8"
 
+  const makeUnregisterButton = (_spin: boolean) => {
+    return (
+      <div className="flex-auto">
+        <SpinningButton
+          spin={_spin}
+          className={cn([baseClass, "bg-red-900"])}
+          onClick={() => { fns.unregister(id) }}
+        >
+          unregister
+        </SpinningButton>
+      </div>
+    )
+
+  }
   switch (status) {
     case "invited":
     case "unregistered":
       return (
         <div className="flex-auto">
-          <Button
+          <SpinningButton
             className={cn([baseClass])}
             onClick={() => { fns.register(id) }}
+            spin={spin}
           >
-            {spin ? spinner : "register"}
-          </Button>
+            register
+          </SpinningButton>
         </div>
       )
     case "registered":
       // TODO: add a slide-out thingy that says: are you sure?
-      return (
-        <div className="flex-auto">
-          <Button
-            className={cn([baseClass, "hover:bg-red-900"])}
-            onClick={() => { fns.unregister(id) }}
-          >
-            {spin ? spinner : "unregister"}
-          </Button>
-        </div>
-      )
+      return (makeUnregisterButton(spin))
     case "attended":
       return (
         <div className="flex-auto">
           <Button
-            className={cn([ baseClass, "hover:bg-emerald-900" ])}
+            className={cn([baseClass, "hover:bg-emerald-900"])}
             disabled
           >
-            {spin ? spinner : "attended"}
+            attended
           </Button>
         </div>
       )
     case "requested":
+      // const [reveal, setReveal] = useState(false)
       return (
-        <div className="flex-auto">
-          <Button
-            disabled
-            className={cn([ baseClass, "hover:bg-stone-900" ])}
-          >
-            {spin ? spinner : "requested"}
-          </Button>
-        </div>
+        <Button className={cn([baseClass])} disabled > requested </Button>
       )
+      {/*
+          <div className="h-8">
+          <Button
+          className={cn([baseClass, "bg-stone-400", "w-full", "mb-2"])}
+          onClick={() => { setReveal(flipBoolean) }}
+          >
+          requested
+          </Button>
+          <SlideDownAndReveal
+          show={reveal}
+          >
+          {makeUnregisterButton(spin)}
+          </SlideDownAndReveal>
+          </div>
+          */}
     default:
       console.error(`unexpected evt status: ${status}`)
       return (<div></div>)
@@ -71,43 +90,47 @@ const ButtonSwitch: React.FC<
 }
 
 
+function makeToastMessage(status: EventStatus): string {
+  switch (status) {
+    case "requested":
+      return "successfully sent registration to event host"
+    case "registered":
+      return "successfully registered to event"
+    case "unregistered":
+    case "invited":
+      return "successfully unregistered from event"
+    // case "attended":
+    default:
+      return `event status changed, new status: ${status}`
+  }
+}
+
 const EventStatusButtons: React.FC<
   {
+    fetchedContext: boolean,
     id: EventId,
     status: EventStatus
     register: Backend["register"]
     unregister: Backend["unregister"]
   }
-> = ({ id, status, ...fns }) => {
+> = ({ id, status, fetchedContext, ...fns }) => {
   const { toast } = useToast()
   const [sentPoke, setSentPoke] = useState(false)
 
   const registerHandler = (eventId: EventId) => {
-    fns.register(eventId)
-      .then((success) => {
-        console.log("registered: ", success)
-        setSentPoke(true)
-      })
+    fns.register(eventId).then(setSentPoke)
   }
 
 
   const unregisterHandler = (eventId: EventId) => {
-    fns.unregister(eventId)
-      .then((success) => {
-        console.log("unregistered: ", success)
-        setSentPoke(true)
-      })
+    fns.unregister(eventId).then(setSentPoke)
   }
-
-  // TODO: add spinner
 
   useEffect(() => {
 
-    if (id.ship === '') {
+    if (!fetchedContext) {
       return
     }
-
-    console.log(sentPoke)
 
     if (!sentPoke) {
       return
@@ -115,7 +138,7 @@ const EventStatusButtons: React.FC<
 
     toast({
       title: `${id.ship}/${id.name}`,
-      description: `successfully ${status} to event`
+      description: makeToastMessage(status)
     })
 
     setSentPoke(false)
