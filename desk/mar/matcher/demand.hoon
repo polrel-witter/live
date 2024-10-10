@@ -1,5 +1,5 @@
 /-  *matcher
-/+  *matcher
+/+  *matcher-json
 ::
 |_  dem=demand
 ++  grab

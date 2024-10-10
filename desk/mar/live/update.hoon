@@ -1,5 +1,5 @@
 /-  *live
-/+  *live
+/+  *live-json
 |_  upd=update
 ++  grow
   |%

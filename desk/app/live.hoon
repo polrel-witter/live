@@ -1,6 +1,6 @@
 ::  %live: event coordination
 ::
-/-  *live, matcher, live-records, hark, contacts
+/-  *live, matcher, lr=live-records, hark, contacts
 /+  *sss, *mip, verb, dbug, default-agent
 ::
 |%
@@ -9,19 +9,19 @@
 ::
 +$  state-0
   $:  %0
-      events=(map id event)                                 :: events we host
-      records=(mip id ship record)                          :: guests & passes
-      result=$@(@t (map id info))                           :: search result
-      sub-records=_(mk-subs live-records ,[%record @ @ ~])  :: record subs
-      pub-records=_(mk-pubs live-records ,[%record @ @ ~])  :: record pubs
+      events=(map id event)                               :: events we host
+      records=(mip id ship record)                        :: guests & passes
+      result=$@(@t (map id info))                         :: search result
+      sub-records=_(mk-subs records:lr ,[%record @ @ ~])  :: record subs
+      pub-records=_(mk-pubs records:lr ,[%record @ @ ~])  :: record pubs
   ==
 +$  state-1
   $:  %1
       events=(map id event-1)                               :: events we host
       records=(mip id ship record-1)                        :: access data
       result=$@(@t (map id info-1))                         :: search result
-      sub-records=_(mk-subs live-records ,[%record @ @ ~])  :: record subs
-      pub-records=_(mk-pubs live-records ,[%record @ @ ~])  :: record pubs
+      sub-records=_(mk-subs records-1:lr ,[%record @ @ ~])  :: record subs
+      pub-records=_(mk-pubs records-1:lr ,[%record @ @ ~])  :: record pubs
   ==
 ::
 ::
@@ -29,7 +29,7 @@
 ::
 --
 ::
-%+  verb  |
+%+  verb  &
 %-  agent:dbug
 =|  state-1
 =*  state  -
@@ -90,14 +90,15 @@
 =|  cards=(list card)
 |_  =bowl:gall
 +*  cor  .
-    du-records    =/  du  (du live-records ,[%record @ @ ~])
+    du-records    =/  du  (du records-1:lr ,[%record @ @ ~])
                   (du pub-records bowl -:!>(*result:du))
-    da-records    =/  da  (da live-records ,[%record @ @ ~])
+    da-records    =/  da  (da records-1:lr ,[%record @ @ ~])
                   (da sub-records bowl -:!>(*result:da) -:!>(*from:da) -:!>(*fail:da))
 ::
 ++  emit  |=(=card cor(cards [card cards]))
 ++  emil  |=(caz=(list card) cor(cards (weld (flop caz) cards)))
 ++  abet  ^-((quip card _state) [(flop cards) state])
+++  bran  |=(=tape (weld "%live: " tape))
 ::  +sss-pub-records: update +cor cards and pub-records state
 ::
 ::   sss library produces a (quip card _pubs) so we need to split it
@@ -116,28 +117,54 @@
   =.  sub-records  s
   (emil c)
 ::
-++  init
-  ^+  cor
-  cor
-::  %-  emit
-::  [%pass /eyre/connect %arvo %e %connect [~ /apps/live] %live]
+++  init  ^+(cor cor)
 ::
 ++  load
   |=  =vase
-  ^+  cor
-  =/  ole  !<(versioned-state vase)
+  |^  ^+  cor
+  =+  !<(ole=versioned-state vase)
   ?-    -.ole
+      %1  cor(state ole)
       %0
+    =.  cor
+      ::  unbind URL path; %live 1.0 was handling http-requests directly
+      ::  whereas 2.0 uses Eyre channels
+      ::
+      %-  emit
+      [%pass /eyre/connect %arvo %e %disconnect [~ /apps/live]]
     %=  cor
       state   :*  %1
-                  (~(urn by events.ole) event-0-to-1)
+                  ::  convert events and add them to %matcher
+                  ::
+                  =/  morphed=(map id event-1)
+                    (~(urn by events.ole) event-0-to-1)
+                  =/  ml=(list [=id event-1])
+                    ~(tap by morphed)
+                  |-  ^+  morphed
+                  ?~  ml  morphed
+                  =.  cor
+                    %+  poke-matcher
+                      /matcher/(scot %p our.bowl)/add
+                    [id.i.ml [%add-peer our.bowl]]
+                  $(ml t.ml)
+                  ::  convert records and add guests to %matcher with a
+                  ::  %registered or %attended status
                   ::
                   ^-  (mip id ship record-1)
-                  =/  ls  `(list (trel id ship record-1))`(turn ~(tap bi records.ole) record-0-to-1)
-                    =|  ms=(mip id ship record-1)
-                    |-
-                    ?~  ls  ms
-                    $(ls t.ls, ms (~(put bi ms) p.i.ls q.i.ls r.i.ls))
+                  =/  ls
+                    ^-  (list (trel id ship record-1))
+                    (turn ~(tap bi records.ole) record-0-to-1)
+                  =|  ms=(mip id ship record-1)
+                  |-
+                  ?~  ls  ms
+                  =?  cor  ?&  =(our.bowl ship.p.i.ls)
+                               ?=(?(%registered %attended) p.status.r.i.ls)
+                           ==
+                    %+  poke-matcher
+                      /matcher/(scot %p q.i.ls)/add
+                    [p.i.ls [%add-peer q.i.ls]]
+                  $(ls t.ls, ms (~(put bi ms) p.i.ls q.i.ls r.i.ls))
+                  ::  convert result
                   ::
                   ^-  $@(@t (map id info-1))
                   ?@  result.ole
@@ -145,25 +172,106 @@
                   ^-  (map id info-1)
                   %-  malt
                   ^-  (list [id info-1])
-                  =/  ls=(list [id info])  ~(tap by ;;((map id info) result.ole))
+                  =/  ls=(list [id info])
+                    ~(tap by ;;((map id info) result.ole))
                   ^-  (list [id info-1])
                   %+  turn  `(list [id info])`ls  result-0-to-1
-                  ::  TODO
-                  :: (~(urn by result.ole) result-0-to-1)
+                  ::  convert subscription and publication state
                   ::
-                  sub-records.ole
-                  pub-records.ole
+                  (sub-records-0-to-1 sub-records.ole)
+                  (pub-records-0-to-1 pub-records.ole)
     ==        ==
-      %1
-    cor(state ole)
   ==
+  ::
+  ++  event-0-to-1
+    |=  [k=id v=event]
+    ^-  event-1
+    [(info-0-to-1 info.v) secret.v limit.v]
+  ::
+  ++  result-0-to-1
+    |=  [k=id v=info]
+    ^-  [id info-1]
+    [k (info-0-to-1 v)]
+  ::
+  ++  info-0-to-1
+    |=  =info
+    ^-  info-1
+    =/  [start=(unit time) end=(unit time) =timezone]
+      moment.info
+    :-  title.info
+    [about.info [start end] timezone ~ ~ ~ kind.info latch.info ~]
+  ::
+  ++  record-0-to-1
+    |=  [k0=id k1=ship v=record]
+    ^-  [id ship record-1]
+    :+  k0
+      k1
+    [(info-0-to-1 info.v) secret.v status.v]
+  ::
+  ++  sub-records-0-to-1
+    |=  subs=_(mk-subs records:lr ,[%record @ @ ~])
+    ^+  sub-records
+    =|  key=[ship dude [%record @ @ ~]]
+    =|  val=(unit [aeon=@ud stale=? fail=? =rock:records:lr])
+    :-  %0
+    %-  malt
+    ^-  (list [_key (unit [@ud ? ? rock:records-1:lr])])
+    %+  turn  ~(tap by `(map _key _val)`+.subs)
+    |=  [k=_key v=_val]
+    ^-  [_key (unit [@ud ? ? rock:records-1:lr])]
+    ?~  v  [k ~]
+    =/  r=record
+      record.rock.u.v
+    :-  k
+    `[aeon.u.v stale.u.v fail.u.v [(info-0-to-1 info.r) secret.r status.r]]
+  ::
+  +$  trok  ((mop aeon rock:records-1:lr) gte)
+  +$  twav  ((mop aeon wave:records-1:lr) lte)
+  +$  tide
+    $:  rok=((mop aeon rock:records:lr) gte)
+        wav=((mop aeon wave:records:lr) lte)
+        rul=[horizon=(unit @ud) frequency=@ud]
+        mem=(jug ship dude)
+    ==
+  +$  buoy  [tid=$~(*tide $@(aeon tide)) alo=(unit (set ship))]
+  ::
+  ++  pub-records-0-to-1
+    |=  pubs=_(mk-pubs records:lr ,[%record @ @ ~])
+    |^  ^+  pub-records
+    ?:  =(~ +.pubs)      *_pub-records
+    ?.  ?=([%1 ^] pubs)  *_pub-records
+    =|  paths=[%record @ @ ~]
+    =<  -
+    %+  ~(rib by `(map _paths buoy)`+.pubs)
+      *_pub-records
+    |=  [[k=_paths v=_q.n.+.pubs] acc=_pub-records]
+    ?>  ?=(^ v)
+    ?>  ?=(%1 -.acc)
+    :_  [k v]
+    :-  -.acc
+    %+  ~(put by +.acc)  k
+    :_  `(unit (set ship))`alo.v
+    ?@  tid.v  `@ud`tid.v
+    ^-  [trok twav [(unit @ud) @ud] (jug ship term)]
+    =/  rok=trok
+      %+  gas:((on aeon rock:records-1:lr) gte)  *trok
+      (turn (tap:((on aeon rock:records:lr) gte) rok.tid.v) srec)
+    =/  wav=twav
+      %+  gas:((on aeon wave:records-1:lr) lte)  *twav
+      (turn (tap:((on aeon wave:records:lr) lte) wav.tid.v) srec)
+    [rok wav rul.tid.v mem.tid.v]
+    ::
+    ++  srec
+      |=  [k=aeon v=record]
+      :-  k
+      [(info-0-to-1 info.v) secret.v status.v]
+    --
+  --
 ::
 ++  watch
   |=  pol=(pole knot)
   ^+  cor
   ?>  (team:title our.bowl src.bowl)
-  :: TODO remove
-  ~&  pol
   ?+  pol  ~|(bad-watch+pol cor)
     [%updates ~]  cor
   ==
@@ -189,11 +297,11 @@
     ?+    t.t.wire  ~|(bad-wire+wire cor)
         [%add ~]
       ?~  p.sign  cor
-      ~&(>>> "failed to add {<ship>} as peer in %matcher" cor)
+      ~&(>>> (bran "failed to add {<ship>} as peer in %matcher") cor)
     ::
         [%delete ~]
       ?~  p.sign  cor
-      ~&(>>> "failed to remove {<ship>} from %matcher" cor)
+      ~&(>>> (bran "failed to remove {<ship>} from %matcher") cor)
     ==
   ::
       [%case %request @ @ ~]
@@ -327,7 +435,7 @@
     =/  msg  !<(into:du-records (fled vase))
     (sss-pub-records (apply:du-records msg))
   ::
-      %sss-live-records
+      %sss-live-records-1
     =/  msg  !<(into:da-records (fled vase))
     (sss-sub-records (apply:da-records msg))
   ::
@@ -421,6 +529,15 @@
   |=  [=id =action]
   ^-  cage
   live-operation+!>(`operation`[id action])
+::  +poke-matcher: send a dictum poke to %matcher
+::
+++  poke-matcher
+  |=  [=wire dict=dictum:matcher]
+  ^+  cor
+  =/  =cage
+    matcher-dictum+!>(`dictum:matcher`dict)
+  %-  emit
+  (make-act wire our.bowl %matcher cage)
 ::  +append-entropy: add random characters to a name for uniqueness
 ::
 ++  append-entropy
@@ -562,7 +679,7 @@
     ^-  ?
     =;  ver=?
       ?:  ver  &
-      ~&(>>> "bad call on event: {<id>}" |)
+      ~&(>>> (bran "bad call on event: {<id>}") |)
     ?&  =(src our):bowl
         =(our.bowl ship.id)
     ==
@@ -665,15 +782,6 @@
       %unregister  (unregister +.act)
       %punch       (punch +.act)
     ==
-    ::  +poke-matcher: send a dictum poke to %matcher
-    ::
-    ++  poke-matcher
-      |=  [=wire dict=dictum:matcher]
-      ^+  cor
-      =/  =cage
-        matcher-dictum+!>(`dictum:matcher`dict)
-      %-  emit
-      (make-act wire our.bowl %matcher cage)
     ::  +create: write a new event to state
     ::
     ++  create
@@ -684,7 +792,9 @@
         [ship.id (append-entropy name.id)]
       =.  events  (~(put by events) id event)
       =.  cor
-        (poke-matcher /matcher/(scot %p our.bowl)/add [id [%add-peer our.bowl]])
+        %+  poke-matcher
+          /matcher/(scot %p our.bowl)/add
+        [id [%add-peer our.bowl]]
       =.  cor  (update-remote-event event)
       update-all-remote-events
     ::  +delete: as host, permanently delete an event; as a guest,
@@ -786,7 +896,7 @@
         =/  ses=(unit session)
           (~(get by sessions.info.event) sid)
         ?~  ses
-          ~&(>>> "no session found for sid {<sid>}" event)
+          ~&(>>> (bran "no session found for sid {<sid>}") event)
         =;  rev=session
           event(sessions.info (~(put by sessions.info.event) sid rev))
         ?-    -.q.sub-info
@@ -843,11 +953,11 @@
         %-  sss-sub-records
         (surf:da-records ship dap.bowl [%record name.id our.bowl ~])
       :: if we're are the source and not the host, sub to the host
-      ?:  &(=(our src):bowl ?!(=(our.bowl ship.id)))
-        ship.id
-      :: if the source is the host and we are not the host, sub to the source
-      ?>  &(=(src.bowl ship.id) ?!(=(our.bowl ship.id)))
-      src.bowl
+      ::
+      ?:  &(=(our src):bowl ?!(=(our.bowl ship.id)))  ship.id
+      :: if the source is the host, which is not us, sub to the source
+      ::
+      ?>  &(=(src.bowl ship.id) ?!(=(our.bowl ship.id)))  src.bowl
     ::  +invite: send an event invite to a list of ships
     ::
     ++  invite
@@ -1089,25 +1199,4 @@
       (~(publish re ship) record)
     --
   --
-++  event-0-to-1
-  |=  [k=id v=event]
-  ^-  event-1
-  [(info-0-to-1 info.v) secret.v limit.v]
-++  result-0-to-1
-  |=  [k=id v=info]
-  ^-  [id info-1]
-  [k (info-0-to-1 v)]
-++  info-0-to-1
-  |=  =info
-  ^-  info-1
-  =/  [start=(unit time) end=(unit time) =timezone]
-    moment.info
-  :-  title.info
-  [about.info [start end] timezone ~ ~ ~ kind.info latch.info ~]
-++  record-0-to-1
-  |=  [k0=id k1=ship v=record]
-  ^-  [id ship record-1]
-  :+  k0
-    k1
-  [(info-0-to-1 info.v) secret.v status.v]
 --
