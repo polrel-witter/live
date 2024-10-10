@@ -97,6 +97,7 @@
 ++  emit  |=(=card cor(dek [card dek]))
 ++  emil  |=(lac=(list card) cor(dek (welp lac dek)))
 ++  abet  ^-((quip card _state) [(flop dek) state])
+++  bran  |=(=tape (weld "%matcher: " tape))
 ::  +sss-pub-peers: update +cor cards and pub-peers state
 ::
 ::   sss library produces a (quip card _pubs) so we need to split it
@@ -215,14 +216,16 @@
     =/  =ship  (slav %p i.t.wire)
     ?>  ?=(%poke-ack -.sign)
     ?~  p.sign  cor
-    ~&(>>> "%shake to {<ship>} failed to process on host ship" cor)
+    ~&(>>> (bran "%shake to {<ship>} failed to process on host ship") cor)
   ::
       [%show @ @ ~]
     =/  actor=ship   (slav %p i.t.wire)
     =/  target=ship  (slav %p i.t.t.wire)
     ?>  ?=(%poke-ack -.sign)
     ?~  p.sign  cor
-    ~&(>>> "failed to show {<actor>} their updated status with {<target>}" cor)
+    ~&  >>>
+      (bran "failed to show {<actor>} their updated status with {<target>}")
+    cor
   ::
       [%profile *]
     ?+    t.wire  ~|(bad-agent-wire+wire !!)
@@ -230,7 +233,7 @@
       ?>  ?=(%poke-ack -.sign)
       ?~  p.sign  cor
       =/  =ship  (slav %p i.t.wire)
-      ~&(>>> "failed to give updated profile to {<ship>}" cor)
+      ~&(>>> (bran "failed to give updated profile to {<ship>}") cor)
     ::
         [%local ~]
       :: TODO handle these properly
@@ -239,7 +242,7 @@
           %poke-ack  !!
           %watch-ack
         ?~  p.sign
-          ~&(> "watching %contacts for updates to our Tlon profile" cor)
+          ~&(> (bran "watching %contacts for updates to our Tlon profile") cor)
         :: TODO handle the $tang properly
         ~&(u.p.sign cor)
       ::
@@ -270,7 +273,7 @@
       %matcher-dictum
     =+  !<(d=dictum vase)
     ?.  |(=(ship.id.d our.bowl) =(ship.id.d src.bowl))
-      ~&(>>> "only the host of {<name.id.d>} can pass a dictum" cor)
+      ~&(>>> (bran "only the host of {<name.id.d>} can pass a dictum") cor)
     ?-  -.+.d
         %add-peer     ?:((event-exists id.d) ~(add pe id.d ship.d) cor)
         %delete-peer  ?:((event-exists id.d) ~(delete pe id.d ship.d) cor)
@@ -296,44 +299,25 @@
     ?>  ?=([[%peers @ @ ~] *] msg)
     =/  =id:live
       [`ship`+<:path.msg `term`+>-:path.msg]
-    ~&  wave.msg
-    ?^  wave.msg
-      =/  =wave:live-peers  (need wave.msg)
-      ::  guest list update so we write to our peers mip and pass the
-      ::  public poriton of our profile
+    ?:  stale.msg
+      ::  subscription state is stale so we unsub and remove the event;
+      ::  means we no longer have a %registered/%attended status in
+      ::  %live
       ::
-      ?-    -.wave
-          %add-peer
-        =.  peers  (~(put bi peers) id ship.wave ~)
-        ?:  =(our.bowl ship.wave)  cor
-        (send-profile %part ship.wave)
-      ::
-          %delete-peer
-        ::  if we're removed, we're no longer %registered/%attended so
-        ::  we delete the peers for that event and unsubscribe
-        ::
-        ?.  =(ship.wave our.bowl)
-          cor(peers (~(del bi peers) id ship.wave))
-      :: TODO problem with unsubscribing at this point; we get mixed
-      :: results when it comes to state changes from the host. Thinking
-      :: we should run a check on our local peers state and if null just
-      :: write the rock to state and nothing more
-      ::
-      ::  =.  sub-peers  %^  quit:da-peers  ship.id
-      ::                   dap.bowl
-      ::                 [%peers ship.id name.id ~]
-        cor(peers (~(del by peers) id))
-      ==
-    ::  we've been added to some new event so we add the guests to our
-    ::  peers mip and send the public portion of our profile
+      =.  sub-peers  %^  quit:da-peers  ship.id
+                       dap.bowl
+                     [%peers ship.id name.id ~]
+      cor(peers (~(del by peers) id))
+    ::  subscription state is active so we overwrite our peers mip to match
+    ::  the latest rock
     ::
     =/  new-peers=(list ship)
       ~(tap in guests.rock.msg)
+    =.  peers  (~(del by peers) id)
     |-
     ?~  new-peers  cor
+    =.  peers  (~(put bi peers) id i.new-peers ~)
     =?  cor  ?!(=(our.bowl i.new-peers))
-      =.  peers  (~(put bi peers) id i.new-peers ~)
-      ?:  =(our.bowl i.new-peers)  cor
       (send-profile %part i.new-peers)
     $(new-peers t.new-peers)
   ==
@@ -375,7 +359,7 @@
   ?.  ?=(%event-exists -.demand)
     ~|('bad-scry-result' !!)
   ?:  p.demand  &
-  ~&(>>> "%live does not have {<id>} in state" |)
+  ~&(>>> (bran "%live does not have {<id>} in state") |)
 ::  +record-status: scry for the $status:live of a guest
 ::
 ++  record-status
@@ -385,7 +369,7 @@
    ?.  ?=(%record -.demand)
      ~|('bad-scry-result' !!)
    ?~  p.demand
-     ~&(>>> "{<guest>} does not have a record at event {<id>}" ~)
+     ~&(>>> (bran "{<guest>} does not have a record at event {<id>}") ~)
    `status.u.p.demand
  .^  demand:live
    %gx
@@ -404,7 +388,9 @@
   ::  we cannot be the host
   ::
   ?:  =(ship.id our.bowl)
-    ~&(>>> "cannot subscribe to a guest list of which we're the host" cor)
+    ~&  >>>
+      (bran "cannot subscribe to a guest list of which we're the host")
+    cor
   %-  sss-sub-peers
   (surf:da-peers src.bowl dap.bowl [%peers ship.id name.id ~])
 ::  +edit-profile: add/update a profile field entry
@@ -414,9 +400,9 @@
   ^+  cor
   ?.  =(our.bowl src.bowl)  cor
   ?.  (~(has bi profiles) our.bowl p.field)
-    ~&(>>> "profile field, {<p.field>}, not supported" cor)
+    ~&(>>> (bran "profile field, {<p.field>}, not supported") cor)
   ?:  ?=(?(%nickname %bio %avatar) p.field)
-    ~&(>>> "cannot edit Tlon field, {<p.field>}, from %matcher" cor)
+    ~&(>>> (bran "cannot edit Tlon field, {<p.field>}, from %matcher") cor)
   =.  profiles  (~(put bi profiles) our.bowl field)
   =.  cor
     =/  fields=(list [term entry])
@@ -429,7 +415,9 @@
   |=  profile=(map term entry)
   ^+  cor
   ?:  =(our.bowl src.bowl)
-    ~&(>>> "cannot pass %profile-diff locally; use %edit-profile instead" cor)
+    ~&  >>>
+      (bran "cannot pass %profile-diff locally; use %edit-profile instead")
+    cor
   =/  still=(map term entry)
     ::  only include supported profile fields
     ::
@@ -497,7 +485,7 @@
   =/  is-running=?
     .^(? %gu (weld (base-path %contacts) /$))
   ?.  is-running
-    ~&(>> "%contacts isn't running, cannot pull our Tlon profile data" ~)
+    ~&(>> (bran "%contacts isn't running, cannot pull our Tlon profile data") ~)
   .^(rolodex:contacts %gx (weld (base-path %contacts) /all/contact-rolodex))
 ::  +update-tlon-fields: populate supported Tlon fields into %live profile
 ::
@@ -546,16 +534,22 @@
   ::
   ++  init-sss-peers
     ^+  cor
+    =.  pub-peers
+      (rule:du-peers path [~ 1] 1)
     (sss-pub-peers (secret:du-peers [path]~))
   ::  +allow-sss: give culp access to the sss peers path
   ::
   ++  allow-sss-peers
     ^+  cor
+    =.  pub-peers
+      (wipe:du-peers path)
     (sss-pub-peers (allow:du-peers [culp]~ [path]~))
   ::  +block-sss-peers: revoke sss peers path access
   ::
   ++  block-sss-peers
     ^+  cor
+    =.  pub-peers
+      (wipe:du-peers path)
     (sss-pub-peers (block:du-peers ~[culp] [path]~))
   ::  +publish: push an sss update to our peers
   ::
@@ -569,7 +563,7 @@
   ++  add
     ^+  cor
     ?:  (~(has bi peers) id culp)
-      ~&(> "{<culp>} is already a peer" cor)
+      ~&(> (bran "{<culp>} is already a peer;") cor)
     =/  who=(unit ship)
       ::  only add to peers if they're %registered or %attended, or if
       ::  the culp is the host (i.e. us)
@@ -584,7 +578,7 @@
         matches  (~(put bi matches) id u.who ~)
         reaches  (~(put bi reaches) id u.who ~)
       ==
-    ~&  >  "added {<u.who>} to peers"
+    ~&  >  (bran "added {<u.who>} to peers")
     ::  if we're being added, i.e. which means we're the host, then init
     ::  the sss peers path and publish an update
     ::
@@ -607,7 +601,7 @@
   ++  delete
     ^+  cor
     ?.  (~(has bi peers) id culp)
-      ~&(> "{<culp>} has already been removed from peers state" cor)
+      ~&(> (bran "{<culp>} has already been removed from peers state") cor)
     =/  sta=(unit status:live)
       (record-status id culp)
     ?~  sta  cor
@@ -620,7 +614,7 @@
         matches  (~(del bi matches) id culp)
         reaches  (~(del bi reaches) id culp)
       ==
-    ~&  >  "removed {<culp>} from peers"
+    ~&  >  (bran "removed {<culp>} from peers")
     =.  cor  block-sss-peers
     (publish [%delete-peer culp])
   ::  +ingest-show: process a %show poke from event host
@@ -631,6 +625,7 @@
     ?.  &(=(src.bowl our.bowl) =(ship.id our.bowl))
       (show status)
     ~&  >>>
+    %-  bran
     %+  weld  "%show is a result of a %shake poke; cannot pass directly as the"
     " host of: {<id>}"
     cor
@@ -657,9 +652,11 @@
     |^  ^+  cor
         ?:  =(our.bowl src.bowl)
           ?:  =(our.bowl culp)
-            ~&(>>> "cannot match with ourselves" cor)
+            ~&(>>> (bran "cannot match with ourselves") cor)
           ?.  (~(has bi peers) id culp)
-            ~&(>>> "{<culp>} is not on the guest list for event: {<id>}" cor)
+            ~&  >>>
+              (bran "{<culp>} is not on the guest list for event: {<id>}")
+            cor
           ?:  =(ship.id our.bowl)
             ::  as host
             ::

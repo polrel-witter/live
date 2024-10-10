@@ -50,7 +50,7 @@
         timezone+(ot ~[p+bo q+(se %ud)])
         location+de-unit-cord
         venue-map+de-unit-cord
-        group+ul :: TODO de-group
+        group+de-group
         kind+de-kind
         latch+de-latch
         create-session+(ot dl-session)
@@ -67,7 +67,7 @@
         timezone+(ot ~[p+bo q+(se %ud)])
         location+de-unit-cord
         venue-map+de-unit-cord
-        group+ul  :: TODO de-group
+        group+de-group
         kind+de-kind
         latch+de-latch
         sessions+(op sym ^-($-(json session) (ot dl-session)))
@@ -83,11 +83,12 @@
     ==
   ::
   ++  de-group
-    :: ^-  $-(json group)
-    :: %-  ot:dejs-soft:format
-    :~  p+(se %p)
-        q+(se %tas)
-    ==
+    |^  ^-  $-(json group)
+        (su:dejs-soft:format ;~((glue fas) ship ^sym))
+    ::
+    ++  sym   (se %tas)
+    ++  ship  ;~(pfix sig fed:ag)
+    --
   ::
   ++  dl-session
     :~  title+so
