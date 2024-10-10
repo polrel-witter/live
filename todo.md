@@ -22,8 +22,8 @@ key:
       - change background of menu items
       + clicking a menu item clollapses the menu
       + fixed chevron orientation
-	- Need timeline home button, or back button
-	- Event title should be the only header text at the top of an event page.
+	+ Need timeline home button, or back button
+	+ Event title should be the only header text at the top of an event page.
 	- Hosted by @p (if we have time: include avatar and nickname)
 	- datetimes should be: HH:MM AM/PM (Zone) on Month DD YYYY
 	- Inclue location string on event page

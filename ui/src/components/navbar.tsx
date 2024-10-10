@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 import ProfileDialog from "./profile-dialog"
 import { useEffect, useState } from "react"
 import { Button, buttonVariants } from "./ui/button"
-import { ChevronLeft, ChevronUp, User, } from "lucide-react"
+import { ArrowLeft, ChevronLeft, ChevronUp, User, } from "lucide-react"
 import { cn, flipBoolean } from "@/lib/utils"
 import { Backend, EventAsGuest, Profile } from "@/backend"
 import { SlideDownAndReveal } from "./sliders"
@@ -74,10 +74,12 @@ const NavBar: React.FC<Props> = (
       <NavigationMenuList className="static">
         <NavigationMenuItem className="fixed left-0">
           <Button className="p-3 m-1 rounded-3xl">
-            <User
-              onClick={() => { setOpenProfile(flipBoolean) }}
-              className="w-4 h-4 text-white"
-            />
+            <Link to="/apps/live">
+              <ArrowLeft
+                onClick={() => { setOpenProfile(flipBoolean) }}
+                className="w-4 h-4 text-white"
+              />
+            </Link>
           </Button>
           <ProfileDialog
             onOpenChange={setOpenProfile}
@@ -149,6 +151,22 @@ const NavBar: React.FC<Props> = (
               </NavigationMenuContent>
             </NavigationMenuItem>
         }
+
+        <NavigationMenuItem className="fixed right-0">
+          <Button className="p-3 m-1 rounded-3xl">
+            <User
+              onClick={() => { setOpenProfile(flipBoolean) }}
+              className="w-4 h-4 text-white"
+            />
+          </Button>
+          <ProfileDialog
+            onOpenChange={setOpenProfile}
+            open={openProfile}
+            patp={profile.patp}
+            profileFields={profile}
+            editProfileField={fns.editProfileField}
+          />
+        </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu >
   )
