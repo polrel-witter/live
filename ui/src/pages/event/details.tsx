@@ -51,18 +51,17 @@ const EventDetails: React.FC = () => {
             {/* TODO: add nickname next to patp */}
             <div className={cn([baseTextClass])}> {ship} </div>
           </div>
-          <p className={cn([baseTextClass])}> starts: {formatEventDate(startDate, timezone)} </p>
-          <p className={cn([baseTextClass])}> ends: {formatEventDate(endDate, timezone)} </p>
+          <p className={cn([baseTextClass])}> starts: { startDate ? formatEventDate(startDate, timezone) : "TBD"} </p>
+          <p className={cn([baseTextClass])}> ends: { endDate ? formatEventDate(endDate, timezone) : "TBD"} </p>
           <p className={cn([baseTextClass, "text-center"])}> {description} </p>
           <div className="flex justify-around">
-            <Button className="w-fit-content">
-              {/* if we use these Links without reloadDocument prop set they make
-                cpu use 100% and hang the app*/}
-              <Link to="attendees" reloadDocument >attendees</Link>
-            </Button>
-            <Button className="w-fit-content">
-              <Link to="schedule" reloadDocument >schedule</Link>
-            </Button>
+            <Link to="attendees" >
+              <Button className="w-fit-content">attendees</Button>
+            </Link>
+            <Link to="schedule" >
+              <Button className="w-fit-content">
+                schedule </Button>
+            </Link>
           </div>
         </CardContent>
         <CardFooter className="justify-center">

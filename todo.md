@@ -30,22 +30,23 @@ key:
 	- Viewport changes to make map view consistent with rest of pages on mobile. See if we can pinch/zoom.
 
 ## Bugs
-	- Host needs to see the event and be able to interface with it like guests
-	- Sometimes have to click attendees button more than once to open
-	- Subscription updates don't always automatically appear; e.g. when a new record is added I had to refresh page to see it.
-	- PWA was working initally, but eventually got 404 error after clicking around a bit. This hapend when i
+	x Host needs to see the event and be able to interface with it like guests
+      - skip for now
+	+ Sometimes have to click attendees button more than once to open
+	? Subscription updates don't always automatically appear; e.g. when a new record is added I had to refresh page to see it.
+	? PWA was working initally, but eventually got 404 error after clicking around a bit. This hapend when i
 	- "No internet connection" message when PWA is offline
     	- Remove match functionality for ourselves
-	- Profile button doesn't work within event home page; does work on timeline page
+	+ Profile button doesn't work within event home page; does work on timeline page
 
 ## Features
     + test schedule with live data
 	- Tinderfy the matching feature
 	- Button to open group chat and DM; no deep linking, just need to open the corresponding URL for the Tlon app
-		- Path for group: https://<ship url>/apps/groups/groups/<group host ship>/<group name>/channels/chat/<chat channel id>
-		- Path for dm: https://<ship url>/apps/groups/dm/<target ship>
-	- Sigil rendering (~polrel looking into examples from other apps to understand how to implement)
-	- Avatar rendering (i.e. the %avatar value from the profile object)
+		- Path for group: https://<ship url>/apps/groups/groups/<group host ship>/<group name>/channels
+        - Path for dm: https://<ship url>/apps/groups/dm/<target ship>
+	+ Sigil rendering (~polrel looking into examples from other apps to understand how to implement)
+	+ Avatar rendering (i.e. the %avatar value from the profile object)
 	- In-app instructions for installing PWA
 
 
