@@ -44,7 +44,7 @@ key:
 	- Tinderfy the matching feature
 	- Button to open group chat and DM; no deep linking, just need to open the corresponding URL for the Tlon app
 		- Path for group: https://<ship url>/apps/groups/groups/<group host ship>/<group name>/channels
-        - Path for dm: https://<ship url>/apps/groups/dm/<target ship>
+		- Path for dm: https://<ship url>/apps/groups/dm/<target ship>
 	+ Sigil rendering (~polrel looking into examples from other apps to understand how to implement)
 	+ Avatar rendering (i.e. the %avatar value from the profile object)
 	- In-app instructions for installing PWA
