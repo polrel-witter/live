@@ -1,8 +1,27 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { TZDate } from "@date-fns/tz"
+import { format } from "date-fns"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 export function flipBoolean(b: boolean) { return !b }
+
+// HH:MM AM/PM (Zone) on Month DD YYYY
+export function formatEventDate(d: Date, timezone: string,) : string {
+  const t = new TZDate(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate(),
+    d.getHours(),
+    d.getMinutes(),
+    d.getSeconds(),
+    d.getMilliseconds(),
+    timezone,
+  )
+  const fmt =  format(t, `HH:MM aa (OO) 'on' LLLL Do yyyy`)
+  // console.log("f", fmt)
+  return fmt
+}

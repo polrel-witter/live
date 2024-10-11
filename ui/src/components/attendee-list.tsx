@@ -1,13 +1,12 @@
 import { Card, CardContent, } from "@/components/ui/card"
 import { Profile, Attendee } from "@/backend"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Plus, Ellipsis, X, Check, FileQuestion } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { cn, flipBoolean } from "@/lib/utils"
 import { SlideDownAndReveal, SlideRightAndReveal } from "./sliders"
 import ProfileCard from "./profile-card"
-import UrbitSigil from "@urbit/sigil-js"
+import Sigil from "./sigil"
 
 const _connectionsButton: React.FC<{
   attendee: Attendee
@@ -92,9 +91,6 @@ const ListItem: React.FC<{
   const [showProfile, setShowProfile] = useState(false)
   const toggleProfile = () => setShowProfile(flipBoolean)
 
-  const isMoon = attendee.patp.length > 14
-  const isComet = attendee.patp.length > 28
-
   return (
     <li >
       <Card className="hover:bg-stone-100" onClick={() => toggleProfile()} >
@@ -102,22 +98,16 @@ const ListItem: React.FC<{
           className={
             "px-6 py-3 content-center"}>
           <div className="flex gap-4 gap-x-10 items-center pb-1">
-            <Avatar>
-              {
-                isMoon || isComet
-                  ?
-                  <AvatarFallback className="text-xs bg-stone-200">{isMoon ? "moon" : "comet"}</AvatarFallback>
-                  :
-                  <UrbitSigil {...{
-                    point: `${attendee.patp}`, // or 'zod'
-                    size: 348,
-                    background: '#010101',
-                    foreground: 'yellow',
-                    detail: 'none',
-                    space: 'none',
-                  }} />
-              }
-            </Avatar>
+            <Sigil
+              avatarUrl={(profile && profile.avatar !== "" ? profile.avatar ?? undefined : undefined)}
+              sigilConfig={{
+                point: `${attendee.patp}`, // or 'zod'
+                size: 348,
+                background: '#010101',
+                foreground: 'yellow',
+                detail: 'none',
+                space: 'none',
+              }} />
             <div className="flex flex-col items-center gap-1 w-2xl">
               <p className="text-sm">{attendee.patp}</p>
             </div>

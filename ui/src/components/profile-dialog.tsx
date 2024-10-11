@@ -24,6 +24,7 @@ const ProfileDialog: React.FC<Props> = ({ open, onOpenChange, profileFields, edi
       <Dialog
         open={open}
         onOpenChange={onOpenChange}
+        aria-description="a dialog containing a form to edit profile"
       >
         <DialogContent
           aria-description="Contains profile fields and a form to update them"

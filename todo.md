@@ -24,8 +24,8 @@ key:
       + fixed chevron orientation
 	+ Need timeline home button, or back button
 	+ Event title should be the only header text at the top of an event page.
-	- Hosted by @p (if we have time: include avatar and nickname)
-	- datetimes should be: HH:MM AM/PM (Zone) on Month DD YYYY
+	+ Hosted by @p (if we have time: include avatar and nickname)
+	+ datetimes should be: HH:MM AM/PM (Zone) on Month DD YYYY
 	- Inclue location string on event page
 	- Viewport changes to make map view consistent with rest of pages on mobile. See if we can pinch/zoom.
 
