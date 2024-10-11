@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@date-fns/tz": "^1.1.2",
-    "@date-fns/utc": "^2.1.0",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-dialog": "^1.1.1",
