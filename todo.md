@@ -26,7 +26,7 @@ key:
 	+ Event title should be the only header text at the top of an event page.
 	+ Hosted by @p (if we have time: include avatar and nickname)
 	+ datetimes should be: HH:MM AM/PM (Zone) on Month DD YYYY
-	- Inclue location string on event page
+	+ Inclue location string on event page
 	- Viewport changes to make map view consistent with rest of pages on mobile. See if we can pinch/zoom.
 
 ## Bugs
@@ -39,7 +39,7 @@ key:
 	- Profile button doesn't work within event home page; does work on timeline page
 
 ## Features
-    - test schedule with live data
+    + test schedule with live data
 	- Tinderfy the matching feature
 	- Button to open group chat and DM; no deep linking, just need to open the corresponding URL for the Tlon app
 		- Path for group: https://<ship url>/apps/groups/groups/<group host ship>/<group name>/channels/chat/<chat channel id>

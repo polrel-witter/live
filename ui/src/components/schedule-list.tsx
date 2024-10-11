@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/card"
 
 import { Session } from "@/backend"
-import { defaultMaxListeners } from "events"
+import { compareAsc } from "date-fns"
+import { formatSessionTime } from "@/lib/utils"
 
 function formatSessionPanel(panel: string[]): string {
   switch (panel.length) {
@@ -32,10 +33,15 @@ function makeSessionMarkup(session: Session) {
             {session.title}
           </CardTitle>
           <CardDescription className="italics">
-            held by {session.mainSpeaker}
-            <br />
+            {
+              session.mainSpeaker !== ""
+                ?
+                <p> held by {session.mainSpeaker} </p>
+                :
+                ""
+            }
             {session.panel.length !== 0 ? <span className="text-sm">{formatSessionPanel(session.panel)}<br /></span> : ""}
-            <span>from {session.startTime.toTimeString()} to {session.endTime.toTimeString()}</span>
+            <span>from {formatSessionTime(session.startTime)} to {formatSessionTime(session.endTime)}</span>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -52,7 +58,9 @@ function makeSessionMarkup(session: Session) {
 export default function SessionList(props: { sessions: Session[] }) {
   return (
     <ul className="grid gap-6">
-      {props.sessions.map(makeSessionMarkup)}
+      {props.sessions
+        .sort((a, b) => compareAsc(a.startTime, b.startTime))
+        .map(makeSessionMarkup)}
     </ul>
   )
 }
