@@ -107,18 +107,3 @@ export function EventIndex(props: { backend: Backend }) {
       ''
   );
 }
-
-// <IndexContext.Provider value={indexCtx}>
-//   <EventContext.Provider value={eventContext}>
-//     <div className="grid size-full" >
-//       <NavBar
-//         eventName={eventContext!.details.id.name}
-//         host={eventContext!.details.id.ship}
-//         profile={indexCtx!.profile}
-//         patp={window.ship}
-//         editProfileField={props.backend.editProfileField}
-//       />
-//       <Outlet />
-//     </div>
-//   </EventContext.Provider>
-// </IndexContext.Provider> 

@@ -119,26 +119,11 @@ type Session = {
   endTime: Date;
 }
 
-type Event = {
-  id: EventId;
-  status: EventStatus;  // we also have invitation date if we want
-  location: string;
-  startDate: Date;
-  endDate: Date;
-  timezone: string;
-  description: string;
-  group: string;
-  kind: "public" | "private" | "secret";
-  latch: "open" | "closed" | "over";
-  sessions: Session[]
-}
-
-
 type EventDetails = {
   id: EventId;
   location: string;
-  startDate: Date;
-  endDate: Date;
+  startDate: Date | null;
+  endDate: Date | null;
   timezone: string;
   description: string;
   group: string;
@@ -160,12 +145,11 @@ type EventAsGuest = {
 }
 
 
-const emptyEventDetails: Event = {
+const emptyEventDetails: EventDetails = {
   id: {
     ship: "",
     name: "",
   },
-  status: "invited",
   location: "",
   startDate: new Date(0),
   endDate: new Date(0),
@@ -247,6 +231,7 @@ const backendInfo1Schema = z.object({
 
 function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof backendInfo1Schema>): EventDetails {
   const {
+    // TODO: if these are null, display 'TBD'
     moment: { start, end },
     about,
     location: _location,
@@ -276,8 +261,8 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
   return {
     id: eventId,
     description: (about ? about : "no event description"),
-    startDate: (start ? new Date(start) : new Date(0)),
-    endDate: (end ? new Date(end) : new Date(0)),
+    startDate: (start ? new Date(start) : null),
+    endDate: (end ? new Date(end) : null),
     location: (_location ? _location : "no location"),
     group: (_group ? _group : "no group"),
     timezone: timezoneString,
@@ -824,4 +809,4 @@ function newBackend(api: Urbit, ship: string): Backend {
 
 export { emptyEventAsGuest, emptyProfile, emptyEventAsHost, newBackend, eventIdsEqual }
 
-export type { EventId, Event, EventStatus, MatchStatus, EventAsGuest, EventAsHost, EventDetails, Session, Attendee, Profile, LiveUpdateEvent, Backend }
+export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, EventDetails, Session, Attendee, Profile, LiveUpdateEvent, Backend }
