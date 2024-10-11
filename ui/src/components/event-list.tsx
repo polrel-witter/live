@@ -9,10 +9,11 @@ import {
 
 import { EventDetails } from "@/backend"
 import { Link } from "react-router-dom"
+import { formatEventDate } from "@/lib/utils"
 
 const ListItem: React.FC<
   { details: EventDetails }
-> = ({ details: { id: { ship, name }, startDate, location, ...restDetails } }) => {
+> = ({ details: { id: { ship, name }, startDate, timezone, location, ...restDetails } }) => {
   // TODO: on mobile it's not clear that you can click the title to navigate
   // forward, add an icon in a button
   return (
@@ -21,13 +22,13 @@ const ListItem: React.FC<
       <Link to={`event/${ship}/${name}`}>
         <Card>
           <CardHeader>
-            <CardTitle className="font-medium hover:font-bold">
+            <CardTitle className="font-bold">
               {name}
             </CardTitle>
             <CardDescription className="italics">hosted by {ship}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>Starts on {startDate.toDateString()}</p>
+            <p>Starts on {formatEventDate(startDate, timezone)}</p>
             <p>location: {location}</p>
           </CardContent>
           <CardFooter>

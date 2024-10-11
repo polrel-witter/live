@@ -1,14 +1,16 @@
 import { createContext } from "react";
-import { Session, Profile, Attendee, EventAsGuest } from "@/backend";
+import { Session, Profile, Attendee, EventAsGuest, emptyProfile } from "@/backend";
 
 interface EventCtx {
+  fetched: boolean
   event: EventAsGuest
-  attendees: Attendee[];
-  profiles: Profile[];
+  attendees: Attendee[]
+  profiles: Profile[]
 }
 
 function newEmptyCtx(): EventCtx {
   return {
+    fetched: false,
     event: {
       details: {
         id: {

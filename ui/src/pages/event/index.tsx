@@ -8,7 +8,6 @@ import { Backend, emptyEventAsGuest, EventId, eventIdsEqual, Profile } from '@/b
 
 import { GlobalContext, GlobalCtx } from '@/root';
 import { EventContext, EventCtx, newEmptyCtx } from './context';
-import { profile } from 'console';
 
 interface EventParams {
   hostShip: string,
@@ -52,6 +51,7 @@ async function buildContextData(
   })
 
   return {
+    fetched: true,
     event: evt,
     attendees: attendees,
     profiles: profiles,
@@ -88,19 +88,23 @@ export function EventIndex(props: { backend: Backend }) {
 
   // add skeleton component while this loads
   return (
-    <EventContext.Provider value={eventContext}>
-      <div className="grid size-full" >
-        <NavBar
-          fetchedContext={globalContext.fetched}
-          event={eventContext.event}
-          profile={globalContext.profile}
-          editProfileField={props.backend.editProfileField}
-          register={props.backend.register}
-          unregister={props.backend.unregister}
-        />
-        <Outlet />
-      </div>
-    </EventContext.Provider>
+    eventContext.fetched
+      ?
+      <EventContext.Provider value={eventContext}>
+        <div className="grid size-full" >
+          <NavBar
+            fetchedContext={globalContext.fetched}
+            event={eventContext.event}
+            profile={globalContext.profile}
+            editProfileField={props.backend.editProfileField}
+            register={props.backend.register}
+            unregister={props.backend.unregister}
+          />
+          <Outlet />
+        </div>
+      </EventContext.Provider>
+      :
+      ''
   );
 }
 

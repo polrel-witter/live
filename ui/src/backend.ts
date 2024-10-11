@@ -91,6 +91,22 @@ type Profile = {
   phone: string | null;
 }
 
+const emptyProfile: Profile = {
+  patp: "",
+  // these are always fetched from tlon
+  avatar: null,
+  bio: null,
+  nickname: null,
+  // these are available only when we match
+  x: null,
+  ensDomain: null,
+  email: null,
+  github: null,
+  telegram: null,
+  signal: null,
+  phone: null,
+}
+
 type Session = {
   title: string;
   mainSpeaker: string;
@@ -228,6 +244,11 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
     ...infoRest
   } = info1
 
+  const timezoneSign = timezone.p ? "+" : "-"
+  const timezoneNumber = timezone.q > 9 ? `${timezone.q}` : `0${timezone.q}`
+
+  const timezoneString = `${timezoneSign}${timezoneNumber}:00`
+
   return {
     id: eventId,
     description: (about ? about : "no event description"),
@@ -235,7 +256,7 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
     endDate: (end ? new Date(end) : new Date(0)),
     location: (_location ? _location : "no location"),
     group: (_group ? _group : "no group"),
-    timezone: "TBD",
+    timezone: timezoneString,
     sessions: [
       {
         title: "first talk",
@@ -805,6 +826,6 @@ function newBackend(api: Urbit, ship: string): Backend {
   }
 }
 
-export { emptyEventAsGuest, emptyEventAsHost, newBackend, eventIdsEqual }
+export { emptyEventAsGuest, emptyProfile, emptyEventAsHost, newBackend, eventIdsEqual }
 
 export type { EventId, Event, EventStatus, MatchStatus, EventAsGuest, EventAsHost, EventDetails, Session, Attendee, Profile, LiveUpdateEvent, Backend }

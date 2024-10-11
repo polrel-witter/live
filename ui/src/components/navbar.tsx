@@ -45,18 +45,12 @@ const NavBar: React.FC<Props> = (
     }
   }, []);
 
-  // TODO: when i have global context do away with window.ship here
-  const showGuestList = event.status === "registered" || event.status === "attended" || eventHost === window.ship
   const isMobile = width <= 768;
 
   const eventRoutingLinks = [
     {
       to: `/apps/live/event/${eventHost}/${eventName}`,
       text: "event home"
-    },
-    {
-      to: "attendees",
-      text: "attendees"
     },
     {
       to: "schedule",
@@ -71,6 +65,17 @@ const NavBar: React.FC<Props> = (
       text: "connections"
     },
   ]
+
+  const showGuestList = eventStatus === "registered"
+    || eventStatus === "attended"
+    || eventHost === profile.patp
+
+  if (showGuestList) {
+    eventRoutingLinks.push({
+      to: "attendees",
+      text: "guest list"
+    })
+  }
 
   const editProfile = async (fields: Record<string, string>): Promise<void> => {
     const _ = await Promise.all(Object
@@ -89,14 +94,14 @@ const NavBar: React.FC<Props> = (
     <NavigationMenu >
       <NavigationMenuList className="static">
         <NavigationMenuItem className="fixed left-0">
-          <Button className="p-3 m-1 rounded-3xl">
-            <Link to="/apps/live">
+          <Link to="/apps/live">
+            <Button className="p-3 m-1 rounded-3xl">
               <ArrowLeft
                 onClick={() => { setOpenProfile(flipBoolean) }}
                 className="w-4 h-4 text-white"
               />
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         </NavigationMenuItem>
         <NavigationMenuItem className="fixed left-12">
           <EventStatusButtons
@@ -161,9 +166,10 @@ const NavBar: React.FC<Props> = (
         }
 
         <NavigationMenuItem className="fixed right-0 sm:right-10">
-          <Button className="p-3 m-1 rounded-3xl">
+          <Button
+            onClick={() => { setOpenProfile(flipBoolean) }}
+            className="p-3 m-1 rounded-3xl">
             <User
-              onClick={() => { setOpenProfile(flipBoolean) }}
               className="w-4 h-4 text-white"
             />
           </Button>
