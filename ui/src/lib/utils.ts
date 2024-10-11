@@ -10,7 +10,7 @@ export function cn(...inputs: ClassValue[]) {
 export function flipBoolean(b: boolean) { return !b }
 
 // HH:MM AM/PM (Zone) on Month DD YYYY
-export function formatEventDate(d: Date, timezone: string,) : string {
+export function formatEventDate(d: Date, timezone: string,): string {
   const t = new TZDate(
     d.getFullYear(),
     d.getMonth(),
@@ -21,7 +21,12 @@ export function formatEventDate(d: Date, timezone: string,) : string {
     d.getMilliseconds(),
     timezone,
   )
-  const fmt =  format(t, `HH:MM aa (OO) 'on' LLLL Do yyyy`)
+  const fmt = format(t, `HH:MM aa (OO) 'on' LLLL Do yyyy`)
   // console.log("f", fmt)
+  return fmt
+}
+
+export function formatSessionTime(d: Date): string {
+  const fmt = format(d, `HH:MM aa`)
   return fmt
 }

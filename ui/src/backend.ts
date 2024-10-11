@@ -1,4 +1,5 @@
 import Urbit from "@urbit/http-api";
+import { title } from "process";
 
 import { z, ZodError } from "zod" // this is an object validation library
 
@@ -109,6 +110,7 @@ const emptyProfile: Profile = {
 
 type Session = {
   title: string;
+  // backend doesn't send this yet
   mainSpeaker: string;
   panel: string[];
   location: string;
@@ -219,6 +221,14 @@ const eventLatchSchema = z.enum([
 
 const timeSchema = z.number()
 
+const sessionSchema = z.object({
+  title: z.string(),
+  location: z.string(),
+  moment: z.object({ start: z.number(), end: z.number() }),
+  about: z.string(),
+  panel: z.string()
+})
+
 const backendInfo1Schema = z.object({
   about: z.string().nullable(),
   group: z.string().nullable(),
@@ -226,7 +236,9 @@ const backendInfo1Schema = z.object({
   latch: eventLatchSchema,
   location: z.string().nullable(),
   moment: z.object({ start: timeSchema.nullable(), end: timeSchema.nullable() }),
-  sessions: z.object({}).catchall(z.any()),
+  sessions: z.record(z.object({
+    session: sessionSchema
+  })),
   timezone: z.object({ p: z.boolean(), q: z.number() }),
   title: z.string(),
   ["venue-map"]: z.string().nullable(),
@@ -249,6 +261,18 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
 
   const timezoneString = `${timezoneSign}${timezoneNumber}:00`
 
+  const sessions = Object.values(_sessions).map(({ session }): Session => {
+    return {
+      title: session.title,
+      mainSpeaker: "",
+      location: session.location,
+      about: session.about,
+      panel: session.panel.split(" "),
+      startTime: new Date(session.moment.start),
+      endTime: new Date(session.moment.end)
+    }
+  })
+
   return {
     id: eventId,
     description: (about ? about : "no event description"),
@@ -257,35 +281,7 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
     location: (_location ? _location : "no location"),
     group: (_group ? _group : "no group"),
     timezone: timezoneString,
-    sessions: [
-      {
-        title: "first talk",
-        mainSpeaker: "~sampel-palnet",
-        panel: [],
-        location: "anywhere",
-        about: "idk just vibes",
-        startTime: new Date(1995, 11, 17, 3, 13, 37),
-        endTime: new Date(1995, 11, 17, 3, 16, 20),
-      },
-      {
-        title: "second talk",
-        mainSpeaker: "~sampel-palnet",
-        panel: ["~sampel-palnet", "~sampel-palnet"],
-        location: "anywhere",
-        about: "idk just vibes",
-        startTime: new Date(1995, 11, 17, 3, 13, 37),
-        endTime: new Date(1995, 11, 17, 3, 16, 20),
-      },
-      {
-        title: "third talk",
-        mainSpeaker: "~sampel-palnet",
-        panel: ["~sampel-palnet", "~sampel-palnet", "~sampel-palnet"],
-        location: "anywhere",
-        about: "idk just vibes",
-        startTime: new Date(1995, 11, 18, 3, 13, 37),
-        endTime: new Date(1995, 11, 18, 3, 16, 20),
-      }
-    ],
+    sessions: sessions,
     ...infoRest
   }
 }
