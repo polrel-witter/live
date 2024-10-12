@@ -129,6 +129,7 @@ type EventDetails = {
   group: string;
   kind: "public" | "private" | "secret";
   latch: "open" | "closed" | "over";
+  venueMap: string;
   sessions: Session[]
 }
 
@@ -158,6 +159,7 @@ const emptyEventDetails: EventDetails = {
   kind: "public",
   group: "",
   latch: "open",
+  venueMap: "",
   sessions: []
 }
 
@@ -238,6 +240,7 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
     timezone,
     group: _group,
     sessions: _sessions,
+    ["venue-map"]: venueMap,
     ...infoRest
   } = info1
 
@@ -267,6 +270,7 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
     group: (_group ? _group : "no group"),
     timezone: timezoneString,
     sessions: sessions,
+    venueMap: venueMap ?? "",
     ...infoRest
   }
 }

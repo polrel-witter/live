@@ -30,3 +30,12 @@ export function formatSessionTime(d: Date): string {
   const fmt = format(d, `HH:MM aa`)
   return fmt
 }
+
+export function isMoon(patp: string): boolean {
+  return patp.length > 14
+}
+
+
+export function isComet(patp: string): boolean {
+  return patp.length > 28
+}
