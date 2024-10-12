@@ -3,7 +3,7 @@
   info+'event coordination'
   color+0x1a.1a1a
   version+[2 0 0]
-  website+'https://x.com/polrel_witter'
+  website+'https://zyx.polrel-witter.xyz/home'
   license+'MIT'
   base+'live'
   glob-ames+[~sondev-polrel-witter 0v0]
