@@ -91,7 +91,7 @@ const NavBar: React.FC<Props> = (
   }
 
   return (
-    <NavigationMenu >
+    <NavigationMenu className="fixed border-b-2 w-full bg-white">
       <NavigationMenuList className="static">
         <NavigationMenuItem className="fixed left-0">
           <Link to="/apps/live">

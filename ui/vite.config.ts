@@ -58,6 +58,18 @@ export default defineConfig(({ mode }) => {
                 },
                 cacheableResponse: { statuses: [0, 200], }
               },
+            },
+            {
+              urlPattern: ({ url, sameOrigin: _sameOrigin }) => url.pathname.match(/^.*\.(jpg|png){1}$/i),
+              handler: "NetworkFirst",
+              options: {
+                cacheName: "scry-cache",
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
+                },
+                cacheableResponse: { statuses: [0, 200], }
+              },
             }
           ],
         },

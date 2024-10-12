@@ -3,7 +3,7 @@ import { EventContext } from "./context";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import Sigil from "@/components/sigil";
-import { cn, formatEventDate } from "@/lib/utils";
+import { cn, formatEventDate, isComet, isMoon } from "@/lib/utils";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 
 
@@ -20,7 +20,7 @@ const EventDetails: React.FC = () => {
     },
   } = ctx
 
-  const baseTextClass = "text-md md:text-xl"
+  const baseTextClass = "text-sm md:text-xl"
 
   return (
     <div className="space-y-6 py-20 text-center">
@@ -30,29 +30,31 @@ const EventDetails: React.FC = () => {
         </CardHeader>
         <CardContent
           className="grid items-justify gap-y-6" >
-          <div className="flex items-center justify-center">
+          <div className="flex-row md:flex items-center justify-center">
             <div className={cn([baseTextClass])}> hosted by </div>
-            {(
-              ctx.fetched
-                ?
-                <Sigil
-                  className="mt-[2px] mx-2 w-7 h-7 object-contain "
-                  sigilConfig={{
-                    point: `${ship}`, // or 'zod'
-                    size: 348,
-                    background: '#010101',
-                    foreground: 'yellow',
-                    detail: 'none',
-                    space: 'none',
-                  }} />
-                :
-                ''
-            )}
-            {/* TODO: add nickname next to patp */}
-            <div className={cn([baseTextClass])}> {ship} </div>
+            <div className="flex items-center justify-center mt-2 md:m-0">
+              {(
+                ctx.fetched
+                  ?
+                  <Sigil
+                    className="mx-2 w-5 h-5 md:w-7 md:h-7 object-contain "
+                    sigilConfig={{
+                      point: `${ship}`, // or 'zod'
+                      size: 348,
+                      background: '#010101',
+                      foreground: 'yellow',
+                      detail: 'none',
+                      space: 'none',
+                    }} />
+                  :
+                  ''
+              )}
+              {/* TODO: add nickname next to patp */}
+              <div className={cn([baseTextClass], {"text-xs": isMoon(ship) || isComet(ship)})}> {ship} </div>
+            </div>
           </div>
-          <p className={cn([baseTextClass])}> starts: { startDate ? formatEventDate(startDate, timezone) : "TBD"} </p>
-          <p className={cn([baseTextClass])}> ends: { endDate ? formatEventDate(endDate, timezone) : "TBD"} </p>
+          <p className={cn([baseTextClass])}> starts: {startDate ? formatEventDate(startDate, timezone) : "TBD"} </p>
+          <p className={cn([baseTextClass])}> ends: {endDate ? formatEventDate(endDate, timezone) : "TBD"} </p>
           <p className={cn([baseTextClass, "text-center"])}> {description} </p>
           <div className="flex justify-around">
             <Link to="attendees" >

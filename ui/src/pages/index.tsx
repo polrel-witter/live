@@ -87,7 +87,7 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
 
   return (
     <div>
-      <NavigationMenu >
+      <NavigationMenu className="fixed border-b-2 w-full bg-white">
         <NavigationMenuList>
           <NavigationMenuItem className="fixed left-0">
             <Button
@@ -111,7 +111,7 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
 
       <div className="grid justify-center w-full space-y-6 py-20 text-center">
         <h1 className="text-3xl italic">events</h1>
-        <Tabs defaultValue="eventsAsGuest" className="w-[400px]">
+        <Tabs defaultValue="eventsAsGuest">
           <TabsList>
             <TabsTrigger value="eventsAsHost">you're hosting</TabsTrigger>
             <TabsTrigger value="eventsAsGuest">you can participate</TabsTrigger>

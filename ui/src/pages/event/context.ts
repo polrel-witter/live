@@ -17,6 +17,7 @@ function newEmptyCtx(): EventCtx {
           ship: "",
           name: ""
         },
+        venueMap: "",
         location: "",
         startDate: new Date(0),
         endDate: new Date(0),

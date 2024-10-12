@@ -27,7 +27,8 @@ key:
 	+ Hosted by @p (if we have time: include avatar and nickname)
 	+ datetimes should be: HH:MM AM/PM (Zone) on Month DD YYYY
 	+ Inclue location string on event page
-	- Viewport changes to make map view consistent with rest of pages on mobile. See if we can pinch/zoom.
+	+ Viewport changes to make map view consistent with rest of pages on mobile. See if we can pinch/zoom.
+      + disabled pinch zoom by default on all pages, enabling it programmatically in map page
 
 ## Bugs
 	x Host needs to see the event and be able to interface with it like guests
