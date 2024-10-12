@@ -677,9 +677,6 @@
   ::
   ++  host-call
     ^-  ?
-    =;  ver=?
-      ?:  ver  &
-      ~&(>>> (bran "bad call on event: {<id>}") |)
     ?&  =(src our):bowl
         =(our.bowl ship.id)
     ==
