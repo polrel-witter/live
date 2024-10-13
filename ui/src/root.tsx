@@ -72,14 +72,23 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
       onEvent: (updateEvent: LiveUpdateEvent) => {
         // TODO: do we get updates on host events too?
         setCtx(({ eventsAsGuest: oldEventsAsGuest, ...restCtx }) => {
+          const maybeIdx = oldEventsAsGuest
+            .map((evt) => evt.details.id)
+            .findIndex((oldId) => eventIdsEqual(oldId, updateEvent.event.details.id))
+
+          if (maybeIdx === -1) {
+            return {
+              eventsAsGuest: [...oldEventsAsGuest, updateEvent.event],
+              ...restCtx
+            }
+          }
+
           return {
-            eventsAsGuest: oldEventsAsGuest
-              .map((evt) => {
-                if (eventIdsEqual(updateEvent.event.details.id, evt.details.id)) {
-                  return updateEvent.event
-                }
-                return evt
-              }), ...restCtx
+            eventsAsGuest: [
+              ...oldEventsAsGuest.slice(0, maybeIdx),
+              ...oldEventsAsGuest.slice(maybeIdx + 1, oldEventsAsGuest.length - 1),
+              updateEvent.event],
+            ...restCtx
           }
 
         })
