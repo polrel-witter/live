@@ -20,27 +20,23 @@ const ProfileDialog: React.FC<Props> = ({ open, onOpenChange, profileFields, edi
   // TODO: add disclaimer somewhere that explains how this info is shared
 
   return (
-    <div>
-      <Dialog
-        open={open}
-        onOpenChange={onOpenChange}
-        aria-description="a dialog containing a form to edit profile"
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      aria-description="a dialog containing a form to edit profile"
+    >
+      <DialogContent
+        aria-description="Contains profile fields and a form to update them"
       >
-        <DialogContent
-          aria-description="Contains profile fields and a form to update them"
-        >
-          <DialogHeader>
-            <DialogTitle>Your Profile</DialogTitle>
-            <ProfileForm
-              profileFields={profileFields}
-              editProfile={editProfile}
-            />
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-
-    </div>
-
+        <DialogHeader>
+          <DialogTitle>Your Profile</DialogTitle>
+          <ProfileForm
+            profileFields={profileFields}
+            editProfile={editProfile}
+          />
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
   )
 }
 

@@ -126,7 +126,7 @@ type EventDetails = {
   endDate: Date | null;
   timezone: string;
   description: string;
-  group: string;
+  group: { ship: string, name: string } | null;
   kind: "public" | "private" | "secret";
   latch: "open" | "closed" | "over";
   venueMap: string;
@@ -157,7 +157,7 @@ const emptyEventDetails: EventDetails = {
   description: "",
   timezone: "",
   kind: "public",
-  group: "",
+  group: null,
   latch: "open",
   venueMap: "",
   sessions: []
@@ -217,7 +217,10 @@ const sessionSchema = z.object({
 
 const backendInfo1Schema = z.object({
   about: z.string().nullable(),
-  group: z.string().nullable(),
+  group: z.object({
+    ship: z.string(),
+    term: z.string(),
+  }).nullable(),
   kind: eventVisibilitySchema,
   latch: eventLatchSchema,
   location: z.string().nullable(),
@@ -238,7 +241,7 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
     about,
     location: _location,
     timezone,
-    group: _group,
+    group: group,
     sessions: _sessions,
     ["venue-map"]: venueMap,
     ...infoRest
@@ -256,10 +259,13 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
       location: session.location,
       about: session.about,
       panel: session.panel.split(" "),
-      startTime: new Date(session.moment.start),
-      endTime: new Date(session.moment.end)
+      // multiplying by 1000 since backend sends unix seconds
+      startTime: new Date(session.moment.start * 1000),
+      endTime: new Date(session.moment.end * 1000)
     }
   })
+
+  console.log("start:", start, end)
 
   return {
     id: eventId,
@@ -267,7 +273,7 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
     startDate: (start ? new Date(start) : null),
     endDate: (end ? new Date(end) : null),
     location: (_location ? _location : "no location"),
-    group: (_group ? _group : "no group"),
+    group: (group ? { ship: group.ship, name: group.term } : null),
     timezone: timezoneString,
     sessions: sessions,
     venueMap: venueMap ?? "",
