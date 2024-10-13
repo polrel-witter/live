@@ -44,7 +44,7 @@ const EventList: React.FC<
   { details: EventDetails[] }
 > = ({ details: events }) => {
   return (
-    <ul>
+    <ul className="mx-4 md:m-0">
       {/* this works, but is barely readable */}
       {/* {events.map((evt) => <ListItem {...{ event: evt, ...fns }} />)} */}
       {events.map((evt) =>

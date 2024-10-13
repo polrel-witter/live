@@ -24,7 +24,7 @@ function newEmptyCtx(): EventCtx {
         description: "",
         timezone: "",
         kind: "public",
-        group: "",
+        group: null,
         latch: "open",
         sessions: [] as Session[],
       },

@@ -16,7 +16,7 @@ const EventDetails: React.FC = () => {
 
   const {
     event: {
-      details: { id: { ship, name }, startDate, timezone, endDate, location, description }, ...rest
+      details: { id: { ship, name }, group, startDate, timezone, endDate, location, description }, ...rest
     },
   } = ctx
 
@@ -50,11 +50,18 @@ const EventDetails: React.FC = () => {
                   ''
               )}
               {/* TODO: add nickname next to patp */}
-              <div className={cn([baseTextClass], {"text-xs": isMoon(ship) || isComet(ship)})}> {ship} </div>
+              <div className={cn([baseTextClass], { "text-xs": isMoon(ship) || isComet(ship) })}> {ship} </div>
             </div>
           </div>
           <p className={cn([baseTextClass])}> starts: {startDate ? formatEventDate(startDate, timezone) : "TBD"} </p>
           <p className={cn([baseTextClass])}> ends: {endDate ? formatEventDate(endDate, timezone) : "TBD"} </p>
+          {
+            group
+              ?
+              <p className={cn([baseTextClass])}> event group: {`${group.ship}/${group.name}`} </p>
+              :
+              ''
+          }
           <p className={cn([baseTextClass, "text-center"])}> {description} </p>
           <div className="flex justify-around">
             <Link to="attendees" >
