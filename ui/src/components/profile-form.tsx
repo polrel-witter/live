@@ -102,11 +102,13 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfile }) => {
 
   // add static fields from tlon, saying we're importing from tlon
   return (
-    <Form  {...form}>
+    <Form
+      {...form}
+    >
       <form
         aria-description="A form containing updatable profile entries"
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4"
+        className="space-y-[2px] md:space-y-4"
       >
         {fields.map(([fieldName, placeholder]) => {
           return (
@@ -132,7 +134,7 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfile }) => {
             />
           )
         })}
-        <div className="pt-8 w-full flex justify-center">
+        <div className="pt-4 md:pt-8 w-full flex justify-center">
           <SpinningButton
             spin={spin}
             type="submit"

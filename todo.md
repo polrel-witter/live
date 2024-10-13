@@ -50,11 +50,11 @@ key:
   - event description paragraphs should be aligned margin-left, instead of centered
 
 ### Before launch (in order of priority)
-  - start and end times on an event page are wrong. seems like it may still have mock data popluated for these fields.
-  - session dates also aren't correct. dates in the drop down and within the sessions themselves seem to still have mock data.
-  - events/records aren't rendered and we get the console error at the link below when we populate the group field for an event. the group field will arrive as either `null` or an object shaped like '{'ship':'~zod', 'term':'my-event'}'
+  + start and end times on an event page are wrong. seems like it may still have mock data popluated for these fields.
+  + session dates also aren't correct. dates in the drop down and within the sessions themselves seem to still have mock data.
+  + events/records aren't rendered and we get the console error at the link below when we populate the group field for an event. the group field will arrive as either `null` or an object shaped like '{'ship':'~zod', 'term':'my-event'}'
       - https://zyx.polrel-witter.xyz/scratch/view/bi4sj
-  - on mobile: can't scroll to view all profile fields. on home screen i can't exit the view without reloading the page.
+  + on mobile: can't scroll to view all profile fields. on home screen i can't exit the view without reloading the page.
 
 ### After launch (in order of priority)
   - There's brief delay when clicking into an event which feels like a crash because we get a blank page until the data appears. It's probably the time it takes for the scry to retrieve the data, but the user should know the app is still functioning. I think we should add a loading spinner in the middle of the page, or somewhere where it's obvious, so the user knows the app is doing something. This should appear anytime the frontend is scrying for data or knows it's waiting for an update from the backend (e.g. poking another ship and waiting for some data change).
