@@ -153,14 +153,15 @@
 ::  $demand: scry api
 ::
 +$  demand
-  $%  [%event-exists p=?]                      :: does an event exist?
-      [%record-exists p=?]                     :: does a record exist?
-      [%event p=(unit event-1)]                :: an event
-      [%record p=(unit record-1)]              :: a record
-      [%counts p=(map _-.status @ud)]          :: record status counts
-      [%all-events p=(map id event-1)]         :: all events
-      [%all-records p=(mip id ship record-1)]  :: all records
-      [%event-records p=(map ship record-1)]   :: all records for an event
-      [%remote-events p=(map id info-1)]       :: discoverable events
+  $%  [%event-exists p=?]                           :: does an event exist?
+      [%record-exists p=?]                          :: does a record exist?
+      [%event p=(unit event-1)]                     :: an event
+      [%session-ids p=(list [id=term title=cord])]  :: an event's session ids
+      [%record p=(unit record-1)]                   :: a record
+      [%counts p=(map _-.status @ud)]               :: record status counts
+      [%all-events p=(map id event-1)]              :: all events
+      [%all-records p=(mip id ship record-1)]       :: all records
+      [%event-records p=(map ship record-1)]        :: all records for an event
+      [%remote-events p=(map id info-1)]            :: discoverable events
   ==
 --

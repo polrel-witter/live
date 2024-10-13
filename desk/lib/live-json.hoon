@@ -129,6 +129,7 @@
       %event-exists   !!
       %record-exists  !!
       %event          !!
+      %session-ids    !!
       %counts         !!
       %event-records  !!
       %remote-events  !!
