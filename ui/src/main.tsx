@@ -14,6 +14,7 @@ import { newBackend } from '@/backend'
 import RootComponent from './root';
 // this component returns the router
 import AppRouter from './router';
+import { ConnectionStatus } from './components/connection-status';
 
 window.urbit = new Urbit('');
 window.urbit.ship = window.ship
@@ -30,6 +31,9 @@ if (container) {
     <React.StrictMode>
       <RootComponent backend={backend} >
         <AppRouter backend={backend} />
+        <div className='fixed bottom-0 w-full h-5 bg-accent'>
+         <ConnectionStatus />
+        </div>
       </RootComponent>
     </React.StrictMode>
   );
