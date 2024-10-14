@@ -77,6 +77,7 @@ key:
       - paragraph breaks aren't recognized (e.g. '\0a's are ignored)
       - location should be placed under the end time; it's difficult to find at the bottm when the event description is long
       - session descriptions don't recognize paragraph breaks (i.e. `\0a's are ignored)
+      - sigils aren't displaying
   - wording changes
       - 'attendees' button should be 'guest list', for consistency
       - at the top of the profile form, it should say: 'this information is only shared with ships you match with.'
