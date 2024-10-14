@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
   const SHIP_URL = env.SHIP_URL || env.VITE_SHIP_URL || 'http://localhost:8080';
   const flags = {
     inDev: mode === 'development',
-    enablePwa: env.ENABLE_PWA_IN_DEV === "true"
+    enablePwa: env.VITE_ENABLE_PWA_IN_DEV === "true"
   }
 
   if (flags.inDev) {
@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => {
           icons: []
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,ttf}'],
           // this makes it so it controls already open web pages
           clientsClaim: true,
           runtimeCaching: [
