@@ -21,13 +21,13 @@ export function formatEventDate(d: Date, timezone: string,): string {
     d.getMilliseconds(),
     timezone,
   )
-  const fmt = format(t, `HH:MM aa (OO) 'on' LLLL Do yyyy`)
+  const fmt = format(t, `HH:mm aa (OO) 'on' LLLL do yyyy`)
   // console.log("f", fmt)
   return fmt
 }
 
 export function formatSessionTime(d: Date): string {
-  const fmt = format(d, `HH:MM aa`)
+  const fmt = format(d, `HH:mm aa`)
   return fmt
 }
 
