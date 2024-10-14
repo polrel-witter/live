@@ -265,8 +265,6 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
     }
   })
 
-  console.log("start:", start, end)
-
   return {
     id: eventId,
     description: (about ? about : "no event description"),

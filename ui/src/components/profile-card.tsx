@@ -1,10 +1,12 @@
 import { DropdownMenuTrigger, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Backend, MatchStatus, Profile, } from '@/backend'
 import { Card, CardContent, CardHeader, } from '@/components/ui/card'
-import { Ellipsis } from "lucide-react"
+import { Ellipsis, MessageCircle } from "lucide-react"
 import { Button, buttonVariants } from "./ui/button"
 import { useEffect, useState } from "react"
 import { SpinningButton } from "./spinning-button"
+import { cn } from "@/lib/utils"
+import { Link } from "react-router-dom"
 
 type Props = {
   patp: string,
@@ -41,6 +43,18 @@ const ProfileCard: React.FC<Props> = ({ patp, status, profile, showHeader, unmat
                     <Ellipsis className="w-4 h-4 text-black" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
+                    <DropdownMenuLabel className="font-normal">
+                      <Link
+                        to={`/apps/groups/dm/${patp}`}
+                        reloadDocument
+                      >
+                        <div className="flex items-center justify-center">
+                          <MessageCircle className="h-4 w-4 mr-2 mb-[3px] text-black" />
+                          send DM in tlon
+                        </div>
+                      </Link>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
                     <DropdownMenuLabel> match status: {status}</DropdownMenuLabel>
                     <div>
                       <DropdownMenuSeparator />

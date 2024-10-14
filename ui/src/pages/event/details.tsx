@@ -1,10 +1,11 @@
 import { useContext } from "react";
 import { EventContext } from "./context";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import Sigil from "@/components/sigil";
 import { cn, formatEventDate, isComet, isMoon } from "@/lib/utils";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { MessagesSquare } from "lucide-react";
 
 
 const EventDetails: React.FC = () => {
@@ -58,14 +59,25 @@ const EventDetails: React.FC = () => {
           {
             group
               ?
-              <p className={cn([baseTextClass])}> event group: {`${group.ship}/${group.name}`} </p>
+              <div className="flex items-center justify-center">
+                <Link
+                  className={cn([baseTextClass, buttonVariants({ variant: "link" }), "bg-black", "text-accent", "p-3", "h-7"])}
+                  to={`/apps/groups/groups/${group.ship}/${group.name}/channels`}
+                  reloadDocument
+                >
+                <MessagesSquare className="h-4 w-4 mr-3" />
+                  tlon:
+                  {`${group.ship}/${group.name}`}
+                </Link>
+              </div>
+
               :
               ''
           }
           <p className={cn([baseTextClass, "text-center"])}> {description} </p>
           <div className="flex justify-around">
             <Link to="attendees" >
-              <Button className="w-fit-content">attendees</Button>
+              <Button className="w-fit-content">guest list</Button>
             </Link>
             <Link to="schedule" >
               <Button className="w-fit-content">
