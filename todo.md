@@ -58,6 +58,10 @@ key:
   + on mobile: can't scroll to view all profile fields. on home screen i can't exit the view without reloading the page.
 
 ### After launch (in order of priority)
+  - formatting/rendering
+      - paragraph breaks aren't recognized (e.g. '\0a's are ignored)
+      - location should be placed under the end time; it's difficult to find at the bottm when the event description is long
+      - session descriptions don't recognize paragraph breaks (i.e. `\0a's are ignored)
   - There's brief delay when clicking into an event which feels like a crash because we get a blank page until the data appears. It's probably the time it takes for the scry to retrieve the data, but the user should know the app is still functioning. I think we should add a loading spinner in the middle of the page, or somewhere where it's obvious, so the user knows the app is doing something. This should appear anytime the frontend is scrying for data or knows it's waiting for an update from the backend (e.g. poking another ship and waiting for some data change).
   - need to iron out all crashing. for any feature that results in an error due to incompletion we need to disable the button/link that leads to the error message. this is currently happening for the 'connections' button and event tiles that we're hosting. from a users pov, it's better not have the chance to click something than to result in an error.
   - If we're not yet registered, the guest list page is blank. If this is the case, it should display a message to direct the user: 'register to this event to see the guest list'
@@ -73,10 +77,6 @@ key:
       - (should be fixed with the subscription to %matcher) new ships added to the guest list don't automatically display; have to refresh to get them to show. it must be due to scrying instead of having a subscription. i think we should dial up the scry frequency, if this is the case.
             - similarly, new events don't auto-appear either. we have to reload to see them.
             - new sessions do populate automatically, though
-  - formatting/rendering
-      - paragraph breaks aren't recognized (e.g. '\0a's are ignored)
-      - location should be placed under the end time; it's difficult to find at the bottm when the event description is long
-      - session descriptions don't recognize paragraph breaks (i.e. `\0a's are ignored)
       - sigils aren't displaying
   - wording changes
       - 'attendees' button should be 'guest list', for consistency
