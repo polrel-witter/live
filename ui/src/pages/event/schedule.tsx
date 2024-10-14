@@ -1,19 +1,26 @@
 import { useContext, useEffect, useState } from "react";
 import { EventContext } from './context'
 import SessionList from "@/components/schedule-list";
-import { Select } from "@/components/ui/select";
 import { SessionDateSelect } from "@/components/session-date-select";
 import { Session } from "@/backend";
+import { compareAsc } from "date-fns"
 
 function sliceISODate(d: Date): string {
   return d.toISOString().slice(0, 10)
 }
 
+function getSortedDates(dates: Map<string, Date>): Date[] {
+  return [...dates.values()]
+    .sort((date1, date2) => compareAsc(date1, date2))
+}
+
+
 function getCurrentDate(dates: Map<string, Date>): Date {
   if (dates.size > 0) {
-    return [...dates.values()]
-      .sort((date1, date2) => date1.getTime() - date2.getTime())[0]
-  } else { return new Date(0) }
+    return getSortedDates(dates)[0]
+  }
+
+  return new Date(0)
 }
 
 function makeDatesMap(sessions: Session[]): Map<string, Date> {
@@ -52,7 +59,7 @@ export function SchedulePage() {
     <div className="grid m-6 md:mx-96 space-y-12 justify-items-center">
       <div className="text-2xl font-medium">schedule</div>
       <SessionDateSelect
-        sessionDates={[...dates.values()]}
+        sessionDates={getSortedDates(dates)}
         changeDate={(newDate: Date) => setActiveDate(dates.get(sliceISODate(newDate))!)}
         currentDate={getCurrentDate(dates)}
       />

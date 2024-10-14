@@ -270,8 +270,8 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
   return {
     id: eventId,
     description: (about ? about : "no event description"),
-    startDate: (start ? new Date(start) : null),
-    endDate: (end ? new Date(end) : null),
+    startDate: (start ? new Date(start * 1000) : null),
+    endDate: (end ? new Date(end * 1000) : null),
     location: (_location ? _location : "no location"),
     group: (group ? { ship: group.ship, name: group.term } : null),
     timezone: timezoneString,
