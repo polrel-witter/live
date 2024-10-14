@@ -6,5 +6,5 @@
   website+'https://zyx.polrel-witter.xyz/home'
   license+'MIT'
   base+'live'
-  glob-ames+[~sondev-polrel-witter 0v0]
+  glob-ames+[~mocbel 0v0]
 ==
