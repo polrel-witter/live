@@ -19,7 +19,7 @@ key:
       + feedback for regiister
 	+ Mobile menu button adjustments (see ~sarlev's feedback)
       + made menu button bigger, moved it up
-      - change background of menu items
+      + change background of menu items
       + clicking a menu item clollapses the menu
       + fixed chevron orientation
 	+ Need timeline home button, or back button
