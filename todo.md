@@ -59,16 +59,16 @@ key:
   + on mobile: can't scroll to view all profile fields. on home screen i can't exit the view without reloading the page.
 
 ### After launch (in order of priority)
+  + the @p's need the ~ prepended to them. this is why the DM button isn't working properly. the ship in the Tlon path needs the ~ included: <url>/apps/groups/dm/~zod
+  + event title is pulling the event name from the id. it should specfically pull the event title.
   - schedule isn't showing all dates; the date dropdown function is only showing some sessions, but not all.
       - on sessions and event times, we should get rid of the AM/PM distiction since they're on 24hour clock.
   - not including the end date in a session will cause the frontend to not display the event
   - on mobile: on smaller screens the status button hangs over the event title; can we push the title down a line?
   - paragraph breaks aren't recognized (e.g. '\0a's are ignored) for event or session descriptions.
   - PWA works if you're using the app and then cut the internet connection, but if you start the app without an internet connection data does not popluate. ~sarlev got the same result. Seems like it might need more caching or something.
-  - event title is pulling the event name from the id. it should specfically pull the event title.
   - sigils aren't displaying
       - if needed, here's an example from Tlon: https://github.com/tloncorp/tlon-apps/blob/develop/apps/tlon-web/src/components/Avatar.tsx#L1
-  + the @p's need the ~ prepended to them. this is why the DM button isn't working properly. the ship in the Tlon path needs the ~ included: <url>/apps/groups/dm/~zod
   - There's brief delay when clicking into an event which feels like a crash because we get a blank page until the data appears. It's probably the time it takes for the scry to retrieve the data, but the user should know the app is still functioning. I think we should add a loading spinner in the middle of the page, or somewhere where it's obvious, so the user knows the app is doing something. This should appear anytime the frontend is scrying for data or knows it's waiting for an update from the backend (e.g. poking another ship and waiting for some data change).
   - need to iron out all crashing. for any feature that results in an error due to incompletion we need to disable the button/link that leads to the error message. this is currently happening for the 'connections' button and event tiles that we're hosting. from a users pov, it's better not have the chance to click something than to result in an error.
   - after updating the profile the poke succesfully goes through, but a second or two after the form closes if I reopen the profile form the fields aren't populated. I had to close it and reopen it again for them to appear.
