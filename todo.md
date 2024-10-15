@@ -59,11 +59,11 @@ key:
   + on mobile: can't scroll to view all profile fields. on home screen i can't exit the view without reloading the page.
 
 ### After launch (in order of priority)
-  + the @p's need the ~ prepended to them. this is why the DM button isn't working properly. the ship in the Tlon path needs the ~ included: <url>/apps/groups/dm/~zod
-  + event title is pulling the event name from the id. it should specfically pull the event title.
-  - schedule isn't showing all dates; the date dropdown function is only showing some sessions, but not all.
-      - on sessions and event times, we should get rid of the AM/PM distiction since they're on 24hour clock.
-  - not including the end date in a session will cause the frontend to not display the event
+  - the @p's need the ~ prepended to them. this is why the DM button isn't working properly. the ship in the Tlon path needs the ~ included: <url>/apps/groups/dm/~zod
+  - event title is pulling the event name from the id. it should specfically pull the event title.
+  + schedule isn't showing all dates; the date dropdown function is only showing some sessions, but not all.
+      + on sessions and event times, we should get rid of the AM/PM distiction since they're on 24hour clock.
+  + not including the end date in a session will cause the frontend to not display the event
   - on mobile: on smaller screens the status button hangs over the event title; can we push the title down a line?
   - paragraph breaks aren't recognized (e.g. '\0a's are ignored) for event or session descriptions.
   - PWA works if you're using the app and then cut the internet connection, but if you start the app without an internet connection data does not popluate. ~sarlev got the same result. Seems like it might need more caching or something.
