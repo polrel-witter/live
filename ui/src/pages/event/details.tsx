@@ -33,22 +33,12 @@ const EventDetails: React.FC = () => {
           className="grid items-justify gap-y-6" >
           <div className="flex-row md:flex items-center justify-center">
             <div className={cn([baseTextClass])}> hosted by </div>
-            <div className="flex items-center justify-center mt-2 md:m-0">
+            <div className="flex  justify-center mt-2 md:m-0">
               {(
                 ctx.fetched
                   ?
-                  <Sigil
-                    className="mx-2 w-5 h-5 md:w-7 md:h-7 object-contain "
-                    sigilConfig={{
-                      point: `${ship}`, // or 'zod'
-                      size: 348,
-                      background: '#010101',
-                      foreground: 'yellow',
-                      detail: 'none',
-                      space: 'none',
-                    }} />
-                  :
-                  ''
+                  <Sigil size="xs" point={`${ship}`} />
+                  : ''
               )}
               {/* TODO: add nickname next to patp */}
               <div className={cn([baseTextClass], { "text-xs": isMoon(ship) || isComet(ship) })}> {ship} </div>

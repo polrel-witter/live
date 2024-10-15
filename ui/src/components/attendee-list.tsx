@@ -97,20 +97,21 @@ const ListItem: React.FC<{
         <CardContent
           className={
             "px-6 py-3 content-center"}>
-          <div className="flex gap-4 gap-x-10 items-center pb-1">
+          <div className="flex gap-4 gap-x-5 items-center pb-1">
             <Sigil
-              avatarUrl={(profile && profile.avatar !== "" ? profile.avatar ?? undefined : undefined)}
-              sigilConfig={{
-                point: `${attendee.patp}`, // or 'zod'
-                size: 348,
-                background: '#010101',
-                foreground: 'yellow',
-                detail: 'none',
-                space: 'none',
-              }} />
+              point="~widmes-hassen"
+              // point={attendee.patp}
+              size="xs"
+              avatarUrl={(profile && profile.avatar !== ""
+                ? profile.avatar ?? undefined
+                : undefined)}
+
+            />
             <div className="flex flex-col items-center gap-1 w-2xl">
               <p className="text-sm">
-                {(profile && profile.nickname !== "" ? profile.nickname ?? attendee.patp : attendee.patp)}
+                {(profile && profile.nickname !== ""
+                  ? profile.nickname ?? attendee.patp
+                  : attendee.patp)}
               </p>
             </div>
           </div>
