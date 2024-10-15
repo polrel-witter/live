@@ -88,7 +88,7 @@ const ButtonSwitch: React.FC<
 function makeToastMessage(status: EventStatus): string {
   switch (status) {
     case "requested":
-      return "successfully sent registration to event host"
+      return "successfully sent entry request to event host"
     case "registered":
       return "successfully registered to event"
     case "unregistered":

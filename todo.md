@@ -19,7 +19,7 @@ key:
       + feedback for regiister
 	+ Mobile menu button adjustments (see ~sarlev's feedback)
       + made menu button bigger, moved it up
-      - change background of menu items
+      + change background of menu items
       + clicking a menu item clollapses the menu
       + fixed chevron orientation
 	+ Need timeline home button, or back button
@@ -29,8 +29,8 @@ key:
 	+ Inclue location string on event page
 	+ Viewport changes to make map view consistent with rest of pages on mobile. See if we can pinch/zoom.
       + disabled pinch zoom by default on all pages, enabling it programmatically in map page
-  - session titles highlight on hover. no need for this, as it feels like a link to something.
-  - 'successfully sent registration to event host' should say 'successfully sent entry request to event host'
+    + session titles highlight on hover. no need for this, as it feels like a link to something.
+    + 'successfully sent registration to event host' should say 'successfully sent entry request to event host'
 
 
 ## Bugs
@@ -59,11 +59,11 @@ key:
   + on mobile: can't scroll to view all profile fields. on home screen i can't exit the view without reloading the page.
 
 ### After launch (in order of priority)
-  + the @p's need the ~ prepended to them. this is why the DM button isn't working properly. the ship in the Tlon path needs the ~ included: <url>/apps/groups/dm/~zod
-  + event title is pulling the event name from the id. it should specfically pull the event title.
-  - schedule isn't showing all dates; the date dropdown function is only showing some sessions, but not all.
-      - on sessions and event times, we should get rid of the AM/PM distiction since they're on 24hour clock.
-  - not including the end date in a session will cause the frontend to not display the event
+  - the @p's need the ~ prepended to them. this is why the DM button isn't working properly. the ship in the Tlon path needs the ~ included: <url>/apps/groups/dm/~zod
+  - event title is pulling the event name from the id. it should specfically pull the event title.
+  + schedule isn't showing all dates; the date dropdown function is only showing some sessions, but not all.
+      + on sessions and event times, we should get rid of the AM/PM distiction since they're on 24hour clock.
+  + not including the end date in a session will cause the frontend to not display the event
   - on mobile: on smaller screens the status button hangs over the event title; can we push the title down a line?
   - paragraph breaks aren't recognized (e.g. '\0a's are ignored) for event or session descriptions.
   - PWA works if you're using the app and then cut the internet connection, but if you start the app without an internet connection data does not popluate. ~sarlev got the same result. Seems like it might need more caching or something.

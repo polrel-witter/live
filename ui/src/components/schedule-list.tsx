@@ -40,8 +40,16 @@ function makeSessionMarkup(session: Session) {
                 :
                 ""
             }
-            {session.panel.length !== 0 ? <span className="text-sm">{formatSessionPanel(session.panel)}<br /></span> : ""}
-            <span>from {formatSessionTime(session.startTime)} to {formatSessionTime(session.endTime)}</span>
+            {
+              session.panel && session.panel.length !== 0
+                ? <span className="text-sm">{formatSessionPanel(session.panel)}<br /></span>
+                : ""
+            }
+            {
+              session.startTime && session.endTime
+                ? <span> from {formatSessionTime(session.startTime)} to {formatSessionTime(session.endTime)} </span>
+                : ''
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -59,7 +67,13 @@ export default function SessionList(props: { sessions: Session[] }) {
   return (
     <ul className="grid gap-6">
       {props.sessions
-        .sort((a, b) => compareAsc(a.startTime, b.startTime))
+        .sort((a, b) => {
+          if (a.startTime && b.startTime) {
+            return compareAsc(a.startTime, b.startTime)
+          } else {
+            return -1
+          }
+        })
         .map(makeSessionMarkup)}
     </ul>
   )

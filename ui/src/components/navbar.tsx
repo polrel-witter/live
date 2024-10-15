@@ -129,7 +129,7 @@ const NavBar: React.FC<Props> = (
                         onClick={() => { console.log("click"); setOpenMenu(false) }}
                         className={cn([
                           buttonVariants({ variant: "default" }),
-                          // "bg-stone-800",
+                          "bg-gray-700",
                           "w-full"
                         ])}
                         to={to}> {text} </Link>
@@ -138,7 +138,7 @@ const NavBar: React.FC<Props> = (
                 </ul>
               </SlideDownAndReveal>
               <Button
-                className="p-2 w-10 h-10 m-6 rounded-full fixed right-0 bottom-0 hover:bg-black"
+                className="p-2 w-10 h-10 m-6 rounded-full fixed right-0 bottom-0 hover:bg-gray-700"
                 onClick={() => { setOpenMenu(flipBoolean) }}
               >
                 <ChevronUp className={
