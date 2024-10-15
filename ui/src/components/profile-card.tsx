@@ -45,7 +45,7 @@ const ProfileCard: React.FC<Props> = ({ patp, status, profile, showHeader, unmat
                   <DropdownMenuContent>
                     <DropdownMenuLabel className="font-normal">
                       <Link
-                        to={`/apps/groups/dm/${patp}`}
+                        to={`/apps/groups/dm/~${patp}`}
                         reloadDocument
                       >
                         <div className="flex items-center justify-center">
