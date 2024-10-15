@@ -29,8 +29,8 @@ key:
 	+ Inclue location string on event page
 	+ Viewport changes to make map view consistent with rest of pages on mobile. See if we can pinch/zoom.
       + disabled pinch zoom by default on all pages, enabling it programmatically in map page
-  - session titles highlight on hover. no need for this, as it feels like a link to something.
-  - 'successfully sent registration to event host' should say 'successfully sent entry request to event host'
+    + session titles highlight on hover. no need for this, as it feels like a link to something.
+    + 'successfully sent registration to event host' should say 'successfully sent entry request to event host'
 
 
 ## Bugs
