@@ -121,6 +121,7 @@ type Session = {
 
 type EventDetails = {
   id: EventId;
+  title: string;
   location: string;
   startDate: Date | null;
   endDate: Date | null;
@@ -151,6 +152,7 @@ const emptyEventDetails: EventDetails = {
     ship: "",
     name: "",
   },
+  title: "",
   location: "",
   startDate: new Date(0),
   endDate: new Date(0),
@@ -303,7 +305,7 @@ function backendRecordToEventAsGuest(eventId: EventId, record: z.infer<typeof ba
 }
 
 // const allRecordsSchema = z.object({
-//   allRecords: z.object({})    
+//   allRecords: z.object({})
 //     .catchall(z.object({})
 //       .catchall(z.object({
 //         record: recordSchema
@@ -669,7 +671,7 @@ function getProfile(_api: Urbit): (patp: string) => Promise<Profile | null> {
 
 const backendMatchStatusSchema = z.enum(["match", "incoming", "outgoing"]).nullable()
 
-// !!! the peers object's keys are patps with ~ 
+// !!! the peers object's keys are patps with ~
 const getAttendeesSchema = z.object({
   peers: z
     .record(z.string().startsWith("~"), z

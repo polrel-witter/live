@@ -13,7 +13,7 @@ import { formatEventDate } from "@/lib/utils"
 
 const ListItem: React.FC<
   { details: EventDetails }
-> = ({ details: { id: { ship, name }, startDate, timezone, location, ...restDetails } }) => {
+> = ({ details: { id: { ship, name }, title, startDate, timezone, location, ...restDetails } }) => {
   // TODO: on mobile it's not clear that you can click the title to navigate
   // forward, add an icon in a button
   return (
@@ -23,12 +23,12 @@ const ListItem: React.FC<
         <Card>
           <CardHeader>
             <CardTitle className="font-bold">
-              {name}
+              {title}
             </CardTitle>
             <CardDescription className="italics">hosted by {ship}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>Starts on { startDate ? formatEventDate(startDate, timezone) : "TBD"}</p>
+            <p>starts on { startDate ? formatEventDate(startDate, timezone) : "TBD"}</p>
             <p>location: {location}</p>
           </CardContent>
           <CardFooter>

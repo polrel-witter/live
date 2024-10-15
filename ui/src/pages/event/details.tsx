@@ -17,7 +17,7 @@ const EventDetails: React.FC = () => {
 
   const {
     event: {
-      details: { id: { ship, name }, group, startDate, timezone, endDate, location, description }, ...rest
+      details: { id: { ship, name }, title, group, startDate, timezone, endDate, location, description }, ...rest
     },
   } = ctx
 
@@ -27,7 +27,7 @@ const EventDetails: React.FC = () => {
     <div className="space-y-6 py-20 text-center">
       <Card className="mx-12 md:mx-96">
         <CardHeader>
-          <p className="text-xl font-semibold"> {name} </p>
+          <p className="text-xl font-semibold"> {title} </p>
         </CardHeader>
         <CardContent
           className="grid items-justify gap-y-6" >

@@ -17,6 +17,7 @@ function newEmptyCtx(): EventCtx {
           ship: "",
           name: ""
         },
+        title: "",
         venueMap: "",
         location: "",
         startDate: new Date(0),
@@ -40,4 +41,4 @@ const EventContext = createContext<EventCtx | null>(null)
 
 export { EventContext, newEmptyCtx }
 
-export type { EventCtx }  
+export type { EventCtx }

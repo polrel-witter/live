@@ -22,7 +22,7 @@ const NavBar: React.FC<Props> = (
   {
     fetchedContext,
     event: {
-      details: { id: { name: eventName, ship: eventHost } },
+      details: { id: { name: eventName, ship: eventHost }, title: eventTitle },
       status: eventStatus,
       ...eventRest
     },
@@ -112,7 +112,7 @@ const NavBar: React.FC<Props> = (
             unregister={fns.unregister}
           />
         </NavigationMenuItem>
-        <NavigationMenuItem className="grow text-center"> {eventName || "event"} </NavigationMenuItem>
+        <NavigationMenuItem className="grow text-center"> {eventTitle || "event"} </NavigationMenuItem>
         {
           isMobile
             ?
