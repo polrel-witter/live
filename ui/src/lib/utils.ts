@@ -27,7 +27,7 @@ export function formatEventDate(d: Date, timezone: string,): string {
 }
 
 export function formatSessionTime(d: Date): string {
-  const fmt = format(d, `HH:mm aa`)
+  const fmt = format(d, `HH:mm`)
   return fmt
 }
 

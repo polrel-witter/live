@@ -112,11 +112,11 @@ type Session = {
   title: string;
   // backend doesn't send this yet
   mainSpeaker: string;
-  panel: string[];
-  location: string;
-  about: string;
-  startTime: Date;
-  endTime: Date;
+  panel: string[] | null;
+  location: string | null;
+  about: string | null;
+  startTime: Date | null;
+  endTime: Date | null;
 }
 
 type EventDetails = {
@@ -209,12 +209,17 @@ const eventLatchSchema = z.enum([
 
 const timeSchema = z.number()
 
+const moment1Schema = z.object({
+  start: z.number().nullable(),
+  end: z.number().nullable()
+})
+
 const sessionSchema = z.object({
   title: z.string(),
-  location: z.string(),
-  moment: z.object({ start: z.number(), end: z.number() }),
-  about: z.string(),
-  panel: z.string()
+  location: z.string().nullable(),
+  moment: moment1Schema,
+  about: z.string().nullable(),
+  panel: z.string().nullable()
 })
 
 const backendInfo1Schema = z.object({
@@ -260,10 +265,10 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
       mainSpeaker: "",
       location: session.location,
       about: session.about,
-      panel: session.panel.split(" "),
+      panel: session.panel ? session.panel.split(" ") : null,
       // multiplying by 1000 since backend sends unix seconds
-      startTime: new Date(session.moment.start * 1000),
-      endTime: new Date(session.moment.end * 1000)
+      startTime: session.moment.start ? new Date(session.moment.start * 1000) : null,
+      endTime: session.moment.end ? new Date(session.moment.end * 1000) : null
     }
   })
 
