@@ -65,13 +65,25 @@ function makeDatesMapFromSessionTimes(sessions: TZDate[]): Map<string, TZDate> {
   return new Map(kvps)
 }
 
-function makeDatesMapFromEventTimes(startDate: TZDate, endDate: Date): Map<string, TZDate> {
+function makeDatesMapFromEventTimes(startDate: TZDate, endDate: TZDate): Map<string, TZDate> {
   const days: TZDate[] = []
 
   const startDay = startDate
 
+  const justDay = (d: TZDate): TZDate => {
+    return new TZDate(
+      d.getFullYear(),
+      d.getMonth(),
+      d.getDate(),
+      0,
+      0,
+      0,
+      0,
+      d.timeZone)
+  }
+   
   const beforeOrEqual = (d: TZDate): boolean => {
-    return isBefore(d, endDate) || isEqual(d, endDate)
+    return isBefore(justDay(d), endDate) || isEqual(justDay(d), endDate)
   }
 
   for (let i = startDay; beforeOrEqual(i); i = add(i, { days: 1 })) {
