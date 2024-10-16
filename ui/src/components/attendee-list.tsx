@@ -109,16 +109,18 @@ const ListItem: React.FC<{
                 space: 'none',
               }} />
             <div className="flex flex-col items-center gap-1 w-2xl">
-              <p className="text-sm">{attendee.patp}</p>
+              <p className="text-sm">
+                {(profile && profile.nickname !== "" ? profile.nickname ?? attendee.patp : attendee.patp)}
+              </p>
             </div>
           </div>
           <SlideDownAndReveal show={showProfile} maxHeight="max-h-[1000px]">
             {/* TODO: this should be in dedicated page and in a pop-up
               on own attendee in attenees list
 
-              <ProfileForm 
+              <ProfileForm
               attendeeFields={profile}
-              editProfileField={fns.editProfileField} 
+              editProfileField={fns.editProfileField}
               />
             */}
 
