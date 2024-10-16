@@ -28,7 +28,7 @@ const ListItem: React.FC<
             <CardDescription className="italics">hosted by {ship}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>starts on { startDate ? formatEventDate(startDate, timezone) : "TBD"}</p>
+            <p>starts on { startDate ? formatEventDate(startDate) : "TBD"}</p>
             <p>location: {location}</p>
           </CardContent>
           <CardFooter>
