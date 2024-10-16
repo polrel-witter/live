@@ -50,6 +50,7 @@ key:
   - if there are no sessions the date dropdown defaults to some date in 1969, but instead the sessions button shouldn't appear if there are zero sessions.
   - location should be placed under the end time; it's difficult to find at the bottm when the event description is long
   - If we're not yet registered, the guest list page is blank. If this is the case, it should display a message to direct the user: 'register to this event to see the guest list'
+  - on the guest list page, for each guest, i think it's better to have the '...' dialog box inline with the @p/avatar/sigil so that if the profile is blank, we don't have to include a dropdown section.
 
 ### Before launch (in order of priority)
   + start and end times on an event page are wrong. seems like it may still have mock data popluated for these fields.
@@ -59,8 +60,8 @@ key:
   + on mobile: can't scroll to view all profile fields. on home screen i can't exit the view without reloading the page.
 
 ### After launch (in order of priority)
-  - the @p's need the ~ prepended to them. this is why the DM button isn't working properly. the ship in the Tlon path needs the ~ included: <url>/apps/groups/dm/~zod
-  - event title is pulling the event name from the id. it should specfically pull the event title.
+  + the @p's need the ~ prepended to them. this is why the DM button isn't working properly. the ship in the Tlon path needs the ~ included: <url>/apps/groups/dm/~zod
+  + event title is pulling the event name from the id. it should specfically pull the event title.
   + schedule isn't showing all dates; the date dropdown function is only showing some sessions, but not all.
       + on sessions and event times, we should get rid of the AM/PM distiction since they're on 24hour clock.
   + not including the end date in a session will cause the frontend to not display the event
@@ -73,13 +74,13 @@ key:
   - need to iron out all crashing. for any feature that results in an error due to incompletion we need to disable the button/link that leads to the error message. this is currently happening for the 'connections' button and event tiles that we're hosting. from a users pov, it's better not have the chance to click something than to result in an error.
   - after updating the profile the poke succesfully goes through, but a second or two after the form closes if I reopen the profile form the fields aren't populated. I had to close it and reopen it again for them to appear.
         - profile data also doesn't appear within the profile dialog box of an event page; it does on the timeline page, though.
-  - on the guest list page, profile fields should not appear if they're null. e.g. avatar, nickname and bio should not be there if they're not set. also lets change 'profile overview' to just 'profile'. it's cleaner
+  + on the guest list page, profile fields should not appear if they're null. e.g. avatar, nickname and bio should not be there if they're not set. also lets change 'profile overview' to just 'profile'. it's cleaner
   - on mobile: shouldn't have to scroll to the right/left. the boxes and text should be flush with the screen.
-  - on the guest list page, when an avatar is set, it should swap out the sigil field and render whatever image is set instead. No need to have an avatar field in the profile dropdown.
-    - similarly, the nickname should take the place of the @p and rendered next to the sigil/avatar
+  + on the guest list page, when an avatar is set, it should swap out the sigil field and render whatever image is set instead. No need to have an avatar field in the profile dropdown.
+  + similarly, the nickname should take the place of the @p and rendered next to the sigil/avatar
+  - in the guest list, if a nickname is set, the @p should be next to it in parenthesis
   - (should be fixed with the subscription to %matcher) new ships added to the guest list don't automatically display; have to refresh to get them to show. it must be due to scrying instead of having a subscription. i think we should dial up the scry frequency, if this is the case.
-  - wording changes
-  - at the top of the profile form, it should say: 'this information is only shared with ships you match with.'
+  + at the top of the profile form, it should say: 'this information is only shared with ships you match with.'
 
 *after finishing the top priority bugs should move on to finishing the matching feature*
 
