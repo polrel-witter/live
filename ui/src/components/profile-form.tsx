@@ -134,7 +134,7 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfile }) => {
             />
           )
         })}
-        <p className="text-sm">this info is only shared with ships with which you match</p>
+        <p className="text-sm">this info is only shared with ships you match with</p>
         <div className="pt-4 md:pt-8 w-full flex justify-center">
           <SpinningButton
             spin={spin}
