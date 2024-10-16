@@ -35,7 +35,7 @@ const ProfileCard: React.FC<Props> = ({ patp, status, profile, showHeader, unmat
           ?
           <CardHeader className="p-4 font-semibold text-md">
             <div className="flex items-center justify-between">
-              <p> profile overview </p>
+              <p> profile </p>
               <div className="justify-self-end">
                 <DropdownMenu >
                   {/* maybe  make this into a button tap area too small */}
@@ -85,17 +85,10 @@ const ProfileCard: React.FC<Props> = ({ patp, status, profile, showHeader, unmat
         {
           Object.entries(profile).map(([field, val]) => {
             switch (field) {
-              case "avatar":
-              case "bio":
-              case "nickname":
-                const fieldVal = (val ? val : "not set in tlon")
-                return (
-                  <div key={field}>
-                    <span>{field}: </span>
-                    <span className={val ? "" : "font-bold"}>{fieldVal}</span>
-                  </div>
-                )
-              default:
+                case "avatar":
+                case "nickname":
+                  return null;
+                default:
                 return (val ? <p key={field}>{`${field}: ${val}`}</p> : "")
             }
           })
