@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { EventContext } from "./context";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import Sigil from "@/components/sigil";
+import ProfilePicture from "@/components/sigil";
 import { cn, formatEventDate, isComet, isMoon } from "@/lib/utils";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { MessagesSquare } from "lucide-react";
@@ -17,7 +17,7 @@ const EventDetails: React.FC = () => {
 
   const {
     event: {
-      details: { id: { ship, name }, title, group, startDate, timezone, endDate, location, description }, ...rest
+      details: { id: { ship }, title, group, startDate, endDate, location, description }, ...rest
     },
   } = ctx
 
@@ -31,18 +31,11 @@ const EventDetails: React.FC = () => {
         </CardHeader>
         <CardContent
           className="grid items-justify gap-y-6" >
-          <div className="flex-row md:flex items-center justify-center">
-            <div className={cn([baseTextClass])}> hosted by </div>
-            <div className="flex  justify-center mt-2 md:m-0">
-              {(
-                ctx.fetched
-                  ?
-                  <Sigil size="xs" point={`${ship}`} />
-                  : ''
-              )}
-              {/* TODO: add nickname next to patp */}
-              <div className={cn([baseTextClass], { "text-xs": isMoon(ship) || isComet(ship) })}> {ship} </div>
-            </div>
+          <div className="flex-row md:flex items-center justify-center gap-x-2">
+            <div className={cn([baseTextClass, "pr-2"])}> hosted by </div>
+            {(ctx.fetched ? <ProfilePicture size="xs" point={ship} /> : '')}
+            {/* TODO: add nickname next to patp */}
+            <div className={cn([baseTextClass], { "text-xs": isMoon(ship) || isComet(ship) })}> {ship} </div>
           </div>
           <p className={cn([baseTextClass])}> starts: {startDate ? formatEventDate(startDate) : "TBD"} </p>
           <p className={cn([baseTextClass])}> ends: {endDate ? formatEventDate(endDate) : "TBD"} </p>

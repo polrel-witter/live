@@ -6,7 +6,7 @@ import { useState } from "react"
 import { cn, flipBoolean } from "@/lib/utils"
 import { SlideDownAndReveal, SlideRightAndReveal } from "./sliders"
 import ProfileCard from "./profile-card"
-import Sigil from "./sigil"
+import ProfilePicture from "./sigil"
 
 const _connectionsButton: React.FC<{
   attendee: Attendee
@@ -98,10 +98,10 @@ const ListItem: React.FC<{
           className={
             "px-6 py-3 content-center"}>
           <div className="flex gap-4 gap-x-5 items-center pb-1">
-            <Sigil
-              point="~widmes-hassen"
-              // point={attendee.patp}
-              size="xs"
+            <ProfilePicture
+              // point="~widmes-hassen"
+              point={attendee.patp}
+              size="sm"
               avatarUrl={(profile && profile.avatar !== ""
                 ? profile.avatar ?? undefined
                 : undefined)}
