@@ -84,13 +84,9 @@ const ProfileCard: React.FC<Props> = ({ patp, status, profile, showHeader, unmat
       <CardContent className="p-4 pt-0 text-sm">
         {
           Object.entries(profile).map(([field, val]) => {
-            switch (field) {
-                case "avatar":
-                case "nickname":
-                  return null;
-                default:
-                return (val ? <p key={field}>{`${field}: ${val}`}</p> : "")
-            }
+            return (val
+              ? <p key={field}>{`${field}: ${val}`}</p>
+              : "")
           })
         }
       </CardContent>

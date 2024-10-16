@@ -68,7 +68,7 @@ key:
   - on mobile: on smaller screens the status button hangs over the event title; can we push the title down a line?
   - paragraph breaks aren't recognized (e.g. '\0a's are ignored) for event or session descriptions.
   - PWA works if you're using the app and then cut the internet connection, but if you start the app without an internet connection data does not popluate. ~sarlev got the same result. Seems like it might need more caching or something.
-  - sigils aren't displaying
+  + sigils aren't displaying
       - if needed, here's an example from Tlon: https://github.com/tloncorp/tlon-apps/blob/develop/apps/tlon-web/src/components/Avatar.tsx#L1
   - There's brief delay when clicking into an event which feels like a crash because we get a blank page until the data appears. It's probably the time it takes for the scry to retrieve the data, but the user should know the app is still functioning. I think we should add a loading spinner in the middle of the page, or somewhere where it's obvious, so the user knows the app is doing something. This should appear anytime the frontend is scrying for data or knows it's waiting for an update from the backend (e.g. poking another ship and waiting for some data change).
   - need to iron out all crashing. for any feature that results in an error due to incompletion we need to disable the button/link that leads to the error message. this is currently happening for the 'connections' button and event tiles that we're hosting. from a users pov, it's better not have the chance to click something than to result in an error.

@@ -112,7 +112,7 @@ const NavBar: React.FC<Props> = (
             unregister={fns.unregister}
           />
         </NavigationMenuItem>
-        <NavigationMenuItem className="grow text-center"> {eventTitle || "event"} </NavigationMenuItem>
+        <NavigationMenuItem className="grow text-center"> {eventTitle} </NavigationMenuItem>
         {
           isMobile
             ?
