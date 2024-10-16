@@ -1,5 +1,7 @@
 import Urbit from "@urbit/http-api";
-import { title } from "process";
+
+import { sub } from "date-fns";
+import { TZDate, tzOffset } from "@date-fns/tz";
 
 import { z, ZodError } from "zod" // this is an object validation library
 
@@ -115,16 +117,16 @@ type Session = {
   panel: string[] | null;
   location: string | null;
   about: string | null;
-  startTime: Date | null;
-  endTime: Date | null;
+  startTime: TZDate | null;
+  endTime: TZDate | null;
 }
 
 type EventDetails = {
   id: EventId;
   title: string;
   location: string;
-  startDate: Date | null;
-  endDate: Date | null;
+  startDate: TZDate | null;
+  endDate: TZDate | null;
   timezone: string;
   description: string;
   group: { ship: string, name: string } | null;
@@ -154,8 +156,8 @@ const emptyEventDetails: EventDetails = {
   },
   title: "",
   location: "",
-  startDate: new Date(0),
-  endDate: new Date(0),
+  startDate: new TZDate(0),
+  endDate: new TZDate(0),
   description: "",
   timezone: "",
   kind: "public",
@@ -259,6 +261,27 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
 
   const timezoneString = `${timezoneSign}${timezoneNumber}:00`
 
+  const newTZDateOrNull = (tsOrNull: number | null): TZDate | null => {
+    if (!tsOrNull) { return null }
+
+    // unix timestamp is always assumed to be in UTC, if we add a timezone
+    // in the TZDate construtor it shifts the Date by the timezone
+    const dateInUTC = new TZDate(tsOrNull * 1000, "+00:00")
+
+    // so we first get set the TZDate to UTC, then we figure out the offset
+    // from that date to our event timezone, then we make a new TZDate with
+    // the timezone set, shifted negatively by the offset we got in the
+    // previous step
+    const offset = tzOffset(timezoneString, dateInUTC)
+
+    const res = sub<TZDate, TZDate>(
+      new TZDate(dateInUTC, timezoneString),
+      { minutes: offset }
+    )
+
+    return res
+  }
+
   const sessions = Object.values(_sessions).map(({ session }): Session => {
     return {
       title: session.title,
@@ -267,16 +290,16 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
       about: session.about,
       panel: session.panel ? session.panel.split(" ") : null,
       // multiplying by 1000 since backend sends unix seconds
-      startTime: session.moment.start ? new Date(session.moment.start * 1000) : null,
-      endTime: session.moment.end ? new Date(session.moment.end * 1000) : null
+      startTime: newTZDateOrNull(session.moment.start),
+      endTime: newTZDateOrNull(session.moment.end)
     }
   })
 
   return {
     id: eventId,
     description: (about ? about : "no event description"),
-    startDate: (start ? new Date(start * 1000) : null),
-    endDate: (end ? new Date(end * 1000) : null),
+    startDate: newTZDateOrNull(start),
+    endDate: newTZDateOrNull(end),
     location: (_location ? _location : "no location"),
     group: (group ? { ship: group.ship, name: group.term } : null),
     timezone: timezoneString,

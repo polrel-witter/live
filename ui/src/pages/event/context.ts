@@ -1,5 +1,6 @@
 import { createContext } from "react";
 import { Session, Profile, Attendee, EventAsGuest, emptyProfile } from "@/backend";
+import { TZDate } from "@date-fns/tz";
 
 interface EventCtx {
   fetched: boolean
@@ -20,8 +21,8 @@ function newEmptyCtx(): EventCtx {
         title: "",
         venueMap: "",
         location: "",
-        startDate: new Date(0),
-        endDate: new Date(0),
+        startDate: new TZDate(0),
+        endDate: new TZDate(0),
         description: "",
         timezone: "",
         kind: "public",

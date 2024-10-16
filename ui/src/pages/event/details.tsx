@@ -54,8 +54,8 @@ const EventDetails: React.FC = () => {
               <div className={cn([baseTextClass], { "text-xs": isMoon(ship) || isComet(ship) })}> {ship} </div>
             </div>
           </div>
-          <p className={cn([baseTextClass])}> starts: {startDate ? formatEventDate(startDate, timezone) : "TBD"} </p>
-          <p className={cn([baseTextClass])}> ends: {endDate ? formatEventDate(endDate, timezone) : "TBD"} </p>
+          <p className={cn([baseTextClass])}> starts: {startDate ? formatEventDate(startDate) : "TBD"} </p>
+          <p className={cn([baseTextClass])}> ends: {endDate ? formatEventDate(endDate) : "TBD"} </p>
           {
             group
               ?
@@ -65,7 +65,7 @@ const EventDetails: React.FC = () => {
                   to={`/apps/groups/groups/${group.ship}/${group.name}/channels`}
                   reloadDocument
                 >
-                <MessagesSquare className="h-4 w-4 mr-3" />
+                  <MessagesSquare className="h-4 w-4 mr-3" />
                   tlon:
                   {`${group.ship}/${group.name}`}
                 </Link>
