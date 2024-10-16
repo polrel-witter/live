@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { EventContext } from "./context";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import ProfilePicture from "@/components/sigil";
+import ProfilePicture from "@/components/profile-picture";
 import { cn, formatEventDate, isComet, isMoon } from "@/lib/utils";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { MessagesSquare } from "lucide-react";

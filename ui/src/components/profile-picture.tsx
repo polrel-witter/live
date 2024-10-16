@@ -3,7 +3,6 @@ import { Config, sigil as sigilFn } from "@urbit/sigil-js"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn, isComet, isMoon } from "@/lib/utils"
 import { useEffect, useRef } from "react"
-import { normalize } from "path"
 
 type Size = "xs" | "sm"
 

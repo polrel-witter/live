@@ -6,7 +6,7 @@ import { useState } from "react"
 import { cn, flipBoolean } from "@/lib/utils"
 import { SlideDownAndReveal, SlideRightAndReveal } from "./sliders"
 import ProfileCard from "./profile-card"
-import ProfilePicture from "./sigil"
+import ProfilePicture from "./profile-picture"
 
 const _connectionsButton: React.FC<{
   attendee: Attendee
