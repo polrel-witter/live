@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import ProfileDialog from "@/components/profile-dialog";
 import { flipBoolean } from "@/lib/utils";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
-import { GlobalContext } from "@/root";
+import { GlobalContext } from "@/globalContext";
 
 const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
   const globalContext = useContext(GlobalContext)

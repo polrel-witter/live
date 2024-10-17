@@ -25,7 +25,7 @@ const EventDetails: React.FC = () => {
 
   return (
     <div className="space-y-6 py-20 text-center">
-      <Card className="mx-12 md:mx-96">
+      <Card className="mx-6 md:mx-12 lg:mx-96">
         <CardHeader>
           <p className="text-xl font-semibold"> {title} </p>
         </CardHeader>
@@ -57,7 +57,7 @@ const EventDetails: React.FC = () => {
               :
               ''
           }
-          <p className={cn([baseTextClass, "text-center"])}> {description} </p>
+          <p className={cn([baseTextClass, "text-justify"])}> {description} </p>
           <div className="flex justify-around">
             <Link to="attendees" >
               <Button className="w-fit-content">guest list</Button>

@@ -14,7 +14,7 @@ const ButtonSwitch: React.FC<
     unregister: (id: EventId) => void
   }
 > = ({ id, status, spin, ...fns }) => {
-  const baseClass = "w-26 h-8"
+  const baseClass = "w-32 h-8 p-0"
 
   const makeUnregisterButton = (_spin: boolean) => {
     return (

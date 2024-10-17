@@ -18,6 +18,8 @@ type Props = {
   unregister: Backend["unregister"]
 }
 
+// TODO: this navbar situation with all the position absolutes is horrible
+// needs a refactoring
 const NavBar: React.FC<Props> = (
   {
     fetchedContext,
@@ -62,7 +64,8 @@ const NavBar: React.FC<Props> = (
     },
     {
       to: "connections",
-      text: "connections"
+      text: "connections",
+      disabled: true
     },
   ]
 
@@ -91,7 +94,7 @@ const NavBar: React.FC<Props> = (
   }
 
   return (
-    <NavigationMenu className="fixed border-b-2 w-full bg-white">
+    <NavigationMenu className="fixed border-b-2 w-full bg-white ">
       <NavigationMenuList className="static">
         <NavigationMenuItem className="fixed left-0">
           <Link to="/apps/live">
@@ -103,14 +106,31 @@ const NavBar: React.FC<Props> = (
             </Button>
           </Link>
         </NavigationMenuItem>
-        <NavigationMenuItem className="fixed left-12">
-          <EventStatusButtons
-            fetchedContext={fetchedContext}
-            id={{ ship: eventHost, name: eventName }}
-            status={eventStatus}
-            register={fns.register}
-            unregister={fns.unregister}
-          />
+        <NavigationMenuItem>
+
+          {
+            isMobile
+              ?
+              <div className="fixed left-20 bottom-1" >
+                <EventStatusButtons
+                  fetchedContext={fetchedContext}
+                  id={{ ship: eventHost, name: eventName }}
+                  status={eventStatus}
+                  register={fns.register}
+                  unregister={fns.unregister}
+                />
+              </div>
+              : <div className="fixed left-12 top-2">
+                <EventStatusButtons
+                  fetchedContext={fetchedContext}
+                  id={{ ship: eventHost, name: eventName }}
+                  status={eventStatus}
+                  register={fns.register}
+                  unregister={fns.unregister}
+                />
+              </div>
+
+          }
         </NavigationMenuItem>
         <NavigationMenuItem className="grow text-center"> {eventTitle} </NavigationMenuItem>
         {
@@ -123,22 +143,24 @@ const NavBar: React.FC<Props> = (
                 duration="duration-1000"
               >
                 <ul className="grid gap-3 m-6">
-                  {eventRoutingLinks.map(({ to, text }) =>
+                  {eventRoutingLinks.map(({ to, text, disabled }) =>
                     <li key={to} className="">
-                      <Link
+                      <Button
                         onClick={() => { console.log("click"); setOpenMenu(false) }}
+                        variant="default"
+                        disabled={disabled}
                         className={cn([
-                          buttonVariants({ variant: "default" }),
-                          "bg-gray-700",
+                          // "bg-stone-800",
                           "w-full"
-                        ])}
-                        to={to}> {text} </Link>
+                        ])}>
+                        <Link to={to}> {text} </Link>
+                      </Button>
                     </li>
                   )}
                 </ul>
               </SlideDownAndReveal>
               <Button
-                className="p-2 w-10 h-10 m-6 rounded-full fixed right-0 bottom-0 hover:bg-gray-700"
+                className="p-2 w-10 h-10 m-6 rounded-full fixed right-0 bottom-6 hover:bg-black"
                 onClick={() => { setOpenMenu(flipBoolean) }}
               >
                 <ChevronUp className={
@@ -155,9 +177,14 @@ const NavBar: React.FC<Props> = (
               <NavigationMenuTrigger />
               <NavigationMenuContent>
                 <ul className="grid gap-3 p-4  md:w-[400px] lg:w-[500px] ">
-                  {eventRoutingLinks.map(({ to, text }) =>
+                  {eventRoutingLinks.map(({ to, text, disabled }) =>
                     <li key={to} className="row row-span-3">
-                      <Link to={to}> {text} </Link>
+                      {
+                        disabled
+                          ? <span className="text-stone-300">{text}</span>
+                          : <Link to={to}> {text} </Link>
+                      }
+
                     </li>
                   )}
                 </ul>

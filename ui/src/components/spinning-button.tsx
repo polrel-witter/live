@@ -13,12 +13,8 @@ const SpinningButton = React.forwardRef<React.ElementRef<typeof Button>, Spinnin
       <Button {...props}>
         {
           spin
-            ?
-            <LoaderCircle className="animate-spin w-4 h-4" />
-            :
-            <div>
-              {children}
-            </div>
+            ? <LoaderCircle className="animate-spin w-4 h-4" />
+            : <div> {children} </div>
         }
       </Button>
     )
