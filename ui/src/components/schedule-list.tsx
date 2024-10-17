@@ -26,7 +26,7 @@ function formatSessionPanel(panel: string[]): string {
 
 function makeSessionMarkup(session: Session) {
   return (
-    <li key={window.crypto.randomUUID()}>
+    <li key={session.title}>
       <Card>
         <CardHeader>
           <CardTitle className="font-medium hover:font-bold">
