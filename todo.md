@@ -39,12 +39,15 @@ key:
 	+ Sometimes have to click attendees button more than once to open
 	? Subscription updates don't always automatically appear; e.g. when a new record is added I had to refresh page to see it.
 	? PWA was working initally, but eventually got 404 error after clicking around a bit. This hapend when i
+	+ "No internet connection" message when PWA is offline
+    	- Remove match functionality for ourselves
 	+ Profile button doesn't work within event home page; does work on timeline page
 
 *these can be skipped in favor of the top priority bugs listed below and Tinderfying the matching feature:*
  - on mobile: the frame for the event page is a bit wide; shouldn't have to scroll to the right/left. the boxes and text should be flush with the screen.
   - If we're on any sub-page of the event (i.e. guest list, map, schedule) the back button should take us back to the event home page instead of the timeline. It's more intuitive if these are essentially nested.
       - hovering over a provfile should change the cursor to a pointer finger.
+  + on mobile: on smaller screens the status button hangs over the event title; can we push the title down a line?
   - event description paragraphs should be aligned margin-left, instead of centered
   - if there are no sessions the date dropdown defaults to some date in 1969, but instead the sessions button shouldn't appear if there are zero sessions.
   - location should be placed under the end time; it's difficult to find at the bottm when the event description is long

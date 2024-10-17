@@ -14,7 +14,8 @@ import { newBackend } from '@/backend'
 import RootComponent from './root';
 // this component returns the router
 import AppRouter from './router';
-import { ConnectionStatus } from './components/connection-status';
+import { ConnectionStatusBar } from './components/connection-status';
+import { GlobalContext } from './globalContext';
 
 window.urbit = new Urbit('');
 window.urbit.ship = window.ship
@@ -30,10 +31,18 @@ if (container) {
   createRoot(container).render(
     <React.StrictMode>
       <RootComponent backend={backend} >
-        <AppRouter backend={backend} />
-        <div className='fixed bottom-0 w-full h-5 bg-accent'>
-         <ConnectionStatus />
-        </div>
+        <GlobalContext.Consumer >
+          {ctx => {
+            return (
+              <div className="phantom">
+                <AppRouter backend={backend} />
+                <div className='fixed bottom-0 w-full h-10 md:h-12 bg-accent'>
+                  <ConnectionStatusBar status={ctx?.connectionStatus} />
+                </div>
+              </div>
+            )
+          }}
+        </GlobalContext.Consumer >
       </RootComponent>
     </React.StrictMode>
   );

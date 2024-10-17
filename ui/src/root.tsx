@@ -1,57 +1,53 @@
 import { PropsWithChildren, useEffect, useState } from "react"
-import { createContext } from "react";
-import { Backend, EventAsGuest, EventAsHost, eventIdsEqual, LiveUpdateEvent, Profile } from "@/backend";
+import { Backend, eventIdsEqual, LiveUpdateEvent } from "@/backend";
 import { Toaster } from "./components/ui/toaster";
+import { buildIndexCtx, ConnectionStatus, GlobalContext, newEmptyIndexCtx } from "./globalContext";
 
-interface GlobalCtx {
-  fetched: boolean;
-  profile: Profile;
-  eventsAsGuest: EventAsGuest[]
-  eventsAsHost: EventAsHost[]
-}
 
-function newEmptyIndexCtx(): GlobalCtx {
-  return {
-    fetched: false,
-    profile: {
-      patp: "",
-      avatar: null,
-      bio: null,
-      nickname: null,
-      x: null,
-      ensDomain: null,
-      email: null,
-      github: null,
-      telegram: null,
-      signal: null,
-      phone: null,
-    },
-    eventsAsGuest: [] as EventAsGuest[],
-    eventsAsHost: [] as EventAsHost[],
+// TODO: this should eventually check that the urbit we're connected to
+// can communicate with other urbits (maybe i can to that with a poke?)
+function handleConnection(cb: (status: ConnectionStatus) => void) {
+  return () => {
+    cb("connecting")
+    if (navigator.onLine) {
+      isReachable(getServerUrl()).then(function(online) {
+        if (online) {
+          // handle online status
+          // console.log('online');
+          cb("online")
+        } else {
+          cb("offline")
+          // console.log('no connectivity');
+        }
+      });
+    } else {
+      // handle offline status
+      cb("offline")
+      // console.log('offline');
+    }
   }
 }
 
-const GlobalContext = createContext<GlobalCtx | null>(null)
-
-
-async function buildIndexCtx(backend: Backend, patp: string): Promise<GlobalCtx> {
-
-  const ctx = newEmptyIndexCtx()
-
-  const ownProfile = await backend.getProfile(patp)
-
-  if (ownProfile) {
-    ctx.profile = ownProfile
-  } else {
-    console.error(`profile for ${patp} not found`)
+async function isReachable(url: string) {
+  /**
+   * Note: fetch() still "succeeds" for 404s on subdirectories,
+   * which is ok when only testing for domain reachability.
+   *
+   * Example:
+   *   https://google.com/noexist does not throw
+   *   https://noexist.com/noexist does throw
+   */
+  try {
+    console.log("trying fetch", url)
+    const resp = await fetch(url, { method: 'HEAD', redirect: "follow", mode: 'no-cors' });
+    return resp && (resp.ok || resp.type === 'opaque');
+  } catch (err) {
+    console.warn('[conn test failure]:', err);
   }
+}
 
-  ctx.eventsAsGuest = await backend.getRecords()
-  ctx.eventsAsHost = await backend.getEvents()
-
-  ctx.fetched = true;
-
-  return ctx
+function getServerUrl() {
+  return window.location.origin + import.meta.env.BASE_URL;
 }
 
 type Props = {
@@ -62,11 +58,26 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
   const [indexCtx, setCtx] = useState(newEmptyIndexCtx())
 
 
+  const setConnectionStatusInCtx = (status: ConnectionStatus): void => {
+    setCtx(({ connectionStatus: _, ...rest }) => {
+      return { connectionStatus: status, ...rest }
+    })
+  }
+
+
   useEffect(() => {
+    const connectionStatusHandler = handleConnection(setConnectionStatusInCtx)
+
+    window.addEventListener('online', connectionStatusHandler);
+    window.addEventListener('offline', connectionStatusHandler);
+
+
     let liveSubId: number;
 
     buildIndexCtx(backend, window.ship).then(setCtx)
 
+
+    console.log("vite env test", import.meta.env.BASE_URL, import.meta.env.VITE_ENABLE_PWA_IN_DEV)
     // subscribe to event to update state dynamically
     backend.subscribeToLiveEvents({
       onEvent: (updateEvent: LiveUpdateEvent) => {
@@ -112,5 +123,3 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
 }
 
 export default RootComponent;
-export { GlobalContext }
-export type { GlobalCtx }
