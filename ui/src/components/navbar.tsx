@@ -111,7 +111,7 @@ const NavBar: React.FC<Props> = (
           {
             isMobile
               ?
-              <div className="fixed left-20 bottom-1" >
+              <div className="fixed left-16 bottom-4" >
                 <EventStatusButtons
                   fetchedContext={fetchedContext}
                   id={{ ship: eventHost, name: eventName }}
@@ -136,7 +136,7 @@ const NavBar: React.FC<Props> = (
         {
           isMobile
             ?
-            <div className="flex-0 fixed right-0 bottom-20">
+            <div className="flex-0 fixed right-0 bottom-0 mb-24">
               <SlideDownAndReveal
                 show={openMenu}
                 maxHeight="max-h-[1000px]"
@@ -144,23 +144,22 @@ const NavBar: React.FC<Props> = (
               >
                 <ul className="grid gap-3 m-6">
                   {eventRoutingLinks.map(({ to, text, disabled }) =>
-                    <li key={to} className="">
-                      <Button
-                        onClick={() => { console.log("click"); setOpenMenu(false) }}
-                        variant="default"
-                        disabled={disabled}
-                        className={cn([
-                          // "bg-stone-800",
-                          "w-full"
-                        ])}>
-                        <Link to={to}> {text} </Link>
-                      </Button>
+                    <li key={to}>
+                      {(disabled
+                        ? <Button disabled > {text} </Button>
+                        : <Link
+                          to={to}
+                          onClick={function() { setOpenMenu(false) }}
+                          className={cn([buttonVariants({ variant: "default" }), "w-full", "bg-gray-600"])}>
+                          {text}
+                        </Link>
+                      )}
                     </li>
                   )}
                 </ul>
               </SlideDownAndReveal>
               <Button
-                className="p-2 w-10 h-10 m-6 rounded-full fixed right-0 bottom-6 hover:bg-black"
+                className="p-2 w-10 h-10 m-6 rounded-full fixed right-0 bottom-12 hover:bg-gray-600"
                 onClick={() => { setOpenMenu(flipBoolean) }}
               >
                 <ChevronUp className={
