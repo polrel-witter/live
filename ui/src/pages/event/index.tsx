@@ -93,7 +93,6 @@ export function EventIndex(props: { backend: Backend }) {
       <EventContext.Provider value={eventContext}>
         <div className="grid size-full" >
           <NavBar
-          className="mb-2"
             fetchedContext={globalContext.fetched}
             event={eventContext.event}
             profile={globalContext.profile}
