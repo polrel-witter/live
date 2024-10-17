@@ -44,6 +44,7 @@ key:
 	+ Profile button doesn't work within event home page; does work on timeline page
 
 *these can be skipped in favor of the top priority bugs listed below and Tinderfying the matching feature:*
+ - on mobile: the frame for the event page is a bit wide; shouldn't have to scroll to the right/left. the boxes and text should be flush with the screen.
   - If we're on any sub-page of the event (i.e. guest list, map, schedule) the back button should take us back to the event home page instead of the timeline. It's more intuitive if these are essentially nested.
       - hovering over a provfile should change the cursor to a pointer finger.
   - event description paragraphs should be aligned margin-left, instead of centered
@@ -51,6 +52,13 @@ key:
   - location should be placed under the end time; it's difficult to find at the bottm when the event description is long
   - If we're not yet registered, the guest list page is blank. If this is the case, it should display a message to direct the user: 'register to this event to see the guest list'
   - on the guest list page, for each guest, i think it's better to have the '...' dialog box inline with the @p/avatar/sigil so that if the profile is blank, we don't have to include a dropdown section.
+  - paragraph breaks aren't recognized (e.g. '\0a's are ignored) for event or session descriptions.
+  - similarly, the nickname should take the place of the @p and rendered next to the sigil/avatar
+  - in the guest list, if a nickname is set, the @p should be next to it in parenthesis
+  - (should be fixed with the subscription to %matcher) new ships added to the guest list don't automatically display; have to refresh to get them to show. it must be due to scrying instead of having a subscription. i think we should dial up the scry frequency, if this is the case.
+  - after updating the profile the poke succesfully goes through, but a second or two after the form closes if I reopen the profile form the fields aren't populated. I had to close it and reopen it again for them to appear.
+
+
 
 ### Before launch (in order of priority)
   + start and end times on an event page are wrong. seems like it may still have mock data popluated for these fields.
@@ -59,6 +67,7 @@ key:
       - https://zyx.polrel-witter.xyz/scratch/view/bi4sj
   + on mobile: can't scroll to view all profile fields. on home screen i can't exit the view without reloading the page.
 
+
 ### After launch (in order of priority)
   + the @p's need the ~ prepended to them. this is why the DM button isn't working properly. the ship in the Tlon path needs the ~ included: <url>/apps/groups/dm/~zod
   + event title is pulling the event name from the id. it should specfically pull the event title.
@@ -66,21 +75,16 @@ key:
       + on sessions and event times, we should get rid of the AM/PM distiction since they're on 24hour clock.
   + not including the end date in a session will cause the frontend to not display the event
   - on mobile: on smaller screens the status button hangs over the event title; can we push the title down a line?
-  - paragraph breaks aren't recognized (e.g. '\0a's are ignored) for event or session descriptions.
-  - PWA works if you're using the app and then cut the internet connection, but if you start the app without an internet connection data does not popluate. ~sarlev got the same result. Seems like it might need more caching or something.
+  + PWA works if you're using the app and then cut the internet connection, but if you start the app without an internet connection data does not popluate. ~sarlev got the same result. Seems like it might need more caching or something.
   + sigils aren't displaying
-      - if needed, here's an example from Tlon: https://github.com/tloncorp/tlon-apps/blob/develop/apps/tlon-web/src/components/Avatar.tsx#L1
+      + if needed, here's an example from Tlon: https://github.com/tloncorp/tlon-apps/blob/develop/apps/tlon-web/src/components/Avatar.tsx#L1
+        + profile data also doesn't appear within the profile dialog box of an event page; it does on the timeline page, though.
+  + on the guest list page, profile fields should not appear if they're null. e.g. avatar, nickname and bio should not be there if they're not set. also lets change 'profile overview' to just 'profile'. it's cleaner
+  + on the guest list page, when an avatar is set, it should swap out the sigil field and render whatever image is set instead. No need to have an avatar field in the profile dropdown.
+  + at the top of the profile form, it should say: 'this information is only shared with ships you match with.'
   - There's brief delay when clicking into an event which feels like a crash because we get a blank page until the data appears. It's probably the time it takes for the scry to retrieve the data, but the user should know the app is still functioning. I think we should add a loading spinner in the middle of the page, or somewhere where it's obvious, so the user knows the app is doing something. This should appear anytime the frontend is scrying for data or knows it's waiting for an update from the backend (e.g. poking another ship and waiting for some data change).
   - need to iron out all crashing. for any feature that results in an error due to incompletion we need to disable the button/link that leads to the error message. this is currently happening for the 'connections' button and event tiles that we're hosting. from a users pov, it's better not have the chance to click something than to result in an error.
-  - after updating the profile the poke succesfully goes through, but a second or two after the form closes if I reopen the profile form the fields aren't populated. I had to close it and reopen it again for them to appear.
-        - profile data also doesn't appear within the profile dialog box of an event page; it does on the timeline page, though.
-  + on the guest list page, profile fields should not appear if they're null. e.g. avatar, nickname and bio should not be there if they're not set. also lets change 'profile overview' to just 'profile'. it's cleaner
-  - on mobile: shouldn't have to scroll to the right/left. the boxes and text should be flush with the screen.
-  + on the guest list page, when an avatar is set, it should swap out the sigil field and render whatever image is set instead. No need to have an avatar field in the profile dropdown.
-  + similarly, the nickname should take the place of the @p and rendered next to the sigil/avatar
-  - in the guest list, if a nickname is set, the @p should be next to it in parenthesis
-  - (should be fixed with the subscription to %matcher) new ships added to the guest list don't automatically display; have to refresh to get them to show. it must be due to scrying instead of having a subscription. i think we should dial up the scry frequency, if this is the case.
-  + at the top of the profile form, it should say: 'this information is only shared with ships you match with.'
+
 
 *after finishing the top priority bugs should move on to finishing the matching feature*
 
@@ -119,5 +123,5 @@ key:
   - for a private or secret event, if you're %registered and then become %unregistered, updates such as session additions, etc. are still sent. this should not happen.
 
 ## Features
-  - Set up Red Horizon fleet
+  + Set up Red Horizon fleet
 	- Event-level tagging in %pals
