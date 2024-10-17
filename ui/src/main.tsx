@@ -36,7 +36,7 @@ if (container) {
             return (
               <div className="phantom">
                 <AppRouter backend={backend} />
-                <div className='fixed bottom-0 w-full h-10 md:h-12 bg-accent'>
+                <div className='fixed bottom-0 w-full h-16 md:h-20 bg-accent'>
                   <ConnectionStatusBar status={ctx?.connectionStatus} />
                 </div>
               </div>
