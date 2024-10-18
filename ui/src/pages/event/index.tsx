@@ -100,7 +100,9 @@ export function EventIndex(props: { backend: Backend }) {
             register={props.backend.register}
             unregister={props.backend.unregister}
           />
-          <Outlet />
+          <div className="pt-12">
+            <Outlet />
+          </div>
         </div>
       </EventContext.Provider>
       :
