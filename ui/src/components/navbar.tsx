@@ -65,7 +65,7 @@ const NavBar: React.FC<Props> = (
     {
       to: "connections",
       text: "connections",
-      disabled: true
+      disabled: false
     },
   ]
 

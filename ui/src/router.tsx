@@ -10,6 +10,7 @@ import { AttendeesPage } from '@/pages/event/attendees';
 import { SchedulePage } from '@/pages/event/schedule';
 import { MapPage } from '@/pages/event/map';
 import { EventDetails } from '@/pages/event/details';
+import { ConnectionsPage } from '@/pages/event/connections';
 
 
 const basePath = "/apps/live"
@@ -47,6 +48,11 @@ const makeRouter = (backend: Backend) => {
           path: basePath + "/event/:hostShip/:name/map",
           loader: EventParamsLoader,
           element: <MapPage />
+        },
+        {
+          path: basePath + "/event/:hostShip/:name/connections",
+          loader: EventParamsLoader,
+          element: <ConnectionsPage />
         },
       ],
     },
