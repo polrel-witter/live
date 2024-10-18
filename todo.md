@@ -58,6 +58,10 @@ key:
   - in the guest list, if a nickname is set, the @p should be next to it in parenthesis
   - (should be fixed with the subscription to %matcher) new ships added to the guest list don't automatically display; have to refresh to get them to show. it must be due to scrying instead of having a subscription. i think we should dial up the scry frequency, if this is the case.
   - after updating the profile the poke succesfully goes through, but a second or two after the form closes if I reopen the profile form the fields aren't populated. I had to close it and reopen it again for them to appear.
+  - the 'connected' footer bar is mega huge on desktop; i'd put it in the nav bar on desktop (low priority nitpick)
+      - connection status bar slightly covers the contents at the bottom of the page. e.g. if the guest list spans the full page the bottom profile is slightly covered. just need to either move the bar down a tad or need a little more padding at the bottom of the page.
+  - the connection status doesn't change to 'connected' after cutting the internet connection then reconntecting
+  - @p's show up without the ~ prepended.
 
 
 
