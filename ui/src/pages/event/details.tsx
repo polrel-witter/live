@@ -3,10 +3,32 @@ import { EventContext } from "./context";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import ProfilePicture from "@/components/profile-picture";
-import { cn, formatEventDate, isComet, isMoon } from "@/lib/utils";
+import { cn, formatEventDate, isComet, isMoon, stripPatpSig } from "@/lib/utils";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { MessagesSquare } from "lucide-react";
+import { Profile } from "@/backend";
+import { hostname } from "os";
 
+
+const baseTextClass = "text-sm md:text-xl"
+
+const HostedByText: React.FC<{ profile: Profile | undefined, patp: string }> = ({ profile, patp }) => {
+
+  const className = cn(baseTextClass, {
+    "text-xs": isMoon(patp) || isComet(patp)
+  })
+
+  // i think profile?.nickname can become something truthy or falsy
+  if (profile?.nickname && profile.nickname !== "") {
+    return <div className={cn([baseTextClass])}>
+      <span>{profile.nickname}</span>
+      <span className={className}> ({patp})</span>
+    </div>
+  }
+
+
+  return <div className={className}> {patp} </div>
+}
 
 const EventDetails: React.FC = () => {
   const ctx = useContext(EventContext)
@@ -21,7 +43,10 @@ const EventDetails: React.FC = () => {
     },
   } = ctx
 
-  const baseTextClass = "text-sm md:text-xl"
+
+  const hostProfile = ctx.profiles
+    .find((profile) => profile.patp === stripPatpSig(ship))
+
 
   return (
     <div className="space-y-6 py-20 text-center">
@@ -33,9 +58,10 @@ const EventDetails: React.FC = () => {
           className="grid items-justify gap-y-6" >
           <div className="flex-row md:flex items-center justify-center gap-x-2">
             <div className={cn([baseTextClass, "pr-2"])}> hosted by </div>
-            {(ctx.fetched ? <ProfilePicture size="xs" point={ship} /> : '')}
-            {/* TODO: add nickname next to patp */}
-            <div className={cn([baseTextClass], { "text-xs": isMoon(ship) || isComet(ship) })}> {ship} </div>
+            <div className="flex justify-center items-center gap-x-4">
+              {(ctx.fetched ? <ProfilePicture size="xs" point={ship} /> : '')}
+              <HostedByText profile={hostProfile} patp={ship} />
+            </div>
           </div>
           <p className={cn([baseTextClass])}> starts: {startDate ? formatEventDate(startDate) : "TBD"} </p>
           <p className={cn([baseTextClass])}> ends: {endDate ? formatEventDate(endDate) : "TBD"} </p>
