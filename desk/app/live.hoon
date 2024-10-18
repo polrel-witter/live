@@ -14,7 +14,7 @@
       result=$@(@t (map id info))                         :: search result
       sub-records=_(mk-subs records:lr ,[%record @ @ ~])  :: record subs
       pub-records=_(mk-pubs records:lr ,[%record @ @ ~])  :: record pubs
-  ==
+ ==
 +$  state-1
   $:  %1
       events=(map id event-1)                               :: events we host
@@ -29,7 +29,7 @@
 ::
 --
 ::
-%+  verb  |
+%+  verb  &
 %-  agent:dbug
 =|  state-1
 =*  state  -
@@ -666,9 +666,9 @@
   ++  get-event
     ^-  event-1
     ~|(no-event-found+id (~(got by events) id))
-  ::  +get-all-guests: retreive guest ships for an event
+  ::  +get-all-record-ships: retreive all ships with a record for an event
   ::
-  ++  get-all-guests
+  ++  get-all-record-ships
     ^-  (list ship)
     ~(tap in (~(key bi records) id))
   ::  +id-to-path: transform id into a path
@@ -716,7 +716,7 @@
   ++  permitted-count
     ^-  @ud
     =|  count=@ud
-    =+  guests=get-all-guests
+    =+  guests=get-all-record-ships
     |-
     ?~  guests  count
     =+  status=(need ~(current-status re i.guests))
@@ -725,6 +725,17 @@
         ==
       $(guests t.guests)
     $(count +(count), guests t.guests)
+  ::  +get-ships-by-status: ditto
+  ::
+  ++  get-ships-by-status
+    |=  bag=(set _-.status)
+    ^-  (list ship)
+    =/  event-records=(map ship record-1)
+      (~(got by records) id)
+    %+  murn  ~(tap by event-records)
+    |=  [s=ship r=record-1]
+    ^-  (unit ship)
+    ?.((~(has in bag) p.status.r) ~ `s)
   ::  +update-guests: update a subset of ships with records
   ::
   ++  update-guests
@@ -822,7 +833,7 @@
       :: delete an event and notify all guests that it's so %over
       ::
       =.  cor  (update-event event(latch.info %over))
-      =.  cor  (update-guests get-all-guests)
+      =.  cor  (update-guests get-all-record-ships)
       =.  cor  update-all-remote-events
       =.  events  (~(del by events) id)
       :: if no discoverable events, also cull the /all path so others get a nack
@@ -862,16 +873,27 @@
         =?  cor  ?~((get-our-case `name.id) %| %&)
           %+  delete-remote-path  (need (get-our-case `name.id))
           /event/(scot %tas name.id)
-        (update-guests get-all-guests)
+        :: if event is %secret only update %invited, %registered, and
+        :: %attended, otherwise send the update to all ships with a
+        :: record
+        ::
+        %-  update-guests
+        =+  event=get-event
+        ?.  ?=(%secret kind.info.event)  get-all-record-ships
+        %-  get-ships-by-status
+        (silt `(list _-.status)`~[%invited %registered %attended])
       ?-    -.sub-info
           %title      event(title.info p.sub-info)
           %about      event(about.info p.sub-info)
-          %kind       event(kind.info p.sub-info)
           %location   event(location.info p.sub-info)
           %venue-map  event(venue-map.info p.sub-info)
           %group      event(group.info p.sub-info)
           %moment     event(moment.info p.sub-info)
           %timezone   event(timezone.info p.sub-info)
+      ::
+          %delete-session
+        =/  sid=@tas  p.sub-info
+        event(sessions.info (~(del by sessions.info.event) sid))
       ::
           %latch
         :: if limit is reached, prevent host from opening
@@ -881,10 +903,6 @@
             ==
           ~|(event-limit-is-reached+id !!)
         event(latch.info p.sub-info)
-      ::
-          %delete-session
-        =/  sid=@tas  p.sub-info
-        event(sessions.info (~(del by sessions.info.event) sid))
       ::
           %create-session
         =/  sid=@tas
@@ -896,6 +914,31 @@
           (weld (scow %tas (append-entropy name.id)) "-s")
         =/  =session  p.sub-info
         event(sessions.info (~(put by sessions.info.event) sid session))
+      ::
+          %kind
+        =/  new-kind=kind  p.sub-info
+        =?  cor  ?&  ?=(?(%public %private) kind.info.event)
+                     ?=(%secret new-kind)
+                 ==
+          =+  event=get-event
+          ::  kill paths for all records with a %reguested or
+          ::  %unregistered status so they don't receive updates, and
+          ::  let them know the $kind changed
+          ::
+          =/  targets=(list ship)
+            %-  get-ships-by-status
+            (silt `(list _-.status)`~[%requested %unregistered])
+          |-  ?~  targets  cor
+          =.  cor
+            =/  r=record-1
+              (~(got bi records) id i.targets)
+            =.  kind.info.r  new-kind
+            (~(publish re i.targets) r)
+          =.  cor
+            %-  sss-pub-records
+            (kill:du-records [%record name.id i.targets ~]~)
+          $(targets t.targets)
+        event(kind.info new-kind)
       ::
           %edit-session
         =/  sid=@tas  p.sub-info
@@ -939,7 +982,7 @@
       =/  event=event-1  get-event
       =.  secret.event  new-secret
       =.  cor  (update-event event)
-      =+  guests=get-all-guests
+      =+  guests=get-all-record-ships
       =|  permitted=(list ship)
       |-
       ?~  guests
@@ -1042,7 +1085,7 @@
       =?  cor  capped
         =.  cor
           (update-event event(latch.info %closed))
-        (update-guests get-all-guests)
+        (update-guests get-all-record-ships)
       =?  cor  ?=(%registered p.status)
         ::  add to %matcher
         ::
@@ -1105,11 +1148,13 @@
       |^  ^+  cor
       ?:  &(=(src our):bowl ?!(=(our.bowl ship.id)))
         :: send unregister poke to host
+        ::
         =/  =wire  (weld /unregister id-to-path)
         =/  =cage
           (make-operation id [%unregister ~])
         (emit (make-act wire ship.id %live cage))
       :: unregister poke from some guest or us as the host
+      ::
       ?:  over  cor
       =?  who  ?~(who & ?>(host-call |))
         ?>(guest-call `src.bowl)
@@ -1120,7 +1165,15 @@
         %+  poke-matcher
           /matcher/(scot %p (need who))/delete
         [id [%delete-peer (need who)]]
-      (~(update-status re (need who)) [%unregistered now.bowl])
+      ::  update their status and kill the pub path so the guest doesn't
+      ::  receive event updates
+      ::
+      =.  cor
+        (~(update-status re (need who)) [%unregistered now.bowl])
+      =+  event=get-event
+      =?  cor  ?=(%secret kind.info.event)
+        (sss-pub-records (kill:du-records [%record name.id (need who) ~]~))
+      cor
       ::  +is-registered: check if registered
       ::
       ++  is-registered
