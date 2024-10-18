@@ -51,7 +51,7 @@ key:
   - event description paragraphs should be aligned margin-left, instead of centered
   - if there are no sessions the date dropdown defaults to some date in 1969, but instead the sessions button shouldn't appear if there are zero sessions.
   - location should be placed under the end time; it's difficult to find at the bottm when the event description is long
-  - If we're not yet registered, the guest list page is blank. If this is the case, it should display a message to direct the user: 'register to this event to see the guest list'
+  + If we're not yet registered, the guest list page is blank. If this is the case, it should display a message to direct the user: 'register to this event to see the guest list'
   - on the guest list page, for each guest, i think it's better to have the '...' dialog box inline with the @p/avatar/sigil so that if the profile is blank, we don't have to include a dropdown section.
   - paragraph breaks aren't recognized (e.g. '\0a's are ignored) for event or session descriptions.
   - similarly, the nickname should take the place of the @p and rendered next to the sigil/avatar
