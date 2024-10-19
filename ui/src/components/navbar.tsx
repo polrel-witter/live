@@ -111,7 +111,7 @@ const NavBar: React.FC<Props> = (
           {
             isMobile
               ?
-              <div className="fixed left-16 bottom-4" >
+              <div className="fixed left-16 bottom-5" >
                 <EventStatusButtons
                   fetchedContext={fetchedContext}
                   id={{ ship: eventHost, name: eventName }}

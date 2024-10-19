@@ -36,7 +36,7 @@ function getTextFromStatus(status: ConnectionStatus) {
     case "offline":
       return "disconnected"
     default:
-     return "unknown status"
+      return "unknown status"
   }
 }
 
@@ -46,9 +46,10 @@ type DotProps = {
 
 const ConnectionDot: React.FC<DotProps> = ({ status }) => {
   const color = getBackgroundColorFromStatus(status)
+  const sizeClass = "h-2 w-2 md:h-1 md:w-1"
 
   return (
-    <span className="relative flex align-center h-2 w-2 md:h-3 md:w-3 ">
+    <span className={cn([sizeClass, "relative flex align-center"])}>
       {
         status === "offline"
           ? ''
@@ -60,7 +61,8 @@ const ConnectionDot: React.FC<DotProps> = ({ status }) => {
       }
 
       <span className={cn([
-        "inline-flex rounded-full h-2 w-2 md:h-3 md:w-3 bg-emerald-500",
+        "inline-flex rounded-full bg-emerald-500",
+        sizeClass,
         color.filled
       ])}></span>
     </span>
@@ -69,16 +71,16 @@ const ConnectionDot: React.FC<DotProps> = ({ status }) => {
 
 const ConnectionStatusBar: React.FC<{ status?: ConnectionStatus }> = ({ status }) => {
   return (
-    <div className="flex h-full items-center justify-end">
+    <div className="flex items-start justify-end">
       {!status
         ?
         <Skeleton className="h-6 w-6 rounded-full" />
         :
-        <div className="flex items-center h-full justify-center mr-4">
+        <div className="flex items-center h-full justify-center m-16 mt-5 md:m-1 md:mr-4">
           <div className="flex items-center justify-center mt-[1px] md:mt-[2px]">
             <ConnectionDot status={status} />
           </div>
-          <p className="ml-2 text-sm md:text-lg pt-[1px] md:p-0">{ getTextFromStatus(status) }</p>
+          <p className="ml-2 text-sm md:text-xs">{getTextFromStatus(status)}</p>
         </div>
       }
     </div>
