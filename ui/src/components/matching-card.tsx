@@ -5,11 +5,11 @@ type Props = {
   profile: Profile
 }
 
-const MatchingCard: React.FC<Profile> = () => {
+const MatchingCard: React.FC<Props> = ({ profile }) => {
   return (
-    <Card className="w-full h-full border-0 shadow-none">
-      <CardHeader className="text-center"> userfoo </CardHeader>
-      <CardContent className="text-center"> profile</CardContent>
+    <Card className="flex-row">
+      <div className="text-center"> userfoo </div>
+      <div className="text-center"> {profile.patp}</div>
     </Card>
   )
 }
