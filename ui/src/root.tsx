@@ -39,7 +39,7 @@ async function isReachable(url: string) {
    */
   try {
     console.log("trying fetch", url)
-    const resp = await fetch(url, { method: 'HEAD', redirect: "follow", mode: 'no-cors' });
+    const resp = await fetch(url, { method: 'GET', redirect: "follow", mode: 'no-cors' });
     return resp && (resp.ok || resp.type === 'opaque');
   } catch (err) {
     console.warn('[conn test failure]:', err);

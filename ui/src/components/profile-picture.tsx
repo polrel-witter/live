@@ -25,7 +25,7 @@ const getSizeParams = (size: Size): SizeParams => {
         size: 18,
         space: "default",
         detail: "none",
-        wh: "w-7 h-7"
+        wh: "w-6 h-6"
       }
     case "sm":
       return {
