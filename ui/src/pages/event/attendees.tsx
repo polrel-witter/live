@@ -18,7 +18,7 @@ export function AttendeesPage(props: { backend: Backend }) {
   // }, [ctx])
 
   return (
-    <div className="grid m-6 md:mx-96 space-y-12 justify-items-center">
+    <div className="md:mx-20">
       {
         ctx.event.status !== "registered"
           ? <div className="w-full h-full">
@@ -28,8 +28,8 @@ export function AttendeesPage(props: { backend: Backend }) {
               >register to this event to see the guest list</CardContent>
             </Card>
           </div>
-          : <div>
-      <div className="text-bold">event guests</div>
+          : <div className="phantom m-6">
+            <div className="font-thin text-center pb-4">event guests</div>
             <AttendeeList
               attendees={ctx.attendees}
               profiles={ctx.profiles}
