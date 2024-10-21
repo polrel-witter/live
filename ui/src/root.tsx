@@ -2,7 +2,6 @@ import { PropsWithChildren, useEffect, useState } from "react"
 import { Backend, eventIdsEqual, LiveUpdateEvent } from "@/backend";
 import { Toaster } from "./components/ui/toaster";
 import { buildIndexCtx, ConnectionStatus, GlobalContext, newEmptyIndexCtx } from "./globalContext";
-import { oldProfile } from "console";
 
 
 // TODO: this should eventually check that the urbit we're connected to
