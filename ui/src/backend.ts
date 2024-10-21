@@ -3,7 +3,7 @@ import Urbit from "@urbit/http-api";
 import { sub } from "date-fns";
 import { TZDate, tzOffset } from "@date-fns/tz";
 
-import { z, ZodError } from "zod" // this is an object validation library
+import { string, z, ZodError } from "zod" // this is an object validation library
 
 interface EventId { ship: string, name: string };
 
@@ -65,7 +65,12 @@ interface Backend {
   unmatch(id: EventId, patp: string): Promise<void>;
 
   // matcher - TBD
-  subscribeToMatch(handler: (peerPatp: string, matched: boolean) => void): void
+  subscribeToMatcherEvents(handlers: {
+    onMatch: (e: MatcherMatchEvent) => void
+    onProfileChange: (e: MatcherProfileEvent) => void
+    onError: (err: any, id: string) => void,
+    onQuit: (data: any) => void,
+  }): Promise<number>
 
   // unsubscribe
   unsubscribeFromEvent(id: number): Promise<void>
@@ -92,6 +97,23 @@ type Profile = {
   telegram: string | null;
   signal: string | null;
   phone: string | null;
+}
+
+function diffProfiles(oldProfile: Profile, newFields: Record<string, string>): [string, string | null][] {
+
+  const result: [string, string | null][] = []
+
+  const keysObj: any = oldProfile
+
+  for (const entry of Object.entries(newFields)) {
+    const [key, val] = entry
+    if (key in keysObj && val != keysObj[key]) {
+      result.push([key, val])
+    }
+  }
+
+  return result
+
 }
 
 const emptyProfile: Profile = {
@@ -183,6 +205,17 @@ const emptyEventAsHost: EventAsHost = {
 type LiveUpdateEvent = {
   ship: string,
   event: EventAsGuest,
+}
+
+
+type MatcherProfileEvent = {
+  profile: Profile;
+}
+
+
+type MatcherMatchEvent = {
+  ship: string,
+  status: MatchStatus,
 }
 
 // function getSchedule(_api: Urbit): () => Promise<Session[]> {
@@ -550,8 +583,6 @@ const liveUpdateEventSchema = z.object({
   record: backendRecordSchema,
 })
 
-
-
 function subscribeToLiveEvents(_api: Urbit): (handlers: {
   onEvent: (e: LiveUpdateEvent) => void
   onError: (err: any, id: string) => void,
@@ -697,7 +728,7 @@ function getProfile(_api: Urbit): (patp: string) => Promise<Profile | null> {
   }
 }
 
-const backendMatchStatusSchema = z.enum(["match", "incoming", "outgoing"]).nullable()
+const backendMatchStatusSchema = z.enum(["match", "reach"]).nullable()
 
 // !!! the peers object's keys are patps with ~
 const getAttendeesSchema = z.object({
@@ -712,9 +743,8 @@ function backendMatchStatusToMatchStatus(s: z.infer<typeof backendMatchStatusSch
   switch (s) {
     case "match":
       return "matched"
-    case "outgoing":
-      return "unmatched"
-    case "incoming":
+    case "reach":
+      return "sent-request"
     case null:
       return "unmatched"
     default:
@@ -787,7 +817,8 @@ function match(_api: Urbit): (id: EventId, patp: string) => Promise<void> {
       json: {
         "shake": {
           "id": { "ship": id.ship, "name": id.name },
-          "ship": { _patp, "act": true }
+          "ship": `~${_patp}`,
+          "act": true
         }
       }
     })
@@ -807,16 +838,55 @@ function unmatch(_api: Urbit): (id: EventId, patp: string) => Promise<void> {
       json: {
         "shake": {
           "id": { "ship": id.ship, "name": id.name },
-          "ship": _patp,
-          "act": true
+          "ship": `~${_patp}`,
+          "act": false
         }
       }
     })
   }
 }
 
-function subscribeToMatch(_api: Urbit): (handler: (peerPatp: string, matched: boolean) => void) => void {
-  return (_handler: (peerPatp: string, matched: boolean) => void) => { }
+const matcherMatchEventSchema = z.object({
+  match: z.enum(["match", "reach"]).nullable()
+})
+
+const matcherProfileUpdateEventSchema = z.object({
+  ship: z.string(),
+  fields: z.array(profileEntryObjSchema)
+})
+
+function subscribeToMatcherEvents(_api: Urbit): (handlers: {
+  onMatch: (e: MatcherMatchEvent) => void
+  onProfileChange: (e: MatcherProfileEvent) => void
+  onError: (err: any, id: string) => void,
+  onQuit: (data: any) => void,
+}) => Promise<number> {
+  return async ({ onMatch, onProfileChange, onError, onQuit }) => {
+    return window.urbit.subscribe({
+      app: "matcher",
+      path: "/updates",
+      event: (evt) => {
+        try {
+          const { ship, fields } = matcherProfileUpdateEventSchema.parse(evt)
+          onProfileChange({
+            profile: entryArrayToProfile(ship, fields)
+          })
+        } catch {
+          try {
+            const matchEvt = matcherMatchEventSchema.parse(evt)
+            onMatch({
+              ship: "",
+              status: backendMatchStatusToMatchStatus(matchEvt.match)
+            })
+          } catch (e) {
+            throw e
+          }
+        }
+      },
+      err: (err, id) => onError(err, id),
+      quit: (data) => onQuit(data)
+    })
+  }
 }
 
 function newBackend(api: Urbit, ship: string): Backend {
@@ -837,7 +907,7 @@ function newBackend(api: Urbit, ship: string): Backend {
     editProfileField: editProfileField(api),
     match: match(api),
     unmatch: unmatch(api),
-    subscribeToMatch: subscribeToMatch(api),
+    subscribeToMatcherEvents: subscribeToMatcherEvents(api),
 
     unsubscribeFromEvent: (id) => {
       return api.unsubscribe(id)
@@ -845,6 +915,6 @@ function newBackend(api: Urbit, ship: string): Backend {
   }
 }
 
-export { emptyEventAsGuest, emptyProfile, emptyEventAsHost, newBackend, eventIdsEqual }
+export { emptyEventAsGuest, emptyProfile, emptyEventAsHost, newBackend, eventIdsEqual, diffProfiles }
 
 export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, EventDetails, Session, Attendee, Profile, LiveUpdateEvent, Backend }

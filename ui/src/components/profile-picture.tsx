@@ -90,6 +90,7 @@ const ProfilePicture: React.FC<Props> = ({
   point,
   avatarUrl,
   size,
+  className,
   ...restProps
 }) => {
 
@@ -103,7 +104,7 @@ const ProfilePicture: React.FC<Props> = ({
 
   return (
 
-    <Avatar className={cn([sp.wh])} {...restProps}>
+    <Avatar className={cn([sp.wh, className])} {...restProps}>
       {(avatarUrl
         ? <AvatarImage src={avatarUrl} />
         : ((moon || comet)

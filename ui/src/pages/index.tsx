@@ -1,4 +1,4 @@
-import { Backend, Profile } from "@/backend";
+import { Backend, diffProfiles, Profile } from "@/backend";
 import EventList from "@/components/event-list";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { useContext, useEffect, useState } from "react";
@@ -18,7 +18,8 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
   }
 
 
-  const [ownProfileFields, setOwnProfileFields] = useState<Profile | null>(null)
+  // TODO: unify with other profile inside event ctx
+  const [ownProfile, setOwnProfile] = useState<Profile | null>(null)
   const [openProfile, setOpenProfile] = useState(false)
 
   // window.urbit.subscribe({
@@ -53,7 +54,7 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
       if (!profile) {
         console.error(`profile for ${window.ship} not found`)
       } else {
-        setOwnProfileFields(profile)
+        setOwnProfile(profile)
       }
     })
 
@@ -73,11 +74,19 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
 
   // TODO: copied fn from navbar, unify code
   const editProfile = async (fields: Record<string, string>): Promise<void> => {
-    const _ = await Promise.all(Object
-      .entries(fields)
+
+    let fieldsToChange: [string, string | null][] = []
+
+    if (ownProfile) {
+      fieldsToChange = diffProfiles(ownProfile, fields)
+    } else {
+      fieldsToChange = Object.entries(fields)
+    }
+
+    const _ = await Promise.all(fieldsToChange
       .map(([field, val]) => {
-        // TODO: diff between previous values and only send poke for diff ones
-        return backend.editProfileField(field, val)
+        // val ?? '' is hacky remove in future
+        return backend.editProfileField(field, val ?? '')
       }))
 
     setOpenProfile(false)
@@ -101,7 +110,7 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
             <ProfileDialog
               onOpenChange={setOpenProfile}
               open={openProfile}
-              profileFields={ownProfileFields!}
+              profileFields={ownProfile!}
               editProfile={editProfile}
             />
           </NavigationMenuItem>

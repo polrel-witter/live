@@ -4,7 +4,7 @@ import { LoaderFunctionArgs, Params } from "react-router-dom";
 
 import NavBar from "@/components/navbar"
 
-import { Backend, emptyEventAsGuest, EventId, eventIdsEqual, Profile } from '@/backend'
+import { Attendee, Backend, emptyEventAsGuest, EventId, eventIdsEqual, Profile } from '@/backend'
 
 import { GlobalContext, GlobalCtx } from '@/globalContext';
 import { EventContext, EventCtx, newEmptyCtx } from './context';
@@ -26,6 +26,15 @@ export function LoadEventParams(): EventParams {
   return useLoaderData() as EventParams
 }
 
+async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
+  return Promise.all(a
+    .map(attendee => b.getProfile(attendee.patp))
+  ).then((profiles) => {
+    return profiles
+      .filter((profile): profile is Profile => profile !== null)
+  })
+}
+
 async function buildContextData(
   { hostShip, name }: EventParams,
   globalContext: GlobalCtx,
@@ -43,12 +52,7 @@ async function buildContextData(
   }
   const attendees = await backend.getAttendees(evtId)
 
-  const profiles = await Promise.all(attendees
-    .map(attendee => backend.getProfile(attendee.patp))
-  ).then((profiles) => {
-    return profiles
-      .filter((profile): profile is Profile => profile !== null)
-  })
+  const profiles = await fetchProfiles(backend, attendees)
 
   return {
     fetched: true,
@@ -58,7 +62,7 @@ async function buildContextData(
   }
 }
 
-export function EventIndex(props: { backend: Backend }) {
+const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
   const globalContext = useContext(GlobalContext)
 
   if (!globalContext) {
@@ -76,12 +80,36 @@ export function EventIndex(props: { backend: Backend }) {
     if (globalContext.fetched) {
       // const interval = setInterval(async () => {
       //   console.log("loop")
-      //   const ctxData = await buildContextData(eventParams, props.backend)
+      //   const ctxData = await buildContextData(eventParams, backend)
       //   setEventCtx(ctxData)
       // }, 1000);
 
-      buildContextData(eventParams, globalContext, props.backend)
+      buildContextData(eventParams, globalContext, backend)
         .then(setEventCtx)
+    }
+
+    let matcherSubId: number
+
+
+    backend.subscribeToMatcherEvents({
+      onProfileChange: () => { },
+      onMatch: (evt) => {
+        backend.getAttendees(eventContext.event.details.id)
+          .then((newAttendees) => {
+            setEventCtx(({ attendees: _, ...rest }) => {
+              return {
+                attendees: newAttendees,
+                ...rest,
+              }
+            })
+          })
+      },
+      onError: (err, _id) => { console.log("%live err: ", err) },
+      onQuit: (data) => { console.log("%live closed subscription: ", data) }
+    }).then((id) => { matcherSubId = id })
+
+    return () => {
+      backend.unsubscribeFromEvent(matcherSubId).then(() => { })
     }
 
   }, [globalContext])
@@ -94,11 +122,12 @@ export function EventIndex(props: { backend: Backend }) {
         <div className="grid size-full" >
           <NavBar
             fetchedContext={globalContext.fetched}
+            online={globalContext.connectionStatus === "online"}
             event={eventContext.event}
             profile={globalContext.profile}
-            editProfileField={props.backend.editProfileField}
-            register={props.backend.register}
-            unregister={props.backend.unregister}
+            editProfileField={backend.editProfileField}
+            register={backend.register}
+            unregister={backend.unregister}
           />
           <div className="pt-12">
             <Outlet />
@@ -109,3 +138,5 @@ export function EventIndex(props: { backend: Backend }) {
       ''
   );
 }
+
+export { EventIndex }

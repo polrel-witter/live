@@ -52,7 +52,7 @@ const makeRouter = (backend: Backend) => {
         {
           path: basePath + "/event/:hostShip/:name/connections",
           loader: EventParamsLoader,
-          element: <ConnectionsPage />
+          element: <ConnectionsPage backend={backend} />
         },
       ],
     },
