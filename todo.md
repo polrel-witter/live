@@ -31,6 +31,14 @@ key:
       + disabled pinch zoom by default on all pages, enabling it programmatically in map page
     + session titles highlight on hover. no need for this, as it feels like a link to something.
     + 'successfully sent registration to event host' should say 'successfully sent entry request to event host'
+	- connections page
+		- the shake goes through, after clicking the "+" (or "x") button, but we get a blank page.
+		- similarly, when we unmatch with someone, it goes through and reloads the guest page, but it's blank.
+		- i think this should go above the profile tiles: "Match with guests to share your profile info. Requests are sent to the event host, who will then "introduce" you should your request become mutual. Your profile data is stored locally and sent directly to guests you match with."
+		- to avoid moving the mouse or your finger up and down, i think the action buttons on profiles within the connections page should be directly below the avatar/sigil. since the profile info will vary in size.
+	- guest list page
+		- clicking unmatch sometimes will open the profile dropdown. this particularly happens when the button is grayed out.
+		- also, i think the profile box on the guest list would look slightly better justified-left, directly under the avatar. It appears centered when info in the profile doesn't span the full width of the card.
 
 
 ## Bugs
