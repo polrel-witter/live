@@ -5,12 +5,13 @@ import { useEffect, useState } from "react"
 import { Button, buttonVariants } from "./ui/button"
 import { ArrowLeft, ChevronLeft, ChevronUp, User, } from "lucide-react"
 import { cn, flipBoolean } from "@/lib/utils"
-import { Backend, EventAsGuest, Profile } from "@/backend"
+import { Backend, diffProfiles, EventAsGuest, Profile } from "@/backend"
 import { SlideDownAndReveal } from "./sliders"
 import EventStatusButtons from "./event-status-buttons"
 
 type Props = {
   fetchedContext: boolean;
+  online: boolean;
   event: EventAsGuest,
   profile: Profile,
   editProfileField: Backend["editProfileField"]
@@ -28,6 +29,7 @@ const NavBar: React.FC<Props> = (
       status: eventStatus,
       ...eventRest
     },
+    online,
     profile,
     ...fns
   }) => {
@@ -65,7 +67,7 @@ const NavBar: React.FC<Props> = (
     {
       to: "connections",
       text: "connections",
-      disabled: true
+      disabled: !online
     },
   ]
 
@@ -81,11 +83,14 @@ const NavBar: React.FC<Props> = (
   }
 
   const editProfile = async (fields: Record<string, string>): Promise<void> => {
-    const _ = await Promise.all(Object
-      .entries(fields)
+    let fieldsToChange: [string, string | null][] = []
+
+    fieldsToChange = diffProfiles(profile, fields)
+
+    const _ = await Promise.all(fieldsToChange
       .map(([field, val]) => {
-        // TODO: diff between previous values and only send poke for diff ones
-        return fns.editProfileField(field, val)
+        // val ?? '' is hacky remove in future
+        return fns.editProfileField(field, val ?? '')
       }))
 
     setOpenProfile(false)

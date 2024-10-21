@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn, isComet, isMoon } from "@/lib/utils"
 import { useEffect, useRef } from "react"
 
-type Size = "xs" | "sm"
+type Size = "xs" | "sm" | "md" | "xl"
 
 type SizeParams = {
   size: Config["size"],
@@ -33,6 +33,20 @@ const getSizeParams = (size: Size): SizeParams => {
         space: "default",
         detail: "default",
         wh: "w-10 h-10"
+      }
+    case "md":
+      return {
+        size: 200,
+        space: "default",
+        detail: "default",
+        wh: "w-20 h-20"
+      }
+    case "xl":
+      return {
+        size: 400,
+        space: "default",
+        detail: "default",
+        wh: "w-52 h-52"
       }
   }
 }
@@ -76,6 +90,7 @@ const ProfilePicture: React.FC<Props> = ({
   point,
   avatarUrl,
   size,
+  className,
   ...restProps
 }) => {
 
@@ -89,11 +104,17 @@ const ProfilePicture: React.FC<Props> = ({
 
   return (
 
-    <Avatar className={cn([sp.wh])} {...restProps}>
+    <Avatar className={cn([sp.wh, className])} {...restProps}>
       {(avatarUrl
         ? <AvatarImage src={avatarUrl} />
         : ((moon || comet)
-          ? <AvatarFallback className="text-2xl bg-gray-300" > {moon ? "🌑" : "☄️"} </AvatarFallback>
+          ? <AvatarFallback className={cn([
+            "bg-gray-300",
+            { "text-2xl": size === "xs" },
+            { "text-3xl": size === "sm" },
+            { "text-4xl": size === "md" },
+            { "text-9xl": size === "xl" }
+          ])} > {moon ? "🌑" : "☄️"} </AvatarFallback>
           : <Sigil point={point} sizeParams={sp} />)
       )}
     </Avatar>

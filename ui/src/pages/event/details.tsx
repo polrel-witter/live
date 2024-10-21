@@ -7,7 +7,6 @@ import { cn, formatEventDate, isComet, isMoon, stripPatpSig } from "@/lib/utils"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { MessagesSquare } from "lucide-react";
 import { Profile } from "@/backend";
-import { hostname } from "os";
 
 
 const baseTextClass = "text-sm md:text-xl"
@@ -59,7 +58,7 @@ const EventDetails: React.FC = () => {
           <div className="flex-row md:flex items-center justify-center gap-x-2">
             <div className={cn([baseTextClass, "pr-2"])}> hosted by </div>
             <div className="flex justify-center items-center gap-x-4">
-              {(ctx.fetched ? <ProfilePicture size="xs" point={ship} /> : '')}
+              {(ctx.fetched ? <ProfilePicture avatarUrl={hostProfile?.avatar ?? undefined} size="xs" point={ship} /> : '')}
               <HostedByText profile={hostProfile} patp={ship} />
             </div>
           </div>

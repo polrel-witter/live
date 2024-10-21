@@ -2,6 +2,7 @@ import { PropsWithChildren, useEffect, useState } from "react"
 import { Backend, eventIdsEqual, LiveUpdateEvent } from "@/backend";
 import { Toaster } from "./components/ui/toaster";
 import { buildIndexCtx, ConnectionStatus, GlobalContext, newEmptyIndexCtx } from "./globalContext";
+import { oldProfile } from "console";
 
 
 // TODO: this should eventually check that the urbit we're connected to
@@ -73,11 +74,11 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
 
 
     let liveSubId: number;
+    let matcherSubId: number;
 
     buildIndexCtx(backend, window.ship).then(setCtx)
 
 
-    console.log("vite env test", import.meta.env.BASE_URL, import.meta.env.VITE_ENABLE_PWA_IN_DEV)
     // subscribe to event to update state dynamically
     backend.subscribeToLiveEvents({
       onEvent: (updateEvent: LiveUpdateEvent) => {
@@ -108,8 +109,28 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
       onQuit: (data) => { console.log("%live closed subscription: ", data) }
     }).then((id) => { liveSubId = id })
 
+    backend.subscribeToMatcherEvents({
+      onMatch: () => { },
+      onProfileChange: (evt) => {
+        setCtx(({ profile: oldProfile, ...rest }) => {
+          return {
+            profile: {
+              ...oldProfile,
+              ...evt.profile,
+            },
+            ...rest
+          }
+        })
+      },
+      onError: (err, _id) => { console.log("%live err: ", err) },
+      onQuit: (data) => { console.log("%live closed subscription: ", data) }
+    }).then((id) => { matcherSubId = id })
+
     return () => {
-      backend.unsubscribeFromEvent(liveSubId).then()
+      Promise.all([
+        backend.unsubscribeFromEvent(liveSubId),
+        backend.unsubscribeFromEvent(matcherSubId)
+      ]).then(() => { console.log("unsubscribed from events") })
     }
 
   }, [])

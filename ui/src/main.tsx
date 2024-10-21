@@ -31,18 +31,20 @@ if (container) {
   createRoot(container).render(
     <React.StrictMode>
       <RootComponent backend={backend} >
-        <GlobalContext.Consumer >
-          {ctx => {
-            return (
-              <div className="phantom">
-                <AppRouter backend={backend} />
-                <div className='fixed bottom-0 w-full h-16 md:h-6 bg-accent'>
-                  <ConnectionStatusBar status={ctx?.connectionStatus} />
+        <div className='mb-16'>
+          <GlobalContext.Consumer >
+            {ctx => {
+              return (
+                <div className="phantom">
+                  <AppRouter backend={backend} />
+                  <div className='fixed bottom-0 w-full h-16 md:h-6 bg-accent'>
+                    <ConnectionStatusBar status={ctx?.connectionStatus} />
+                  </div>
                 </div>
-              </div>
-            )
-          }}
-        </GlobalContext.Consumer >
+              )
+            }}
+          </GlobalContext.Consumer >
+        </div>
       </RootComponent>
     </React.StrictMode>
   );
