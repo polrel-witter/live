@@ -103,10 +103,7 @@ const NavBar: React.FC<Props> = (
         <NavigationMenuItem className="fixed left-0">
           <Link to={getPathForBackButton()}>
             <Button className="p-3 m-1 rounded-3xl">
-              <ArrowLeft
-                onClick={() => { setOpenProfile(flipBoolean) }}
-                className="w-4 h-4 text-white"
-              />
+              <ArrowLeft className="w-4 h-4 text-white" />
             </Button>
           </Link>
         </NavigationMenuItem>
