@@ -219,7 +219,7 @@ const ConnectionsPage: React.FC<{ backend: Backend }> = ({ backend }) => {
                     </div>
                     {
                       profile
-                        ? <div className="ml-12">
+                        ? <div className="ml-12 mb-4">
                           <ProfileCard profile={profile} showHeader />
                         </div>
                         : ''
