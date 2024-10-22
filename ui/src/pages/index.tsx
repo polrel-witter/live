@@ -4,7 +4,7 @@ import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/compon
 import { useContext, useEffect, useState } from "react";
 import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ProfileDialog from "@/components/profile-dialog";
+import { ProfileDialog } from "@/components/profile-dialog";
 import { flipBoolean } from "@/lib/utils";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { GlobalContext } from "@/globalContext";

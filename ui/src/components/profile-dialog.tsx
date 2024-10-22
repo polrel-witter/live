@@ -67,4 +67,4 @@ const ProfileDialog: React.FC<Props> = ({
   )
 }
 
-export default ProfileDialog;
+export { ProfileDialog };

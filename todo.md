@@ -54,8 +54,8 @@ key:
 
 *these can be skipped in favor of the top priority bugs listed below and Tinderfying the matching feature:*
  - on mobile: the frame for the event page is a bit wide; shouldn't have to scroll to the right/left. the boxes and text should be flush with the screen.
-  - If we're on any sub-page of the event (i.e. guest list, map, schedule) the back button should take us back to the event home page instead of the timeline. It's more intuitive if these are essentially nested.
-      - hovering over a provfile should change the cursor to a pointer finger.
+  + If we're on any sub-page of the event (i.e. guest list, map, schedule) the back button should take us back to the event home page instead of the timeline. It's more intuitive if these are essentially nested.
+      + hovering over a provfile should change the cursor to a pointer finger.
   + on mobile: on smaller screens the status button hangs over the event title; can we push the title down a line?
   - event description paragraphs should be aligned margin-left, instead of centered
   - if there are no sessions the date dropdown defaults to some date in 1969, but instead the sessions button shouldn't appear if there are zero sessions.

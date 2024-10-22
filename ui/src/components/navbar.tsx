@@ -1,14 +1,19 @@
-import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuList, NavigationMenuTrigger, } from "@/components/ui/navigation-menu"
-import { Link } from "react-router-dom"
-import ProfileDialog from "./profile-dialog"
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu"
+import { Link, useLocation } from "react-router-dom"
+import { ProfileDialog } from "./profile-dialog"
 import { useEffect, useState } from "react"
 import { Button, buttonVariants } from "./ui/button"
-import { ArrowLeft, ChevronLeft, ChevronUp, User, } from "lucide-react"
+import { ArrowLeft, ChevronUp, User, } from "lucide-react"
 import { cn, flipBoolean } from "@/lib/utils"
-import { Backend, diffProfiles, EventAsGuest, Profile } from "@/backend"
+import { Backend, EventAsGuest, Profile } from "@/backend"
 import { SlideDownAndReveal } from "./sliders"
-import EventStatusButtons from "./event-status-buttons"
-import postcss from "postcss"
+import { EventStatusButtons } from "./event-status-buttons"
 
 type Props = {
   fetchedContext: boolean;
@@ -52,9 +57,12 @@ const NavBar: React.FC<Props> = (
 
   const isMobile = width <= 768;
 
+  const basePath = import.meta.env.BASE_URL
+  const eventIndex = basePath + `event/${eventHost}/${eventName}`
+
   const eventRoutingLinks = [
     {
-      to: `/apps/live/event/${eventHost}/${eventName}`,
+      to: eventIndex,
       text: "event home"
     },
     {
@@ -83,11 +91,17 @@ const NavBar: React.FC<Props> = (
     })
   }
 
+
+  const getPathForBackButton = (): string => {
+    if (useLocation().pathname === eventIndex) { return basePath }
+    return eventIndex
+  }
+
   return (
     <NavigationMenu className="fixed border-b-2 w-full bg-white ">
       <NavigationMenuList className="static">
         <NavigationMenuItem className="fixed left-0">
-          <Link to="/apps/live">
+          <Link to={getPathForBackButton()}>
             <Button className="p-3 m-1 rounded-3xl">
               <ArrowLeft
                 onClick={() => { setOpenProfile(flipBoolean) }}

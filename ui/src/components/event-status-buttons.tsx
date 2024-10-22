@@ -151,4 +151,4 @@ const EventStatusButtons: React.FC<
   )
 }
 
-export default EventStatusButtons;
+export { EventStatusButtons };
