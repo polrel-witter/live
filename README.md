@@ -52,7 +52,7 @@ A record will have the event info, and if we're also
 secret.
 
 #### Matching
-As a way to facilitate guest networking during or after the event,
+As a way to facilitate guest networking during or after an event,
 `%live` includes a matching feature. This begins with a guest setting their
 profile (i.e. contact fields such as github, x handle, etc), which is stored locally, then sent to guests they match with.
 
@@ -60,9 +60,8 @@ Within the event page there's a Connections tab that will display guest
 profiles individually, giving the option to match. When a guest initiates
 a match request, the `%matcher` agent sends a positive `%shake` poke to
 the host ship where the connection status is stored locally until the
-recipient initiates a postive `%shake` on their own accord. Both parties are
-notified of the match when it becomes mutual, at which point they share
-their profile info with each other. Profile info is never sent to the host, unless a guest matches with them.
+recipient initiates a postive `%shake` on their own accord. The host
+ship notifies both parties of the match when it becomes mutual. At this point profile info is shared with each other, directly. Profile data is never sent to the host, unless a guest matches with them.
 
 # Pokes
 ## %live
@@ -81,14 +80,12 @@ There are two poke types:
 - `$dictum` a host-only action
 - `$deed` a host or guest action
 
-All pokes are defined in `desk/sur/matcher.hoon`. The only ones that aren't implicitly handled by %matcher or %live are `%edit-profile` and `%shake`, to respectively change profile info and match with guests.
+All pokes are defined in `desk/sur/matcher.hoon`. The only ones that aren't implicitly handled by `%matcher` or `%live` are `%edit-profile` and `%shake`, to respectively change profile info and match with guests.
 
 # Scries
 ## Live
 The `%live` agent contains the following scry endpoints. Each result in
-a `$demand` type, defined in `/desk/sur/live.hoon`. References to 'host ship' and
-'name' correlate to the event id, which is defined in `/desk/sur/live` as `[=ship
-name=term]`.
+a `$demand` type, defined in `/desk/sur/live.hoon`. References to 'host ship' and 'name' correlate to the event id: `[=ship name=term]`.
 
 ### %u scries
 `/event/exists/[host ship]/[name]` -> does an event exist?
