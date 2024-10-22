@@ -48,7 +48,7 @@ const EventDetails: React.FC = () => {
 
 
   return (
-    <div className="space-y-6 py-20 text-center">
+    <div className="space-y-6 pt-10 text-center">
       <Card className="mx-6 md:mx-12 lg:mx-96">
         <CardHeader>
           <p className="text-xl font-semibold"> {title} </p>

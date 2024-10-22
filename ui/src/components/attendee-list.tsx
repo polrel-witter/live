@@ -18,9 +18,12 @@ const ListItem: React.FC<{
 
   return (
     <li>
-      <Card className="hover:bg-stone-100" onClick={() => toggleProfile()} >
-        <CardContent className="px-6 py-3 content-center">
-          <div className="flex gap-4 gap-x-5 items-center pb-1">
+      <Card
+        className="hover:bg-stone-100 hover:cursor-pointer"
+        onClick={() => toggleProfile()}
+      >
+        <CardContent className="px-6 p-2 content-center">
+          <div className="flex gap-x-5 pb-1">
             <ProfilePicture
               // point="~widmes-hassen"
               point={attendee.patp}
@@ -30,7 +33,7 @@ const ListItem: React.FC<{
                 : undefined)}
 
             />
-            <div className="flex w-full justify-between items-center gap-1">
+            <div className="flex w-full justify-between items-center gap-4">
               <p className="text-xs sm:text-sm">
                 {(profile && profile.nickname !== ""
                   ? profile.nickname ?? attendee.patp

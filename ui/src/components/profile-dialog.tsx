@@ -1,27 +1,54 @@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
 import ProfileForm from "./profile-form";
-import { Backend, Profile } from "@/backend";
+import { Backend, diffProfiles, Profile } from "@/backend";
+import { useEffect, useState } from "react";
 
 type Props = {
   open: boolean;
+  profile: Profile;
   onOpenChange: (b: boolean) => void;
-  profileFields: Profile;
-  editProfile: (fields: Record<string, string>) => Promise<void>
+  editProfileField: Backend["editProfileField"]
 }
 
-const ProfileDialog: React.FC<Props> = ({ open, onOpenChange, profileFields, editProfile }) => {
+const ProfileDialog: React.FC<Props> = ({
+  open,
+  onOpenChange,
+  profile,
+  editProfileField
+}) => {
 
-  // TODO: add disclaimer somewhere that explains how this info is shared
+  const [openDialog, setOpenDialog] = useState(false)
+
+  useEffect(() => {
+    setOpenDialog(open)
+  }, [open])
+
+
+  const editProfile = async (fields: Record<string, string>): Promise<void> => {
+
+    let fieldsToChange: [string, string | null][] = []
+
+    fieldsToChange = diffProfiles(profile, fields)
+
+    const _ = await Promise.all(fieldsToChange
+      .map(([field, val]) => {
+        return editProfileField(field, val)
+      }))
+
+    setOpenDialog(false)
+    onOpenChange(false)
+
+    return Promise.resolve()
+  }
 
   return (
     <Dialog
-      open={open}
+      open={openDialog}
       onOpenChange={onOpenChange}
       aria-description="a dialog containing a form to edit profile"
     >
@@ -31,7 +58,7 @@ const ProfileDialog: React.FC<Props> = ({ open, onOpenChange, profileFields, edi
         <DialogHeader>
           <DialogTitle>Your Profile</DialogTitle>
           <ProfileForm
-            profileFields={profileFields}
+            profileFields={profile}
             editProfile={editProfile}
           />
         </DialogHeader>
@@ -40,4 +67,4 @@ const ProfileDialog: React.FC<Props> = ({ open, onOpenChange, profileFields, edi
   )
 }
 
-export default ProfileDialog;
+export { ProfileDialog };
