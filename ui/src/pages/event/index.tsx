@@ -8,6 +8,7 @@ import { Attendee, Backend, emptyEventAsGuest, EventId, eventIdsEqual, Profile }
 
 import { GlobalContext, GlobalCtx } from '@/globalContext';
 import { EventContext, EventCtx, newEmptyCtx } from './context';
+import { stripPatpSig } from '@/lib/utils';
 
 interface EventParams {
   hostShip: string,
@@ -50,7 +51,10 @@ async function buildContextData(
     console.error("couldn't find event with id ", evtId)
     evt = emptyEventAsGuest
   }
-  const attendees = await backend.getAttendees(evtId)
+  
+  // remove ourselves from the list of guests / profles
+  const attendees = (await backend.getAttendees(evtId))
+    .filter((attendee) => attendee.patp !== globalContext.profile.patp)
 
   const profiles = await fetchProfiles(backend, attendees)
 
@@ -94,15 +98,18 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
     backend.subscribeToMatcherEvents({
       onProfileChange: () => { },
       onMatch: (evt) => {
-        backend.getAttendees(eventContext.event.details.id)
-          .then((newAttendees) => {
-            setEventCtx(({ attendees: _, ...rest }) => {
-              return {
-                attendees: newAttendees,
-                ...rest,
-              }
-            })
-          })
+        setEventCtx(({ attendees: oldAttendees, ...rest }) => {
+          return {
+            attendees: oldAttendees
+              .map((attendee): Attendee => {
+                if (attendee.patp === stripPatpSig(evt.ship)) {
+                  return { patp: stripPatpSig(evt.ship), status: evt.status }
+                }
+                return attendee
+              }),
+            ...rest,
+          }
+        })
       },
       onError: (err, _id) => { console.log("%live err: ", err) },
       onQuit: (data) => { console.log("%live closed subscription: ", data) }

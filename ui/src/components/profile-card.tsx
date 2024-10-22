@@ -14,15 +14,14 @@ export interface ProfileCardProps
 const ProfileCard = React.forwardRef<React.ElementRef<typeof Card>, ProfileCardProps>(
   ({ profile, showHeader, className, ...rest }, ref) => {
     return (
-      <div className="flex justify-center">
         <Card className={cn([
-          "mt-4 border-0 shadow-none",
+          "border-0 shadow-none",
           className
         ])} {...rest}>
           {
             showHeader
               ?
-              <CardHeader className="p-4 font-semibold text-md">
+              <div className="font-semibold text-md">
                 <div className="flex items-center justify-between">
                   <p> profile </p>
                   <div className="justify-self-end">
@@ -30,12 +29,12 @@ const ProfileCard = React.forwardRef<React.ElementRef<typeof Card>, ProfileCardP
                   </div>
                 </div>
 
-              </CardHeader>
+              </div>
               :
               ""
           }
           {/* if this is not text-xs on mobile it goes off screen by 10px...*/}
-          <CardContent className="p-4 pt-0 grid gap-2 text-xs md:text-sm">
+          <div className="grid gap-2 text-xs md:text-sm">
             {
               Object.entries(profile).map(([field, val]) => {
                 return (!val || field === "avatar"
@@ -43,9 +42,8 @@ const ProfileCard = React.forwardRef<React.ElementRef<typeof Card>, ProfileCardP
                   : <div className="text-justify" key={field}>{`${field}: ${val}`}</div>)
               })
             }
-          </CardContent>
+          </div>
         </Card>
-      </div>
     )
   })
 
