@@ -56,7 +56,7 @@ interface Backend {
   getAttendees(id: EventId): Promise<Attendee[]>
 
   // matcher - poke %edit-profile
-  editProfileField(field: string, value: string): Promise<void>
+  editProfileField(field: string, value: string | null): Promise<void>
 
   // matcher - poke %shake y
   match(id: EventId, patp: string): Promise<void>;
@@ -783,8 +783,10 @@ function getAttendees(_api: Urbit): (eventId: EventId) => Promise<Attendee[]> {
 }
 
 
-function editProfileField(_api: Urbit): (field: keyof Profile, value: string) => Promise<void> {
-  return async (field: keyof Profile, value: string) => {
+function editProfileField(_api: Urbit): (field: keyof Profile, value: string | null) => Promise<void> {
+  // in the future we can use the fact that the field is null to represent
+  // a field being unset as opposed to it being set to an empty string
+  return async (field: keyof Profile, value: string | null) => {
     let actualField: string = field;
 
     // TODO: add Promise<boolean> pattern

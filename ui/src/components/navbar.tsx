@@ -8,6 +8,7 @@ import { cn, flipBoolean } from "@/lib/utils"
 import { Backend, diffProfiles, EventAsGuest, Profile } from "@/backend"
 import { SlideDownAndReveal } from "./sliders"
 import EventStatusButtons from "./event-status-buttons"
+import postcss from "postcss"
 
 type Props = {
   fetchedContext: boolean;
@@ -80,22 +81,6 @@ const NavBar: React.FC<Props> = (
       to: "attendees",
       text: "guest list"
     })
-  }
-
-  const editProfile = async (fields: Record<string, string>): Promise<void> => {
-    let fieldsToChange: [string, string | null][] = []
-
-    fieldsToChange = diffProfiles(profile, fields)
-
-    const _ = await Promise.all(fieldsToChange
-      .map(([field, val]) => {
-        // val ?? '' is hacky remove in future
-        return fns.editProfileField(field, val ?? '')
-      }))
-
-    setOpenProfile(false)
-
-    return Promise.resolve()
   }
 
   return (
@@ -207,8 +192,8 @@ const NavBar: React.FC<Props> = (
           <ProfileDialog
             onOpenChange={setOpenProfile}
             open={openProfile}
-            profileFields={profile}
-            editProfile={editProfile}
+            profile={profile}
+            editProfileField={fns.editProfileField}
           />
         </NavigationMenuItem>
       </NavigationMenuList>

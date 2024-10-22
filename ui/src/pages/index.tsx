@@ -17,82 +17,7 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
     return
   }
 
-
-  // TODO: unify with other profile inside event ctx
-  const [ownProfile, setOwnProfile] = useState<Profile | null>(null)
   const [openProfile, setOpenProfile] = useState(false)
-
-  // window.urbit.subscribe({
-  //   app: "live",
-  //   path: "/updates",
-  //   event: (evt) => { console.log("%live event: ", evt) },
-  //   err: (err, _id) => { console.log("%live err: ", err) },
-  //   quit: (data) => { console.log("%live closed subscription: ", data) }
-  // }).then(() => {console.log("subscribed to live")})
-
-  useEffect(() => {
-    console.log("trying match")
-
-    // window.urbit.poke({
-    //   app: "matcher",
-    //   mark: "matcher-deed",
-    //   // why do we need the [ ~ ~bel ]
-    //   // this is the guest ship
-    //   // json: [[_id.ship, _id.name], ["%register", ["~", "~bel"]]]
-    //   // json: { "id": { "ship": <string>, "name": <string> }, "action": { "register": <string or null> } }
-    //   json: {
-    //     "shake": {
-    //       "id": { "ship": "~bus", "name": "event" },
-    //       "ship": "~bus",
-    //       "act": true
-    //     }
-    //   }
-    // }).then(() => { console.log("match") })
-    let liveSubId: number
-
-    backend.getProfile(window.ship).then((profile) => {
-      if (!profile) {
-        console.error(`profile for ${window.ship} not found`)
-      } else {
-        setOwnProfile(profile)
-      }
-    })
-
-
-    return () => {
-      backend.unsubscribeFromEvent(liveSubId).then()
-    }
-
-    // const interval = setInterval(async () => {
-    //   console.log("loop")
-    //   const ctxData = await buildContextData(eventParams, props.backend)
-    //   setEventCtx(ctxData)
-    // }, 1000);
-
-  }, [])
-
-
-  // TODO: copied fn from navbar, unify code
-  const editProfile = async (fields: Record<string, string>): Promise<void> => {
-
-    let fieldsToChange: [string, string | null][] = []
-
-    if (ownProfile) {
-      fieldsToChange = diffProfiles(ownProfile, fields)
-    } else {
-      fieldsToChange = Object.entries(fields)
-    }
-
-    const _ = await Promise.all(fieldsToChange
-      .map(([field, val]) => {
-        // val ?? '' is hacky remove in future
-        return backend.editProfileField(field, val ?? '')
-      }))
-
-    setOpenProfile(false)
-
-    return Promise.resolve()
-  }
 
   return (
     <div>
@@ -110,8 +35,8 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
             <ProfileDialog
               onOpenChange={setOpenProfile}
               open={openProfile}
-              profileFields={ownProfile!}
-              editProfile={editProfile}
+              profile={globalContext.profile}
+              editProfileField={backend.editProfileField}
             />
           </NavigationMenuItem>
           <NavigationMenuItem className="font-medium text-xl"> %live </NavigationMenuItem>
