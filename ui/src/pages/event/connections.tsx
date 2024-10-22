@@ -10,10 +10,11 @@ import { Attendee, Backend, Profile } from "@/backend"
 import ProfileCard from "@/components/profile-card"
 import { SpinningButton } from "@/components/spinning-button"
 import { type CarouselApi } from "@/components/ui/carousel"
-import { Check, Ellipsis, FileQuestion, IterationCw, Plus, X } from "lucide-react"
+import { Check, ChevronUp, Ellipsis, FileQuestion, IterationCw, Plus, X } from "lucide-react"
 import { cn, flipBoolean } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { SlideRightAndReveal } from "@/components/sliders"
+import { SlideDownAndReveal, SlideRightAndReveal } from "@/components/sliders"
+import { Card } from "@/components/ui/card"
 
 
 // TODO: these should stop spinning once the event from matcher comes in
@@ -120,7 +121,6 @@ const ConnectionsPage: React.FC<{ backend: Backend }> = ({ backend }) => {
   const [api, setApi] = useState<CarouselApi>()
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [spinButton1, setSpinButton1] = useState<boolean>(false);
-  const [spinButton2, setSpinButton2] = useState<boolean>(false);
 
   useEffect(() => {
     if (!api) {
@@ -155,7 +155,6 @@ const ConnectionsPage: React.FC<{ backend: Backend }> = ({ backend }) => {
   }
 
   const skipHandler = () => {
-    setSpinButton1(true)
     if (api?.canScrollNext()) {
       api?.scrollNext()
     } else {
@@ -164,53 +163,75 @@ const ConnectionsPage: React.FC<{ backend: Backend }> = ({ backend }) => {
   }
 
   return (
-    <div className="flex h-full align-content-center justify-center m-4 mt-5">
-      <Carousel
-        setApi={setApi}
-        className="w-80 h-full mx-4"
-      >
-        <CarouselContent className="m-0">
-          {ctx.attendees.map(attendee => {
-            const profile = ctx.profiles
-              .find((profile) => profile.patp === attendee.patp)
-            return (
-              <CarouselItem key={attendee.patp} className=" p-0" >
-                <div className="flex-grow justify-items-center md:border md:rounded-lg md:shadow-sm">
-                  <div className="inline-flex w-full h-full justify-center">
-                    <ProfilePicture
-                      className="mt-8"
-                      avatarUrl={profile?.avatar ?? undefined}
-                      size="xl"
-                      point={attendee.patp} />
+    <div className="flex h-full items-center justify-center mt-5">
+      <div className="flex-row w-80 md:w-96">
+        <Card className="mb-4 md:mx-0">
+          <div className="flex items-center justify-between">
+            <p className="text-xs pl-3">Match with guests to share your profile info</p>
+            <Button
+              onClick={() => { setSpinButton1(flipBoolean) }}
+              variant="ghost"
+              className="p-0 w-10 hover:bg-white"
+            >
+              <ChevronUp
+                className={cn([
+                  "transition-all h-4 w-4",
+                  { "rotate-180": spinButton1 }
+                ])}
+              />
+            </Button>
+          </div>
+          <SlideDownAndReveal show={spinButton1}>
+            <div className="flex-row space-y-2 p-3 pt-1">
+              <p className="text-xs">Requests are sent to the event host, who will then "introduce" you should your request become mutual.</p>
+              <p className="text-xs">Your profile data is stored locally and sent directly to guests you match with.</p>
+            </div>
+          </SlideDownAndReveal>
+        </Card>
+        <Carousel setApi={setApi} >
+          <CarouselContent className="m-0 ">
+            {ctx.attendees.map(attendee => {
+              const profile = ctx.profiles
+                .find((profile) => profile.patp === attendee.patp)
+              return (
+                <CarouselItem key={attendee.patp} className="pl-0 pb-0" >
+                  <div className="flex-grow justify-items-center md:border md:rounded-lg md:shadow-sm p-2">
+                    <div className="inline-flex w-full h-full justify-center">
+                      <ProfilePicture
+                        className="mt-8"
+                        avatarUrl={profile?.avatar ?? undefined}
+                        size="xl"
+                        point={attendee.patp} />
+                    </div>
+                    <div className="w-full flex justify-around pt-3">
+                      <ConnectionsButton
+                        status={attendee.status}
+                        match={matchHandler(attendee.patp)}
+                        unmatch={unMatchHandler(attendee.patp)}
+                      />
+
+                      <Button
+                        className="hover:bg-accent/100 bg-white rounded-full w-12 h-12"
+                        onClick={skipHandler}
+                      >
+                        <IterationCw className="w-4 h-4 text-black" />
+                      </Button>
+                    </div>
+                    {
+                      profile
+                        ? <div className="ml-12">
+                          <ProfileCard profile={profile} showHeader />
+                        </div>
+                        : ''
+                    }
                   </div>
-                  {
-                    profile
-                      ? <ProfileCard profile={profile} showHeader />
-                      : ''
-                  }
-                  <div className="w-full flex justify-around pt-3">
-                    <ConnectionsButton
-                      status={attendee.status}
-                      match={matchHandler(attendee.patp)}
-                      unmatch={unMatchHandler(attendee.patp)}
-                    />
-
-                    <Button
-                      className="hover:bg-accent/100 bg-white rounded-full w-12 h-12"
-                      onClick={skipHandler}
-                    >
-                      <IterationCw className="w-4 h-4 text-black" />
-                    </Button>
-                  </div>
-                </div>
-              </CarouselItem>)
-          }
-          )}
-        </CarouselContent>
-      </Carousel>
-
-
-    </div >
+                </CarouselItem>)
+            }
+            )}
+          </CarouselContent>
+        </Carousel>
+      </div>
+    </div>
   )
 }
 

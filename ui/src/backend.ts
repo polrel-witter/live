@@ -847,6 +847,7 @@ function unmatch(_api: Urbit): (id: EventId, patp: string) => Promise<void> {
 }
 
 const matcherMatchEventSchema = z.object({
+  ship: z.string(),
   match: z.enum(["match", "reach"]).nullable()
 })
 
@@ -875,7 +876,7 @@ function subscribeToMatcherEvents(_api: Urbit): (handlers: {
           try {
             const matchEvt = matcherMatchEventSchema.parse(evt)
             onMatch({
-              ship: "",
+              ship: matchEvt.ship,
               status: backendMatchStatusToMatchStatus(matchEvt.match)
             })
           } catch (e) {

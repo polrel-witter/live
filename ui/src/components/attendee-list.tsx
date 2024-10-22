@@ -57,6 +57,7 @@ const ListItem: React.FC<{
               profile
                 ?
                 <ProfileCard
+                  className="bg-transparent mt-4"
                   profile={profile}
                   showHeader
                 />
@@ -94,4 +95,5 @@ const AttendeeList: React.FC<{
   )
 }
 
-export default AttendeeList;
+export default
+  AttendeeList;
