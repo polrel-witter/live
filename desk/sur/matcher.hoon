@@ -30,7 +30,7 @@
 ::  $update: local subscription changes
 ::
 +$  update
-  $%  [%match =status]                             :: match change
+  $%  [%match =ship =status]                       :: match change
       [%profile =ship fields=(list [term entry])]  :: profile change
   ==
 ::  $demand: scry api

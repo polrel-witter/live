@@ -643,7 +643,7 @@
     =?  cor  ?~(status | ?=(%match u.status))
       (send-profile %whole culp)
     =.  cor
-      (local-update [%match status])
+      (local-update [%match culp status])
     cor(peers (~(put bi peers) id culp status))
   ::  +shake: core matching arm
   ::
