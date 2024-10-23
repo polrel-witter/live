@@ -26,7 +26,9 @@ key:
 
 
 # Backend
-	- Restrict a session's $moment to only happen within the bounds of its event $moment
+	+ Restrict a session's $moment to only happen within the bounds of its event $moment
+  - moment sanity check; make sure start comes before end
+  - get-our-case is failing after second time we try to pass something through +change-info
 	- Event-level tagging in %pals
   - Respect calm engine settings
   - Json conversions for the remainder of the actions
