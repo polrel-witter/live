@@ -705,6 +705,45 @@
     =/  =wire  (weld /subscribe id-to-path)
     =/  =cage  (make-operation id [%subscribe ~])
     (emit (make-act wire ship dap.bowl cage))
+  ::  +in-moment: check whether some time is within the bounds of a
+  ::  moment
+  ::
+  ++  in-moment
+    |=  [bound=moment-1 =time]
+    ^-  ?
+    ?:  ?=([~ ~] bound)  &
+    ?:  ?=([^ ^] bound)
+      ?&  (gte time (need start.bound))
+          (lte time (need end.bound))
+      ==
+    ?~  end.bound
+      (gte time (need start.bound))
+    (lte time (need end.bound))
+  ::  +are-dates-bound: check if all session dates are within the bound
+  ::  of a moment
+  ::
+  ++  are-dates-bound
+    |=  [bound=moment-1 sessions=(map @tas =session)]
+    ^-  ?
+    :: if event moment is TBD ([~ ~]), session dates will pass now but the
+    :: moment will be checked against them later when it's set
+    ::
+    ?:  ?=([~ ~] bound)  &
+    =|  not-bound=tape
+    =/  ls=(list [sid=@tas s=session])
+      ~(tap by sessions)
+    |-
+    ?~  ls
+      ?~  not-bound  &
+      ~&  >>>
+        %+  weld  "these sessions are outside the bound of their event moment:"
+        not-bound
+      |
+    ?:  ?&  ?~(t=start.moment.s.i.ls & (in-moment bound u.t))
+            ?~(t=end.moment.s.i.ls & (in-moment bound u.t))
+        ==
+      $(ls t.ls)
+    $(not-bound (weld not-bound " {<sid.i.ls>}"), ls t.ls)
   ::  +delete-remote-path: delete all instances of an event's remote scry
   ::  path
   ::
@@ -815,6 +854,10 @@
       ?>  host-call
       =?  id  (~(has by events) id)
         [ship.id (append-entropy name.id)]
+      ?.  (are-dates-bound moment.info.event sessions.info.event)
+        ~&  >>>
+          "cannot write event to state with out-of-bound session dates"
+        cor
       =.  events  (~(put by events) id event)
       =.  cor
         %+  poke-matcher
@@ -876,9 +919,10 @@
       ::
       ?:  &(?!(?=(%latch -.sub-info)) over)  cor
       =.  cor  (ingest-diff sub-info)
-      =?  cor  ?~((get-our-case `name.id) %| %&)
-        %+  delete-remote-path  (need (get-our-case `name.id))
-        /event/(scot %tas name.id)
+    :: TODO get-our-case scry is failing
+    ::  =?  cor  ?~((get-our-case `name.id) %| %&)
+    ::    %+  delete-remote-path  (need (get-our-case `name.id))
+    ::    /event/(scot %tas name.id)
       :: if event is %secret only update %invited, %registered, and
       :: %attended, otherwise send the update to all ships with a
       :: record
@@ -900,8 +944,14 @@
             %location   (update-event event(location.info p.sub-info))
             %venue-map  (update-event event(venue-map.info p.sub-info))
             %group      (update-event event(group.info p.sub-info))
-            %moment     (update-event event(moment.info p.sub-info))
             %timezone   (update-event event(timezone.info p.sub-info))
+        ::
+            %moment
+          ?.  (are-dates-bound p.sub-info sessions.info.event)
+            ~&  >>>
+              "event moment is not wide enough to contain all session dates"
+            cor
+          (update-event event(moment.info p.sub-info))
         ::
             %delete-session
           =/  sid=@tas  p.sub-info
@@ -926,6 +976,15 @@
             %-  crip
             (weld (scow %tas (append-entropy name.id)) "-s")
           =/  =session  p.sub-info
+          =/  bound=moment-1  moment.info:get-event
+          ?.  ?&  ?~(t=start.moment.session & (in-moment bound u.t))
+                  ?~(t=end.moment.session & (in-moment bound u.t))
+              ==
+            ~&  >>>
+              %+  weld
+                "session moment is not within the bound of the event moment, "
+              "which starts {<start.bound>} and ends {<end.bound>}"
+            cor
           %-  update-event
           event(sessions.info (~(put by sessions.info.event) sid session))
         ::
