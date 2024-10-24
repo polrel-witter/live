@@ -99,6 +99,7 @@
 ++  emil  |=(caz=(list card) cor(cards (weld (flop caz) cards)))
 ++  abet  ^-((quip card _state) [(flop cards) state])
 ++  bran  |=(=tape (weld "%live: " tape))
+++  noop  ~&(>>> (bran "cannot write to state") cor)
 ::  +sss-pub-records: update +cor cards and pub-records state
 ::
 ::   sss library produces a (quip card _pubs) so we need to split it
@@ -705,6 +706,25 @@
     =/  =wire  (weld /subscribe id-to-path)
     =/  =cage  (make-operation id [%subscribe ~])
     (emit (make-act wire ship dap.bowl cage))
+  ::  +sane: check whether a moment's start comes before end
+  ::
+  :: TODO if dates are equal, but have different entropy this will
+  :: result in a negative asertion
+  ++  sane
+    |=  m=moment-1
+    ^-  ?
+    ?:  ?=([~ ~] m)  &
+    ?.  ?=([^ ^] m)  &
+    (lte (need start.m) (need end.m))
+  ::  +moment-nests: check whether a moment exists within the bound of
+  ::  another moment
+  ::
+  ++  moment-nests
+    |=  [bound=moment-1 start=(unit time) end=(unit time)]
+    ^-  ?
+    ?&  ?~(start & (in-moment bound u.start))
+        ?~(end & (in-moment bound u.end))
+    ==
   ::  +in-moment: check whether some time is within the bounds of a
   ::  moment
   ::
@@ -729,19 +749,25 @@
     :: moment will be checked against them later when it's set
     ::
     ?:  ?=([~ ~] bound)  &
+    ?.  (sane bound)
+      ~&(>>> (bran "event moment is insane: {<bound>}") |)
+    =|  not-sane=tape
     =|  not-bound=tape
     =/  ls=(list [sid=@tas s=session])
       ~(tap by sessions)
     |-
     ?~  ls
+      ?.  =(~ not-sane)
+        ~&(>>> (bran "these session moments are insane:") |)
       ?~  not-bound  &
       ~&  >>>
+        %-  bran
         %+  weld  "these sessions are outside the bound of their event moment:"
         not-bound
       |
-    ?:  ?&  ?~(t=start.moment.s.i.ls & (in-moment bound u.t))
-            ?~(t=end.moment.s.i.ls & (in-moment bound u.t))
-        ==
+    ?.  (sane moment.s.i.ls)
+      $(not-sane (weld not-sane " {<sid.i.ls>}: {<moment.s.i.ls>}"), ls t.ls)
+    ?:  (moment-nests bound moment.s.i.ls)
       $(ls t.ls)
     $(not-bound (weld not-bound " {<sid.i.ls>}"), ls t.ls)
   ::  +delete-remote-path: delete all instances of an event's remote scry
@@ -855,9 +881,7 @@
       =?  id  (~(has by events) id)
         [ship.id (append-entropy name.id)]
       ?.  (are-dates-bound moment.info.event sessions.info.event)
-        ~&  >>>
-          "cannot write event to state with out-of-bound session dates"
-        cor
+        noop
       =.  events  (~(put by events) id event)
       =.  cor
         %+  poke-matcher
@@ -932,6 +956,22 @@
       ?.  ?=(%secret kind.info.event)  get-all-record-ships
       %-  get-ships-by-status
       (silt `(list _-.status)`~[%invited %registered %attended])
+      ::  +session-moment-nests: does a session moment nest within the
+      ::  bound of its event moment?
+      ::
+      ++  session-moment-nests
+        |=  session-moment=moment-1
+        ^-  ?
+        ?.  (sane session-moment)
+          ~&(>>> (bran "session moment is insane: {<session-moment>}") |)
+        =/  bound=moment-1  moment.info:get-event
+        ?:  (moment-nests bound session-moment)  &
+        ~&  >>>
+          %-  bran
+          %+  weld
+            "session moment is not within the bound of the event moment, "
+          "which starts {<start.bound>} and ends {<end.bound>}"
+        |
       ::  +ingest-diff: write the diff to state
       ::
       ++  ingest-diff
@@ -948,9 +988,7 @@
         ::
             %moment
           ?.  (are-dates-bound p.sub-info sessions.info.event)
-            ~&  >>>
-              "event moment is not wide enough to contain all session dates"
-            cor
+            noop
           (update-event event(moment.info p.sub-info))
         ::
             %delete-session
@@ -976,15 +1014,7 @@
             %-  crip
             (weld (scow %tas (append-entropy name.id)) "-s")
           =/  =session  p.sub-info
-          =/  bound=moment-1  moment.info:get-event
-          ?.  ?&  ?~(t=start.moment.session & (in-moment bound u.t))
-                  ?~(t=end.moment.session & (in-moment bound u.t))
-              ==
-            ~&  >>>
-              %+  weld
-                "session moment is not within the bound of the event moment, "
-              "which starts {<start.bound>} and ends {<end.bound>}"
-            cor
+          ?.  (session-moment-nests moment.session)  noop
           %-  update-event
           event(sessions.info (~(put by sessions.info.event) sid session))
         ::
@@ -1034,7 +1064,9 @@
               %panel      u.ses(panel p.q.sub-info)
               %location   u.ses(location p.q.sub-info)
               %about      u.ses(about p.q.sub-info)
-              %moment     u.ses(moment p.q.sub-info)
+              %moment
+            ?.  (session-moment-nests p.q.sub-info)  u.ses
+            u.ses(moment p.q.sub-info)
           ==
         ==
       --
