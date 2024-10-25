@@ -121,27 +121,32 @@
   ==
 ::
 ++  enjs-demand
-  =,  enjs:format
   |=  =demand
   ^-  ^json
   ~|  "{<-.demand>} conversion not supported"
+  %-  frond:enjs:format
   ?-    -.demand
-      %event-exists   !!
-      %record-exists  !!
-      %event          !!
-      %session-ids    !!
-      %counts         !!
-      %event-records  !!
-      %remote-events  !!
-      %all-events   (frond ['allEvents' (en-all-events p.demand)])
-      %all-records  (frond ['allRecords' (en-all-records p.demand)])
-      %record       (frond ['record' ?~(p.demand ~ (en-record u.p.demand))])
+      %event-exists   ['eventExists' b+p.demand]
+      %record-exists  ['recordExists' b+p.demand]
+      %event          ['event' (en-event p.demand)]
+      %session-ids    ['sessionIds' (en-session-ids p.demand)]
+      %counts         ['counts' (en-counts p.demand)]
+      %event-records  ['records' (en-records p.demand)]
+      %remote-events  ['remoteEvents' (en-remote-events p.demand)]
+      %all-events     ['allEvents' (en-all-events p.demand)]
+      %all-records    ['allRecords' (en-all-records p.demand)]
+      %record         ['record' ?~(p.demand ~ (en-record u.p.demand))]
   ==
 ::
 ++  en-unit-cord
   |=  a=(unit cord)
   ^-  json
   ?~(a ~ s+u.a)
+::
+++  id-to-cord
+  |=  =id
+  ^-  cord
+  (crip :(weld (scow %p ship.id) "/" (scow %tas name.id)))
 ::
 ++  en-id
   |=  a=id
@@ -151,12 +156,67 @@
       ['name' s+(scot %tas name.a)]
   ==
 ::
+++  en-counts
+  |=  a=(map _-.status @ud)
+  ^-  ^json
+  :-  %o
+  %-  malt
+  ^-  (list [cord ^json])
+  %+  turn  ~(tap by a)
+  |=  [s=_-.status c=@ud]
+  :-  (scot %tas s)
+  (frond:enjs:format ['count' (numb c)])
+::
+++  en-session-ids
+  |=  a=(list [term cord])
+  ^-  ^json
+  :-  %a
+  ^-  (list ^json)
+  %+  turn  a
+  |=  [t=term c=cord]
+  %-  pairs:enjs:format
+  :~  ['sessionId' s+(scot %tas t)]
+      ['sessionTitle' s+c]
+  ==
+::
+++  en-remote-events
+  |=  a=(map id info-1)
+  ^-  ^json
+  :-  %o
+  %-  malt
+  ^-  (list [cord ^json])
+  %+  turn  ~(tap by a)
+  |=  [=id i=info-1]
+  :-  (id-to-cord id)
+  (frond:enjs:format ['info' (en-info i)])
+::
+++  en-event
+  |=  a=(unit event-1)
+  ^-  ^json
+  ?~  a  ~
+  %-  pairs:enjs:format
+  :~  ['info' (en-info info.u.a)]
+      ['secret' (en-unit-cord secret.u.a)]
+      ['limit' `json`?~(limit.u.a ~ (numb u.limit.u.a))]
+  ==
+::
+++  en-all-events
+  |=  a=(map id event-1)
+  ^-  json
+  :-  %o
+  %-  malt
+  ^-  (list [cord ^json])
+  %+  turn  ~(tap by a)
+  |=  [=id e=event-1]
+  :-  (id-to-cord id)
+  (frond:enjs:format ['event' (en-event `e)])
+::
 ++  en-record
   =,  enjs:format
   |=  a=record-1
   |^  ^-  ^json
   %-  pairs
-  :~  ['info' (en-info-1 info.a)]
+  :~  ['info' (en-info info.a)]
       ['secret' (en-unit-cord secret.a)]
       ['status' (en-status status.a)]
   ==
@@ -170,27 +230,16 @@
     ==
   --
 ::
-++  en-all-events
-  |=  a=(map id event-1)
-  |^  ^-  json
+++  en-records
+  |=  a=(map ship record-1)
+  ^-  ^json
   :-  %o
   %-  malt
   ^-  (list [cord ^json])
   %+  turn  ~(tap by a)
-  |=  [=id eve=event-1]
-  :-  (crip :(weld (scow %p ship.id) "/" (scow %tas name.id)))
-  (frond:enjs:format ['event' (en-event eve)])
-  ::
-  ++  en-event
-    =,  enjs:format
-    |=  a=event-1
-    ^-  ^json
-    %-  pairs
-    :~  ['info' (en-info-1 info.a)]
-        ['secret' (en-unit-cord secret.a)]
-        ['limit' `json`?~(limit.a ~ (numb u.limit.a))]
-    ==
-  --
+  |=  [s=ship r=record-1]
+  :-  (scot %p s)
+  (frond:enjs:format ['record' (en-record r)])
 ::
 ++  en-all-records
   |=  a=(mip id ship record-1)
@@ -202,19 +251,10 @@
   ^-  (list [cord ^json])
   %+  turn  ids
   |=  =id
-  ::  convert the id to a single cord for the object map, and nest
-  ::  the records map as an object within
-  ::
-  :-  (crip :(weld (scow %p ship.id) "/" (scow %tas name.id)))
-  :-  %o
-  %-  malt
-  ^-  (list [cord ^json])
-  %+  turn  ~(tap by (~(got by a) id))
-  |=  [=ship rec=record-1]
-  :-  (scot %p ship)
-  (frond:enjs:format ['record' (en-record rec)])
+  :-  (id-to-cord id)
+  (en-records (~(got by a) id))
 ::
-++  en-info-1
+++  en-info
   =,  enjs:format
   |=  a=info-1
   |^  ^-  ^json
@@ -263,9 +303,9 @@
     %-  malt
     ^-  (list [cord ^json])
     %+  turn  ~(tap by a)
-    |=  [=term =session]
-    :-  (scot %tas term)
-    (frond:enjs:format ['session' (en-session session)])
+    |=  [t=term s=session]
+    :-  (scot %tas t)
+    (frond:enjs:format ['session' (en-session s)])
   ::
   ++  en-session
     |=  a=session

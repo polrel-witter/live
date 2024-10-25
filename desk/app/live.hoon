@@ -370,8 +370,9 @@
   =;  =demand
     ``[%live-demand !>(demand)]
   ?+    pol  ~|(invalid-scry-path+pol !!)
-      [%x %events %all ~]   [%all-events events]
-      [%x %records %all ~]  [%all-records records]
+      [%x %events %all ~]     [%all-events events]
+      [%x %records %all ~]    [%all-records records]
+      [%x %events %remote ~]  [%remote-events get-remote-events]
   ::
       [%u %event %exists host=@ name=@ ~]
     :-  %event-exists
