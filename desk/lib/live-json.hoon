@@ -2,6 +2,19 @@
 /+  *mip
 |%
 ::
+++  dejs-dial
+  =,  dejs:format
+  |=  jon=json
+  |^  ^-  dial
+  %.  jon
+  %-  of
+  :~  find+(ot ~[ship+(se %p) name+de-unit-term])
+      case-request+de-unit-term
+      case-response+(ot ~[case+ni:dejs-soft:format name+de-unit-term])
+  ==
+  ++  de-unit-term  (su:dejs-soft:format sym)
+  --
+::
 ++  dejs-operation
   =,  dejs:format
   |=  jon=json

@@ -31,7 +31,7 @@ key:
   - by 10/28, Json conversions for the remainder of the actions
     - live
         + remaining demands
-        - find
+        + find
         - search result updates
     - matcher
         - demand
