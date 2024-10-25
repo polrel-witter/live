@@ -54,13 +54,14 @@
   |=  =demand
   |^  ^-  ^json
   ~|  "{<-.demand>} conversion not supported"
+  %-  frond
   ?-    -.demand
       %peer-status  !!
       %matches      !!
       %reaches      !!
-      %peers     (frond ['peers' (en-peers p.demand)])
-      %profile   (frond ['profile' (en-profile p.demand)])
-      %profiles  (frond ['allProfiles' (en-all-profiles p.demand)])
+      %peers        ['peers' (en-peers p.demand)]
+      %profile      ['profile' (en-profile p.demand)]
+      %profiles     ['allProfiles' (en-all-profiles p.demand)]
   ==
   ::
   ++  en-peers
