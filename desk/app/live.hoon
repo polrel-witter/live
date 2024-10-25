@@ -411,7 +411,7 @@
       [%x %counts host=@ name=@ ~]
     ?~  rec=(~(get by records) (slav %p host:pol) (slav %tas name:pol))
       [%counts ~]
-    =/  cnt=(map _-.status @ud)
+    =/  cnt=(map stage @ud)
       %-  malt
       %-  limo
       :~  invited+0
@@ -802,7 +802,7 @@
   ::  +get-ships-by-status: ditto
   ::
   ++  get-ships-by-status
-    |=  bag=(set _-.status)
+    |=  bag=(set stage)
     ^-  (list ship)
     =/  event-records=(map ship record-1)
       (~(got by records) id)
@@ -956,7 +956,7 @@
       =+  event=get-event
       ?.  ?=(%secret kind.info.event)  get-all-record-ships
       %-  get-ships-by-status
-      (silt `(list _-.status)`~[%invited %registered %attended])
+      (silt `(list stage)`~[%invited %registered %attended])
       ::  +session-moment-nests: does a session moment nest within the
       ::  bound of its event moment?
       ::
@@ -1025,7 +1025,7 @@
             =+  event=get-event
             =/  targets=(list ship)
               %-  get-ships-by-status
-              (silt `(list _-.status)`~[%requested %unregistered])
+              (silt `(list stage)`~[%requested %unregistered])
             ?.  ?=(?(%public %private) kind.info.event)
               ?.  ?=(?(%public %private) new-kind)  cor
               ::  ask all records with a %requested or %unregistered

@@ -157,15 +157,16 @@
   ==
 ::
 ++  en-counts
-  |=  a=(map _-.status @ud)
+  =,  enjs:format
+  |=  a=(map stage @ud)
   ^-  ^json
   :-  %o
   %-  malt
   ^-  (list [cord ^json])
   %+  turn  ~(tap by a)
-  |=  [s=_-.status c=@ud]
+  |=  [s=stage c=@ud]
   :-  (scot %tas s)
-  (frond:enjs:format ['count' (numb c)])
+  (frond ['count' (numb c)])
 ::
 ++  en-session-ids
   |=  a=(list [term cord])
@@ -191,10 +192,11 @@
   (frond:enjs:format ['info' (en-info i)])
 ::
 ++  en-event
+  =,  enjs:format
   |=  a=(unit event-1)
   ^-  ^json
   ?~  a  ~
-  %-  pairs:enjs:format
+  %-  pairs
   :~  ['info' (en-info info.u.a)]
       ['secret' (en-unit-cord secret.u.a)]
       ['limit' `json`?~(limit.u.a ~ (numb u.limit.u.a))]

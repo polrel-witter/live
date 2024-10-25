@@ -72,17 +72,18 @@
 ::
 +$  event    [=info =secret =limit]
 +$  event-1  [info=info-1 =secret =limit]
+::  $stage: guest access level
+::
++$  stage
+  $?  %invited
+      %requested
+      %registered
+      %unregistered
+      %attended
+  ==
 ::  $status: state of a guest
 ::
-+$  status
-  %+  pair
-    $?  %invited
-        %requested
-        %registered
-        %unregistered
-        %attended
-    ==
-  time
++$  status  (pair stage time)
 ::  $record: event-specific guest information
 ::
 +$  record    [=info =secret =status]
@@ -158,7 +159,7 @@
       [%event p=(unit event-1)]                     :: an event
       [%session-ids p=(list [id=term title=cord])]  :: an event's session ids
       [%record p=(unit record-1)]                   :: a record
-      [%counts p=(map _-.status @ud)]               :: record status counts
+      [%counts p=(map stage @ud)]                   :: record status counts
       [%all-events p=(map id event-1)]              :: all events
       [%all-records p=(mip id ship record-1)]       :: all records
       [%event-records p=(map ship record-1)]        :: all records for an event
