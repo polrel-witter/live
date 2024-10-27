@@ -28,13 +28,14 @@ key:
 # Backend
 	+ Restrict a session's $moment to only happen within the bounds of its event $moment
   + moment sanity check; make sure start comes before end
-  - by 10/28, Json conversions for the remainder of the actions
-    - live
+  + by 10/28, Json conversions for the remainder of the actions
+    + live
         + remaining demands
         + find
-        - search result updates
-    - matcher
-        - demand
+        + search result updates
+            + when scry result comes in, extract name from path
+            + test
+            + consolidate result update into one arm and call at each instance
   - get-our-case is failing after second time we try to pass something through +change-info
 	- Event-level tagging in %pals
   - Respect calm engine settings

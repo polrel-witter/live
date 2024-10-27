@@ -150,7 +150,13 @@
 ::  $update: local subscription changes
 ::
 +$  update
-  $%([%record =id =ship record=record-1])      :: record change
+  $%  [%record =id =ship record=record-1]      :: record change
+      $:  %result                              :: search result
+          =ship
+          name=(unit term)
+          result=$@(@t (map id info-1))
+      ==
+  ==
 ::  $demand: scry api
 ::
 +$  demand

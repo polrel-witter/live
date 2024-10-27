@@ -131,6 +131,17 @@
         ['ship' s+(scot %p ship.upd)]
         ['record' (en-record record.upd)]
     ==
+  ::
+      %result
+    %-  pairs
+    :~  ['ship' s+(scot %p ship.upd)]
+        ['name' `json`?~(name.upd ~ s+u.name.upd)]
+        :-  'result'
+        ^-  ^json
+        ?@  result.upd
+          [%s ;;(cord result.upd)]
+        (en-remote-events result.upd)
+    ==
   ==
 ::
 ++  enjs-demand

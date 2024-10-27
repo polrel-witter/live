@@ -306,12 +306,13 @@
     ==
   ::
       [%case %request @ @ ~]
-    =/  =ship  (slav %p i.t.t.wire)
-    =/  name=@t  i.t.t.t.wire
+    =/  =ship      (slav %p i.t.t.wire)
+    =/  name=term  (slav %tas i.t.t.t.wire)
     ?>  ?=(%poke-ack -.sign)
     ?~  p.sign  cor
     =;  msg=tape
-      cor(result (crip msg))
+      =.  result  (crip msg)
+      (give-update [%result ship `name result])
     ?:  =('all' name)
       ~['No events found under' ' ' (scot %p ship)]
     ~[(crip "'{<name>}'") ' not found under ' (scot %p ship)]
@@ -345,22 +346,34 @@
       =/  msg  'No events found'
       =;  rev=_result
         =?  rev  ?~(rev & |)  msg
-        cor(result rev)
+        =.  result  rev
+        =/  =ship  ship.sign-arvo
+        =/  name=(unit term)
+          =/  =term  -:(flop path.sign-arvo)
+          ?:(?=(%all term) ~ `term)
+        (give-update [%result ship name result])
       ?~  roar.sign-arvo  msg
       =/  =roar:ames      u.roar.sign-arvo
       ?~  q.dat.roar      msg
       ;;((map id info-1) +.u.q.dat.roar)
     ::
         [%timer @ @ *]
-      =/  end=path
-        ?+  t.t.t.t.t.wire  ~|(bad-wire+wire !!)
-          [%all ~]      //all
-          [%event @ ~]  //event/(scot %tas `term`i.t.t.t.t.t.wire)
+      =/  [end=path name=(unit term)]
+        ?+    t.t.t.t.t.wire  ~|(bad-wire+wire !!)
+            [%all ~]      [//all ~]
+            [%event @ ~]
+          =/  =term  i.t.t.t.t.t.wire
+          [//event/(scot %tas term) `term]
         ==
       =/  =ship     (slav %p i.t.t.t.wire)
       =/  case=@ud  (slav %ud i.t.t.t.t.wire)
       =/  =spur     (weld /g/x/(scot %ud case)/live end)
-      (emit [%pass /remote/scry/cancel %arvo %a %yawn ship spur])
+      =.  cor  (emit [%pass /remote/scry/cancel %arvo %a %yawn ship spur])
+      =.  result
+        %-  crip
+        ?~  name  ~['No events found under' ' ' (scot %p ship)]
+        ~[(crip "'{<name>}'") ' not found under ' (scot %p ship)]
+      (give-update [%result ship name result])
     ==
   ==
 ::
@@ -472,10 +485,7 @@
     =/  current=(unit record-1)
       (~(get bi records) [src.msg name] our.bowl)
     =.  cor
-      =/  =cage
-        :-  %live-update
-        !>(`update`[%record [src.msg name] our.bowl rev])
-      (emit [%give %fact ~[/updates] cage])
+      (give-update [%record [src.msg name] our.bowl rev])
     =?  cor  (notify current rev)
       (emit (make-hark src.msg title.info.rev status.rev))
     cor(records (~(put bi records) [src.msg name] our.bowl rev))
@@ -534,6 +544,13 @@
   |=  [=wire who=ship app=term =cage]
   ^-  card
   [%pass wire %agent [who app] %poke cage]
+::  +give-update: produce a local $update
+::
+++  give-update
+  |=  upd=update
+  ^+  cor
+  %-  emit
+  [%give %fact ~[/updates] live-update+!>(`update`upd)]
 ::  +make-operation: produce an $operation cage
 ::
 ++  make-operation
@@ -603,7 +620,8 @@
   ::
   =.  result  *@t
   ?:  =(our.bowl ship)
-    cor(result 'See home page for our events')
+    =.  result  'See home page for our events'
+    (give-update [%result ship name result])
   =/  =wire
     %+  weld  /case/request/(scot %p ship)
     ?~  name  /all
@@ -635,7 +653,8 @@
     :: the path in question
     ::
     =;  msg=tape
-      cor(result (crip msg))
+      =.  result  (crip msg)
+      (give-update [%result src.bowl name result])
     ?~  name
       ~['No events found under' ' ' (scot %p src.bowl)]
     ~[(crip "{<(scow %tas u.name)>}") ' not found under ' (scot %p src.bowl)]
