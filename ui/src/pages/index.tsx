@@ -2,7 +2,7 @@ import { Backend, diffProfiles, Profile } from "@/backend";
 import EventList from "@/components/event-list";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { useContext, useEffect, useState } from "react";
-import { User } from "lucide-react";
+import { Plus, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileDialog } from "@/components/profile-dialog";
 import { flipBoolean } from "@/lib/utils";
@@ -40,6 +40,16 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
             />
           </NavigationMenuItem>
           <NavigationMenuItem className="font-medium text-xl"> %live </NavigationMenuItem>
+          <NavigationMenuItem className="fixed right-0 font-medium text-xl">
+            <Button
+              onClick={() => { setOpenProfile(flipBoolean) }}
+              className="p-3 m-1 rounded-3xl"
+            >
+              <Plus
+                className="w-4 h-4 mr-2 text-white"
+              /> create event
+            </Button>
+          </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
 

@@ -6,7 +6,7 @@ key:
 
 
 # Frontend
-  - Event creation
+  + Event creation
   - Host dashboard
     - Record list with vetting (record status change buttons)
     - Record counts by status

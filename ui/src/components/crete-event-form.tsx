@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Backend, Profile } from "@/backend"
 import { SpinningButton } from "./spinning-button"
 import { useState } from "react"
+import { resolve6 } from "dns"
 
 
 const emptyStringSchema = z.literal("")
@@ -24,39 +25,87 @@ const phoneNumberSchema = z.custom<`${number}`>((data: string) => {
   return /^\d+$/.test(data)
 }, "phone number must contain only digits")
 
+const validUTCOffsets = [
+  "-0",
+  "-1",
+  "-2",
+  "-3",
+  "-4",
+  "-5",
+  "-6",
+  "-7",
+  "-8",
+  "-9",
+  "-10",
+  "-11",
+  "-12",
+  "+0",
+  "+1",
+  "+2",
+  "+3",
+  "+4",
+  "+5",
+  "+6",
+  "+7",
+  "+8",
+  "+9",
+  "+10",
+  "+11",
+  "+12",
+  "+13",
+  "+14",
+] as const
+
+const utcOffsetSchema = z.enum(validUTCOffsets)
+
 const schemasAndPlaceHoldersForFields = {
-  github: {
-    schema: emptyStringSchema
-      .or(z.string().min(1, { message: "can't use empty string as username" })),
-    placeholder: "your github username",
+  title: {
+    schema: z.string().min(1, { message: "title should be at least one character" }),
+    placeholder: "the title of your event",
   },
-  telegram: {
-    schema: emptyStringSchema.or(usernameWithAtSchema),
-    placeholder: "your telegram @",
+  // todo: add date or maybe date picker
+  // use this but replace date picker with daterange picker:
+  // https://time.openstatus.dev/
+  // https://ui.shadcn.com/docs/components/date-picker#form
+  // startDate: {
+  //     schema: z.string().min(1, { message: "title should be at least one character" }),
+  //     placeholder: "The title of your event",
+  //   },
+  // endDate: {
+  //     schema: z.string().min(1, { message: "title should be at least one character" }),
+  //     placeholder: "The title of your event",
+  //   },
+  // use combobox for this
+  // https://ui.shadcn.com/docs/components/combobox#form
+  utcOffset: {
+    schema: utcOffsetSchema,
+    placeholder: "the UTC offset for the timezone where the event will take place",
   },
-  phone: {
-    schema: emptyStringSchema.or(phoneNumberSchema),
-    placeholder: "your phone number",
+  limit: {
+    schema: z.number()
+      .gt(1, { message: "can't have an event with 0 or 1 attendees" })
+      .nullable(),
+    placeholder: "limit the number of attendees to this event (can be empty)",
   },
-  email: {
-    schema: emptyStringSchema.or(emailSchema),
-    placeholder: "your email",
+  // select for these two
+  // https://ui.shadcn.com/docs/components/select#form
+  // add FormDescription for these and possibly others as well
+  eventKind: {
+    schema: z.enum(["%public", "%private", "%secret"]),
+    placeholder: "the type of event you'll be hosting",
   },
-  x: {
-    schema: emptyStringSchema.or(usernameWithAtSchema),
-    placeholder: "your X @",
+  eventState: {
+    schema: z.enum(["%open", "%closed", "%over"]),
+    placeholder: "the type of event you'll be hosting",
   },
-  ensDomain: {
-    schema: emptyStringSchema
-      .or(z.string().includes(".", { message: "Must include a dot" })),
-    placeholder: "your ens domain",
+  eventDescription: {
+    schema: z.string(),
+    placeholder: "the event description",
   },
-  signal: {
-    schema: emptyStringSchema
-      .or(usernameWithAtSchema
-        .or(phoneNumberSchema)),
-    placeholder: "your signal @ or phone number",
-  },
+  eventSecret: {
+    schema: z.string(),
+    placeholder: "event secret; this message will be sent to registered attendees / guests",
+  }
 }
 
 const formSchema = z.object(Object
@@ -69,7 +118,7 @@ type Props = {
   editProfile: (fields: Record<string, string>) => Promise<void>
 }
 
-const ProfileForm: React.FC<Props> = ({ profileFields, editProfile }) => {
+const CreateEventForm: React.FC<Props> = ({ profileFields, editProfile }) => {
 
   const [spin, setSpin] = useState(false)
 
@@ -146,4 +195,4 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfile }) => {
 }
 
 
-export default ProfileForm;
+export default CreateEventForm;
