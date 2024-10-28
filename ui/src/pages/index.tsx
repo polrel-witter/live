@@ -1,13 +1,12 @@
-import { Backend, diffProfiles, Profile } from "@/backend";
-import EventList from "@/components/event-list";
+import { Backend } from "@/backend";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { Plus, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileDialog } from "@/components/profile-dialog";
 import { flipBoolean } from "@/lib/utils";
-import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { GlobalContext } from "@/globalContext";
+import { Link, Outlet } from "react-router-dom";
 
 const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
   const globalContext = useContext(GlobalContext)
@@ -41,37 +40,21 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
           </NavigationMenuItem>
           <NavigationMenuItem className="font-medium text-xl"> %live </NavigationMenuItem>
           <NavigationMenuItem className="fixed right-0 font-medium text-xl">
-            <Button
-              onClick={() => { setOpenProfile(flipBoolean) }}
-              className="p-3 m-1 rounded-3xl"
-            >
-              <Plus
-                className="w-4 h-4 mr-2 text-white"
-              /> create event
-            </Button>
+            <Link to="create">
+              <Button
+                onClick={() => { setOpenProfile(flipBoolean) }}
+                className="p-3 m-1 rounded-3xl shadow-sm border bg-white hover:bg-primary/20"
+              >
+                <Plus className="w-4 h-4 mr-1 text-primary" />
+                <p className="text-primary"> create event </p>connected
+              </Button>
+            </Link>
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
 
-      <div className="grid justify-center w-full space-y-6 py-20 text-center">
-        <h1 className="text-3xl italic">events</h1>
-        <Tabs defaultValue="eventsAsGuest">
-          <TabsList>
-            <TabsTrigger value="eventsAsHost">you're hosting</TabsTrigger>
-            <TabsTrigger value="eventsAsGuest">you can participate</TabsTrigger>
-          </TabsList>
-          <TabsContent value="eventsAsHost">
-            <EventList
-              details={globalContext.eventsAsHost.map((evt) => evt.details)}
-            />
-          </TabsContent>
-          <TabsContent value="eventsAsGuest">
-            <EventList
-              details={globalContext.eventsAsGuest.map((evt) => evt.details)}
-            />
-          </TabsContent>
-        </Tabs>
-
+      <div className="pt-12">
+        <Outlet />
       </div>
     </div>
   )

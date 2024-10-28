@@ -11,6 +11,8 @@ import { SchedulePage } from '@/pages/event/schedule';
 import { MapPage } from '@/pages/event/map';
 import { EventDetails } from '@/pages/event/details';
 import { ConnectionsPage } from '@/pages/event/connections';
+import { CreatePage } from "./pages/create";
+import { EventTimelinePage } from "./pages/event-timeline";
 
 
 const basePath = "/apps/live"
@@ -21,6 +23,16 @@ const makeRouter = (backend: Backend) => {
       element: <Index backend={backend} />,
       errorElement: <ErrorPage />,
       children: [
+        {
+          index: true,
+          element: <EventTimelinePage />,
+          errorElement: <ErrorPage />,
+        },
+        {
+          path: basePath + "/create",
+          element: <CreatePage backend={backend} />,
+          errorElement: <ErrorPage />,
+        },
       ],
     },
     {
