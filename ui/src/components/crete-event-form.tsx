@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
+import { Control, useForm } from "react-hook-form"
+import { nullable, z } from "zod"
 
 import {
   Form,
@@ -12,18 +12,44 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Backend, Profile } from "@/backend"
+import { Backend, emptyEventAsHost, EventAsHost, Profile } from "@/backend"
 import { SpinningButton } from "./spinning-button"
 import { useState } from "react"
-import { resolve6 } from "dns"
+import { create } from "domain"
+import { newEmptyIndexCtx } from "@/globalContext"
+import { TZDate } from "@date-fns/tz"
 
 
-const emptyStringSchema = z.literal("")
-const usernameWithAtSchema = z.string().startsWith("@")
-const emailSchema = z.string().email()
-const phoneNumberSchema = z.custom<`${number}`>((data: string) => {
-  return /^\d+$/.test(data)
-}, "phone number must contain only digits")
+type TextFormFieldProps = {
+  name: keyof z.infer<typeof schemas>,
+  placeholder: string,
+  description: string
+  control: Control<z.infer<typeof schemas>>,
+};
+
+const TextFormField: React.FC<TextFormFieldProps> =
+  ({ name, placeholder, control, description }) => {
+    return (
+      <FormField
+        key={name}
+        control={control}
+        name={name}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{name}</FormLabel>
+            <FormControl>
+              <Input placeholder={placeholder} {...field} />
+            </FormControl>
+            <FormDescription>
+              {description}
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+
+        )}
+      />
+    )
+  }
 
 const validUTCOffsets = [
   "-0",
@@ -56,12 +82,13 @@ const validUTCOffsets = [
   "+14",
 ] as const
 
+const emptyStringSchema = z.literal("")
 const utcOffsetSchema = z.enum(validUTCOffsets)
 
 const schemasAndPlaceHoldersForFields = {
   title: {
     schema: z.string().min(1, { message: "title should be at least one character" }),
-    placeholder: "the title of your event",
+    placeholder: "",
   },
   // todo: add date or maybe date picker
   // use this but replace date picker with daterange picker:
@@ -91,11 +118,11 @@ const schemasAndPlaceHoldersForFields = {
   // https://ui.shadcn.com/docs/components/select#form
   // add FormDescription for these and possibly others as well
   eventKind: {
-    schema: z.enum(["%public", "%private", "%secret"]),
+    schema: z.enum(["public", "private", "secret"]),
     placeholder: "the type of event you'll be hosting",
   },
   eventState: {
-    schema: z.enum(["%open", "%closed", "%over"]),
+    schema: z.enum(["open", "closed", "over"]),
     placeholder: "the type of event you'll be hosting",
   },
   eventDescription: {
@@ -108,37 +135,93 @@ const schemasAndPlaceHoldersForFields = {
   }
 }
 
+
+const schemas = z.object({
+  title: z.string().min(1, { message: "title should be at least one character" }),
+  // todo: add date or maybe date picker
+  // use this but replace date picker with daterange picker:
+  // https://time.openstatus.dev/
+  // https://ui.shadcn.com/docs/components/date-picker#form
+  startDate: z.string().min(1, { message: "title should be at least one character" }),
+  endDate: z.string().min(1, { message: "title should be at least one character" }),
+  // use combobox for this
+  // https://ui.shadcn.com/docs/components/combobox#form
+  utcOffset: utcOffsetSchema,
+  limit: emptyStringSchema.or(z.number().gt(1, { message: "can't have an event with 0 or 1 attendees" })),
+  // select for these two
+  // https://ui.shadcn.com/docs/components/select#form
+  // add FormDescription for these and possibly others as well
+  eventKind: z.enum(["public", "private", "secret"]),
+  eventLatch: z.enum(["open", "closed", "over"]),
+  eventDescription: emptyStringSchema.or(z.string()),
+  eventSecret: emptyStringSchema.or(z.string()),
+})
+
 const formSchema = z.object(Object
   .fromEntries(Object
     .entries(schemasAndPlaceHoldersForFields)
-    .map(([key, val]) => [key, val.schema])))
+    .map(([key, val]) => [key, val.schema] as const)))
 
 type Props = {
-  profileFields: Profile;
-  editProfile: (fields: Record<string, string>) => Promise<void>
+  createEvent: (newEvent: EventAsHost) => Promise<void>
 }
 
-const CreateEventForm: React.FC<Props> = ({ profileFields, editProfile }) => {
+const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
 
   const [spin, setSpin] = useState(false)
 
-  const pf = Object
-    .fromEntries(Object
-      .entries(profileFields)
-      .map(([field, val]) => [field, (val ? val : '')]))
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<z.infer<typeof schemas>>({
     resolver: zodResolver(formSchema),
     mode: "onChange",
-    defaultValues: pf,
+    // defaultValues: {
+    //   title: "",
+    //   // todo : , 
+    //   // use this but replace date picker with daterange picker:
+    //   // https://time.openstatus.dev/
+    //   // https://ui.shadcn.com/docs/components/date-picker#form
+    //   startDate: "",
+    //   endDate: "",
+    //   // use combobox for this
+    //   // https://ui.shadcn.com/docs/components/combobox#form
+    //   utcOffset: "-0",
+    //   limit: 0,
+    //   // select for these two
+    //   // https://ui.shadcn.com/docs/components/select#form
+    //   // add FormDescription for these and possibly others as well
+    //   eventKind: "secret",
+    //   eventLatch: "open",
+    //   eventDescription: "",
+    //   eventSecret: "",
+    // },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: z.infer<typeof schemas>) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
 
+    let newEvent = emptyEventAsHost;
+
+    newEvent.limit = values.limit !== "" ? values.limit : null
+    newEvent.secret = values.eventSecret
+    // created automatically
+    // blankEvent.details.id = `${ship}${values.title}`
+
+    newEvent.details.title = values.title
+    newEvent.details.location = ""
+    newEvent.details.startDate = new TZDate(0)
+    newEvent.details.endDate = new TZDate(0)
+    newEvent.details.description = ""
+    newEvent.details.timezone = ""
+    newEvent.details.kind = values.eventKind
+    newEvent.details.group = null
+    newEvent.details.latch = values.eventLatch
+    newEvent.details.venueMap = ""
+    newEvent.details.sessions = []
+
+
     setSpin(true)
-    editProfile(values).then(() => setSpin(false))
+    createEvent(newEvent).then(() => setSpin(false))
   }
 
   type _editableFields = Exclude<keyof Profile, "patp" | "nickname" | "avatar" | "bio">
@@ -156,30 +239,12 @@ const CreateEventForm: React.FC<Props> = ({ profileFields, editProfile }) => {
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-[2px] md:space-y-4"
       >
-        {fields.map(([fieldName, placeholder]) => {
-          return (
-            <FormField
-              key={fieldName}
-              control={form.control}
-              name={fieldName}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{fieldName}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={placeholder} {...field} />
-                  </FormControl>
-                  {/*
-                      <FormDescription>
-                      This is your public display name.
-                      </FormDescription>
-                    */}
-                  <FormMessage />
-                </FormItem>
-
-              )}
-            />
-          )
-        })}
+      <TextFormField
+      name="title"
+      description="the title of your event"
+      placeholder="the title of your event"
+      control={form.control}
+      />
         <p className="text-sm">this info is only shared with ships you match with</p>
         <div className="pt-4 md:pt-8 w-full flex justify-center">
           <SpinningButton
