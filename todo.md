@@ -36,7 +36,7 @@ key:
             + when scry result comes in, extract name from path
             + test
             + consolidate result update into one arm and call at each instance
-  + get-our-case is failing after second time we try to pass something through +change-info
+  - get-our-case is failing after second time we try to pass something through +change-info
 	- Event-level tagging in %pals
   - Respect calm engine settings
 
