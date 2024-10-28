@@ -942,11 +942,13 @@
       :: if event is %over, only allow a %latch modification
       ::
       ?:  &(?!(?=(%latch -.sub-info)) over)  cor
-      =.  cor  (ingest-diff sub-info)
-    :: TODO get-our-case scry is failing
-    ::  =?  cor  ?~((get-our-case `name.id) %| %&)
-    ::    %+  delete-remote-path  (need (get-our-case `name.id))
-    ::    /event/(scot %tas name.id)
+      =/  new-cor=(unit _cor)
+        (ingest-diff sub-info)
+      =?  cor  ?~(new-cor %| %&)
+        =.  cor  (need new-cor)
+        ?~  (get-our-case `name.id)  cor
+        %+  delete-remote-path  (need (get-our-case `name.id))
+        /event/(scot %tas name.id)
       :: if event is %secret only update %invited, %registered, and
       :: %attended, otherwise send the update to all ships with a
       :: record
@@ -976,23 +978,23 @@
       ::
       ++  ingest-diff
         |=  sub-info=sub-info-1
-        ^+  cor
+        ^-  (unit _cor)
         =/  event=event-1  get-event
         ?-    -.sub-info
-            %title      (update-event event(title.info p.sub-info))
-            %about      (update-event event(about.info p.sub-info))
-            %location   (update-event event(location.info p.sub-info))
-            %venue-map  (update-event event(venue-map.info p.sub-info))
-            %group      (update-event event(group.info p.sub-info))
-            %timezone   (update-event event(timezone.info p.sub-info))
+            %title      `(update-event event(title.info p.sub-info))
+            %about      `(update-event event(about.info p.sub-info))
+            %location   `(update-event event(location.info p.sub-info))
+            %venue-map  `(update-event event(venue-map.info p.sub-info))
+            %group      `(update-event event(group.info p.sub-info))
+            %timezone   `(update-event event(timezone.info p.sub-info))
         ::
             %moment
-          ?.  (are-dates-bound p.sub-info sessions.info.event)
-            noop
-          (update-event event(moment.info p.sub-info))
+          ?.  (are-dates-bound p.sub-info sessions.info.event)  ~
+          `(update-event event(moment.info p.sub-info))
         ::
             %delete-session
           =/  sid=@tas  p.sub-info
+          %-  some
           %-  update-event
           event(sessions.info (~(del by sessions.info.event) sid))
         ::
@@ -1003,7 +1005,7 @@
                   ?~(limit.event | =(u.limit.event permitted-count))
               ==
             ~|(event-limit-is-reached+id !!)
-          (update-event event(latch.info p.sub-info))
+          `(update-event event(latch.info p.sub-info))
         ::
             %create-session
           =/  sid=@tas
@@ -1014,7 +1016,8 @@
             %-  crip
             (weld (scow %tas (append-entropy name.id)) "-s")
           =/  =session  p.sub-info
-          ?.  (session-moment-nests moment.session)  noop
+          ?.  (session-moment-nests moment.session)  ~
+          %-  some
           %-  update-event
           event(sessions.info (~(put by sessions.info.event) sid session))
         ::
@@ -1049,14 +1052,15 @@
               %-  sss-pub-records
               (kill:du-records [%record name.id i.targets ~]~)
             $(targets t.targets)
-          (update-event event(kind.info new-kind))
+          `(update-event event(kind.info new-kind))
         ::
             %edit-session
           =/  sid=@tas  p.sub-info
           =/  ses=(unit session)
             (~(get by sessions.info.event) sid)
-          ?~  ses  ~&(>>> (bran "no session found for sid {<sid>}") cor)
+          ?~  ses  ~&(>>> (bran "no session found for sid {<sid>}") ~)
           =;  rev=session
+            %-  some
             %-  update-event
             event(sessions.info (~(put by sessions.info.event) sid rev))
           ?-    -.q.sub-info
