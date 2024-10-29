@@ -1,7 +1,7 @@
 import { Backend, EventAsHost, } from "@/backend";
 import { useContext, useState } from "react";
 import { GlobalContext } from "@/globalContext";
-import CreateEventForm from "@/components/crete-event-form";
+import CreateEventForm from "@/components/create-event-form";
 
 const CreatePage: React.FC<{ backend: Backend }> = ({ backend }) => {
   const globalContext = useContext(GlobalContext)
@@ -24,4 +24,4 @@ const CreatePage: React.FC<{ backend: Backend }> = ({ backend }) => {
 
 }
 
-export { CreatePage };
+export { CreatePage }
