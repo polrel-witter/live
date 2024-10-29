@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Control, useForm } from "react-hook-form"
-import { nullable, z } from "zod"
+import { datetimeRegex, nullable, z } from "zod"
 
 import {
   Form,
@@ -14,16 +14,23 @@ import {
 import { Input } from "@/components/ui/input"
 import { Backend, emptyEventAsHost, EventAsHost, Profile } from "@/backend"
 import { SpinningButton } from "./spinning-button"
-import { useState } from "react"
-import { create } from "domain"
-import { newEmptyIndexCtx } from "@/globalContext"
+import { useEffect, useState } from "react"
 import { TZDate } from "@date-fns/tz"
+import { DateTimePicker } from "./ui/date-time-picker/date-time-picker"
+import { Popover } from "@radix-ui/react-popover"
+import { PopoverContent, PopoverTrigger } from "./ui/popover"
+import { Button } from "./ui/button"
+import { cn } from "@/lib/utils"
+import { CalendarIcon } from "lucide-react"
+import { Calendar } from "./ui/calendar"
+import { TimePicker } from "./ui/date-time-picker/time-picker"
+import { format, parse } from "date-fns"
 
 
 type TextFormFieldProps = {
   name: keyof z.infer<typeof schemas>,
-  placeholder: string,
-  description: string
+  placeholder?: string,
+  description?: string
   control: Control<z.infer<typeof schemas>>,
 };
 
@@ -40,9 +47,9 @@ const TextFormField: React.FC<TextFormFieldProps> =
             <FormControl>
               <Input placeholder={placeholder} {...field} />
             </FormControl>
-            <FormDescription>
-              {description}
-            </FormDescription>
+            {description
+              ? <FormDescription> {description} </FormDescription>
+              : ''}
             <FormMessage />
           </FormItem>
 
@@ -50,6 +57,65 @@ const TextFormField: React.FC<TextFormFieldProps> =
       />
     )
   }
+
+
+type DateTimeFormFieldProps = {
+  name: "startDate" | "endDate",
+  control: Control<z.infer<typeof schemas>>,
+};
+
+const DateTimeFormField: React.FC<DateTimeFormFieldProps> = ({ control, name }) => {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className="flex flex-col">
+          <FormLabel className="text-left">DateTime</FormLabel>
+
+          <Popover>
+            <FormControl>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[280px] justify-start text-left font-normal",
+                    !field.value && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {field.value ? (
+                    format(field.value, "PPP HH:mm:ss")
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+            </FormControl>
+            <PopoverContent className="w-auto p-0">
+              {/* problem is that these two things can't match with the control*/}
+              <div className="p-3 border-t border-border">
+                <TimePicker
+                  setDate={field.onChange}
+                  date={field.value
+                    ? parse(field.value, "PPP HH:mm:ss", new Date())
+                    : new Date()}
+                />
+              </div>
+              <Calendar
+                mode="single"
+                selected={field.value
+                  ? parse(field.value, "PPP HH:mm:ss", new Date())
+                  : new Date()}
+                onSelect={field.onChange}
+                autoFocus12
+              />
+            </PopoverContent>
+          </Popover>
+        </FormItem>
+      )}
+    />)
+}
 
 const validUTCOffsets = [
   "-0",
@@ -84,6 +150,7 @@ const validUTCOffsets = [
 
 const emptyStringSchema = z.literal("")
 const utcOffsetSchema = z.enum(validUTCOffsets)
+const dateTimeSchema = z.string().datetime()
 
 const schemasAndPlaceHoldersForFields = {
   title: {
@@ -142,8 +209,8 @@ const schemas = z.object({
   // use this but replace date picker with daterange picker:
   // https://time.openstatus.dev/
   // https://ui.shadcn.com/docs/components/date-picker#form
-  startDate: z.string().min(1, { message: "title should be at least one character" }),
-  endDate: z.string().min(1, { message: "title should be at least one character" }),
+  startDate: dateTimeSchema,
+  endDate: dateTimeSchema,
   // use combobox for this
   // https://ui.shadcn.com/docs/components/combobox#form
   utcOffset: utcOffsetSchema,
@@ -170,6 +237,19 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
 
   const [spin, setSpin] = useState(false)
 
+  const [width, setWidth] = useState<number>(window.innerWidth);
+
+
+  const handleWindowSizeChange = () => { setWidth(window.innerWidth); }
+
+  useEffect(() => {
+    window.addEventListener('resize', handleWindowSizeChange);
+    return () => {
+      window.removeEventListener('resize', handleWindowSizeChange);
+    }
+  }, []);
+
+  const isMobile = width <= 768;
 
   const form = useForm<z.infer<typeof schemas>>({
     resolver: zodResolver(formSchema),
@@ -237,14 +317,32 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
       <form
         aria-description="A form containing updatable profile entries"
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-[2px] md:space-y-4"
+        className="space-y-6"
       >
-      <TextFormField
-      name="title"
-      description="the title of your event"
-      placeholder="the title of your event"
-      control={form.control}
-      />
+        <TextFormField
+          name="title"
+          description={!isMobile ? "the title of your event" : undefined}
+          placeholder={isMobile ? "the title of your event" : undefined}
+          control={form.control}
+        />
+        <DateTimeFormField
+          name="startDate"
+          control={form.control}
+        />
+
+        <TextFormField
+          name="title"
+          description={!isMobile ? "the title of your event" : undefined}
+          placeholder={isMobile ? "the title of your event" : undefined}
+          control={form.control}
+        />
+
+        <TextFormField
+          name="title"
+          description={!isMobile ? "the title of your event" : undefined}
+          placeholder={isMobile ? "the title of your event" : undefined}
+          control={form.control}
+        />
         <p className="text-sm">this info is only shared with ships you match with</p>
         <div className="pt-4 md:pt-8 w-full flex justify-center">
           <SpinningButton
