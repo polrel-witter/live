@@ -17,6 +17,7 @@ key:
   - event search
       - somewhere on this page we can see our previous search (can be scried from backend state)
   - guest should see their status and date it occured
+  - add %pal connection language on the Connections page: "ships you match with will be added as %pals"
   - there's brief delay when clicking into an event which feels like a crash because we get a blank page until the data appears. It's probably the time it takes for the scry to retrieve the data, but the user should know the app is still functioning. I think we should add a loading spinner in the middle of the page, or somewhere where it's obvious, so the user knows the app is doing something. This should appear anytime the frontend is scrying for data or knows it's waiting for an update from the backend (e.g. poking another ship and waiting for some data change).
   - on mobile: the frame for the event page is a bit wide; shouldn't have to scroll to the right/left. the boxes and text should be flush with the screen.
   - Event/session descriptions should recognize breaks, links, and images
