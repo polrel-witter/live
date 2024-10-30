@@ -30,6 +30,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TimeOption, TimePicker } from './time-picker';
+import { date } from 'zod';
 
 // changing internal DayPicker to be a range picker and calling it
 // if i ever need a date picker also i can abstract away the surronding
@@ -37,23 +38,17 @@ import { TimeOption, TimePicker } from './time-picker';
 
 export type CalendarProps = Omit<React.ComponentProps<typeof DayPicker>, 'mode'>;
 
+type DateRangeStrict = { from: Date, to: Date }
+
 export type DateTimePickerProps = {
   /**
-   * The datetime value to display and control for the start of the range.
+   * The datetime value to display and control for range.
    */
-  fromValue: Date | undefined;
+  dateRangeValue: DateRangeStrict;
   /**
-   * Callback function to handle 'from' changes.
+   * Callback function to handle date range changes.
    */
-  onFromChange: (date: Date | undefined) => void;
-  /**
-   * The datetime value to display and control for the end of the range.
-   */
-  toValue: Date | undefined;
-  /**
-   * Callback function to handle 'to' changes.
-   */
-  onToChange: (date: Date | undefined) => void;
+  onRangeChange: (range: DateRangeStrict|undefined) => void;
   /**
    * The minimum datetime value allowed.
    * @default undefined
@@ -111,7 +106,7 @@ export type DateTimePickerProps = {
 };
 
 export type DateTimeRenderTriggerProps = {
-  value: Date[] | undefined;
+  value: DateRange | undefined;
   open: boolean;
   timezone?: string;
   disabled?: boolean;
@@ -120,10 +115,8 @@ export type DateTimeRenderTriggerProps = {
 };
 
 export function DateTimePicker({
-  fromValue,
-  toValue,
-  onFromChange,
-  onToChange,
+  dateRangeValue,
+  onRangeChange,
   renderTrigger,
   min,
   max,
@@ -139,16 +132,21 @@ export function DateTimePicker({
   const [open, setOpen] = useState(false);
   const [monthYearPicker, setMonthYearPicker] = useState<'month' | 'year' | false>(false);
 
-  const initFromDate = useMemo(() => new TZDate(fromValue || new Date(), timezone), [fromValue, timezone]);
-  const initToDate = useMemo(() => new TZDate(toValue || new Date(), timezone), [toValue, timezone]);
+  const initDateRange = useMemo(() => {
+    return {
+      from: new TZDate(new Date(), timezone),
+      to: new TZDate(new Date(), timezone)
+    }
+  }, [timezone]);
 
-  const [month, setMonth] = useState<Date>(initFromDate);
-  const [date, setDate] = useState<Date>(initFromDate);
+  const [month, setMonth] = useState<Date>(initDateRange.from);
 
-  const [fromDate, setFromDate] = useState<Date>(initFromDate);
-  const [toDate, setToDate] = useState<Date>(initToDate);
 
-  const [dateRange, setDateRange] = useState<DateRange>({ from: initFromDate });
+  const [dateRange, setDateRange] = useState<DateRangeStrict>(initDateRange);
+
+  const valuesReset = useMemo(
+    () => dateRange === initDateRange,
+    [dateRange, dateRangeValue]);
 
   const endMonth = useMemo(() => {
     return setYear(month, getYear(month) + 1);
@@ -156,31 +154,31 @@ export function DateTimePicker({
   const minDate = useMemo(() => (min ? new TZDate(min, timezone) : undefined), [min, timezone]);
   const maxDate = useMemo(() => (max ? new TZDate(max, timezone) : undefined), [max, timezone]);
 
-  const onDayChange = (d: Date, fromToDate: Date, setter: typeof setFromDate) => {
-    d.setHours(fromToDate.getHours(), fromToDate.getMinutes(), fromToDate.getSeconds());
+  const onDayChange = (d: Date, oldDate: Date) => {
+    d.setHours(oldDate.getHours(), oldDate.getMinutes(), oldDate.getSeconds());
     if (min && d < min) {
       d.setHours(min.getHours(), min.getMinutes(), min.getSeconds());
     }
     if (max && d > max) {
       d.setHours(max.getHours(), max.getMinutes(), max.getSeconds());
     }
-    setter(d);
   }
 
   const onDayRangeChanged = useCallback(
     (r: DateRange) => {
-      console.log("range", r)
-      r.from && onDayChange(r.from, fromDate, setFromDate)
-      r.to && onDayChange(r.to, toDate, setToDate)
-      setDateRange(r)
+      const from = r.from ?? initDateRange.from
+      const to = r.to ?? initDateRange.to
+      from && onDayChange(from, dateRange.from)
+      to && onDayChange(to, dateRange.to)
+      setDateRange({ from, to })
     },
-    [setDate, setMonth]
+    [setDateRange]
+    // [setFromDate, setToDate, setMonth]
   );
   const onSumbit = useCallback(() => {
-    onFromChange(new Date(fromDate));
-    onToChange(new Date(toDate));
+    onRangeChange(dateRange)
     setOpen(false);
-  }, [fromDate, toDate, onFromChange, onToChange]);
+  }, [dateRange, onRangeChange]);
 
   const onMonthYearChanged = useCallback(
     (d: Date, mode: 'month' | 'year') => {
@@ -202,25 +200,35 @@ export function DateTimePicker({
 
   useEffect(() => {
     if (open) {
-      setDate(initFromDate);
-      setMonth(initFromDate);
+      setDateRange(initDateRange)
+      setMonth(initDateRange.from);
       setMonthYearPicker(false);
     }
-  }, [open, initFromDate]);
+  }, [open, initDateRange]);
 
   const displayValue = useMemo(() => {
-    if (!open && !fromValue) return fromValue;
-    return open ? [fromDate, toDate] : [initFromDate, initToDate];
-  }, [date, fromValue, open]);
+    if (!open && valuesReset) return undefined;
+    return dateRange;
+  }, [dateRange, open]);
 
   const dislayFormat = useMemo(() => {
-    if (!displayValue) return 'Pick a date';
+    let result = "pick a date range"
+    if (!displayValue) return result;
     const fmt = (d: Date) => format(
       d,
       `${!hideTime ? 'MMM' : 'MMMM'} d, yyyy${!hideTime ? (use12HourFormat ? ' hh:mm:ss a' : ' HH:mm:ss') : ''}`
     )
-    const [from, to] = displayValue
-    return `${fmt(from)} - ${fmt(to)}`;
+    if (displayValue.from) {
+      result = `${fmt(displayValue.from)}`
+    }
+
+    if (displayValue.to) {
+      result += ` - ${fmt(displayValue.to)}`
+    } else {
+      result += ` - ?`
+    }
+
+    return result;
   }, [displayValue, hideTime, use12HourFormat]);
 
   return (
@@ -233,7 +241,7 @@ export function DateTimePicker({
             className={cn(
               'flex w-full cursor-pointer items-center h-9 ps-3 pe-1 font-normal border border-input rounded-md text-sm shadow-sm',
               !displayValue && 'text-muted-foreground',
-              (!clearable || !fromValue) && 'pe-3',
+              (!clearable || !dateRangeValue) && 'pe-3',
               disabled && 'opacity-50 cursor-not-allowed',
               classNames?.trigger
             )}
@@ -243,7 +251,7 @@ export function DateTimePicker({
               <CalendarIcon className="mr-2 size-4" />
               {dislayFormat}
             </div>
-            {clearable && fromValue && (
+            {clearable && dateRangeValue && (
               <Button
                 disabled={disabled}
                 variant="ghost"
@@ -254,8 +262,9 @@ export function DateTimePicker({
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  onFromChange(undefined);
-                  onToChange(undefined);
+                  setDateRange(initDateRange)
+                  onRangeChange(undefined)
+                  setDateRange(initDateRange)
                   setOpen(false);
                 }}
               >
@@ -347,8 +356,10 @@ export function DateTimePicker({
                 <p className="text-center">start time</p>
                 <TimePicker
                   timePicker={timePicker}
-                  value={fromDate}
-                  onChange={setFromDate}
+                  value={dateRange.from ? dateRange.from : new Date()}
+                  onChange={(newTime) => {
+                    setDateRange(({ from: _, to }) => { return { from: newTime, to } })
+                  }}
                   use12HourFormat={use12HourFormat}
                   min={minDate}
                   max={maxDate}
@@ -358,8 +369,10 @@ export function DateTimePicker({
                 <p className="text-center" >end time</p>
                 <TimePicker
                   timePicker={timePicker}
-                  value={toDate}
-                  onChange={setToDate}
+                  value={dateRange.to ? dateRange.to : new Date()}
+                  onChange={(newTime) => {
+                    setDateRange(({ from, to: _ }) => { return { from, to: newTime } })
+                  }}
                   use12HourFormat={use12HourFormat}
                   min={minDate}
                   max={maxDate}
@@ -369,7 +382,7 @@ export function DateTimePicker({
           )}
           <div className="flex flex-row-reverse items-center justify-between">
             <Button className="ms-2 h-7 px-2" onClick={onSumbit}>
-              Done
+              done
             </Button>
             {timezone && (
               <div className="text-sm">

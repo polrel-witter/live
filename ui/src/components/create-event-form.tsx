@@ -27,6 +27,9 @@ import { TimePicker } from "./ui/date-time-picker/time-picker"
 import { format, parse } from "date-fns"
 import { GenericComboBox } from "./ui/combo-box"
 import { off } from "process"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { fi } from "date-fns/locale"
+import { deflate } from "zlib"
 
 
 type TextFormFieldProps = {
@@ -51,7 +54,6 @@ const TextFormField: React.FC<TextFormFieldProps> =
             </FormControl>
             <FormMessage />
           </FormItem>
-
         )}
       />
     )
@@ -128,12 +130,10 @@ const schemas = z.object({
   // use this but replace date picker with daterange picker:
   // https://time.openstatus.dev/
   // https://ui.shadcn.com/docs/components/date-picker#form
-  startDate: dateTimeSchema,
-  endDate: dateTimeSchema,
-  // dateRange: z.object({
-  //   from: z.date(),
-  //   to: z.date(),
-  // }),
+  dateRange: z.object({
+    from: dateTimeSchema,
+    to: dateTimeSchema,
+  }),
   // use combobox for this
   // https://ui.shadcn.com/docs/components/combobox#form
   utcOffset: utcOffsetSchema,
@@ -181,18 +181,17 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
       // use this but replace date picker with daterange picker:
       // https://time.openstatus.dev/
       // https://ui.shadcn.com/docs/components/date-picker#form
-      startDate: new Date(),
-      endDate: new Date(),
+      dateRange: {},
       // use combobox for this
       // https://ui.shadcn.com/docs/components/combobox#form
-      utcOffset: "-0",
+      utcOffset: undefined,
       limit: undefined,
       // limit: undefined,
       // select for these two
       // https://ui.shadcn.com/docs/components/select#form
       // add FormDescription for these and possibly others as well
-      eventKind: "secret",
-      eventLatch: "open",
+      eventKind: undefined,
+      eventLatch: undefined,
       eventDescription: "",
       eventSecret: "",
     },
@@ -264,15 +263,28 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
         />
 
 
-        <FormItem className="flex flex-col">
-          <FormLabel className="text-left">DateTime</FormLabel>
-          <DateTimePicker
-            fromValue={form.watch("startDate")}
-            toValue={form.watch("endDate")}
-            onFromChange={(fromDate) => { fromDate && form.setValue("startDate", fromDate) }}
-            onToChange={(toDate) => { toDate && form.setValue("endDate", toDate) }}
-          />
-        </FormItem>
+        <FormField
+          control={form.control}
+          name={"dateRange"}
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel className="text-left">event dates</FormLabel>
+              <FormControl>
+                <DateTimePicker
+                  dateRangeValue={field.value}
+                  onRangeChange={(newRange) => {
+                    newRange
+                      ? form.setValue("dateRange", newRange)
+                      : form.resetField("dateRange")
+                  }}
+                  min={new Date()}
+                  clearable
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        >
+        </FormField>
 
 
         <FormField
@@ -291,6 +303,95 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                   onSelect={(newVal) => { form.setValue("utcOffset", newVal) }}
                 />
               </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name={"eventKind"}
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel className="text-left">event kind</FormLabel>
+              <FormControl>
+                {/* could turn this into generic also */}
+                <Select value={field.value} onValueChange={(newVal) => {
+                  switch (newVal) {
+                    case "public":
+                      form.setValue("eventKind", newVal)
+                      break
+                    case "private":
+                      form.setValue("eventKind", newVal)
+                      break
+                    case "secret":
+                      form.setValue("eventKind", newVal)
+                      break
+                    default:
+                      console.warn("uknown event kind:", newVal)
+                  }
+                }}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="pick a kind" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="public">public</SelectItem>
+                    <SelectItem value="private">private</SelectItem>
+                    <SelectItem value="secret">secret</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormDescription className="flex-row space-y-4 w-1/3">
+                <p>
+                  this affects the way guests can register; <br />
+                </p>
+                <p>
+                  a public event will be discoverable and allow guests to regiser by themselves <br />
+                </p>
+                <p>
+                  a private event will be discoverable but guests can only request to be registered and the host needs to approve them manually <br />
+                </p>
+                <p>
+                  a secret event will be discoverable only when the host invites us (and users register immediately??) <br />
+                </p>
+              </FormDescription>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name={"eventLatch"}
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel className="text-left">event latch</FormLabel>
+              <FormControl>
+                {/* could turn this into generic also */}
+                <Select value={field.value} onValueChange={(newVal) => {
+                  switch (newVal) {
+                    case "open":
+                      form.setValue("eventLatch", newVal)
+                      break
+                    case "closed":
+                      form.setValue("eventLatch", newVal)
+                      break
+                    case "over":
+                      form.setValue("eventLatch", newVal)
+                      break
+                    default:
+                      console.warn("uknown event latch:", newVal)
+                  }
+                }}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="pick a latch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open">open</SelectItem>
+                    <SelectItem value="closed">closed</SelectItem>
+                    <SelectItem value="over">over</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormDescription>the 'state' of the event</FormDescription>
             </FormItem>
           )}
         />
