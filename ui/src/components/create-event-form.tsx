@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Backend, emptyEventAsHost, EventAsHost, Profile } from "@/backend"
 import { SpinningButton } from "./spinning-button"
 import { useEffect, useState } from "react"
-import { TZDate } from "@date-fns/tz"
+import { TZDate, } from "@date-fns/tz"
 import { Popover } from "@radix-ui/react-popover"
 import { PopoverContent, PopoverTrigger } from "./ui/popover"
 import { Button } from "./ui/button"
@@ -25,7 +25,8 @@ import { Calendar } from "./ui/calendar"
 import { DateTimePicker } from "./ui/date-time-picker2/date-time-picker"
 import { TimePicker } from "./ui/date-time-picker/time-picker"
 import { format, parse } from "date-fns"
-import { ComboBox } from "./ui/combo-box"
+import { GenericComboBox } from "./ui/combo-box"
+import { off } from "process"
 
 
 type TextFormFieldProps = {
@@ -263,19 +264,15 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
         />
 
 
-        <FormField
-          control={form.control}
-          name={"startDate"}
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel className="text-left">DateTime</FormLabel>
-              <DateTimePicker
-                value={field.value}
-                onChange={field.onChange}
-              />
-            </FormItem>
-          )}
-        />
+        <FormItem className="flex flex-col">
+          <FormLabel className="text-left">DateTime</FormLabel>
+          <DateTimePicker
+            fromValue={form.watch("startDate")}
+            toValue={form.watch("endDate")}
+            onFromChange={(fromDate) => { fromDate && form.setValue("startDate", fromDate) }}
+            onToChange={(toDate) => { toDate && form.setValue("endDate", toDate) }}
+          />
+        </FormItem>
 
 
         <FormField
@@ -283,12 +280,15 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
           name={"utcOffset"}
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel className="text-left">limit</FormLabel>
+              <FormLabel className="text-left">timezone</FormLabel>
               <FormControl>
                 {/* is this magic? */}
-                <ComboBox<z.infer<typeof utcOffsetSchema>>
-                  items={validUTCOffsets.map((offset) => { return { label: offset, value: offset } })}
-                  onSelect={(newVal) => { field.value = newVal }}
+                <GenericComboBox<z.infer<typeof utcOffsetSchema>>
+                  value={field.value}
+                  items={validUTCOffsets.map((offset) => {
+                    return { label: `GMT${offset}`, value: offset }
+                  })}
+                  onSelect={(newVal) => { form.setValue("utcOffset", newVal) }}
                 />
               </FormControl>
             </FormItem>
