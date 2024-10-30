@@ -23,15 +23,17 @@
 ::  $deed: host or guest action
 ::
 +$  deed
-  $%  [%profile-diff p=(map term entry)]     :: update peer profile
-      [%edit-profile =term =entry]           :: edit profile
-      [%shake =id:live =ship act=?]          :: initiate a new peer status
+  $%  [%profile-diff p=(map term entry)]  :: update peer profile
+      [%edit-profile =term =entry]        :: edit profile
+      [%shake =id:live =ship act=?]       :: initiate a new peer status
+      [%add-pals p=?]                     :: add matched peers as pal
   ==
 ::  $update: local subscription changes
 ::
 +$  update
   $%  [%match =ship =status]                       :: match change
       [%profile =ship fields=(list [term entry])]  :: profile change
+      [%add-pals p=?]                              :: %pals toggle change
   ==
 ::  $demand: scry api
 ::
@@ -42,5 +44,6 @@
       [%peers p=(map ship status)]                  :: peer statuses by event
       [%matches p=(map ship (list ship))]           :: all matches for an event
       [%reaches p=(map ship (list ship))]           :: all reaches for an event
+      [%add-pals p=?]                               :: are matches added as pal
   ==
 --

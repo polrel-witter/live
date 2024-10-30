@@ -17,12 +17,16 @@ key:
   - event search
       - somewhere on this page we can see our previous search (can be scried from backend state)
   - guest should see their status and date it occured
-  - add %pal connection language on the Connections page: "ships you match with will be added as %pals"
+  - add %pal toggle on profile form
+      - 'Automatically add ships you match with as %pals and include the event title as a tag. This change will only take effect on future matches.'
   - there's brief delay when clicking into an event which feels like a crash because we get a blank page until the data appears. It's probably the time it takes for the scry to retrieve the data, but the user should know the app is still functioning. I think we should add a loading spinner in the middle of the page, or somewhere where it's obvious, so the user knows the app is doing something. This should appear anytime the frontend is scrying for data or knows it's waiting for an update from the backend (e.g. poking another ship and waiting for some data change).
   - on mobile: the frame for the event page is a bit wide; shouldn't have to scroll to the right/left. the boxes and text should be flush with the screen.
   - Event/session descriptions should recognize breaks, links, and images
   - need to remove the avatar, patp, and nickname from the profile. the patp should just be next to the avatar image, or if a nickname is set in parethesis next to it.
   - @p's show up without the ~ prepended.
+  - Respect calm engine settings
+    - frontend just needs to scry this out. either show/hide the avatar and/or the nickname
+
 
 
 
@@ -37,9 +41,10 @@ key:
             + when scry result comes in, extract name from path
             + test
             + consolidate result update into one arm and call at each instance
-  - get-our-case is failing after second time we try to pass something through +change-info
-	- Event-level tagging in %pals
-  - Respect calm engine settings
+  + get-our-case is failing after second time we try to pass something through +change-info
+	+ Event-level tagging in %pals
+    + toggle %pals setting
+  - include a changelog.txt in desk
 
 
 

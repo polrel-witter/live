@@ -5,7 +5,7 @@
 ::
 |%
 ::
-+$  versioned-state  $%(state-0)
++$  versioned-state  $%(state-0 state-1)
 ::
 +$  state-0
   $:  %0
@@ -17,13 +17,24 @@
       pub-peers=_(mk-pubs live-peers ,[%peers @ @ ~])  :: publications
   ==
 ::
++$  state-1
+  $:  %1
+      profiles=(mip ship term entry)                   :: contact info
+      peers=(mip id:live ship status)                  :: our relation to a peer
+      matches=(mip id:live ship (list ship))           :: host pov: matches
+      reaches=(mip id:live ship (list ship))           :: host pov: match tries
+      sub-peers=_(mk-subs live-peers ,[%peers @ @ ~])  :: subscriptions
+      pub-peers=_(mk-pubs live-peers ,[%peers @ @ ~])  :: publications
+      add-pals=?                                       :: add %match peers as pal
+  ==
+::
 +$  card  card:agent:gall
 ::
 --
 ::
 %+  verb  |
 %-  agent:dbug
-=|  state-0
+=|  state-1
 =*  state  -
 ::
 ^-  agent:gall
@@ -94,7 +105,7 @@
                     -:!>(*fail:da)
                   ==
 ::
-++  emit  |=(=card ~&(card cor(dek [card dek])))
+++  emit  |=(=card cor(dek [card dek]))
 ++  emil  |=(lac=(list card) cor(dek (welp lac dek)))
 ++  abet  ^-((quip card _state) [(flop dek) state])
 ++  bran  |=(=tape (weld "%matcher: " tape))
@@ -128,8 +139,20 @@
 ++  load
   |=  =vase
   ^+  cor
-  ?>  ?=([%0 *] q.vase)
-  cor(state !<(state-0 vase))
+  =+  !<(ole=versioned-state vase)
+  ?-    -.ole
+      %1  cor(state ole)
+      %0
+    %=  cor
+      state  :*  %1
+                 profiles.ole
+                 peers.ole
+                 matches.ole
+                 reaches.ole
+                 sub-peers.ole
+                 pub-peers.ole
+                 %|
+  ==  ==    ==
 ::
 ++  watch
   |=  pol=(pole knot)
@@ -157,6 +180,7 @@
   =;  =demand
     ``[%matcher-demand !>(demand)]
   ?+    pol  ~|(invalid-scry-path+pol !!)
+      [%u %pals %add ~]  [%add-pals add-pals]
       [%x %profile ship=@ ~]
     :-  %profile
     ?~  mp=(~(get by profiles) (slav %p ship:pol))  ~
@@ -271,9 +295,12 @@
       %matcher-deed
     =+  !<(=deed vase)
     ?-  -.deed
-      %edit-profile    (edit-profile term.deed entry.deed)
-      %profile-diff    (update-peer-profile p.deed)
-      %shake           (~(shake pe id.deed ship.deed) act.deed)
+        %edit-profile    (edit-profile term.deed entry.deed)
+        %profile-diff    (update-peer-profile p.deed)
+        %shake           (~(shake pe id.deed ship.deed) act.deed)
+        %add-pals
+      =.  cor  (local-update [%add-pals p.deed])
+      cor(add-pals p.deed)
     ==
   ::
       %matcher-dictum
@@ -644,15 +671,17 @@
       culp
     ?.  (~(has bi peers) id culp)  cor
     =?  cor  ?~(status | ?=(%match u.status))
-      =?  cor  .^(? %gu (weld (base-path %pals) /$))
-        (add-pal culp)
+      =?  cor  ?&  add-pals
+                   .^(? %gu (weld (base-path %pals) /$))
+               ==
+        (poke-pals culp)
       (send-profile %whole culp)
     =.  cor
       (local-update [%match culp status])
     cor(peers (~(put bi peers) id culp status))
-    ::  +add-pal: send a %meet poke to %pals with event title as tag
+    ::  +poke-pals: send a %meet poke to %pals with event title as tag
     ::
-    ++  add-pal
+    ++  poke-pals
       |=  =ship
       ^+  cor
       =/  =demand:live

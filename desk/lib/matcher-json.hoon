@@ -9,6 +9,7 @@
   %-  of
   :~  edit-profile+(ot ~[term+(se %tas) entry+so:dejs-soft:format])
       shake+de-shake
+      add-pals+bo
   ==
   ::
   ++  de-shake
@@ -36,6 +37,7 @@
   |=  upd=update
   ^-  ^json
   ?-    -.upd
+      %add-pals  (frond ['addPals' b+p.upd])
       %match
     %-  pairs
     :~  ['ship' s+(scot %p ship.upd)]
@@ -59,6 +61,7 @@
       %peer-status  !!
       %matches      !!
       %reaches      !!
+      %add-pals     ['addPals' b+p.demand]
       %peers        ['peers' (en-peers p.demand)]
       %profile      ['profile' (en-profile p.demand)]
       %profiles     ['allProfiles' (en-all-profiles p.demand)]
