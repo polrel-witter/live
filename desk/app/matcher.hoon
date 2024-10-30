@@ -1,6 +1,6 @@
 ::  %matcher: %live's social networking agent
 ::
-/-  *matcher, live, live-peers, contacts
+/-  *matcher, live, live-peers, contacts, pals
 /+  *sss, *mip, verb, dbug, default-agent
 ::
 |%
@@ -212,6 +212,12 @@
       [~ %sss %scry-response @ @ @ %peers @ @ ~]
     (sss-pub-peers (tell:du-peers |3:wire sign))
   ::
+      [%pals %add @ ~]
+    =/  =ship  (slav %p i.t.t.wire)
+    ?>  ?=(%poke-ack -.sign)
+    ?~  p.sign  cor
+    ~&(>>> (bran "failed to add {<ship>} as %pal") cor)
+  ::
       [%shake @ ~]
     =/  =ship  (slav %p i.t.wire)
     ?>  ?=(%poke-ack -.sign)
@@ -275,10 +281,10 @@
     ?.  |(=(ship.id.d our.bowl) =(ship.id.d src.bowl))
       ~&(>>> (bran "only the host of {<name.id.d>} can pass a dictum") cor)
     ?-  -.+.d
-        %add-peer     ?:((event-exists id.d) ~(add pe id.d ship.d) cor)
-        %delete-peer  ?:((event-exists id.d) ~(delete pe id.d ship.d) cor)
-        %show         (~(ingest-show pe id.d ship.d) status.d)
-        %subscribe    (subscribe id.d)
+      %add-peer     ?:((event-exists id.d) ~(add pe id.d ship.d) cor)
+      %delete-peer  ?:((event-exists id.d) ~(delete pe id.d ship.d) cor)
+      %show         (~(ingest-show pe id.d ship.d) status.d)
+      %subscribe    (subscribe id.d)
     ==
   ::
       %sss-to-pub
@@ -327,6 +333,20 @@
   |=  [=wire who=ship app=term =cage]
   ^-  card
   [%pass wire %agent [who app] %poke cage]
+::  +live-scry: read from %live
+::
+++  live-scry
+  |=  [care=?(%gx %gu) =path]
+  ^-  demand:live
+  .^  demand:live  care
+    (weld (base-path %live) ?:(?=(%gu care) path (weld path /live-demand)))
+  ==
+::  +base-path: prepend to local scries
+::
+++  base-path
+  |=  =dude:gall
+  ^-  path
+  /(scot %p our.bowl)/(scot %tas dude)/(scot %da now.bowl)
 ::  +make-watch: build watch card
 ::
 ++  make-watch
@@ -339,23 +359,13 @@
   |=  upd=update
   ^+  cor
   (emit [%give %fact ~[/updates] matcher-update+!>(`update`upd)])
-::  +base-path: prepend to local scries
-::
-++  base-path
-  |=  =dude:gall
-  ^-  path
-  /(scot %p our.bowl)/(scot %tas dude)/(scot %da now.bowl)
 ::  +event-exists: check if an event exists in our %live state
 ::
 ++  event-exists
   |=  =id:live
   ^-  ?
   =/  =demand:live
-    .^  demand:live
-      %gu
-      %+  weld  (base-path %live)
-      /event/exists/(scot %p ship.id)/(scot %tas name.id)
-    ==
+    (live-scry %gu /event/exists/(scot %p ship.id)/(scot %tas name.id))
   ?.  ?=(%event-exists -.demand)
     ~|('bad-scry-result' !!)
   ?:  p.demand  &
@@ -365,28 +375,21 @@
 ++  record-status
   |=  [=id:live guest=ship]
   ^-  (unit status:live)
-  =;  =demand:live
-   ?.  ?=(%record -.demand)
-     ~|('bad-scry-result' !!)
-   ?~  p.demand
-     ~&(>>> (bran "{<guest>} does not have a record at event {<id>}") ~)
-   `status.u.p.demand
- .^  demand:live
-   %gx
-   %+  weld  (base-path %live)
-   /record/(scot %p ship.id)/(scot %tas name.id)/(scot %p guest)/live-demand
- ==
+  =/  =demand:live
+    %+  live-scry  %gx
+    /record/(scot %p ship.id)/(scot %tas name.id)/(scot %p guest)
+  ?.  ?=(%record -.demand)
+    ~|('bad-scry-result' !!)
+  ?~  p.demand
+    ~&(>>> (bran "{<guest>} does not have a record at event {<id>}") ~)
+  `status.u.p.demand
 ::  +subscribe: a poke received from a host, asking us to subscribe to
 ::  their sss %peers path for guest list updates
 ::
 ++  subscribe
   |=  =id:live
   ^+  cor
-  ::  must come from event host
-  ::
   ?.  =(ship.id src.bowl)  cor
-  ::  we cannot be the host
-  ::
   ?:  =(ship.id our.bowl)
     ~&  >>>
       (bran "cannot subscribe to a guest list of which we're the host")
@@ -633,7 +636,7 @@
   ::
   ++  show
     |=  =status
-    ^+  cor
+    |^  ^+  cor
     =.  culp
       :: if culp is us, the host, we need to operate on the src
       ::
