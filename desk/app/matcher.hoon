@@ -94,7 +94,7 @@
                     -:!>(*fail:da)
                   ==
 ::
-++  emit  |=(=card cor(dek [card dek]))
+++  emit  |=(=card ~&(card cor(dek [card dek])))
 ++  emil  |=(lac=(list card) cor(dek (welp lac dek)))
 ++  abet  ^-((quip card _state) [(flop dek) state])
 ++  bran  |=(=tape (weld "%matcher: " tape))
