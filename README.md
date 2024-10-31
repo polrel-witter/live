@@ -1,7 +1,8 @@
 # Overview
-%live gives users a basic set of tools to organize an event (parties,
-meetings, weddings, meetups, etc.). It's best approached from two
-perspectives:
+%live is a tool to organize and run an event (parties, meetings, weddings,
+meetups, etc.). It's best approached from two perspectives:
+
+For feedback and support, either join [~mocbel/software](https://tlon.network/lure/0v1.tipkt.egdok.cs1ck.q1u50.vh304) on Urbit or dm [@polrel_wittter](https://x.com/polrel_witter) on X.
 
 ### As a host
 *the frontend host dashboard is currently under development; for now all
@@ -111,6 +112,9 @@ title for an event
 
 ## Matcher
 These result in a `$demand` type defined in `desk/sur/matcher.hoon`.
+
+### %u scries
+`/pals/add` -> toggle whether matches should be added to %pals
 
 ### %x scries
 `/profile/[ship]` -> a profile

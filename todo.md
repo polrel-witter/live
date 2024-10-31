@@ -44,7 +44,8 @@ key:
   + get-our-case is failing after second time we try to pass something through +change-info
 	+ Event-level tagging in %pals
     + toggle %pals setting
-  - include a changelog.txt in desk
+  + include a changelog.txt in desk
+  + Update README and get rid of %docs
 
 
 
