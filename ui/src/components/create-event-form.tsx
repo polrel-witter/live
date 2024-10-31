@@ -25,6 +25,7 @@ import { Button } from "./ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
 import { CreateSessionForm } from "./create-session-form"
 import { flipBoolean } from "@/lib/utils"
+import { SessionCard } from "./session-card"
 
 // need this otherwise the <Input> in there is not happy
 type adjustedFormType = Omit<z.infer<typeof schemas>, "dateRange" | "sessions">
@@ -105,7 +106,7 @@ const dateTimeSchema = z.date()
 const sessionSchema = z.object({
   title: z.string(),
   // TODO: maybe validate that these are actually patps
-  panel: emptyStringSchema.or(z.string()),
+  panel: z.array(z.string()),
   location: emptyStringSchema.or(z.string()),
   about: emptyStringSchema.or(z.string()),
   start: z.date(),
@@ -182,14 +183,7 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
       eventLatch: undefined,
       eventDescription: "",
       eventSecret: "",
-      sessions: [{
-        title: "title",
-        panel: "panel",
-        location: "location",
-        about: "idk",
-        start: new Date(),
-        end: new Date(),
-      }],
+      sessions: [],
     },
   })
 
@@ -416,11 +410,13 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                   <Card>
                     <CardContent className="p-1">
                       <ul>
-                        {field.value.map(({ title, panel, about, start, end }) =>
-                          <li key={title}>
-                            <Card>
-                              <CardHeader>{title}</CardHeader>
-                            </Card>
+                        {field.value.map((session) =>
+                          <li key={session.title}>
+                            <SessionCard session={{
+                              startTime: new TZDate(session.start),
+                              endTime: new TZDate(session.end),
+                              ...session
+                            }} />
                           </li>)}
                       </ul>
 
@@ -435,7 +431,7 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
 
                       <Dialog
                         open={openDialog}
-                        onOpenChange={() => {setOpenDialog(flipBoolean)}}
+                        onOpenChange={() => { setOpenDialog(flipBoolean) }}
                         aria-description="a dialog to add a new session to the event"
                       >
                         <DialogContent
@@ -447,21 +443,13 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                               */}
                             <CreateSessionForm
                               onSubmit={({
-                                title,
-                                panel,
-                                about,
-                                location,
-                                timeRange: { start, end }
+                                timeRange: { start, end },
+                                ...rest
                               }) => {
-                                const newSession: z.infer<typeof sessionSchema> = {
-                                  title,
-                                  panel: panel.join(" "),
-                                  about,
-                                  location,
-                                  start,
-                                  end
-                                }
-                                const newFieldValue = [...field.value, newSession]
+                                const newFieldValue = [
+                                  ...field.value,
+                                  { start, end, ...rest }
+                                ]
                                 form.setValue("sessions", newFieldValue)
                               }
                               }
