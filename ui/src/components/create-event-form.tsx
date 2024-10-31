@@ -12,49 +12,57 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Backend, emptyEventAsHost, EventAsHost, Profile } from "@/backend"
+import { emptyEventAsHost, EventAsHost } from "@/backend"
 import { SpinningButton } from "./spinning-button"
 import { useEffect, useState } from "react"
 import { TZDate, } from "@date-fns/tz"
-import { Popover } from "@radix-ui/react-popover"
-import { PopoverContent, PopoverTrigger } from "./ui/popover"
-import { Button } from "./ui/button"
-import { cn } from "@/lib/utils"
-import { CalendarIcon } from "lucide-react"
-import { Calendar } from "./ui/calendar"
 import { DateTimePicker } from "./ui/date-time-picker2/date-time-picker"
-import { TimePicker } from "./ui/date-time-picker/time-picker"
-import { format, parse } from "date-fns"
 import { GenericComboBox } from "./ui/combo-box"
-import { off } from "process"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { fi } from "date-fns/locale"
-import { deflate } from "zlib"
+import { Textarea } from "./ui/textarea"
+import { Card, CardContent, CardHeader } from "./ui/card"
+import { Button } from "./ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
+import { CreateSessionForm } from "./create-session-form"
+import { flipBoolean } from "@/lib/utils"
 
+// need this otherwise the <Input> in there is not happy
+type adjustedFormType = Omit<z.infer<typeof schemas>, "dateRange" | "sessions">
 
 type TextFormFieldProps = {
-  name: keyof z.infer<typeof schemas>,
+  formField: keyof adjustedFormType,
+  label: string;
   placeholder?: string,
-  description?: string
   control: Control<z.infer<typeof schemas>>,
+  textArea?: boolean;
 };
 
+const BoldText: React.FC<{ text: string }> = ({ text }) => {
+  return (
+    <span className="font-bold">{text}</span>
+  )
+}
+
 const TextFormField: React.FC<TextFormFieldProps> =
-  ({ name, placeholder, control, description }) => {
+  ({ formField, label, placeholder, control, textArea }) => {
+
     return (
       <FormField
-        key={name}
+        key={formField}
         control={control}
-        name={name}
-        render={({ field }) => (
+        name={formField}
+        render={({ field }) =>
           <FormItem>
-            <FormLabel>{name}</FormLabel>
+            <FormLabel>{label}</FormLabel>
             <FormControl>
-              <Input placeholder={placeholder} {...field} />
+              {textArea
+                ? <Textarea placeholder={placeholder} {...field} />
+                : <Input placeholder={placeholder} {...field} />
+              }
             </FormControl>
             <FormMessage />
           </FormItem>
-        )}
+        }
       />
     )
   }
@@ -94,35 +102,15 @@ const emptyStringSchema = z.literal("")
 const utcOffsetSchema = z.enum(validUTCOffsets)
 const dateTimeSchema = z.date()
 
-const schemasAndPlaceHoldersForFields = {
-  title: "",
-  // todo: add date or maybe date picker
-  // use this but replace date picker with daterange picker:
-  // https://time.openstatus.dev/
-  // https://ui.shadcn.com/docs/components/date-picker#form
-  // startDate: {
-  //     schema: z.string().min(1, { message: "title should be at least one character" }),
-  //     placeholder: "The title of your event",
-  //   },
-  // endDate: {
-  //     schema: z.string().min(1, { message: "title should be at least one character" }),
-  //     placeholder: "The title of your event",
-  //   },
-  // use combobox for this
-  // https://ui.shadcn.com/docs/components/combobox#form
-  utcOffset: "the UTC offset for the timezone where the event will take place",
-  limit: "limit the number of attendees to this event (can be empty)",
-  // select for these two
-  // https://ui.shadcn.com/docs/components/select#form
-  // add FormDescription for these and possibly others as well
-  eventKind: "the type of event you'll be hosting",
-
-  eventState: "the type of event you'll be hosting",
-  eventDescription: "the event description",
-  eventSecret: "event secret; this message will be sent to registered attendees / guests",
-
-}
-
+const sessionSchema = z.object({
+  title: z.string(),
+  // TODO: maybe validate that these are actually patps
+  panel: emptyStringSchema.or(z.string()),
+  location: emptyStringSchema.or(z.string()),
+  about: emptyStringSchema.or(z.string()),
+  start: z.date(),
+  end: z.date(),
+})
 
 const schemas = z.object({
   title: z.string().min(1, { message: "title should be at least one character" }),
@@ -147,6 +135,7 @@ const schemas = z.object({
   eventLatch: z.enum(["open", "closed", "over"]),
   eventDescription: emptyStringSchema.or(z.string()),
   eventSecret: emptyStringSchema.or(z.string()),
+  sessions: z.array(sessionSchema)
 })
 
 type Props = {
@@ -154,7 +143,6 @@ type Props = {
 }
 
 const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
-
   const [spin, setSpin] = useState(false)
 
   const [width, setWidth] = useState<number>(window.innerWidth);
@@ -176,12 +164,12 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
     mode: "onChange",
     // this is needed to avoid the error about uncontrolled input
     defaultValues: {
-      title: "",
+      title: undefined,
       // todo : , 
       // use this but replace date picker with daterange picker:
       // https://time.openstatus.dev/
       // https://ui.shadcn.com/docs/components/date-picker#form
-      dateRange: {},
+      dateRange: undefined,
       // use combobox for this
       // https://ui.shadcn.com/docs/components/combobox#form
       utcOffset: undefined,
@@ -194,6 +182,14 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
       eventLatch: undefined,
       eventDescription: "",
       eventSecret: "",
+      sessions: [{
+        title: "title",
+        panel: "panel",
+        location: "location",
+        about: "idk",
+        start: new Date(),
+        end: new Date(),
+      }],
     },
   })
 
@@ -238,9 +234,9 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
         className="space-y-6"
       >
         <TextFormField
-          name="title"
-          description={!isMobile ? "the title of your event" : undefined}
-          placeholder={isMobile ? "the title of your event" : undefined}
+          formField="title"
+          label="event title"
+          placeholder="the title of your event"
           control={form.control}
         />
 
@@ -253,7 +249,7 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
               <FormControl>
                 <Input
                   type="number"
-                  placeholder="limit of attendees for this event"
+                  placeholder="limit of attendees for this event (leave empty for no limit)"
                   {...field}
                 // onChange={(e) => { if (e) { console.log(e); field.onChange(e) } }}
                 />
@@ -340,19 +336,11 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                   </SelectContent>
                 </Select>
               </FormControl>
-              <FormDescription className="flex-row space-y-4 w-1/3">
-                <p>
-                  this affects the way guests can register; <br />
-                </p>
-                <p>
-                  a public event will be discoverable and allow guests to regiser by themselves <br />
-                </p>
-                <p>
-                  a private event will be discoverable but guests can only request to be registered and the host needs to approve them manually <br />
-                </p>
-                <p>
-                  a secret event will be discoverable only when the host invites us (and users register immediately??) <br />
-                </p>
+              <FormDescription>
+                this affects the way guests can register <br />
+                a <BoldText text="public" /> event will be discoverable and allow guests to regiser by themselves <br />
+                a <BoldText text="private" /> event will be discoverable but guests can only request to be registered and the host needs to approve them manually <br />
+                a <BoldText text="secret" /> event will be discoverable only when the host invites us (and users register immediately??)
               </FormDescription>
             </FormItem>
           )}
@@ -391,25 +379,123 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                   </SelectContent>
                 </Select>
               </FormControl>
-              <FormDescription>the 'state' of the event</FormDescription>
+              <FormDescription>
+                the 'state' of the event: <br />
+                an <BoldText text="open" /> event accepts registrations <br />
+                a <BoldText text="closed" /> event does not accept registrations anymore; this gets triggered automatically when the event participant number gets over the limit <br />
+                <BoldText text="over" />: this event state is for events that already took place
+              </FormDescription>
             </FormItem>
           )}
         />
 
-        <p className="text-sm">this info is only shared with ships you match with</p>
+        <TextFormField
+          formField="eventDescription"
+          label="description"
+          placeholder="some text to describe your event"
+          control={form.control}
+          textArea
+        />
+
+        <TextFormField
+          formField="eventSecret"
+          label="secret"
+          placeholder="a secret message to send guests once they register (optional)"
+          control={form.control}
+        />
+
+        <FormField
+          control={form.control}
+          name={"sessions"}
+          render={({ field }) => {
+            const [openDialog, setOpenDialog] = useState(false)
+            return (
+              <FormItem className="flex flex-col">
+                <FormLabel className="text-left">sessions</FormLabel>
+                <FormControl>
+                  <Card>
+                    <CardContent className="p-1">
+                      <ul>
+                        {field.value.map(({ title, panel, about, start, end }) =>
+                          <li key={title}>
+                            <Card>
+                              <CardHeader>{title}</CardHeader>
+                            </Card>
+                          </li>)}
+                      </ul>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100"
+                        onClick={() => { setOpenDialog(flipBoolean) }}
+                      >
+                        + add session
+                      </Button>
+
+                      <Dialog
+                        open={openDialog}
+                        onOpenChange={() => {setOpenDialog(flipBoolean)}}
+                        aria-description="a dialog to add a new session to the event"
+                      >
+                        <DialogContent
+                          aria-description="contains event fields and a form to instantiate them"
+                        >
+                          <DialogHeader>
+                            <DialogTitle>new session</DialogTitle>
+                            {/*
+                              */}
+                            <CreateSessionForm
+                              onSubmit={({
+                                title,
+                                panel,
+                                about,
+                                location,
+                                timeRange: { start, end }
+                              }) => {
+                                const newSession: z.infer<typeof sessionSchema> = {
+                                  title,
+                                  panel: panel.join(" "),
+                                  about,
+                                  location,
+                                  start,
+                                  end
+                                }
+                                const newFieldValue = [...field.value, newSession]
+                                form.setValue("sessions", newFieldValue)
+                              }
+                              }
+                              min={form.getValues("dateRange.from")}
+                              max={form.getValues("dateRange.to")}
+
+                            />
+                          </DialogHeader>
+                        </DialogContent>
+                      </Dialog>
+
+                    </CardContent>
+                  </Card>
+                </FormControl>
+                <FormDescription>
+                  event sessions
+                </FormDescription>
+              </FormItem>
+            )
+          }}
+        />
+
         <div className="pt-4 md:pt-8 w-full flex justify-center">
           <SpinningButton
             spin={spin}
             onClick={() => { console.log(form.formState) }}
             type="submit"
             className="p-2 w-24 h-auto">
-            Submit
+            Create
           </SpinningButton>
         </div>
       </form>
     </Form>
   )
 }
-
 
 export default CreateEventForm;

@@ -14,11 +14,13 @@ const CreatePage: React.FC<{ backend: Backend }> = ({ backend }) => {
   const [openProfile, setOpenProfile] = useState(false)
 
   return (
-    <div className="grid w-full h-full justify-center pt-16">
-    <p className="p-4 pb-12 text-xl font-bold text-center"> create your new event </p>
-      <CreateEventForm
-        createEvent={async (_evt: EventAsHost) => { }}
-      />
+    <div className="flex w-full h-full justify-center pt-16">
+      <div className="w-full m-4 md:w-1/3 md:m-0">
+        <p className="p-4 pb-12 text-xl font-bold text-center"> create your new event </p>
+        <CreateEventForm
+          createEvent={async (_evt: EventAsHost) => { }}
+        />
+      </div>
     </div>
   )
 
