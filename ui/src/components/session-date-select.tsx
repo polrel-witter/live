@@ -6,34 +6,69 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { format, isEqual } from "date-fns"
+import { useEffect, useState } from "react"
+import { TZDate } from "react-day-picker"
 
-
-function dateToKey(d: Date): string {
-  return format(d, "y-M-dd")
+function dateToKey(d: TZDate): string {
+  return format(d, "y-M-ddX")
 }
 
-export function SessionDateSelect(props: { sessionDates: Array<Date>, changeDate: (s: Date) => void, currentDate: Date }) {
+const SessionDateSelect: React.FC<{
+  sessionDates: Array<TZDate>,
+  onDateChange: (s: TZDate) => void,
+  currentDate: TZDate
+}
+> = ({ sessionDates, onDateChange, currentDate }) => {
+
+  const [dates, setDates] = useState<Map<string, TZDate>>(new Map())
+
+  useEffect(
+    () => {
+      console.log("foo")
+      setDates(new Map(
+        sessionDates
+          .map((date) => [dateToKey(date), date])
+      ))
+    },
+    [sessionDates])
+
   return (
     <Select
-      onValueChange={(s: string) => props.changeDate(new Date(Date.parse(s)))
+      onValueChange={(key: string) => {
+        const d = dates.get(key)
+
+        if (!d) {
+          console.error(`couldn't find date with key ${key}`)
+          return
+        }
+
+        return onDateChange(d)
+      }
       }>
       <SelectTrigger className="w-[180px]">
         <SelectValue
-          defaultValue={props.currentDate ? dateToKey(props.currentDate) : "Select Date"}
+          defaultValue={currentDate ? dateToKey(currentDate) : "Select Date"}
           placeholder={
-            (isEqual(props.currentDate, new Date(0))
+            (isEqual(currentDate, new Date(0))
               ? "no time set"
-              : props.currentDate.toDateString()) || "Select Date"}
+              : currentDate.toDateString()) || "Select Date"}
         />
       </SelectTrigger>
       <SelectContent>
-        {props.sessionDates.map(date => {
-          if (isEqual(date, new Date(0))) {
-            return <SelectItem key={dateToKey(date)} value={dateToKey(date)}>no time set</SelectItem>
-          }
-          return <SelectItem key={dateToKey(date)} value={dateToKey(date)}>{date.toDateString()}</SelectItem>
-        })}
+        {dates
+          .entries()
+          .map(([key, date]) => {
+            if (isEqual(date, new TZDate(0))) {
+              return <SelectItem key={key} value={key}>no time set</SelectItem>
+            }
+            return <SelectItem key={key} value={key}>{date.toDateString()}</SelectItem>
+          })
+          .toArray()
+        }
+
       </SelectContent>
     </Select>
   )
 }
+
+export { SessionDateSelect }

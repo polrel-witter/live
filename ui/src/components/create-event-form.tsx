@@ -26,6 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
 import { CreateSessionForm } from "./create-session-form"
 import { flipBoolean } from "@/lib/utils"
 import { SessionCard } from "./session-card"
+import { SlideDownAndReveal } from "./sliders"
 
 // need this otherwise the <Input> in there is not happy
 type adjustedFormType = Omit<z.infer<typeof schemas>, "dateRange" | "sessions">
@@ -420,14 +421,23 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                           </li>)}
                       </ul>
 
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100"
-                        onClick={() => { setOpenDialog(flipBoolean) }}
-                      >
-                        + add session
-                      </Button>
+                      {
+                        form.watch("dateRange") === undefined
+                          ? <Button
+                            type="button"
+                            className="w-full mt-1 bg-stone-100 hover:bg-stone-100 text-primary/50"
+                          >
+                            define a start and end date for the event to add sessions
+                          </Button>
+                          : <Button
+                            type="button"
+                            variant="ghost"
+                            className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100"
+                            onClick={() => { setOpenDialog(flipBoolean) }}
+                          >
+                            + add session
+                          </Button>
+                      }
 
                       <Dialog
                         open={openDialog}
@@ -441,23 +451,23 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                             <DialogTitle>new session</DialogTitle>
                             {/*
                               */}
-                            <CreateSessionForm
-                              onSubmit={({
-                                timeRange: { start, end },
-                                ...rest
-                              }) => {
-                                const newFieldValue = [
-                                  ...field.value,
-                                  { start, end, ...rest }
-                                ]
-                                form.setValue("sessions", newFieldValue)
-                              }
-                              }
-                              min={form.getValues("dateRange.from")}
-                              max={form.getValues("dateRange.to")}
-
-                            />
                           </DialogHeader>
+                          <CreateSessionForm
+                            onSubmit={({
+                              timeRange: { start, end },
+                              ...rest
+                            }) => {
+                              const newFieldValue = [
+                                ...field.value,
+                                { start, end, ...rest }
+                              ]
+                              form.setValue("sessions", newFieldValue)
+                            }
+                            }
+                            min={form.getValues("dateRange.from")}
+                            max={form.getValues("dateRange.to")}
+
+                          />
                         </DialogContent>
                       </Dialog>
 
@@ -471,6 +481,8 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
             )
           }}
         />
+
+
 
         <div className="pt-4 md:pt-8 w-full flex justify-center">
           <SpinningButton

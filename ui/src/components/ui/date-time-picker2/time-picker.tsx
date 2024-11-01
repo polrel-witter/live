@@ -41,6 +41,7 @@ export function TimePicker({
   min,
   max,
   timePicker,
+  containerRef
 }: {
   use12HourFormat?: boolean;
   value: Date;
@@ -48,6 +49,7 @@ export function TimePicker({
   min?: Date;
   max?: Date;
   timePicker?: DateTimePickerProps['timePicker'];
+  containerRef?: React.RefObject<HTMLElement>
 }) {
   // hours24h = HH
   // hours12h = hh
@@ -235,88 +237,94 @@ export function TimePicker({
   }, [value, use12HourFormat, timePicker]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" aria-expanded={open} className="justify-between">
-          <Clock className="mr-2 size-4" />
-          {display}
-          <ChevronDownIcon className="ml-2 size-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="p-0" side="top">
-        <div className="flex-col gap-2 p-2">
-          <div className="flex h-56 grow">
-            {(!timePicker || timePicker.hour) && (
-              <ScrollArea className="h-full flex-grow">
-                <div className="flex grow flex-col items-stretch overflow-y-auto pe-2 pb-48">
-                  {hours.map((v) => (
-                    <div key={v.value} ref={v.value === hour ? hourRef : undefined}>
+    <div>
+      {/* setting 'modal' fixed and issue where this component inside of a
+      * dialog won't work properly;
+      * see: https://github.com/shadcn-ui/ui/issues/1511
+      */}
+      <Popover open={open} onOpenChange={setOpen} modal>
+        <PopoverTrigger asChild>
+          <Button variant="outline" role="combobox" aria-expanded={open} className="justify-between">
+            <Clock className="mr-2 size-4" />
+            {display}
+            <ChevronDownIcon className="ml-2 size-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="p-0" side="top" containerRef={containerRef}>
+          <div className="flex-col gap-2 p-2">
+            <div className="flex h-56 grow">
+              {(!timePicker || timePicker.hour) && (
+                <ScrollArea className="h-full flex-grow">
+                  <div className="flex grow flex-col items-stretch overflow-y-auto pe-2 pb-48">
+                    {hours.map((v) => (
+                      <div key={v.value} ref={v.value === hour ? hourRef : undefined}>
+                        <TimeItem
+                          option={v}
+                          selected={v.value === hour}
+                          onSelect={onHourChange}
+                          className="h-8"
+                          disabled={v.disabled}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+              {(!timePicker || timePicker.minute) && (
+                <ScrollArea className="h-full flex-grow">
+                  <div className="flex grow flex-col items-stretch overflow-y-auto pe-2 pb-48">
+                    {minutes.map((v) => (
+                      <div key={v.value} ref={v.value === minute ? minuteRef : undefined}>
+                        <TimeItem
+                          option={v}
+                          selected={v.value === minute}
+                          onSelect={onMinuteChange}
+                          className="h-8"
+                          disabled={v.disabled}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+              {(!timePicker || timePicker.second) && (
+                <ScrollArea className="h-full flex-grow">
+                  <div className="flex grow flex-col items-stretch overflow-y-auto pe-2 pb-48">
+                    {seconds.map((v) => (
+                      <div key={v.value} ref={v.value === second ? secondRef : undefined}>
+                        <TimeItem
+                          option={v}
+                          selected={v.value === second}
+                          onSelect={(v) => setSecond(v.value)}
+                          className="h-8"
+                          disabled={v.disabled}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+              {use12HourFormat && (
+                <ScrollArea className="h-full flex-grow">
+                  <div className="flex grow flex-col items-stretch overflow-y-auto pe-2">
+                    {ampmOptions.map((v) => (
                       <TimeItem
+                        key={v.value}
                         option={v}
-                        selected={v.value === hour}
-                        onSelect={onHourChange}
+                        selected={v.value === ampm}
+                        onSelect={onAmpmChange}
                         className="h-8"
                         disabled={v.disabled}
                       />
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            )}
-            {(!timePicker || timePicker.minute) && (
-              <ScrollArea className="h-full flex-grow">
-                <div className="flex grow flex-col items-stretch overflow-y-auto pe-2 pb-48">
-                  {minutes.map((v) => (
-                    <div key={v.value} ref={v.value === minute ? minuteRef : undefined}>
-                      <TimeItem
-                        option={v}
-                        selected={v.value === minute}
-                        onSelect={onMinuteChange}
-                        className="h-8"
-                        disabled={v.disabled}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            )}
-            {(!timePicker || timePicker.second) && (
-              <ScrollArea className="h-full flex-grow">
-                <div className="flex grow flex-col items-stretch overflow-y-auto pe-2 pb-48">
-                  {seconds.map((v) => (
-                    <div key={v.value} ref={v.value === second ? secondRef : undefined}>
-                      <TimeItem
-                        option={v}
-                        selected={v.value === second}
-                        onSelect={(v) => setSecond(v.value)}
-                        className="h-8"
-                        disabled={v.disabled}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            )}
-            {use12HourFormat && (
-              <ScrollArea className="h-full flex-grow">
-                <div className="flex grow flex-col items-stretch overflow-y-auto pe-2">
-                  {ampmOptions.map((v) => (
-                    <TimeItem
-                      key={v.value}
-                      option={v}
-                      selected={v.value === ampm}
-                      onSelect={onAmpmChange}
-                      className="h-8"
-                      disabled={v.disabled}
-                    />
-                  ))}
-                </div>
-              </ScrollArea>
-            )}
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </div>
           </div>
-        </div>
-      </PopoverContent>
-    </Popover>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }
 
@@ -336,6 +344,10 @@ const TimeItem = ({
 }) => {
   return (
     <Button
+      // any button associated with a form without type="button"
+      // are automacally submit buttons:
+      // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/button#attributes 
+      type="button"
       variant="ghost"
       className={cn('flex justify-center px-1 pe-2 ps-1', className)}
       onClick={() => onSelect(option)}

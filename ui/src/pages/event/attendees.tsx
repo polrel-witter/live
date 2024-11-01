@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { EventContext } from './context'
 import AttendeeList from "@/components/attendee-list";
-import { Backend } from "@/backend";
+im/port { Backend } from "@/backend";
 import { Card, CardContent } from "@/components/ui/card";
 
 export function AttendeesPage(props: { backend: Backend }) {

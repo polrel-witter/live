@@ -13,21 +13,14 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { emptyEventAsHost, EventAsHost } from "@/backend"
-import { SpinningButton } from "./spinning-button"
-import { useEffect, useState } from "react"
-import { TZDate, } from "@date-fns/tz"
-import { DateTimePicker } from "./ui/date-time-picker2/date-time-picker"
-import { GenericComboBox } from "./ui/combo-box"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import { Textarea } from "./ui/textarea"
-import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
-import { unzip } from "zlib"
 import { TimePicker } from "./ui/date-time-picker2/time-picker"
-import { tr } from "date-fns/locale"
 import { Badge } from "./ui/badge"
 import { X } from "lucide-react"
+import { SessionDateSelect } from "./session-date-select"
+import { makeArrayOfEventDays } from "@/lib/utils"
 
 
 // need this otherwise the <Input> in there is not happy
@@ -68,7 +61,7 @@ const TextFormField: React.FC<TextFormFieldProps> =
 const patpSchema = z.string().startsWith("~").min(4)
 const emptyStringSchema = z.literal("")
 const sessionSchema = z.object({
-  title: z.string().min(1, {message: "session title can't be empty"}),
+  title: z.string().min(1, { message: "session title can't be empty" }),
   // TODO: maybe validate that these are actually patps
   panel: z.array(z.string().min(1)),
   location: emptyStringSchema.or(z.string()),
@@ -88,6 +81,7 @@ type Props = {
 const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
 
   const [width, setWidth] = useState<number>(window.innerWidth);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const handleWindowSizeChange = () => { setWidth(window.innerWidth); }
 
@@ -110,8 +104,8 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
       location: "" as const,
       about: "" as const,
       timeRange: {
-        start: new Date(),
-        end: new Date(),
+        start: min,
+        end: max,
       },
     },
   })
@@ -130,6 +124,7 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
       {...form}
     >
       <form
+        ref={formRef}
         aria-description="A form containing updatable profile entries"
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-6"
@@ -155,6 +150,7 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
                     <div className="flex-row space-y-1 pb-2">
                       {field.value.map((speaker) =>
                         <Badge
+                          key={speaker}
                           className="mx-1"
                         >
                           {speaker}
@@ -178,13 +174,13 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
                     </div>
                     <div className="flex space-x-4">
                       <Input
-                        placeholder="name or patp of speaker"
+                        placeholder="name/patp of speaker"
                         value={speaker}
                         onChange={(e) => { setSpeaker(e.target.value) }}
                       />
                       <Button
                         type="button"
-                        onClick={() => { field.value.push(speaker); setSpeaker("") }}>
+                        onClick={() => { speaker !== "" && field.value.push(speaker); setSpeaker("") }}>
                         add speaker
                       </Button>
                     </div>
@@ -219,17 +215,20 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormControl>
+              {/* TODO: !!! these should be TZDates*/}
+              <SessionDateSelect
+              sessionDates={makeArrayOfEventDays(min, max)
+
+              }
+              />
                 <div className="flex justify-around">
                   <div className="flex-col">
                     <p className="text-center">start time</p>
                     <TimePicker
-                      timePicker={{
-                        hour: true,
-                        minute: true,
-                        second: false,
-                      }}
+                      containerRef={formRef}
                       value={field.value.start}
                       onChange={(newTime) => {
+                        console.log("newtime", newTime)
                         form.setValue("timeRange.start", newTime)
                       }}
                       use12HourFormat
@@ -240,13 +239,10 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
                   <div className="flex-col">
                     <p className="text-center" >end time</p>
                     <TimePicker
-                      timePicker={{
-                        hour: true,
-                        minute: true,
-                        second: false,
-                      }}
+                      containerRef={formRef}
                       value={field.value.end}
                       onChange={(newTime) => {
+                        console.log("newtime", newTime)
                         form.setValue("timeRange.end", newTime)
                       }}
                       use12HourFormat
@@ -260,10 +256,14 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
           )}
         />
 
+
+
         <div className="pt-4 md:pt-8 w-full flex justify-center">
           <Button
             type="submit"
-            className="p-2 w-32 h-auto text-md align-center">
+            variant="ghost"
+            className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100"
+          >
             + add session
           </Button>
         </div>
