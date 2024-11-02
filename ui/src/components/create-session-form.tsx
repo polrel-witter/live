@@ -20,7 +20,8 @@ import { TimePicker } from "./ui/date-time-picker2/time-picker"
 import { Badge } from "./ui/badge"
 import { X } from "lucide-react"
 import { SessionDateSelect } from "./session-date-select"
-import { makeArrayOfEventDays } from "@/lib/utils"
+import { convertDateToTZDate, makeArrayOfEventDays } from "@/lib/utils"
+import { TZDate } from "@date-fns/tz"
 
 
 // need this otherwise the <Input> in there is not happy
@@ -74,14 +75,13 @@ const sessionSchema = z.object({
 
 type Props = {
   onSubmit(values: z.infer<typeof sessionSchema>): void
-  min: Date;
-  max: Date;
+  min: TZDate;
+  max: TZDate;
 }
 
 const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
 
   const [width, setWidth] = useState<number>(window.innerWidth);
-  const formRef = useRef<HTMLFormElement>(null);
 
   const handleWindowSizeChange = () => { setWidth(window.innerWidth); }
 
@@ -109,6 +109,18 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
       },
     },
   })
+
+  const formRef = useRef<HTMLFormElement>(null);
+  const [eventDays, setEventDays] = useState<TZDate[]>([])
+
+  useEffect(
+    () => {
+      const eventDays = makeArrayOfEventDays(min, max)
+      setEventDays(eventDays)
+      form.setValue("timeRange.start", eventDays[0])
+      form.setValue("timeRange.end", eventDays[0])
+    },
+    [])
 
   function onSubmit(values: z.infer<typeof sessionSchema>) {
     // Do something with the form values.
@@ -215,18 +227,22 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormControl>
-              {/* TODO: !!! these should be TZDates*/}
-              <SessionDateSelect
-              sessionDates={makeArrayOfEventDays(min, max)
 
-              }
-              />
+
                 <div className="flex justify-around">
+                  <SessionDateSelect
+                    sessionDates={eventDays}
+                    onDateChange={(newDay: TZDate) => {
+                      form.setValue("timeRange.start", newDay)
+                      form.setValue("timeRange.end", newDay)
+                    }}
+                    currentDate={convertDateToTZDate(form.watch("timeRange.start"), "+00:00")}
+                  />
                   <div className="flex-col">
                     <p className="text-center">start time</p>
                     <TimePicker
                       containerRef={formRef}
-                      value={field.value.start}
+                      value={convertDateToTZDate(form.watch("timeRange.start"), "+00:00")}
                       onChange={(newTime) => {
                         console.log("newtime", newTime)
                         form.setValue("timeRange.start", newTime)
@@ -238,9 +254,13 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
                   </div>
                   <div className="flex-col">
                     <p className="text-center" >end time</p>
+                    {/* it sorta works but it would be best to get rid of these
+                      * inline conversions, they considreably slow the whole
+                      * thing up
+                      */}
                     <TimePicker
                       containerRef={formRef}
-                      value={field.value.end}
+                      value={convertDateToTZDate(form.watch("timeRange.end"), "+00:00")}
                       onChange={(newTime) => {
                         console.log("newtime", newTime)
                         form.setValue("timeRange.end", newTime)
