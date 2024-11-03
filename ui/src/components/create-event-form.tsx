@@ -516,7 +516,7 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                             type="button"
                             className="w-full mt-1 bg-stone-100 hover:bg-stone-100 text-primary/50"
                           >
-                            define a start and end date for the event to add sessions
+                            define start and end date to add sessions
                           </Button>
                           : <Button
                             type="button"
@@ -563,9 +563,6 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                     </CardContent>
                   </Card>
                 </FormControl>
-                <FormDescription>
-                  event sessions
-                </FormDescription>
               </FormItem>
             )
           }}
