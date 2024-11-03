@@ -24,10 +24,17 @@ import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
 import { CreateSessionForm } from "./create-session-form"
-import { convertDateToTZDate, flipBoolean, formatEventDate } from "@/lib/utils"
+import { flipBoolean } from "@/lib/utils"
 import { SessionCard } from "./session-card"
 import { SlideDownAndReveal } from "./sliders"
-import { off } from "process"
+
+/* ON TIME
+ * throughout this page we're storing time in ordinary Dates in local time; the user doesn't know
+ * we'll let him assume that all the times he's entering are in the timezone he specifies; when
+ * we pass this off to the backend we'll convert to time to UTC as send that off along with the timezone
+ * offset
+ */
+
 
 // need this otherwise the <Input> in there is not happy
 type adjustedFormType = Omit<z.infer<typeof schemas>, "dateRange" | "sessions">
@@ -204,8 +211,6 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
 
     newEvent.details.title = values.title
     newEvent.details.location = ""
-    // from: convertDateToTZDate(newRange.from, offset),
-    // to: convertDateToTZDate(newRange.to, offset)
     newEvent.details.startDate = new TZDate(0)
     newEvent.details.endDate = new TZDate(0)
     newEvent.details.description = ""
@@ -265,14 +270,11 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
               <FormLabel className="text-left">event dates</FormLabel>
               <FormControl>
                 <DateTimePicker
+                  use12HourFormat
                   dateRangeValue={field.value}
                   onRangeChange={(newRange) => {
-                    const offset = form.watch("utcOffset") || "+00:00"
                     newRange
-                      ? form.setValue("dateRange", {
-                        from: convertDateToTZDate(newRange.from, offset),
-                        to: convertDateToTZDate(newRange.to, offset)
-                      })
+                      ? form.setValue("dateRange", newRange)
                       : form.resetField("dateRange")
                   }}
                   min={new Date()}
@@ -472,14 +474,8 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                             }
                             }
 
-                            min={convertDateToTZDate(
-                              form.watch("dateRange.from") || new Date(),
-                              form.watch("utcOffset") || "+00:00"
-                            )}
-                            max={convertDateToTZDate(
-                              form.watch("dateRange.to") || new Date(),
-                              form.watch("utcOffset") || "+00:00"
-                            )}
+                            min={form.watch("dateRange.from")}
+                            max={form.watch("dateRange.to")}
 
                           />
                         </DialogContent>

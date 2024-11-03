@@ -20,7 +20,7 @@ export function formatEventDate(d: TZDate): string {
 }
 
 export function formatSessionTime(d: Date): string {
-  const fmt = format(d, `HH:mm`)
+  const fmt = format(d, `hh:mm aa`)
   return fmt
 }
 

@@ -242,7 +242,7 @@ export function TimePicker({
       * dialog won't work properly;
       * see: https://github.com/shadcn-ui/ui/issues/1511
       */}
-      <Popover open={open} onOpenChange={setOpen} modal>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button variant="outline" role="combobox" aria-expanded={open} className="justify-between">
             <Clock className="mr-2 size-4" />
