@@ -12,7 +12,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { emptyEventAsHost, EventAsHost } from "@/backend"
+import { CreateEventParams, emptyEventAsHost, EventAsHost } from "@/backend"
 import { SpinningButton } from "./spinning-button"
 import { useEffect, useState } from "react"
 import { TZDate, } from "@date-fns/tz"
@@ -24,10 +24,9 @@ import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
 import { CreateSessionForm } from "./create-session-form"
-import { flipBoolean } from "@/lib/utils"
+import { convertDateToTZDate, flipBoolean } from "@/lib/utils"
 import { SessionCard } from "./session-card"
 import { SlideDownAndReveal } from "./sliders"
-import { se, tr } from "date-fns/locale"
 import { ChevronUp, X } from "lucide-react"
 
 /* ON TIME
@@ -125,7 +124,8 @@ const sessionSchema = z.object({
 })
 
 const schemas = z.object({
-  title: z.string().min(1, { message: "title should be at least one character" }),
+  title: z.string().min(1, { message: "title can't be empty!" }),
+  location: z.string().min(1, { message: "location can't be empty!" }),
   // todo: add date or maybe date picker
   // use this but replace date picker with daterange picker:
   // https://time.openstatus.dev/
@@ -146,12 +146,17 @@ const schemas = z.object({
   eventKind: z.enum(["public", "private", "secret"]),
   eventLatch: z.enum(["open", "closed", "over"]),
   eventDescription: emptyStringSchema.or(z.string()),
+  venueMap: emptyStringSchema.or(z.string()),
+  eventGroup: z.undefined().or(z.object({
+    host: z.string(),
+    name: z.string()
+  })),
   eventSecret: emptyStringSchema.or(z.string()),
   sessions: z.array(sessionSchema)
 })
 
 type Props = {
-  createEvent: (newEvent: EventAsHost) => Promise<void>
+  createEvent: (newEvent: CreateEventParams) => Promise<boolean>
 }
 
 const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
@@ -192,6 +197,8 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
       // add FormDescription for these and possibly others as well
       eventKind: undefined,
       eventLatch: undefined,
+      eventGroup: undefined,
+      venueMap: "" as const,
       eventDescription: "",
       eventSecret: "",
       sessions: [],
@@ -204,7 +211,7 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
 
     console.log("values", values)
 
-    let newEvent = emptyEventAsHost;
+    let newEvent: CreateEventParams = emptyEventAsHost;
 
     newEvent.limit = values.limit ? values.limit : null
     newEvent.secret = values.eventSecret
@@ -212,16 +219,24 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
     // blankEvent.details.id = `${ship}${values.title}`
 
     newEvent.details.title = values.title
-    newEvent.details.location = ""
-    newEvent.details.startDate = new TZDate(0)
-    newEvent.details.endDate = new TZDate(0)
-    newEvent.details.description = ""
-    newEvent.details.timezone = ""
+    newEvent.details.location = values.location
+    newEvent.details.startDate = convertDateToTZDate(values.dateRange.from, "+00:00")
+    newEvent.details.endDate = convertDateToTZDate(values.dateRange.to, "+00:00")
+    newEvent.details.description = values.eventDescription
+    newEvent.details.timezone = values.utcOffset
     newEvent.details.kind = values.eventKind
-    newEvent.details.group = null
+    // TODO: fill this in
+    newEvent.details.group = { ship: 'sampel-palnet', name: "group" }
     newEvent.details.latch = values.eventLatch
-    newEvent.details.venueMap = ""
-    newEvent.details.sessions = []
+    newEvent.details.venueMap = values.venueMap !== "" ? values.venueMap : ""
+    newEvent.details.sessions = values.sessions.map(({ start, end, ...rest }) => {
+      return {
+        mainSpeaker: '',
+        startTime: convertDateToTZDate(end, "+00:00"),
+        endTime: convertDateToTZDate(end, "+00:00"),
+        ...rest
+      }
+    })
 
 
     setSpin(true)
@@ -242,6 +257,13 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
           formField="title"
           label="event title"
           placeholder="the title of your event"
+          control={form.control}
+        />
+
+        <TextFormField
+          formField="location"
+          label="event location"
+          placeholder="where the event is going to take place"
           control={form.control}
         />
 
@@ -409,6 +431,14 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
           textArea
         />
 
+
+        <TextFormField
+          formField="venueMap"
+          label="venue map image"
+          placeholder="url to a .jpg or .png of the venue map"
+          control={form.control}
+        />
+
         <TextFormField
           formField="eventSecret"
           label="secret"
@@ -417,16 +447,43 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
         />
 
         <FormField
+          key="eventGroup"
+          control={form.control}
+          name="eventGroup"
+          render={({ field }) =>
+            <FormItem>
+              <FormLabel>tlon group for event (optional)</FormLabel>
+              <FormControl>
+                <div className="flex space-x-12">
+                  <Input
+                    placeholder="group host"
+                    value={field.value?.host}
+                    onChange={(e) => {form.setValue("eventGroup.host", e.target.value)}}
+                    />
+                  <Input
+                    placeholder="group name"
+                    value={field.value?.name}
+                    onChange={(e) => {form.setValue("eventGroup.name", e.target.value)}}
+                    />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          }
+        />
+
+
+        <FormField
           control={form.control}
           name={"sessions"}
           render={({ field }) => {
-            const [openSessions, setOpenSessions] = useState<Map<string, boolean>>(new Map())
+            const [openSessions, setOpenSessions] = useState<Map<string, boolean>>(new Map<string, boolean>())
             const [openDialog, setOpenDialog] = useState(false)
             const shouldDisplaySessionDialog = form.watch("dateRange") === undefined
 
             useEffect(
               () => {
-                setOpenSessions((oldSessions) => {
+                setOpenSessions((oldSessions: Map<string, boolean>) => {
                   const newElems: string[] = []
                   const deleteElems: string[] = []
                   field.value.forEach((session) => {
@@ -434,14 +491,18 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                     newElems.push(session.title)
                   })
 
-                  oldSessions.entries().forEach(([title,]) => {
+                  const oldKeys = [...oldSessions.keys()]
+
+
+                  oldKeys.forEach((title) => {
                     if (field.value.findIndex(
                       ({ title: fieldTitle }) => fieldTitle === title) === -1
                     ) {
                       deleteElems.push(title)
                     }
                   })
-                  const newMap = new Map([...oldSessions.entries().toArray()])
+
+                  const newMap: Map<string, boolean> = new Map(oldSessions.entries())
 
                   newElems.forEach((elem) => { newMap.set(elem, false) })
                   deleteElems.forEach((elem) => { newMap.delete(elem) })

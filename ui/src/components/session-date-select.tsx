@@ -55,15 +55,13 @@ const SessionDateSelect: React.FC<{
         />
       </SelectTrigger>
       <SelectContent>
-        {dates
-          .entries()
+        {[...dates.entries()]
           .map(([key, date]) => {
             if (isEqual(date, new TZDate(0))) {
               return <SelectItem key={key} value={key}>no time set</SelectItem>
             }
             return <SelectItem key={key} value={key}>{date.toDateString()}</SelectItem>
           })
-          .toArray()
         }
 
       </SelectContent>
