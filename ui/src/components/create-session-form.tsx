@@ -47,8 +47,14 @@ const TextFormField: React.FC<TextFormFieldProps> =
             <FormLabel>{label}</FormLabel>
             <FormControl>
               {textArea
-                ? <Textarea placeholder={placeholder} {...field} />
-                : <Input placeholder={placeholder} {...field} />
+                ? <Textarea
+                  onKeyDown={(e) => { e.key === 'Enter' && e.preventDefault() }}
+                  placeholder={placeholder} {...field}
+                />
+                : <Input
+                  onKeyDown={(e) => { e.key === 'Enter' && e.preventDefault() }}
+                  placeholder={placeholder} {...field}
+                />
               }
             </FormControl>
             <FormMessage />
@@ -79,6 +85,8 @@ type Props = {
   max: Date;
 }
 
+// cool feature:
+// https://stackoverflow.com/questions/70939652/focus-on-next-input-with-react-form-hook
 const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
 
   const [width, setWidth] = useState<number>(window.innerWidth);
@@ -128,8 +136,9 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
       <form
         ref={formRef}
         aria-description="A form containing updatable profile entries"
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6"
+        // stop this form's submit event from propagating to parent forms
+        onSubmit={(e) => { e.stopPropagation(); form.handleSubmit(onSubmit)(e) }}
+        className="space-y-2 md:space-y-6"
       >
         <TextFormField
           formField="title"
@@ -143,6 +152,12 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
           name={"panel"}
           render={({ field }) => {
             const [speaker, setSpeaker] = useState("")
+            const addSpeaker = () => {
+              if (speaker !== "") {
+                form.setValue("panel", [...field.value, speaker])
+                setSpeaker("")
+              }
+            }
 
             return (
               <FormItem>
@@ -178,11 +193,17 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
                       <Input
                         placeholder="name/patp of speaker"
                         value={speaker}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            addSpeaker()
+                          }
+                        }}
                         onChange={(e) => { setSpeaker(e.target.value) }}
                       />
                       <Button
                         type="button"
-                        onClick={() => { speaker !== "" && field.value.push(speaker); setSpeaker("") }}>
+                        onClick={() => addSpeaker()}>
                         add speaker
                       </Button>
                     </div>
@@ -244,6 +265,12 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
                       <div className="flex-col">
                         <p className="text-center">start time</p>
                         <TimePicker
+                          timePicker={{
+                            hour: true,
+                            minute: true,
+                            fiveMinuteBlocks: true,
+                            second: false,
+                          }}
                           containerRef={formRef}
                           value={form.watch("timeRange.start")}
                           onChange={(newTime) => {
@@ -252,12 +279,18 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
                           }}
                           use12HourFormat
                           min={min}
-                          max={max}
+                          max={form.watch("timeRange.end") || max}
                         />
                       </div>
                       <div className="flex-col">
                         <p className="text-center" >end time</p>
                         <TimePicker
+                          timePicker={{
+                            hour: true,
+                            minute: true,
+                            fiveMinuteBlocks: true,
+                            second: false,
+                          }}
                           containerRef={formRef}
                           value={form.watch("timeRange.end")}
                           onChange={(newTime) => {
@@ -265,7 +298,7 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
                             form.setValue("timeRange.end", newTime)
                           }}
                           use12HourFormat
-                          min={min}
+                          min={form.watch("timeRange.start") || min}
                           max={max}
                         />
                       </div>

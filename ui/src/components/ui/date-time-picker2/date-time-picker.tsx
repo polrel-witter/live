@@ -48,7 +48,7 @@ export type DateTimePickerProps = {
   /**
    * Callback function to handle date range changes.
    */
-  onRangeChange: (range: DateRangeStrict|undefined) => void;
+  onRangeChange: (range: DateRangeStrict | undefined) => void;
   /**
    * The minimum datetime value allowed.
    * @default undefined
@@ -97,6 +97,7 @@ export type DateTimePickerProps = {
   timePicker?: {
     hour?: boolean;
     minute?: boolean;
+    fiveMinuteBlocks?: boolean;
     second?: boolean;
   };
   /**
@@ -214,9 +215,16 @@ export function DateTimePicker({
   const dislayFormat = useMemo(() => {
     let result = "pick a date range"
     if (!displayValue) return result;
+    const secondsFormatting = timePicker?.second ? `:ss` : ''
+    const hourSecondsFormatting = timePicker?.hour ? `:mm${secondsFormatting}` : ''
+    const timeFormatting = !hideTime
+      ? (use12HourFormat
+        ? ` hh${hourSecondsFormatting} a`
+        : ` HH${hourSecondsFormatting}`)
+      : ''
     const fmt = (d: Date) => format(
       d,
-      `${!hideTime ? 'MMM' : 'MMMM'} d, yyyy${!hideTime ? (use12HourFormat ? ' hh:mm:ss a' : ' HH:mm:ss') : ''}`
+      `${!hideTime ? 'MMM' : 'MMMM'} d, yyyy${timeFormatting}`
     )
     if (displayValue.from) {
       result = `${fmt(displayValue.from)}`
@@ -247,7 +255,7 @@ export function DateTimePicker({
             )}
             tabIndex={0}
           >
-            <div className="flex-grow flex items-center">
+            <div className="flex-grow flex items-center text-[11px] sm:text-sm">
               <CalendarIcon className="mr-2 size-4" />
               {dislayFormat}
             </div>

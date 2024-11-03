@@ -27,6 +27,8 @@ import { CreateSessionForm } from "./create-session-form"
 import { flipBoolean } from "@/lib/utils"
 import { SessionCard } from "./session-card"
 import { SlideDownAndReveal } from "./sliders"
+import { se, tr } from "date-fns/locale"
+import { ChevronUp, X } from "lucide-react"
 
 /* ON TIME
  * throughout this page we're storing time in ordinary Dates in local time; the user doesn't know
@@ -270,6 +272,12 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
               <FormLabel className="text-left">event dates</FormLabel>
               <FormControl>
                 <DateTimePicker
+                  timePicker={{
+                    hour: true,
+                    minute: true,
+                    fiveMinuteBlocks: true,
+                    second: false,
+                  }}
                   use12HourFormat
                   dateRangeValue={field.value}
                   onRangeChange={(newRange) => {
@@ -412,8 +420,37 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
           control={form.control}
           name={"sessions"}
           render={({ field }) => {
+            const [openSessions, setOpenSessions] = useState<Map<string, boolean>>(new Map())
             const [openDialog, setOpenDialog] = useState(false)
             const shouldDisplaySessionDialog = form.watch("dateRange") === undefined
+
+            useEffect(
+              () => {
+                setOpenSessions((oldSessions) => {
+                  const newElems: string[] = []
+                  const deleteElems: string[] = []
+                  field.value.forEach((session) => {
+                    if (oldSessions.get(session.title)) { return }
+                    newElems.push(session.title)
+                  })
+
+                  oldSessions.entries().forEach(([title,]) => {
+                    if (field.value.findIndex(
+                      ({ title: fieldTitle }) => fieldTitle === title) === -1
+                    ) {
+                      deleteElems.push(title)
+                    }
+                  })
+                  const newMap = new Map([...oldSessions.entries().toArray()])
+
+                  newElems.forEach((elem) => { newMap.set(elem, false) })
+                  deleteElems.forEach((elem) => { newMap.delete(elem) })
+
+                  return newMap
+                }
+
+                )
+              }, [field.value])
 
             return (
               <FormItem className="flex flex-col">
@@ -422,14 +459,55 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                   <Card>
                     <CardContent className="p-1">
                       <ul>
-                        {field.value.map((session) =>
-                          <li key={session.title}>
-                            <SessionCard session={{
-                              startTime: new TZDate(session.start),
-                              endTime: new TZDate(session.end),
-                              ...session
-                            }} />
-                          </li>)}
+                        {field.value.map((session) => {
+                          return (<li
+                            className="m-1"
+                            key={session.title}>
+                            <div className="flex justify-between items-center w-full m-1">
+                              <p className="justify-self-start"> {session.title} </p>
+                              <div className="flex">
+                                <Button
+                                  type="button"
+                                  className="p-0 w-7 h-7 rounded-full hover:bg-red-200"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    form.setValue("sessions", form.getValues("sessions")
+                                      .filter(_session => _session.title !== session.title))
+                                  }}
+                                >
+                                  <X className="w-4 h-4 text-red-400" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  className="p-0 w-7 h-7 rounded-full"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setOpenSessions((oldSessions) => {
+                                      const oldVal = oldSessions.get(session.title)
+                                      const newSessions = new Map(oldSessions.entries())
+                                      if (oldVal !== undefined) {
+                                        newSessions.set(session.title, !oldVal)
+                                      }
+                                      return newSessions
+                                    })
+                                  }}
+                                >
+                                  <ChevronUp className="w-4 h-4 font-black" />
+                                </Button>
+                              </div>
+                            </div>
+                            <SlideDownAndReveal
+                              maxHeight="max-h-[1000px]"
+                              show={openSessions?.get(session.title) || false}
+                            >
+                              <SessionCard session={{
+                                startTime: new TZDate(session.start),
+                                endTime: new TZDate(session.end),
+                                ...session
+                              }} />
+                            </SlideDownAndReveal>
+                          </li>)
+                        })}
                       </ul>
 
                       {
@@ -471,6 +549,7 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                                 { start, end, ...rest }
                               ]
                               form.setValue("sessions", newFieldValue)
+                              setOpenDialog(flipBoolean)
                             }
                             }
 

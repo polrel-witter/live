@@ -273,17 +273,22 @@ export function TimePicker({
               {(!timePicker || timePicker.minute) && (
                 <ScrollArea className="h-full flex-grow">
                   <div className="flex grow flex-col items-stretch overflow-y-auto pe-2 pb-48">
-                    {minutes.map((v) => (
-                      <div key={v.value} ref={v.value === minute ? minuteRef : undefined}>
-                        <TimeItem
-                          option={v}
-                          selected={v.value === minute}
-                          onSelect={onMinuteChange}
-                          className="h-8"
-                          disabled={v.disabled}
-                        />
-                      </div>
-                    ))}
+                    {minutes
+                      .filter(({ value }) =>
+                        timePicker?.fiveMinuteBlocks
+                          ? (value % 5) === 0
+                          : true)
+                      .map((v) => (
+                        <div key={v.value} ref={v.value === minute ? minuteRef : undefined}>
+                          <TimeItem
+                            option={v}
+                            selected={v.value === minute}
+                            onSelect={onMinuteChange}
+                            className="h-8"
+                            disabled={v.disabled}
+                          />
+                        </div>
+                      ))}
                   </div>
                 </ScrollArea>
               )}

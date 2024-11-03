@@ -44,7 +44,7 @@ const SessionCard: React.FC<Props> = ({ session }) => {
         </CardTitle>
         <CardDescription className="italics">
           {
-            session.mainSpeaker !== ""
+            session.mainSpeaker && session.mainSpeaker !== ""
               ? <span> held by {session.mainSpeaker} </span>
               : ""
           }
@@ -65,9 +65,11 @@ const SessionCard: React.FC<Props> = ({ session }) => {
           ? <CardContent>{session.about}</CardContent>
           : ''
       }
-      <CardFooter>
-        <p>location: {session.location}</p>
-      </CardFooter>
+      {
+        session.location
+          ? <CardFooter> <p>location: {session.location}</p> </CardFooter>
+          : ''
+      }
     </Card>
   )
 }
