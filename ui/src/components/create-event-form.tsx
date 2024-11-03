@@ -38,7 +38,7 @@ import { ChevronUp, X } from "lucide-react"
 
 
 // need this otherwise the <Input> in there is not happy
-type adjustedFormType = Omit<z.infer<typeof schemas>, "dateRange" | "sessions">
+type adjustedFormType = Omit<z.infer<typeof schemas>, "dateRange" | "sessions" | "eventGroup">
 
 type TextFormFieldProps = {
   formField: keyof adjustedFormType,
@@ -458,13 +458,13 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                   <Input
                     placeholder="group host"
                     value={field.value?.host}
-                    onChange={(e) => {form.setValue("eventGroup.host", e.target.value)}}
-                    />
+                    onChange={(e) => { form.setValue("eventGroup.host", e.target.value) }}
+                  />
                   <Input
                     placeholder="group name"
                     value={field.value?.name}
-                    onChange={(e) => {form.setValue("eventGroup.name", e.target.value)}}
-                    />
+                    onChange={(e) => { form.setValue("eventGroup.name", e.target.value) }}
+                  />
                 </div>
               </FormControl>
               <FormMessage />
