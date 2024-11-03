@@ -13,10 +13,10 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { useEffect, useRef, useState, useSyncExternalStore } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Textarea } from "./ui/textarea"
 import { Button } from "./ui/button"
-import { TimePicker } from "./ui/date-time-picker2/time-picker"
+import { TimePicker } from "./ui/date-time-picker/time-picker"
 import { Badge } from "./ui/badge"
 import { X } from "lucide-react"
 import { SessionDateSelect } from "./session-date-select"

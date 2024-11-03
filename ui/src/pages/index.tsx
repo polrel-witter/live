@@ -46,7 +46,7 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
                 className="p-3 m-1 rounded-3xl shadow-sm border bg-white hover:bg-primary/20"
               >
                 <Plus className="w-4 h-4 mr-1 text-primary" />
-                <p className="text-primary"> create event </p>connected
+                <p className="text-primary"> create event </p>
               </Button>
             </Link>
           </NavigationMenuItem>
