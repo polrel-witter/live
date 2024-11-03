@@ -1,10 +1,7 @@
-"use client"
-
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -17,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Backend, Profile } from "@/backend"
 import { SpinningButton } from "./spinning-button"
-import { useState, useSyncExternalStore } from "react"
+import { useState } from "react"
 
 
 const emptyStringSchema = z.literal("")

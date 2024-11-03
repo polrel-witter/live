@@ -4,6 +4,10 @@ import { sub } from "date-fns";
 import { TZDate, tzOffset } from "@date-fns/tz";
 
 import { string, z, ZodError } from "zod" // this is an object validation library
+import { newEmptyCtx } from "./pages/event/context";
+import { title } from "process";
+import { PanelTop } from "lucide-react";
+import { se } from "date-fns/locale";
 
 interface EventId { ship: string, name: string };
 
@@ -33,6 +37,9 @@ interface Backend {
 
   // live - poke %unregister
   unregister(id: EventId): Promise<boolean>
+
+  // live - poke %create
+  createEvent(evt: CreateEventParams): Promise<boolean>
 
   // remove, this is included in an event record
   // getSchedule(id: EventId): Promise<Session[]>
@@ -200,6 +207,12 @@ const emptyEventAsHost: EventAsHost = {
   secret: "",
   limit: 0,
   details: emptyEventDetails
+}
+
+type CreateEventParams = {
+  secret: EventAsHost["secret"];
+  limit: EventAsHost["limit"];
+  details: Omit<EventDetails, "id">;
 }
 
 type LiveUpdateEvent = {
@@ -552,6 +565,57 @@ function register(_api: Urbit): (id: EventId) => Promise<boolean> {
   }
 }
 
+function createEvent(_api: Urbit, ship: string): (newEvent: CreateEventParams) => Promise<boolean> {
+  return async ({ secret, limit, details }: CreateEventParams) => {
+    const id: EventId = { ship, name: details.title }
+    let success = false;
+    const _poke = await _api.poke({
+      app: "live",
+      mark: "live-operation",
+      json: {
+        "id": { "ship": `~${id.ship}`, "name": id.name.replaceAll(" ", "-") },
+        // the value for "register" should be null when used as a guest;
+        // a host might specify a ship name there to register/unregister
+        // guests from his events
+        "action": {
+          "create": {
+            title: details.title,
+            about: details.description,
+            moment: {
+              start: details.startDate?.valueOf(),
+              end: details.endDate?.valueOf()
+            },
+            // TODO: properly handle timezone
+            timezone: { p: true, q: 0 },
+            location: details.location,
+            'venue-map': details.venueMap,
+            group: details.group,
+            kind: "%" + details.kind,
+            latch: "%" + details.latch,
+            sessions: details.sessions.map(session => {
+              return {
+                title: session.title,
+                panel: session.panel,
+                location: session.location,
+                about: session.about,
+                moment: {
+                  start: session.startTime?.valueOf(),
+                  end: session.endTime?.valueOf()
+                }
+              }
+            })
+          }
+        }
+      },
+      onSuccess: () => { success = true },
+      onError: (err) => {
+        console.error("error during create poke: ", err)
+      }
+    })
+    return Promise.resolve(success)
+  }
+}
+
 function unregister(_api: Urbit): (id: EventId) => Promise<boolean> {
   return async (_id: EventId) => {
     let success = false;
@@ -895,6 +959,7 @@ function subscribeToMatcherEvents(_api: Urbit): (handlers: {
 function newBackend(api: Urbit, ship: string): Backend {
   // remeber that the `ship` parameter is without the `~`
   return {
+    createEvent: createEvent(api, ship),
     register: register(api),
     unregister: unregister(api),
     // getSchedule: getSchedule(api),
@@ -920,4 +985,4 @@ function newBackend(api: Urbit, ship: string): Backend {
 
 export { emptyEventAsGuest, emptyProfile, emptyEventAsHost, newBackend, eventIdsEqual, diffProfiles }
 
-export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, EventDetails, Session, Attendee, Profile, LiveUpdateEvent, Backend }
+export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, CreateEventParams, EventDetails, Session, Attendee, Profile, LiveUpdateEvent, Backend }

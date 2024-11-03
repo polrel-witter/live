@@ -4,19 +4,8 @@ import SessionList from "@/components/schedule-list";
 import { Session } from "@/backend";
 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-
-import {
   add,
   compareAsc,
-  getDate,
-  getMonth,
-  getYear,
   isBefore,
   isEqual,
   format,
@@ -25,8 +14,10 @@ import {
   parse
 } from "date-fns"
 import { TZDate } from "@date-fns/tz";
-import { formatEventDate } from "@/lib/utils";
+import { SessionDateSelect } from "@/components/session-date-select";
+import { makeArrayOfEventDays } from "@/lib/utils";
 
+// these are now independent from session-date-select dateFromKey/dateToKey
 function dateToKey(d: TZDate): string {
   return format(d, "y-M-ddX")
 }
@@ -66,29 +57,8 @@ function makeDatesMapFromSessionTimes(sessions: TZDate[]): Map<string, TZDate> {
 }
 
 function makeDatesMapFromEventTimes(startDate: TZDate, endDate: TZDate): Map<string, TZDate> {
-  const days: TZDate[] = []
 
-  const startDay = startDate
-
-  const justDay = (d: TZDate): TZDate => {
-    return new TZDate(
-      d.getFullYear(),
-      d.getMonth(),
-      d.getDate(),
-      0,
-      0,
-      0,
-      0,
-      d.timeZone)
-  }
-   
-  const beforeOrEqual = (d: TZDate): boolean => {
-    return isBefore(justDay(d), endDate) || isEqual(justDay(d), endDate)
-  }
-
-  for (let i = startDay; beforeOrEqual(i); i = add(i, { days: 1 })) {
-    days.push(i)
-  }
+  const days = makeArrayOfEventDays(startDate, endDate)
 
   const kvps: [string, TZDate][] = days
     .map((day) => [dateToKey(day), day])
@@ -100,41 +70,6 @@ function hasSessionWithoutTimes(sessions: Session[]): boolean {
   return sessions
     .map(sessions => sessions.startTime)
     .includes(null)
-}
-
-const SessionDateSelect: React.FC<{
-  sessionDates: Array<TZDate>,
-  changeDate: (s: string) => void,
-  currentDate: TZDate
-}
-> = ({ sessionDates, changeDate, currentDate }) => {
-
-  return (
-    <Select
-      onValueChange={(s: string) => {
-        console.log("key", s)
-        return changeDate(s)
-      }
-      }>
-      <SelectTrigger className="w-[180px]">
-        <SelectValue
-          defaultValue={currentDate ? dateToKey(currentDate) : "Select Date"}
-          placeholder={
-            (isEqual(currentDate, new Date(0))
-              ? "no time set"
-              : currentDate.toDateString()) || "Select Date"}
-        />
-      </SelectTrigger>
-      <SelectContent>
-        {sessionDates.map(date => {
-          if (isEqual(date, new TZDate(0))) {
-            return <SelectItem key={dateToKey(date)} value={dateToKey(date)}>no time set</SelectItem>
-          }
-          return <SelectItem key={dateToKey(date)} value={dateToKey(date)}>{date.toDateString()}</SelectItem>
-        })}
-      </SelectContent>
-    </Select>
-  )
 }
 
 export function SchedulePage() {
@@ -209,12 +144,14 @@ export function SchedulePage() {
       <div className="text-2xl font-medium">schedule</div>
       <SessionDateSelect
         sessionDates={getSortedDates(dates)}
-        changeDate={(newDateKey: string) => {
+        onDateChange={(newDateKey: TZDate) => {
 
-          const newDate = dates.get(newDateKey)
+          const key = dateToKey(newDateKey)
+
+          const newDate = dates.get(key)
 
           if (!newDate) {
-            console.error(`couldn't find date with key ${newDateKey}`)
+            console.error(`couldn't find date with key ${key}`)
             return
           }
 
