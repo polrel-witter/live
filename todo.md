@@ -24,7 +24,7 @@ key:
     - i think i fixed this already, there's no left-right scroll anymore
   - Event/session descriptions should recognize breaks, links, and images
   + need to remove the avatar, patp, and nickname from the profile. the patp should just be next to the avatar image, or if a nickname is set in parethesis next to it.
-  - @p's show up without the ~ prepended.
+  + @p's show up without the ~ prepended.
   - Respect calm engine settings
     - frontend just needs to scry this out. either show/hide the avatar and/or the nickname
 

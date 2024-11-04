@@ -6,7 +6,7 @@ import {
 import { useContext, useEffect, useState } from "react"
 import { EventContext } from "./context"
 import ProfilePicture from "@/components/profile-picture"
-import { Attendee, Backend, Profile } from "@/backend"
+import { Attendee, Backend, Patp, Profile } from "@/backend"
 import ProfileCard from "@/components/profile-card"
 import { SpinningButton } from "@/components/spinning-button"
 import { type CarouselApi } from "@/components/ui/carousel"
@@ -15,6 +15,7 @@ import { cn, flipBoolean } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { SlideDownAndReveal, SlideRightAndReveal } from "@/components/sliders"
 import { Card } from "@/components/ui/card"
+import { nickNameOrPatp } from "@/components/util"
 
 
 // TODO: these should stop spinning once the event from matcher comes in
@@ -131,12 +132,12 @@ const ConnectionsPage: React.FC<{ backend: Backend }> = ({ backend }) => {
     })
   }, [api])
 
-  const matchHandler = (patp: string) => async () => {
+  const matchHandler = (patp: Patp) => async () => {
     return backend.match(ctx.event.details.id, patp)
   }
 
 
-  const unMatchHandler = (patp: string) => async () => {
+  const unMatchHandler = (patp: Patp) => async () => {
     return backend.unmatch(ctx.event.details.id, patp)
   }
 
@@ -189,6 +190,7 @@ const ConnectionsPage: React.FC<{ backend: Backend }> = ({ backend }) => {
                         size="xl"
                         point={attendee.patp} />
                     </div>
+                    <p className="text-center mt-4"> {nickNameOrPatp(profile, attendee.patp)} </p>
                     <div className="w-full flex justify-around pt-3">
                       <ConnectionsButton
                         status={attendee.status}

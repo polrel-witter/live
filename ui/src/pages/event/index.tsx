@@ -103,7 +103,7 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
             attendees: oldAttendees
               .map((attendee): Attendee => {
                 if (attendee.patp === stripPatpSig(evt.ship)) {
-                  return { patp: stripPatpSig(evt.ship), status: evt.status }
+                  return { patp: evt.ship, status: evt.status }
                 }
                 return attendee
               }),

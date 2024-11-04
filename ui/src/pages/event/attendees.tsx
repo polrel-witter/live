@@ -1,10 +1,10 @@
 import { useContext, useEffect, useState } from "react";
 import { EventContext } from './context'
 import AttendeeList from "@/components/attendee-list";
-import { Backend } from "@/backend";
+import { Backend, Patp } from "@/backend";
 import { Card, CardContent } from "@/components/ui/card";
 
-export function AttendeesPage(props: { backend: Backend }) {
+const AttendeesPage: React.FC<{ backend: Backend }> = ({ backend }) => {
   const ctx = useContext(EventContext)
 
   if (!ctx) {
@@ -34,7 +34,7 @@ export function AttendeesPage(props: { backend: Backend }) {
               <AttendeeList
                 attendees={ctx.attendees}
                 profiles={ctx.profiles}
-                unmatch={async (patp: string) => await props.backend.unmatch(ctx.event.details.id, patp)}
+                unmatch={async (patp: Patp) => await backend.unmatch(ctx.event.details.id, patp)}
               />
             </div>
 
@@ -43,3 +43,5 @@ export function AttendeesPage(props: { backend: Backend }) {
     </div>
   )
 }
+
+export { AttendeesPage }
