@@ -580,6 +580,9 @@ function createEvent(_api: Urbit, ship: string): (newEvent: CreateEventParams) =
         // guests from his events
         "action": {
           "create": {
+            secret: secret,
+            limit: limit,
+            info: {
             title: details.title,
             about: details.description,
             moment: {
@@ -587,7 +590,7 @@ function createEvent(_api: Urbit, ship: string): (newEvent: CreateEventParams) =
               end: tzDateToUnix(details.endDate)
             },
             // TODO: properly handle timezone
-            timezone: { p: true, q: 0 },
+            timezone: { p: true, q: 1 },
             location: details.location,
             'venue-map': details.venueMap,
             group: details.group,
@@ -605,6 +608,7 @@ function createEvent(_api: Urbit, ship: string): (newEvent: CreateEventParams) =
                 }
               }
             })
+          }
           }
         }
       },
