@@ -119,7 +119,6 @@ const ConnectionsPage: React.FC<{ backend: Backend }> = ({ backend }) => {
   }
 
   const [api, setApi] = useState<CarouselApi>()
-  const [width, setWidth] = useState<number>(window.innerWidth);
   const [spinButton1, setSpinButton1] = useState<boolean>(false);
 
   useEffect(() => {
@@ -131,19 +130,6 @@ const ConnectionsPage: React.FC<{ backend: Backend }> = ({ backend }) => {
       // Do something on select.
     })
   }, [api])
-
-
-
-  const handleWindowSizeChange = () => { setWidth(window.innerWidth); }
-
-  useEffect(() => {
-    window.addEventListener('resize', handleWindowSizeChange);
-    return () => {
-      window.removeEventListener('resize', handleWindowSizeChange);
-    }
-  }, []);
-
-  const isMobile = width <= 768;
 
   const matchHandler = (patp: string) => async () => {
     return backend.match(ctx.event.details.id, patp)
