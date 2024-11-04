@@ -60,7 +60,7 @@ const ListItem: React.FC<{
               profile
                 ?
                 <ProfileCard
-                  className="bg-transparent mt-4"
+                  className="bg-transparent m-4"
                   profile={profile}
                   showHeader
                 />
