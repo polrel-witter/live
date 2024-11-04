@@ -3,11 +3,7 @@ import Urbit from "@urbit/http-api";
 import { sub } from "date-fns";
 import { TZDate, tzOffset } from "@date-fns/tz";
 
-import { number, string, z, ZodError } from "zod" // this is an object validation library
-import { newEmptyCtx } from "./pages/event/context";
-import { title } from "process";
-import { PanelTop } from "lucide-react";
-import { se } from "date-fns/locale";
+import { z, ZodError } from "zod" // this is an object validation library
 
 interface EventId { ship: string, name: string };
 
@@ -81,6 +77,43 @@ interface Backend {
 
   // unsubscribe
   unsubscribeFromEvent(id: number): Promise<void>
+}
+
+// Patp types and utilities
+
+type PatpWithoutSig = string
+type Patp = `~${PatpWithoutSig}`
+
+function isPatp(s: string): s is Patp {
+  return s.charAt(0) === '~' && s.length >= 4
+}
+
+function stripSig(patp: Patp): PatpWithoutSig {
+  return patp.slice(0, 1)
+}
+
+function addSig(patp: PatpWithoutSig): Patp {
+  return `~${patp}`
+}
+
+function isGalaxy(patp: Patp): boolean {
+  return patp.length === 4
+}
+
+function isStar(patp: Patp): boolean {
+  return patp.length === 7
+}
+
+function isPlanet(patp: Patp): boolean {
+  return patp.length === 14
+}
+
+function isMoon(patp: Patp): boolean {
+  return patp.length > 14 && patp.length < 29
+}
+
+function isComet(patp: Patp): boolean {
+  return patp.length > 29
 }
 
 type MatchStatus = "unmatched" | "sent-request" | "matched";
@@ -583,32 +616,32 @@ function createEvent(_api: Urbit, ship: string): (newEvent: CreateEventParams) =
             secret: secret,
             limit: limit,
             info: {
-            title: details.title,
-            about: details.description,
-            moment: {
-              start: tzDateToUnix(details.startDate),
-              end: tzDateToUnix(details.endDate)
-            },
-            // TODO: properly handle timezone
-            timezone: { p: true, q: 1 },
-            location: details.location,
-            'venue-map': details.venueMap,
-            group: details.group,
-            kind: "%" + details.kind,
-            latch: "%" + details.latch,
-            sessions: details.sessions.map(session => {
-              return {
-                title: session.title,
-                panel: session.panel,
-                location: session.location,
-                about: session.about,
-                moment: {
-                  start: tzDateToUnix(session.startTime),
-                  end: tzDateToUnix(session.endTime)
+              title: details.title,
+              about: details.description,
+              moment: {
+                start: tzDateToUnix(details.startDate),
+                end: tzDateToUnix(details.endDate)
+              },
+              // TODO: properly handle timezone
+              timezone: { p: true, q: 1 },
+              location: details.location,
+              'venue-map': details.venueMap,
+              group: details.group,
+              kind: "%" + details.kind,
+              latch: "%" + details.latch,
+              sessions: details.sessions.map(session => {
+                return {
+                  title: session.title,
+                  panel: session.panel,
+                  location: session.location,
+                  about: session.about,
+                  moment: {
+                    start: tzDateToUnix(session.startTime),
+                    end: tzDateToUnix(session.endTime)
+                  }
                 }
-              }
-            })
-          }
+              })
+            }
           }
         }
       },
