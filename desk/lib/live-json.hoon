@@ -60,7 +60,7 @@
     :~  title+so
         about+de-unit-cord
         moment+de-moment-1
-        timezone+(ot ~[p+bo q+(se %ud)])
+        timezone+(ot ~[p+bo q+ni])
         location+de-unit-cord
         venue-map+de-unit-cord
         group+de-group
@@ -77,7 +77,7 @@
     :~  title+so
         about+de-unit-cord
         moment+de-moment-1
-        timezone+(ot ~[p+bo q+(se %ud)])
+        timezone+(ot ~[p+bo q+ni])
         location+de-unit-cord
         venue-map+de-unit-cord
         group+de-group
