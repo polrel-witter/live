@@ -1,8 +1,9 @@
 import Urbit from "@urbit/http-api";
+import { PatpWithoutSig } from "./backend";
 
 declare global {
   interface Window {
-    ship: string;
+    ship: PatpWithoutSig;
     urbit: Urbit;
     desk: string;
   }

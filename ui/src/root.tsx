@@ -1,5 +1,5 @@
 import { PropsWithChildren, useEffect, useState } from "react"
-import { Backend, eventIdsEqual, LiveUpdateEvent } from "@/backend";
+import { addSig, Backend, eventIdsEqual, LiveUpdateEvent } from "@/backend";
 import { Toaster } from "./components/ui/toaster";
 import { buildIndexCtx, ConnectionStatus, GlobalContext, newEmptyIndexCtx } from "./globalContext";
 
@@ -75,7 +75,7 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
     let liveSubId: number;
     let matcherSubId: number;
 
-    buildIndexCtx(backend, window.ship).then(setCtx)
+    buildIndexCtx(backend, addSig(window.ship)).then(setCtx)
 
 
     // subscribe to event to update state dynamically

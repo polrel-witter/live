@@ -1,4 +1,4 @@
-import { Backend, EventAsGuest, EventAsHost, eventIdsEqual, LiveUpdateEvent, Profile } from "@/backend";
+import { Backend, EventAsGuest, EventAsHost, eventIdsEqual, LiveUpdateEvent, Patp, Profile } from "@/backend";
 import { type } from "os";
 import { createContext } from "react";
 
@@ -18,7 +18,7 @@ function newEmptyIndexCtx(): GlobalCtx {
     connectionStatus: "connecting",
     fetched: false,
     profile: {
-      patp: "",
+      patp: "~",
       avatar: null,
       bio: null,
       nickname: null,
@@ -38,7 +38,7 @@ function newEmptyIndexCtx(): GlobalCtx {
 const GlobalContext = createContext<GlobalCtx | null>(null)
 
 
-async function buildIndexCtx(backend: Backend, patp: string): Promise<GlobalCtx> {
+async function buildIndexCtx(backend: Backend, patp: Patp): Promise<GlobalCtx> {
 
   const ctx = newEmptyIndexCtx()
 
