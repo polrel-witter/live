@@ -3,11 +3,8 @@ import Urbit from "@urbit/http-api";
 import { sub } from "date-fns";
 import { TZDate, tzOffset } from "@date-fns/tz";
 
-import { number, string, z, ZodError } from "zod" // this is an object validation library
-import { newEmptyCtx } from "./pages/event/context";
-import { title } from "process";
-import { PanelTop } from "lucide-react";
-import { se } from "date-fns/locale";
+import { z, ZodError } from "zod" // this is an object validation library
+import { PathParam } from "react-router-dom";
 
 interface EventId { ship: string, name: string };
 
@@ -54,7 +51,7 @@ interface Backend {
   // --- matcher agent --- //
 
   // matcher - scry %profile
-  getProfile(patp: string): Promise<Profile | null>
+  getProfile(patp: Patp): Promise<Profile | null>
 
   // matcher - scry %profiles
   getProfiles(id: EventId): Promise<Profile[]>
@@ -66,10 +63,10 @@ interface Backend {
   editProfileField(field: string, value: string | null): Promise<void>
 
   // matcher - poke %shake y
-  match(id: EventId, patp: string): Promise<void>;
+  match(id: EventId, patp: Patp): Promise<void>;
 
   // matcher - poke %shake n
-  unmatch(id: EventId, patp: string): Promise<void>;
+  unmatch(id: EventId, patp: Patp): Promise<void>;
 
   // matcher - TBD
   subscribeToMatcherEvents(handlers: {
@@ -83,15 +80,52 @@ interface Backend {
   unsubscribeFromEvent(id: number): Promise<void>
 }
 
+// Patp types and utilities
+
+type PatpWithoutSig = string
+type Patp = `~${PatpWithoutSig}`
+
+function isPatp(s: string): s is Patp {
+  return s.charAt(0) === '~' && s.length >= 4
+}
+
+function stripSig(patp: Patp): PatpWithoutSig {
+  return patp.slice(0, 1)
+}
+
+function addSig(patp: PatpWithoutSig): Patp {
+  return `~${patp}`
+}
+
+function isGalaxy(patp: Patp): boolean {
+  return patp.length === 4
+}
+
+function isStar(patp: Patp): boolean {
+  return patp.length === 7
+}
+
+function isPlanet(patp: Patp): boolean {
+  return patp.length === 14
+}
+
+function isMoon(patp: Patp): boolean {
+  return patp.length > 14 && patp.length < 29
+}
+
+function isComet(patp: Patp): boolean {
+  return patp.length > 29
+}
+
 type MatchStatus = "unmatched" | "sent-request" | "matched";
 
 type Attendee = {
-  patp: string,
+  patp: Patp,
   status: MatchStatus,
 }
 
 type Profile = {
-  patp: string;
+  patp: Patp;
   // these are always fetched from tlon
   avatar: string | null;
   bio: string | null;
@@ -124,7 +158,7 @@ function diffProfiles(oldProfile: Profile, newFields: Record<string, string>): [
 }
 
 const emptyProfile: Profile = {
-  patp: "",
+  patp: "~",
   // these are always fetched from tlon
   avatar: null,
   bio: null,
@@ -227,7 +261,7 @@ type MatcherProfileEvent = {
 
 
 type MatcherMatchEvent = {
-  ship: string,
+  ship: Patp,
   status: MatchStatus,
 }
 
@@ -583,32 +617,32 @@ function createEvent(_api: Urbit, ship: string): (newEvent: CreateEventParams) =
             secret: secret,
             limit: limit,
             info: {
-            title: details.title,
-            about: details.description,
-            moment: {
-              start: tzDateToUnix(details.startDate),
-              end: tzDateToUnix(details.endDate)
-            },
-            // TODO: properly handle timezone
-            timezone: { p: true, q: 1 },
-            location: details.location,
-            'venue-map': details.venueMap,
-            group: details.group,
-            kind: "%" + details.kind,
-            latch: "%" + details.latch,
-            sessions: details.sessions.map(session => {
-              return {
-                title: session.title,
-                panel: session.panel,
-                location: session.location,
-                about: session.about,
-                moment: {
-                  start: tzDateToUnix(session.startTime),
-                  end: tzDateToUnix(session.endTime)
+              title: details.title,
+              about: details.description,
+              moment: {
+                start: tzDateToUnix(details.startDate),
+                end: tzDateToUnix(details.endDate)
+              },
+              // TODO: properly handle timezone
+              timezone: { p: true, q: 1 },
+              location: details.location,
+              'venue-map': details.venueMap,
+              group: details.group,
+              kind: "%" + details.kind,
+              latch: "%" + details.latch,
+              sessions: details.sessions.map(session => {
+                return {
+                  title: session.title,
+                  panel: session.panel,
+                  location: session.location,
+                  about: session.about,
+                  moment: {
+                    start: tzDateToUnix(session.startTime),
+                    end: tzDateToUnix(session.endTime)
+                  }
                 }
-              }
-            })
-          }
+              })
+            }
           }
         }
       },
@@ -674,6 +708,13 @@ function subscribeToLiveEvents(_api: Urbit): (handlers: {
   }
 }
 
+const PatpSchema = z.custom<Patp>((val) => {
+  return isPatp(val)
+    // TODO: maybe add regex
+    ? true
+    : false;
+});
+
 
 const profileEntryObjSchema = z.object({
   term: z.string(),
@@ -681,11 +722,14 @@ const profileEntryObjSchema = z.object({
 })
 
 const getProfilesSchema = z.object({
-  allProfiles: z.record(z.array(profileEntryObjSchema))
+  allProfiles: z.record(
+    PatpSchema,
+    z.array(profileEntryObjSchema)
+  )
 })
   .transform(result => result.allProfiles)
 
-function entryArrayToProfile(patp: string, fields: z.infer<typeof profileEntryObjSchema>[]): Profile {
+function entryArrayToProfile(patp: Patp, fields: z.infer<typeof profileEntryObjSchema>[]): Profile {
   const p: Profile = {
     patp: patp,
     avatar: null,
@@ -756,8 +800,13 @@ function getProfiles(_api: Urbit): () => Promise<Profile[]> {
       return []
     }
 
-    const profiles = Object.entries(profileFields)
-      .map(([patp, arrs]) => entryArrayToProfile(patp, arrs))
+    let profiles = []
+    // WARN: patp : casting to Patp here because schema validates it above; it's fine
+    for (const [patp, arrs] of Object.entries(profileFields)) {
+      if (arrs) {
+        profiles.push(entryArrayToProfile(patp as Patp, arrs))
+      }
+    }
 
     return profiles
   }
@@ -777,13 +826,13 @@ const getProfileSchema = z
       .map(([_, obj]) => obj)
   })
 
-function getProfile(_api: Urbit): (patp: string) => Promise<Profile | null> {
-  return async (patp: string) => {
+function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
+  return async (patp: Patp) => {
     const profileFields = await _api.scry({
       app: "matcher",
       // in agent file it says host/name/ship ??
       // pass guest ship
-      path: `/profile/~${patp}`
+      path: `/profile/${patp}`
       // path: `/record/${id.ship}/${id.name}/~zod`
     })
       .then(getProfileSchema.parse)
@@ -802,7 +851,7 @@ const backendMatchStatusSchema = z.enum(["match", "reach"]).nullable()
 // !!! the peers object's keys are patps with ~
 const getAttendeesSchema = z.object({
   peers: z
-    .record(z.string().startsWith("~"), z
+    .record(PatpSchema, z
       .object({
         status: backendMatchStatusSchema
       }))
@@ -839,13 +888,18 @@ function getAttendees(_api: Urbit): (eventId: EventId) => Promise<Attendee[]> {
       return []
     }
 
-    const attendees: Attendee[] = Object.entries(profileFields.peers)
-      .map(([patp, status]) => {
-        return {
-          patp: patp.split("~")[1],
+    const attendees: Attendee[] = []
+
+    for (const [patp, status] of Object.entries(profileFields.peers)) {
+      if (status) {
+        attendees.push({
+          // WARN: patp : casting to Patp here because schema validates it above; it's fine
+          patp: patp as Patp,
           status: backendMatchStatusToMatchStatus(status.status)
-        }
-      })
+        })
+      }
+    }
+
 
     return attendees
   }
@@ -876,8 +930,8 @@ function editProfileField(_api: Urbit): (field: keyof Profile, value: string | n
   }
 }
 
-function match(_api: Urbit): (id: EventId, patp: string) => Promise<void> {
-  return async (id: EventId, _patp: string) => {
+function match(_api: Urbit): (id: EventId, patp: Patp) => Promise<void> {
+  return async (id: EventId, patp: Patp) => {
     _api.poke({
       app: "matcher",
       mark: "matcher-deed",
@@ -888,7 +942,7 @@ function match(_api: Urbit): (id: EventId, patp: string) => Promise<void> {
       json: {
         "shake": {
           "id": { "ship": id.ship, "name": id.name },
-          "ship": `~${_patp}`,
+          "ship": patp,
           "act": true
         }
       }
@@ -897,8 +951,8 @@ function match(_api: Urbit): (id: EventId, patp: string) => Promise<void> {
 }
 
 
-function unmatch(_api: Urbit): (id: EventId, patp: string) => Promise<void> {
-  return async (id: EventId, _patp: string) => {
+function unmatch(_api: Urbit): (id: EventId, patp: Patp) => Promise<void> {
+  return async (id: EventId, patp: Patp) => {
     _api.poke({
       app: "matcher",
       mark: "matcher-deed",
@@ -909,7 +963,7 @@ function unmatch(_api: Urbit): (id: EventId, patp: string) => Promise<void> {
       json: {
         "shake": {
           "id": { "ship": id.ship, "name": id.name },
-          "ship": `~${_patp}`,
+          "ship": patp,
           "act": false
         }
       }
@@ -918,12 +972,12 @@ function unmatch(_api: Urbit): (id: EventId, patp: string) => Promise<void> {
 }
 
 const matcherMatchEventSchema = z.object({
-  ship: z.string(),
+  ship: PatpSchema,
   match: z.enum(["match", "reach"]).nullable()
 })
 
 const matcherProfileUpdateEventSchema = z.object({
-  ship: z.string(),
+  ship: PatpSchema,
   fields: z.array(profileEntryObjSchema)
 })
 
@@ -990,4 +1044,6 @@ function newBackend(api: Urbit, ship: string): Backend {
 
 export { emptyEventAsGuest, emptyProfile, emptyEventAsHost, newBackend, eventIdsEqual, diffProfiles }
 
+export { stripSig, addSig }
+export type { Patp, PatpWithoutSig }
 export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, CreateEventParams, EventDetails, Session, Attendee, Profile, LiveUpdateEvent, Backend }
