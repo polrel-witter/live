@@ -137,9 +137,8 @@ const schemas = z.object({
   // use combobox for this
   // https://ui.shadcn.com/docs/components/combobox#form
   utcOffset: utcOffsetSchema,
-  limit: z.optional(z.number()
-    .gt(1, { message: "can't have an event with 0 or 1 attendees" }))
-  ,
+  limit: emptyStringSchema.or(z.number()
+    .gt(1, { message: "can't have an event with 0 or 1 attendees" })),
   // select for these two
   // https://ui.shadcn.com/docs/components/select#form
   // add FormDescription for these and possibly others as well
@@ -162,26 +161,14 @@ type Props = {
 const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
   const [spin, setSpin] = useState(false)
 
-  const [width, setWidth] = useState<number>(window.innerWidth);
-
-
-  const handleWindowSizeChange = () => { setWidth(window.innerWidth); }
-
-  useEffect(() => {
-    window.addEventListener('resize', handleWindowSizeChange);
-    return () => {
-      window.removeEventListener('resize', handleWindowSizeChange);
-    }
-  }, []);
-
-  const isMobile = width <= 768;
-
   const form = useForm<z.infer<typeof schemas>>({
     resolver: zodResolver(schemas),
     mode: "onChange",
     // this is needed to avoid the error about uncontrolled input
     defaultValues: {
-      title: undefined,
+      title: "",
+      location: "",
+      limit: "",
       // todo : , 
       // use this but replace date picker with daterange picker:
       // https://time.openstatus.dev/
@@ -190,7 +177,6 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
       // use combobox for this
       // https://ui.shadcn.com/docs/components/combobox#form
       utcOffset: undefined,
-      limit: undefined,
       // limit: undefined,
       // select for these two
       // https://ui.shadcn.com/docs/components/select#form
@@ -226,7 +212,7 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
     newEvent.details.timezone = values.utcOffset
     newEvent.details.kind = values.eventKind
     // TODO: fill this in
-    newEvent.details.group = { ship: 'sampel-palnet', name: "group" }
+    newEvent.details.group = { ship: '~sampel-palnet', name: "group" }
     newEvent.details.latch = values.eventLatch
     newEvent.details.venueMap = values.venueMap !== "" ? values.venueMap : ""
     newEvent.details.sessions = values.sessions.map(({ start, end, ...rest }) => {
@@ -275,10 +261,13 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
               <FormLabel className="text-left">limit</FormLabel>
               <FormControl>
                 <Input
-                  type="number"
                   placeholder="limit of attendees for this event (leave empty for no limit)"
                   {...field}
-                // onChange={(e) => { if (e) { console.log(e); field.onChange(e) } }}
+                  onChange={(e) =>
+                    isNaN(e.target.valueAsNumber)
+                      ? field.onChange("")
+                      : field.onChange(e.target.valueAsNumber)}
+
                 />
               </FormControl>
             </FormItem>

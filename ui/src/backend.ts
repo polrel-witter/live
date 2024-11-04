@@ -3,7 +3,7 @@ import Urbit from "@urbit/http-api";
 import { sub } from "date-fns";
 import { TZDate, tzOffset } from "@date-fns/tz";
 
-import { string, z, ZodError } from "zod" // this is an object validation library
+import { number, string, z, ZodError } from "zod" // this is an object validation library
 import { newEmptyCtx } from "./pages/event/context";
 import { title } from "process";
 import { PanelTop } from "lucide-react";
@@ -569,6 +569,7 @@ function createEvent(_api: Urbit, ship: string): (newEvent: CreateEventParams) =
   return async ({ secret, limit, details }: CreateEventParams) => {
     const id: EventId = { ship, name: details.title }
     let success = false;
+    const tzDateToUnix = (d: TZDate | null) => d ? d.valueOf() : 0
     const _poke = await _api.poke({
       app: "live",
       mark: "live-operation",
@@ -579,14 +580,17 @@ function createEvent(_api: Urbit, ship: string): (newEvent: CreateEventParams) =
         // guests from his events
         "action": {
           "create": {
+            secret: secret,
+            limit: limit,
+            info: {
             title: details.title,
             about: details.description,
             moment: {
-              start: details.startDate?.valueOf(),
-              end: details.endDate?.valueOf()
+              start: tzDateToUnix(details.startDate),
+              end: tzDateToUnix(details.endDate)
             },
             // TODO: properly handle timezone
-            timezone: { p: true, q: 0 },
+            timezone: { p: true, q: 1 },
             location: details.location,
             'venue-map': details.venueMap,
             group: details.group,
@@ -599,11 +603,12 @@ function createEvent(_api: Urbit, ship: string): (newEvent: CreateEventParams) =
                 location: session.location,
                 about: session.about,
                 moment: {
-                  start: session.startTime?.valueOf(),
-                  end: session.endTime?.valueOf()
+                  start: tzDateToUnix(session.startTime),
+                  end: tzDateToUnix(session.endTime)
                 }
               }
             })
+          }
           }
         }
       },

@@ -89,19 +89,6 @@ type Props = {
 // https://stackoverflow.com/questions/70939652/focus-on-next-input-with-react-form-hook
 const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
 
-  const [width, setWidth] = useState<number>(window.innerWidth);
-
-  const handleWindowSizeChange = () => { setWidth(window.innerWidth); }
-
-  useEffect(() => {
-    window.addEventListener('resize', handleWindowSizeChange);
-    return () => {
-      window.removeEventListener('resize', handleWindowSizeChange);
-    }
-  }, []);
-
-  const isMobile = width <= 768;
-
   const form = useForm<z.infer<typeof sessionSchema>>({
     resolver: zodResolver(sessionSchema),
     mode: "onChange",
