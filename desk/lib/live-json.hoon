@@ -46,9 +46,13 @@
   ::
   ++  de-punch
     %-  ot
-    :~  act+(su (perk ~[%verify %revoke]))
+    :~  act+(su (perk %verify %revoke ~))
         ship+(se %p)
     ==
+  ::
+  ++  de-kind  (su (perk %public %private %secret ~))
+  ::
+  ++  de-latch  (su (perk %open %closed %over ~))
   ::
   ++  de-sub-info-1
     ^-  $-(json sub-info-1)
@@ -60,8 +64,8 @@
         location+de-unit-cord
         venue-map+de-unit-cord
         group+de-group
-        kind+(se %tas)
-        latch+(se %tas)
+        kind+`kind`de-kind
+        latch+`latch`de-latch
         create-session+(ot dl-session)
         edit-session+(ot ~[p+(se %tas) q+(of dl-session)])
         delete-session+(se %tas)
@@ -77,8 +81,8 @@
         location+de-unit-cord
         venue-map+de-unit-cord
         group+de-group
-        kind+(se %tas)
-        latch+(se %tas)
+        kind+de-kind
+        latch+de-latch
         sessions+(op sym ^-($-(json session) (ot dl-session)))
     ==
   ::
