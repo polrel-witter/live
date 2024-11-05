@@ -628,8 +628,8 @@ function createEvent(_api: Urbit, ship: string): (newEvent: CreateEventParams) =
               location: details.location,
               'venue-map': details.venueMap,
               group: details.group,
-              kind: "%" + details.kind,
-              latch: "%" + details.latch,
+              kind: details.kind,
+              latch: details.latch,
               sessions: details.sessions.map(session => {
                 return {
                   title: session.title,
