@@ -7,6 +7,7 @@ import { ProfileDialog } from "@/components/profile-dialog";
 import { flipBoolean } from "@/lib/utils";
 import { GlobalContext } from "@/globalContext";
 import { Link, Outlet } from "react-router-dom";
+import { AppFrame, NavBar, Footer } from "@/components/frame";
 
 const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
   const globalContext = useContext(GlobalContext)
@@ -19,7 +20,10 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
   const [openProfile, setOpenProfile] = useState(false)
 
   return (
-    <div>
+    <AppFrame>
+      <NavBar>
+        <div> hello world from navbar!</div>
+      </NavBar>
       <NavigationMenu className="fixed border-b-2 w-full bg-white">
         <NavigationMenuList>
           <NavigationMenuItem className="fixed left-0">
@@ -55,7 +59,10 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
       <div className="pt-12">
         <Outlet />
       </div>
-    </div>
+      <Footer>
+        <div> hello world from footer!</div>
+      </Footer>
+    </AppFrame>
   )
 
 }
