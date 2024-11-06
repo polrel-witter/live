@@ -1,15 +1,21 @@
-import { ReactNode } from "react"
+import { ComponentPropsWithoutRef, HTMLProps, ReactNode } from "react"
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 type Props = {
   left: ReactNode
   right: ReactNode
-}
+} & ComponentPropsWithoutRef<typeof NavigationMenu>
 
-const IndexNavbar: React.FC<Props> = ({ left, right }) => {
+const NavbarWithSlots: React.FC<Props> = ({ left, right, className, ...props }) => {
   return (
-    <NavigationMenu className="fixed border-b-2 w-full bg-white">
+    <NavigationMenu
+      className={cn(
+        "fixed border-b-2 w-full bg-white",
+        className
+      )}
+      {...props}
+    >
       <NavigationMenuList>
         <NavigationMenuItem className="fixed left-0">
           {left}
@@ -23,4 +29,4 @@ const IndexNavbar: React.FC<Props> = ({ left, right }) => {
   )
 }
 
-export { IndexNavbar }
+export { NavbarWithSlots }

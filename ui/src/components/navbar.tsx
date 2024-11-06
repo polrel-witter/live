@@ -108,7 +108,6 @@ const NavBar: React.FC<Props> = (
           </Link>
         </NavigationMenuItem>
         <NavigationMenuItem>
-
           {
             isMobile
               ?
