@@ -50,9 +50,9 @@
         ship+(se %p)
     ==
   ::
-  ++  de-kind  (su (perk %public %private %secret ~))
+  ++  de-kind  (su (perk ~[%public %private %secret]))
   ::
-  ++  de-latch  (su (perk %open %closed %over ~))
+  ++  de-latch  (su (perk ~[%open %closed %over]))
   ::
   ++  de-sub-info-1
     ^-  $-(json sub-info-1)
@@ -64,8 +64,8 @@
         location+de-unit-cord
         venue-map+de-unit-cord
         group+de-group
-        kind+`kind`de-kind
-        latch+`latch`de-latch
+        kind+de-kind
+        latch+de-latch
         create-session+(ot dl-session)
         edit-session+(ot ~[p+(se %tas) q+(of dl-session)])
         delete-session+(se %tas)
@@ -83,7 +83,7 @@
         group+de-group
         kind+de-kind
         latch+de-latch
-        sessions+(op sym ^-($-(json session) (ot dl-session)))
+        sessions+de-sessions
     ==
   ::
   ++  de-unit-cord  so:dejs-soft:format
@@ -91,8 +91,8 @@
   ++  de-moment-1
     ^-  $-(json moment-1)
     %-  ot
-    :~  start+da:dejs-soft:format
-        end+da:dejs-soft:format
+    :~  start+di:dejs-soft:format
+        end+di:dejs-soft:format
     ==
   ::
   ++  de-group
@@ -105,11 +105,33 @@
   ::
   ++  dl-session
     :~  title+so
-        panel+de-unit-cord
+        panel+de-panel
         location+de-unit-cord
         about+de-unit-cord
         moment+de-moment-1
     ==
+  ::
+  ++  de-sessions
+    |=  jon=json
+    ^-  (map term session)
+    ?>  ?=([%a *] jon)
+    =/  a=(list session)
+      ((ar (ot dl-session)) jon)
+    =|  i=@ud
+    =|  b=(list [term session])
+    |-  ?~  a  (malt b)
+    $(b [[(slav %tas (crip "s{<i>}")) i.a] b], i +(i), a t.a)
+  ::
+  ++  de-panel
+    |=  jon=json
+    ^-  (unit cord)
+    ?>  ?=([%a *] jon)
+    =-  ?~(- ~ `(crip (join ', ' -)))
+    ^-  tape
+    %+  turn  p.jon
+    |=  j=json
+    ?>  ?=([%s *] j)
+    p.j
   ::
   ++  de-event-1
     ^-  $-(json event-1)

@@ -28,7 +28,33 @@ key:
   - Respect calm engine settings
     - frontend just needs to scry this out. either show/hide the avatar and/or the nickname
 
+## Refinements/bugs
+- create page
+    - on the event creation page, if about, location, venue map, or secret are empty they should be `null`. for both event and sessions. right now they're defaulting to empty strings.
+    - session times are off. the start time takes the same time as the end.
+    - clicking on create event opens the profile window.
+    - entering a limit highlights it red and makes it so we can't submit.
+    - there's a message that says the location field can't be empty, but it can
+    - some field titles have 'event' in front. can get rid of this.
+    - in the event date picker, if we select a date range and click out without clicking 'done' the dates appear to set, but the 'add session' button is greyed out.
+    - the secret text box should be paragraph form and allow downward expansion.
+    - i think there should be some intuitive examples in the group fields to coax correct syntax. for host: ~hoster-palnet; for group name: the-group-name
+    - next to the secret header, include in parenthesis: (only guests marked "registered" or "attended" receive this message)
+    - the session "about" section should reflect the event: "description"
+    - it's nice that the session date picker doesn't allow them to select anything outside the event range, but all times were greyed out on the start time until I changed the end time to PM. the same thing happened when selecting a date on the last day of the event, except I had to select AM.
+    - there should be a back button to return to the timeline
+    - lastly, a few slight changes to the latch and kind descriptions:
+        kind:
+        the privacy level, which affects the way guests can register.
+        public: discoverable and allow guests to register on their own.
+        private: discoverable, but guests must request to be registered and you need to approve them manually.
+        secret: not discoverable and invite-only. once guests receive your invite they can register.
 
+        latch:
+        the 'state' of the event.
+        open: actively accepting registrants.
+        closed: not accepting registrants; this gets triggered automatically when the event participant limit is met.
+        over: already took place; archived.
 
 
 # Backend

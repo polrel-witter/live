@@ -569,11 +569,15 @@
 ::  +append-entropy: add random characters to a name for uniqueness
 ::
 ++  append-entropy
-  |=  name=term
+  |=  [salt=@ud name=term]
   ^-  term
   %+  slav  %tas
   %-  crip
-  :(weld (scow %tas name) "-" (swag [6 4] (scow %uv eny.bowl)))
+  ;:  weld
+    (scow %tas name)
+    "-"
+    (swag [6 4] (scow %uv ?~(salt eny.bowl (mul eny.bowl salt))))
+  ==
 ::  +get-our-case: get a remote scry revision number for one of our
 ::  published paths
 ::
@@ -896,12 +900,14 @@
     ::
     ++  create
       |=  event=event-1
-      ^+  cor
+      |^  ^+  cor
       ?>  host-call
       =?  id  (~(has by events) id)
-        [ship.id (append-entropy name.id)]
+        [ship.id (append-entropy 0 name.id)]
       ?.  (are-dates-bound moment.info.event sessions.info.event)
         noop
+      =.  sessions.info.event
+        (malt (replace-ids ~(tap by sessions.info.event)))
       =.  events  (~(put by events) id event)
       =.  cor
         %+  poke-matcher
@@ -909,6 +915,20 @@
         [id [%add-peer our.bowl]]
       =.  cor  (update-remote-event event)
       update-all-remote-events
+      ::  +replace-ids: session ids inheret name.id and some entropy
+      ::
+      ++  replace-ids
+        |=  in=(list [term =session])
+        ^+  in
+        =+  salt=1
+        =|  out=(list [term session])
+        |-  ?~  in  out
+        =;  sid=term
+          $(out [[sid session.i.in] out], salt +(salt), in t.in)
+        %+  slav  %tas
+        %-  crip
+        (weld (scow %tas (append-entropy salt name.id)) "-s")
+      --
     ::  +delete: as host, permanently delete an event; as a guest,
     ::  delete a record and unsubscribe from its updates
     ::
@@ -1034,7 +1054,7 @@
             ::
             %+  slav  %tas
             %-  crip
-            (weld (scow %tas (append-entropy name.id)) "-s")
+            (weld (scow %tas (append-entropy 0 name.id)) "-s")
           =/  =session  p.sub-info
           ?.  (session-moment-nests moment.session)  ~
           %-  some
