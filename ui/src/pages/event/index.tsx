@@ -1,12 +1,10 @@
-import { ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Link, Location, Outlet, useLoaderData, useLocation } from 'react-router-dom';
 import { LoaderFunctionArgs, Params } from "react-router-dom";
 
-import NavBar from "@/components/navbar"
-
 import { Attendee, Backend, emptyEventAsGuest, EventId, eventIdsEqual, Profile } from '@/backend'
 
-import { ConnectionStatus, GlobalContext, GlobalCtx } from '@/globalContext';
+import { GlobalContext, GlobalCtx } from '@/globalContext';
 import { EventContext, EventCtx, newEmptyCtx } from './context';
 import { cn, flipBoolean, stripPatpSig } from '@/lib/utils';
 import { AppFrame } from '@/components/frame';
@@ -18,7 +16,6 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { useOnMobile } from '@/hooks/use-mobile';
 import { EventStatusButtons } from '@/components/event-status-buttons';
 import { SlideDownAndReveal } from '@/components/sliders';
-import { NavigationMenuContent, NavigationMenuItem, NavigationMenuTrigger } from '@/components/ui/navigation-menu';
 import { ProfileDialog } from '@/components/profile-dialog';
 
 interface EventParams {
@@ -238,9 +235,7 @@ function makeNavbarAndFooter(
         </div>
       }
     >
-      <NavigationMenuItem className="grow text-center">
-        {eventContext.event.details.title}
-      </NavigationMenuItem>
+      {eventContext.event.details.title}
     </NavbarWithSlots>
 
   const footer = <FooterWithSlots
