@@ -10,6 +10,7 @@ import { AppFrame } from "@/components/frame";
 import { NavbarWithSlots } from "@/components/frame/navbar";
 import { FooterWithSlots } from "@/components/frame/footer";
 import { ConnectionStatusBar } from "@/components/connection-status";
+import { useOnMobile } from "@/hooks/use-mobile";
 
 const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
   const globalContext = useContext(GlobalContext)
@@ -20,6 +21,7 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
   }
 
   const [openProfile, setOpenProfile] = useState(false)
+  const onMobile = useOnMobile()
 
   const navBar =
     <NavbarWithSlots
@@ -46,12 +48,14 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
               className="p-3 m-1 rounded-3xl shadow-sm border bg-white hover:bg-primary/20"
             >
               <Plus className="w-4 h-4 mr-1 text-primary" />
-              <p className="text-primary"> create event </p>
+              <p className="text-primary">{onMobile ? "create" : "create event"} </p>
             </Button>
           </Link>
         </div>
       }
-    />
+    >
+      <div className="font-medium text-xl"> %live </div>
+    </NavbarWithSlots>
 
   const footer = <FooterWithSlots
     left={<div> </div>}

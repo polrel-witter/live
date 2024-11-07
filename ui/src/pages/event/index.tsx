@@ -1,5 +1,5 @@
 import { ReactNode, useContext, useEffect, useMemo, useState } from 'react';
-import { Link, Outlet, useLoaderData, useLocation } from 'react-router-dom';
+import { Link, Location, Outlet, useLoaderData, useLocation } from 'react-router-dom';
 import { LoaderFunctionArgs, Params } from "react-router-dom";
 
 import NavBar from "@/components/navbar"
@@ -8,17 +8,18 @@ import { Attendee, Backend, emptyEventAsGuest, EventId, eventIdsEqual, Profile }
 
 import { ConnectionStatus, GlobalContext, GlobalCtx } from '@/globalContext';
 import { EventContext, EventCtx, newEmptyCtx } from './context';
-import { stripPatpSig } from '@/lib/utils';
+import { cn, flipBoolean, stripPatpSig } from '@/lib/utils';
 import { AppFrame } from '@/components/frame';
 import { FooterWithSlots } from '@/components/frame/footer';
 import { ConnectionStatusBar } from '@/components/connection-status';
-import { NavbarWithSlots } from '@/components/frame/navbar'
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { hostname } from 'os';
+import { MenuItemWithLinks, NavbarWithSlots } from '@/components/frame/navbar'
+import { ArrowLeft, ChevronUp, User } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { useOnMobile } from '@/hooks/use-mobile';
-import { Footer } from 'react-day-picker';
 import { EventStatusButtons } from '@/components/event-status-buttons';
+import { SlideDownAndReveal } from '@/components/sliders';
+import { NavigationMenuContent, NavigationMenuItem, NavigationMenuTrigger } from '@/components/ui/navigation-menu';
+import { ProfileDialog } from '@/components/profile-dialog';
 
 interface EventParams {
   hostShip: string,
@@ -76,12 +77,32 @@ async function buildContextData(
   }
 }
 
+// TODO: DX: further extract singular components; it's ok as is tho
 function makeNavbarAndFooter(
+  // hooks
   onMobile: boolean,
-  connectionStatus: ConnectionStatus,
-  getPathForBackButton: () => string,
-  eventStatusButtons: ReactNode
+  location: Location,
+  // contexts
+  globalContext: GlobalCtx,
+  eventContext: EventCtx,
+  // api
+  backend: Backend,
 ) {
+  // variables
+  const basePath = import.meta.env.BASE_URL
+  const { ship: eventHost, name: eventName } = eventContext.event.details.id
+  const eventIndex = basePath + `event/${eventHost}/${eventName}`
+
+  const connectionStatus = globalContext.connectionStatus
+  const online = connectionStatus === "online"
+  const eventStatus = eventContext.event.status
+  const hostProfile = globalContext.profile
+
+  // helpers
+  const getPathForBackButton = (): string => {
+    if (location.pathname === eventIndex) { return basePath }
+    return eventIndex
+  }
 
   const backButton =
     <Link to={getPathForBackButton()}>
@@ -90,30 +111,117 @@ function makeNavbarAndFooter(
       </Button>
     </Link>
 
-  // const statusButton = {
-  //         isMobile
-  //           ?
-  //           <div className="fixed left-16 bottom-5" >
-  //             <EventStatusButtons
-  //               fetchedContext={fetchedContext}
-  //               id={{ ship: eventHost, name: eventName }}
-  //               status={eventStatus}
-  //               register={fns.register}
-  //               unregister={fns.unregister}
-  //             />
-  //           </div>
-  //           : <div className="fixed left-12 top-2">
-  //             <EventStatusButtons
-  //               fetchedContext={fetchedContext}
-  //               id={{ ship: eventHost, name: eventName }}
-  //               status={eventStatus}
-  //               register={fns.register}
-  //               unregister={fns.unregister}
-  //             />
-  //           </div>
 
-  //       }
+  const eventStatusButtons =
+    <EventStatusButtons
+      fetchedContext={eventContext.fetched}
+      id={{ ship: eventHost, name: eventName }}
+      status={eventContext.event.status}
+      register={backend.register}
+      unregister={backend.unregister}
+    />
 
+
+
+  const eventRoutingLinks = [
+    {
+      to: eventIndex,
+      text: "event home"
+    },
+    {
+      to: "schedule",
+      text: "schedule"
+    },
+    {
+      to: "map",
+      text: "map"
+    },
+    {
+      to: "connections",
+      text: "connections",
+      disabled: !online
+    },
+  ]
+
+  const showGuestList = eventStatus === "registered"
+    || eventStatus === "attended"
+    || eventHost === hostProfile.patp
+
+  if (showGuestList) {
+    eventRoutingLinks.push({
+      to: "attendees",
+      text: "guest list"
+    })
+  }
+
+  const MobileMenu: React.FC = () => {
+    const [openMenu, setOpenMenu] = useState(false)
+    return (
+      <div className="fixed bottom-28 right-2">
+        <SlideDownAndReveal
+          show={openMenu}
+          maxHeight="max-h-[1000px]"
+          duration="duration-1000"
+        >
+          <ul className="grid gap-3 m-6">
+            {eventRoutingLinks.map(({ to, text, disabled }) =>
+              <li key={to}>
+                {(disabled
+                  ? <Button disabled > {text} </Button>
+                  : <Link
+                    to={to}
+                    onClick={function() { setOpenMenu(false) }}
+                    className={cn([buttonVariants({ variant: "default" }), "w-full", "bg-gray-600"])}>
+                    {text}
+                  </Link>
+                )}
+              </li>
+            )}
+          </ul>
+        </SlideDownAndReveal>
+        <Button
+          className="p-2 w-10 h-10 m-6 rounded-full fixed right-0 bottom-12 hover:bg-gray-600"
+          onClick={() => { setOpenMenu(flipBoolean) }}
+        >
+          <ChevronUp className={
+            cn([
+              "w-5 h-5 text-accent transition duration-700",
+              { "-rotate-180": openMenu },
+            ])
+
+          } />
+        </Button>
+      </div>
+    )
+  }
+
+  const DesktopMenu: React.FC = () => {
+    return (
+      <MenuItemWithLinks linkItems={eventRoutingLinks} />
+    )
+  }
+
+  const Profile: React.FC = () => {
+    const [openProfile, setOpenProfile] = useState(false)
+
+    return (
+      <div>
+        <Button
+          onClick={() => { setOpenProfile(flipBoolean) }}
+          className="p-3 m-1 rounded-3xl">
+          <User
+            className="w-4 h-4 text-white"
+          />
+        </Button>
+        <ProfileDialog
+          onOpenChange={setOpenProfile}
+          open={openProfile}
+          profile={hostProfile}
+          editProfileField={backend.editProfileField}
+        />
+      </div>
+    )
+  }
 
   const navbar =
     <NavbarWithSlots
@@ -125,16 +233,26 @@ function makeNavbarAndFooter(
       }
       right={
         <div>
+          <Profile />
+          {!onMobile && <DesktopMenu />}
         </div>
       }
-
-    />
+    >
+      <NavigationMenuItem className="grow text-center">
+        {eventContext.event.details.title}
+      </NavigationMenuItem>
+    </NavbarWithSlots>
 
   const footer = <FooterWithSlots
-    left={<div>
+    left={<div className="h-full mt-3 ml-16 flex justify-center">
       {onMobile && eventStatusButtons}
     </div>}
-    right={<ConnectionStatusBar status={connectionStatus} />}
+    right={
+      <div>
+        {onMobile && <MobileMenu />}
+        <ConnectionStatusBar status={connectionStatus} />
+      </div>
+    }
   />
 
   return [navbar, footer]
@@ -156,12 +274,6 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
   useEffect(() => {
     // TODO: add skeleton component
     if (globalContext.fetched) {
-      // const interval = setInterval(async () => {
-      //   console.log("loop")
-      //   const ctxData = await buildContextData(eventParams, backend)
-      //   setEventCtx(ctxData)
-      // }, 1000);
-
       buildContextData(eventParams, globalContext, backend)
         .then(setEventCtx)
     }
@@ -196,45 +308,14 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
   }, [globalContext])
 
 
-  const basePath = import.meta.env.BASE_URL
-  const { ship: eventHost, name: eventName } = eventContext.event.details.id
-  const eventIndex = basePath + `event/${eventHost}/${eventName}`
+  const [navbar, footer] = makeNavbarAndFooter(
+    useOnMobile(),
+    useLocation(),
+    globalContext,
+    eventContext,
+    backend,
+  )
 
-
-  const navbarold =
-    <NavBar
-      fetchedContext={globalContext.fetched}
-      online={globalContext.connectionStatus === "online"}
-      event={eventContext.event}
-      profile={globalContext.profile}
-      editProfileField={backend.editProfileField}
-      register={backend.register}
-      unregister={backend.unregister}
-    />
-
-  const onMobile = useOnMobile()
-
-  const eventStatusButtons =
-    <EventStatusButtons
-      fetchedContext={eventContext.fetched}
-      id={{ ship: eventHost, name: eventName }}
-      status={eventContext.event.status}
-      register={backend.register}
-      unregister={backend.unregister}
-    />
-
-  const [navbar, footer] = useMemo(
-    () => {
-      return makeNavbarAndFooter(
-        false,
-        globalContext.connectionStatus,
-        (): string => {
-          if (useLocation().pathname === eventIndex) { return basePath }
-          return eventIndex
-        },
-        eventStatusButtons
-      )
-    }, [onMobile])
 
   // add skeleton component while this loads
   return (
@@ -248,8 +329,6 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
             <Outlet />
           </div>
         </div>
-        :
-        ''
       </AppFrame>
     </EventContext.Provider>
   );
