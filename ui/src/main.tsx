@@ -14,7 +14,6 @@ import { newBackend } from '@/backend'
 import RootComponent from './root';
 // this component returns the router
 import AppRouter from './router';
-import { ConnectionStatusBar } from './components/connection-status';
 import { GlobalContext } from './globalContext';
 
 window.urbit = new Urbit('');
@@ -37,9 +36,6 @@ if (container) {
               return (
                 <div className="phantom">
                   <AppRouter backend={backend} />
-                  <div className='fixed bottom-0 w-full h-16 md:h-6 bg-accent'>
-                    <ConnectionStatusBar status={ctx?.connectionStatus} />
-                  </div>
                 </div>
               )
             }}
