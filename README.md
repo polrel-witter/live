@@ -1,8 +1,5 @@
 # Overview
-%live is a tool to organize and run an event (parties, meetings, weddings,
-meetups, etc.). It's best approached from two perspectives:
-
-For feedback and support, either join [~mocbel/software](https://tlon.network/lure/0v1.tipkt.egdok.cs1ck.q1u50.vh304) on Urbit or dm [@polrel_wittter](https://x.com/polrel_witter) on X.
+%live is a tool to organize and run social events. It's best approached from two perspectives:
 
 ### As a host
 *the frontend host dashboard is currently under development; for now all
@@ -147,3 +144,7 @@ each agent, on the `/updates` path respectively.
 3. sync this repo with mounted desk: `rsync -avL <this repo> <mounted desk in pier>`
 4. `|commit %live`
 5. `|install our %live`
+
+# Feedback and support
+For feedback or support, either join [~mocbel/software](https://tlon.network/lure/0v1.tipkt.egdok.cs1ck.q1u50.vh304) on Urbit or dm [@polrel_wittter](https://x.com/polrel_witter) on X.
+
