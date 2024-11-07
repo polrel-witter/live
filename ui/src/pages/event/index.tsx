@@ -229,7 +229,7 @@ function makeNavbarAndFooter(
         </div>
       }
       right={
-        <div>
+        <div className="flex">
           <Profile />
           {!onMobile && <DesktopMenu />}
         </div>
