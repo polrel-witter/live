@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import {  Location, Outlet, useLoaderData, useLocation } from 'react-router-dom';
+import { Location, Outlet, useLoaderData, useLocation } from 'react-router-dom';
 import { LoaderFunctionArgs, Params } from "react-router-dom";
 
 import { Attendee, Backend, emptyEventAsGuest, EventId, eventIdsEqual, Patp, Profile } from '@/backend'
@@ -74,7 +74,6 @@ function makeEventRoutingLinks(indexPath: string, online: boolean, showGuestList
       disabled: !online
     },
   ]
-
 
   if (showGuestList) {
     eventRoutingLinks.push({

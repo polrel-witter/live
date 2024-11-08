@@ -1,8 +1,8 @@
-import { Profile, } from '@/backend'
-import { Card, CardContent, CardHeader, } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
 import React from 'react'
 
+import { Profile } from '@/backend'
+import { Card } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 
 export interface ProfileCardProps
   extends React.ComponentPropsWithoutRef<typeof Card> {
@@ -10,13 +10,11 @@ export interface ProfileCardProps
   showHeader: boolean,
 }
 
-
 const ProfileCard = React.forwardRef<React.ElementRef<typeof Card>, ProfileCardProps>(
   ({ profile, showHeader, className, ...rest }, ref) => {
-
     const excludedFields = ["avatar", "patp", "nickname"]
     const fieldsToRender = Object.entries(profile)
-      .filter((tuple): tuple is [string, string] => tuple[1] !== null)
+      .filter((array): array is [string, string] => array[1] !== null)
       .filter(([field, _]) => !excludedFields.includes(field))
       .filter(([, val]) => val != "")
 
@@ -56,4 +54,4 @@ const ProfileCard = React.forwardRef<React.ElementRef<typeof Card>, ProfileCardP
     )
   })
 
-export default ProfileCard;
+export { ProfileCard };

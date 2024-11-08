@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { cn, formatEventDate } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { Button, buttonVariants } from "./ui/button";
-import ProfilePicture from "./profile-picture";
+import { ProfilePicture } from "./profile-picture";
 import { MessagesSquare } from "lucide-react";
 
 

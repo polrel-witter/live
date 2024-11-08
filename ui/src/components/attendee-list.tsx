@@ -1,10 +1,10 @@
 import { Card, CardContent, } from "@/components/ui/card"
 import { Profile, Attendee, Patp } from "@/backend"
 import { useState } from "react"
-import { cn, flipBoolean } from "@/lib/utils"
-import { SlideDownAndReveal, SlideRightAndReveal } from "./sliders"
-import ProfileCard from "./profile-card"
-import ProfilePicture from "./profile-picture"
+import { flipBoolean } from "@/lib/utils"
+import { SlideDownAndReveal } from "./sliders"
+import { ProfileCard } from "./profile-card"
+import { ProfilePicture } from "./profile-picture"
 import { ProfileActionsMenu } from "./profile-actions-menu"
 import { nickNameOrPatp } from "./util"
 
@@ -27,7 +27,6 @@ const ProfileIfExist: React.FC<{ profile: Profile | undefined }> = ({ profile })
 const ListItem: React.FC<{
   attendee: Attendee
   profile?: Profile,
-  // match(patp: string): void;
   unmatch(patp: string): void;
 }> = ({ attendee, profile, ...fns }) => {
   const [showProfile, setShowProfile] = useState(false)
@@ -80,16 +79,12 @@ const AttendeeList: React.FC<{
         attendees.map((attendee) => <ListItem
           key={attendee.patp}
           attendee={attendee}
-          profile={
-            profiles.find((profile) => profile.patp === attendee.patp)
-          }
+          profile={profiles.find((profile) => profile.patp === attendee.patp)}
           unmatch={rest.unmatch}
-        // match={rest.match}
         />)
       }
     </ul>
   )
 }
 
-export default
-  AttendeeList;
+export { AttendeeList };
