@@ -1,9 +1,9 @@
-import { Backend, EventId, EventStatus } from "@/backend"
+import { Backend, EventAsGuest, EventId, EventStatus } from "@/backend"
+import { SpinningButton } from "@/components/spinning-button"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
-import { SpinningButton } from "./spinning-button"
 
 const ButtonSwitch: React.FC<
   {
@@ -100,30 +100,28 @@ function makeToastMessage(status: EventStatus): string {
   }
 }
 
-const EventStatusButtons: React.FC<
-  {
-    fetchedContext: boolean,
-    id: EventId,
-    status: EventStatus
-    register: Backend["register"]
-    unregister: Backend["unregister"]
-  }
-> = ({ id, status, fetchedContext, ...fns }) => {
+type EventStatusButtonProps = {
+  fetched: boolean,
+  event: EventAsGuest
+  backend: Backend
+}
+
+const EventStatusButton = ({ event, fetched, backend }: EventStatusButtonProps) => {
+  const { details: { id }, status } = event
   const { toast } = useToast()
   const [sentPoke, setSentPoke] = useState(false)
 
   const registerHandler = (eventId: EventId) => {
-    fns.register(eventId).then(setSentPoke)
+    backend.register(eventId).then(setSentPoke)
   }
 
-
   const unregisterHandler = (eventId: EventId) => {
-    fns.unregister(eventId).then(setSentPoke)
+    backend.unregister(eventId).then(setSentPoke)
   }
 
   useEffect(() => {
 
-    if (!fetchedContext) {
+    if (!fetched) {
       return
     }
 
@@ -151,4 +149,4 @@ const EventStatusButtons: React.FC<
   )
 }
 
-export { EventStatusButtons };
+export { EventStatusButton };

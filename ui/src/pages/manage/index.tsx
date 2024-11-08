@@ -5,7 +5,6 @@ import { useContext, useEffect, useState } from "react"
 import { EventDetailsCard } from "@/components/event-details-card"
 import { NavbarWithSlots } from "@/components/frame/navbar"
 import { FooterWithSlots } from "@/components/frame/footer"
-import { EventStatusButtons } from "@/components/event-status-buttons"
 import { ConnectionStatusBar } from "@/components/connection-status"
 import { AppFrame } from "@/components/frame"
 

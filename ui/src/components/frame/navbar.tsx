@@ -74,4 +74,6 @@ const NavbarWithSlots: React.FC<Props> = ({ left, right, className, ...props }) 
   )
 }
 
+export type { LinkItem }
+
 export { NavbarWithSlots, MenuItemWithLinks }
