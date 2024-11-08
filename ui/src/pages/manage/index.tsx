@@ -2,7 +2,7 @@ import { Attendee, Backend, emptyEventAsHost, EventAsHost, EventId, eventIdsEqua
 import { GlobalContext, GlobalCtx } from "@/globalContext"
 import { LoaderFunctionArgs, Params, useLoaderData } from "react-router-dom"
 import { useContext, useEffect, useState } from "react"
-import { EventDetailsCard } from "@/components/event-details-card"
+import { EventDetailsCard } from "@/components/cards/event-details"
 import { NavbarWithSlots } from "@/components/frame/navbar"
 import { FooterWithSlots } from "@/components/frame/footer"
 import { ConnectionStatusBar } from "@/components/connection-status"

@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { EventContext } from "./context";
-import { EventDetailsCard } from "@/components/event-details-card";
+import { EventDetailsCard } from "@/components/cards/event-details";
 import { GlobalContext } from "@/globalContext";
 
 const EventDetails: React.FC = () => {

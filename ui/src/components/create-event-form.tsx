@@ -25,7 +25,7 @@ import { Button } from "./ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
 import { CreateSessionForm } from "./create-session-form"
 import { convertDateToTZDate, flipBoolean } from "@/lib/utils"
-import { SessionCard } from "./session-card"
+import { SessionCard } from "./cards/session"
 import { SlideDownAndReveal } from "./sliders"
 import { ChevronUp, X } from "lucide-react"
 
