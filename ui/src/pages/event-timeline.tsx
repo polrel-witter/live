@@ -1,5 +1,5 @@
 
-import EventList from "@/components/event-list";
+import { EventList } from "@/components/event-list";
 import { useContext, useState } from "react";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { GlobalContext } from "@/globalContext";
@@ -23,11 +23,13 @@ const EventTimelinePage: React.FC = () => {
         <TabsContent value="eventsAsHost">
           <EventList
             details={globalContext.eventsAsHost.map((evt) => evt.details)}
+            linkTo={(id) => `manage/${id.ship}/${id.name}`}
           />
         </TabsContent>
         <TabsContent value="eventsAsGuest">
           <EventList
             details={globalContext.eventsAsGuest.map((evt) => evt.details)}
+            linkTo={(id) => `event/${id.ship}/${id.name}`}
           />
         </TabsContent>
       </Tabs>

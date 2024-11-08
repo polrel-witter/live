@@ -3,10 +3,46 @@ import Urbit from "@urbit/http-api";
 import { sub } from "date-fns";
 import { TZDate, tzOffset } from "@date-fns/tz";
 
-import { z, ZodError } from "zod" // this is an object validation library
-import { PathParam } from "react-router-dom";
+import { record, z, ZodError } from "zod" // this is an object validation library
 
-interface EventId { ship: string, name: string };
+// Patp types and utilities
+
+type PatpWithoutSig = string
+type Patp = `~${PatpWithoutSig}`
+
+function isPatp(s: string): s is Patp {
+  return s.charAt(0) === '~' && s.length >= 4
+}
+
+function stripSig(patp: Patp): PatpWithoutSig {
+  return patp.slice(0, 1)
+}
+
+function addSig(patp: PatpWithoutSig): Patp {
+  return `~${patp}`
+}
+
+function isGalaxy(patp: Patp): boolean {
+  return patp.length === 4
+}
+
+function isStar(patp: Patp): boolean {
+  return patp.length === 7
+}
+
+function isPlanet(patp: Patp): boolean {
+  return patp.length === 14
+}
+
+function isMoon(patp: Patp): boolean {
+  return patp.length > 14 && patp.length < 29
+}
+
+function isComet(patp: Patp): boolean {
+  return patp.length > 29
+}
+
+interface EventId { ship: Patp, name: string };
 
 function eventIdsEqual(id1: EventId, id2: EventId): boolean {
   return id1.ship === id2.ship && id1.name === id2.name
@@ -78,43 +114,6 @@ interface Backend {
 
   // unsubscribe
   unsubscribeFromEvent(id: number): Promise<void>
-}
-
-// Patp types and utilities
-
-type PatpWithoutSig = string
-type Patp = `~${PatpWithoutSig}`
-
-function isPatp(s: string): s is Patp {
-  return s.charAt(0) === '~' && s.length >= 4
-}
-
-function stripSig(patp: Patp): PatpWithoutSig {
-  return patp.slice(0, 1)
-}
-
-function addSig(patp: PatpWithoutSig): Patp {
-  return `~${patp}`
-}
-
-function isGalaxy(patp: Patp): boolean {
-  return patp.length === 4
-}
-
-function isStar(patp: Patp): boolean {
-  return patp.length === 7
-}
-
-function isPlanet(patp: Patp): boolean {
-  return patp.length === 14
-}
-
-function isMoon(patp: Patp): boolean {
-  return patp.length > 14 && patp.length < 29
-}
-
-function isComet(patp: Patp): boolean {
-  return patp.length > 29
 }
 
 type MatchStatus = "unmatched" | "sent-request" | "matched";
@@ -214,7 +213,7 @@ type EventAsGuest = {
 
 const emptyEventDetails: EventDetails = {
   id: {
-    ship: "",
+    ship: "~",
     name: "",
   },
   title: "",
@@ -322,6 +321,20 @@ const backendInfo1Schema = z.object({
   ["venue-map"]: z.string().nullable(),
 })
 
+// const PatpSchema = z.custom<Patp>((val) => {
+//   return isPatp(val)
+//     // TODO: maybe add regex
+//     ? true
+//     : false;
+// });
+
+
+const PatpSchema = z
+  .string()
+  .startsWith("~")
+  .refine((s: string): s is Patp => isPatp(s), {
+    message: "string is not patp"
+  });
 
 function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof backendInfo1Schema>): EventDetails {
   const {
@@ -422,14 +435,17 @@ function backendRecordToEventAsGuest(eventId: EventId, record: z.infer<typeof ba
 
 const allRecordsSchema = z.object({
   allRecords: z.record(
-    z.string(), // this is going to be `${hostShip}/${eventName}`
+    PatpSchema, // this is going to be `${hostShip}/${eventName}`
     z.record(
       z.string(), // this is `${guestShip}`
       z.object({ record: backendRecordSchema })
     ))
 }).transform((response) => response.allRecords)
 
-function getRecords(api: Urbit, ship: string): () => Promise<EventAsGuest[]> {
+// ship here was needed to verify that there was a record for our ship
+// but i removed that validation
+// we're trusting the backend for now
+function getRecords(api: Urbit, ship: Patp): () => Promise<EventAsGuest[]> {
   return async () => {
     const allRecords = await api.scry({
       app: "live",
@@ -442,38 +458,42 @@ function getRecords(api: Urbit, ship: string): () => Promise<EventAsGuest[]> {
       return Promise.resolve([])
     }
 
-    // console.log("parsed records: ", allRecords)
 
-    const allRecordsToEvents = (records: z.infer<typeof allRecordsSchema>): EventAsGuest[] => {
+    let records: EventAsGuest[] = []
 
-      const allRecords = Object.
-        entries(records).
-        filter(([idString,]) => {
-          const [hostShip,] = idString.split("/")
-          return hostShip !== "~" + ship
-        }).
-        map(([idString, records]): EventAsGuest => {
-          const [hostShip, eventName] = idString.split("/")
-          const eventId = { ship: hostShip, name: eventName }
+    const entries = Object
+      .entries(allRecords)
+    // .filter(([,records]) => {
+    //   if (records) {
 
-          if (Object.keys(records).length < 1) {
-            console.error("records has less than one key: ", records)
-            return emptyEventAsGuest
-          }
+    //   }
+    //   const [hostShip,] = idString.split("/")
+    //   return hostShip !== "~" + ship
+    // })
 
-          if (Object.keys(records).length > 1) {
-            console.error("records has more than one key: ", records)
-            return emptyEventAsGuest
-          }
+    // WARN: patp : casting to Patp here because schema validates it above; it's fine
+    for (const [idString, recordObj] of entries) {
+      if (recordObj) {
+        const [hostShip, eventName] = idString.split("/")
+        const eventId = { ship: hostShip as Patp, name: eventName }
 
-          return backendRecordToEventAsGuest(eventId, Object.values(records)[0].record)
-        })
-      // console.log(allRecords)
-      return allRecords
+        if (Object.keys(recordObj).length < 1) {
+          console.error("records has less than one key: ", records)
+          records.push(emptyEventAsGuest)
+          break
+        }
+
+        if (Object.keys(recordObj).length > 1) {
+          console.error("records has more than one key: ", records)
+          records.push(emptyEventAsGuest)
+          break
+        }
+
+        records.push(backendRecordToEventAsGuest(eventId, Object.values(recordObj)[0].record))
+      }
     }
 
-
-    return allRecordsToEvents(allRecords)
+    return records
   }
 }
 
@@ -518,7 +538,7 @@ function backendEventToEventAsHost(eventId: EventId, event: z.infer<typeof backe
 
 const allEventsSchema = z.object({
   allEvents: z.record(
-    z.string(), // this is going to be `${hostShip}/${eventName}`
+    PatpSchema, // this is going to be `${hostShip}/${eventName}`
     z.object({ event: backendEventSchema }))
 }).transform(({ allEvents }) => allEvents)
 
@@ -536,27 +556,20 @@ function getEvents(api: Urbit): () => Promise<EventAsHost[]> {
       return Promise.resolve([])
     }
 
-    const allBackendEventsToEvents = (events: z.infer<typeof allEventsSchema>): EventAsHost[] => {
 
-      const allRecords = Object.
-        entries(events).
-        // filter(([idString,]) => {
-        //   console.log(idString, ship)
-        //   const [hostShip,] = idString.split("/")
-        //   return hostShip !== "~" + ship
-        // }).
-        map(([idString, { event }]): EventAsHost => {
-          const [hostShip, eventName] = idString.split("/")
-          const eventId = { ship: hostShip, name: eventName }
+    let events: EventAsHost[] = []
 
-          return backendEventToEventAsHost(eventId, event)
-        })
-      // console.log(allRecords)
-      return allRecords
+    // WARN: patp : casting to Patp here because schema validates it above; it's fine
+    for (const [idString, evtObj] of Object.entries(allEvents)) {
+      if (evtObj) {
+        const [hostShip, eventName] = idString.split("/")
+        const eventId = { ship: hostShip as Patp, name: eventName }
+
+        events.push(backendEventToEventAsHost(eventId, evtObj.event))
+      }
     }
 
-
-    return allBackendEventsToEvents(allEvents)
+    return events
   }
 }
 
@@ -599,7 +612,7 @@ function register(_api: Urbit): (id: EventId) => Promise<boolean> {
   }
 }
 
-function createEvent(_api: Urbit, ship: string): (newEvent: CreateEventParams) => Promise<boolean> {
+function createEvent(_api: Urbit, ship: Patp): (newEvent: CreateEventParams) => Promise<boolean> {
   return async ({ secret, limit, details }: CreateEventParams) => {
     const id: EventId = { ship, name: details.title }
     let success = false;
@@ -608,7 +621,7 @@ function createEvent(_api: Urbit, ship: string): (newEvent: CreateEventParams) =
       app: "live",
       mark: "live-operation",
       json: {
-        "id": { "ship": `~${id.ship}`, "name": id.name.replaceAll(" ", "-") },
+        "id": { "ship": id.ship, "name": id.name.replaceAll(" ", "-") },
         // the value for "register" should be null when used as a guest;
         // a host might specify a ship name there to register/unregister
         // guests from his events
@@ -679,11 +692,16 @@ function unregister(_api: Urbit): (id: EventId) => Promise<boolean> {
 
 const liveUpdateEventSchema = z.object({
   id: z.object({
-    name: z.string(),
+    name: PatpSchema,
     ship: z.string(),
   }),
   ship: z.string(),
   record: backendRecordSchema,
+}).transform((e) => {
+  return {
+    ...e,
+    id: { ship: e.id.ship as Patp, name: e.id.ship }
+  }
 })
 
 function subscribeToLiveEvents(_api: Urbit): (handlers: {
@@ -697,6 +715,7 @@ function subscribeToLiveEvents(_api: Urbit): (handlers: {
       path: "/updates",
       event: (evt) => {
         const updateEvent = liveUpdateEventSchema.parse(evt)
+
         onEvent({
           event: backendRecordToEventAsGuest(updateEvent.id, updateEvent.record),
           ship: updateEvent.ship
@@ -707,14 +726,6 @@ function subscribeToLiveEvents(_api: Urbit): (handlers: {
     })
   }
 }
-
-const PatpSchema = z.custom<Patp>((val) => {
-  return isPatp(val)
-    // TODO: maybe add regex
-    ? true
-    : false;
-});
-
 
 const profileEntryObjSchema = z.object({
   term: z.string(),
@@ -1015,14 +1026,14 @@ function subscribeToMatcherEvents(_api: Urbit): (handlers: {
   }
 }
 
-function newBackend(api: Urbit, ship: string): Backend {
+function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
   // remeber that the `ship` parameter is without the `~`
   return {
-    createEvent: createEvent(api, ship),
+    createEvent: createEvent(api, addSig(ship)),
     register: register(api),
     unregister: unregister(api),
     // getSchedule: getSchedule(api),
-    getRecords: getRecords(api, ship),
+    getRecords: getRecords(api, addSig(ship)),
     getRecord: getRecord(api, ship),
     getEvents: getEvents(api),
     getEvent: getEvent(api),
@@ -1044,6 +1055,6 @@ function newBackend(api: Urbit, ship: string): Backend {
 
 export { emptyEventAsGuest, emptyProfile, emptyEventAsHost, newBackend, eventIdsEqual, diffProfiles }
 
-export { stripSig, addSig }
+export { stripSig, addSig, isComet, isMoon, isPlanet, isStar, isGalaxy }
 export type { Patp, PatpWithoutSig }
 export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, CreateEventParams, EventDetails, Session, Attendee, Profile, LiveUpdateEvent, Backend }

@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import { Link, Location, Outlet, useLoaderData, useLocation } from 'react-router-dom';
 import { LoaderFunctionArgs, Params } from "react-router-dom";
 
-import { Attendee, Backend, emptyEventAsGuest, EventId, eventIdsEqual, Profile } from '@/backend'
+import { Attendee, Backend, emptyEventAsGuest, EventId, eventIdsEqual, Patp, Profile } from '@/backend'
 
 import { GlobalContext, GlobalCtx } from '@/globalContext';
 import { EventContext, EventCtx, newEmptyCtx } from './context';
@@ -18,23 +18,6 @@ import { EventStatusButtons } from '@/components/event-status-buttons';
 import { SlideDownAndReveal } from '@/components/sliders';
 import { ProfileDialog } from '@/components/profile-dialog';
 
-interface EventParams {
-  hostShip: string,
-  name: string
-}
-
-export async function EventParamsLoader(params: LoaderFunctionArgs<any>):
-  Promise<Params<string>> {
-  return {
-    hostShip: params.params.hostShip!,
-    name: params.params.name!
-  }
-}
-
-export function LoadEventParams(): EventParams {
-  return useLoaderData() as EventParams
-}
-
 async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
   return Promise.all(a
     .map(attendee => b.getProfile(attendee.patp))
@@ -45,12 +28,13 @@ async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
 }
 
 async function buildContextData(
-  { hostShip, name }: EventParams,
+  hostShip: Patp,
+  eventName: string,
   globalContext: GlobalCtx,
   backend: Backend
 ): Promise<EventCtx> {
 
-  const evtId: EventId = { ship: hostShip, name: name }
+  const evtId: EventId = { ship: hostShip, name: eventName }
 
   let evt = globalContext.eventsAsGuest
     .find((evt) => eventIdsEqual(evt.details.id, evtId))
@@ -253,6 +237,15 @@ function makeNavbarAndFooter(
   return [navbar, footer]
 }
 
+
+async function EventParamsLoader(params: LoaderFunctionArgs<any>):
+  Promise<Params<string>> {
+  return {
+    hostShip: params.params.hostShip!,
+    name: params.params.name!
+  }
+}
+
 const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
   const globalContext = useContext(GlobalContext)
 
@@ -261,7 +254,7 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
     return
   }
 
-  const eventParams = LoadEventParams();
+  const {hostShip, name} = useLoaderData() as { hostShip: Patp, name: string };
 
   // might refactor into reducer if it becomes annoying
   const [eventContext, setEventCtx] = useState<EventCtx>(newEmptyCtx())
@@ -269,7 +262,7 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
   useEffect(() => {
     // TODO: add skeleton component
     if (globalContext.fetched) {
-      buildContextData(eventParams, globalContext, backend)
+      buildContextData(hostShip, name, globalContext, backend)
         .then(setEventCtx)
     }
 
@@ -329,4 +322,4 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
   );
 }
 
-export { EventIndex }
+export { EventParamsLoader, EventIndex }

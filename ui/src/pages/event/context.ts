@@ -1,5 +1,6 @@
 import { createContext } from "react";
-import { Session, Profile, Attendee, EventAsGuest, emptyProfile } from "@/backend";
+
+import { Session, Profile, Attendee, EventAsGuest } from "@/backend";
 import { TZDate } from "@date-fns/tz";
 
 interface EventCtx {
@@ -15,7 +16,7 @@ function newEmptyCtx(): EventCtx {
     event: {
       details: {
         id: {
-          ship: "",
+          ship: "~",
           name: ""
         },
         title: "",

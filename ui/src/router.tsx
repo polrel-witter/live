@@ -6,6 +6,7 @@ import { Backend } from "@/backend";
 import { Index } from '@/pages/index';
 import { ErrorPage } from '@/pages/error-page';
 import { EventParamsLoader, EventIndex } from '@/pages/event';
+import { ManageParamsLoader, ManageIndex } from '@/pages/manage';
 import { AttendeesPage } from '@/pages/event/attendees';
 import { SchedulePage } from '@/pages/event/schedule';
 import { MapPage } from '@/pages/event/map';
@@ -36,6 +37,39 @@ const makeRouter = (backend: Backend) => {
       ],
     },
     {
+      path: basePath + "/manage/:hostShip/:name",
+      element: <ManageIndex backend={backend} />,
+      loader: ManageParamsLoader,
+      errorElement: <ErrorPage />,
+      // children: [
+      //   {
+      //     index: true,
+      //     loader: EventParamsLoader,
+      //     element: <EventDetails />
+      //   },
+      //   {
+      //     path: basePath + "/event/:hostShip/:name/attendees",
+      //     loader: EventParamsLoader,
+      //     element: <AttendeesPage backend={backend} />
+      //   },
+      //   {
+      //     path: basePath + "/event/:hostShip/:name/schedule",
+      //     loader: EventParamsLoader,
+      //     element: <SchedulePage />
+      //   },
+      //   {
+      //     path: basePath + "/event/:hostShip/:name/map",
+      //     loader: EventParamsLoader,
+      //     element: <MapPage />
+      //   },
+      //   {
+      //     path: basePath + "/event/:hostShip/:name/connections",
+      //     loader: EventParamsLoader,
+      //     element: <ConnectionsPage backend={backend} />
+      //   },
+      // ],
+    },
+    {
       path: basePath + "/event/:hostShip/:name",
       element: <EventIndex backend={backend} />,
       loader: EventParamsLoader,
@@ -43,27 +77,22 @@ const makeRouter = (backend: Backend) => {
       children: [
         {
           index: true,
-          loader: EventParamsLoader,
           element: <EventDetails />
         },
         {
           path: basePath + "/event/:hostShip/:name/attendees",
-          loader: EventParamsLoader,
           element: <AttendeesPage backend={backend} />
         },
         {
           path: basePath + "/event/:hostShip/:name/schedule",
-          loader: EventParamsLoader,
           element: <SchedulePage />
         },
         {
           path: basePath + "/event/:hostShip/:name/map",
-          loader: EventParamsLoader,
           element: <MapPage />
         },
         {
           path: basePath + "/event/:hostShip/:name/connections",
-          loader: EventParamsLoader,
           element: <ConnectionsPage backend={backend} />
         },
       ],
