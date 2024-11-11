@@ -2,6 +2,8 @@ import { useContext } from "react";
 import { EventContext } from "./context";
 import { EventDetailsCard } from "@/components/cards/event-details";
 import { GlobalContext } from "@/globalContext";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const EventDetails: React.FC = () => {
   const globalCtx = useContext(GlobalContext)
@@ -17,11 +19,21 @@ const EventDetails: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 pt-10 text-center">
+    <div className="space-y-6 pt-10">
       {ctx.fetched
         ? <EventDetailsCard
           hostProfile={globalCtx.profile}
           details={ctx.event.details}
+          buttons={
+            <div className="flex justify-between">
+              <Link to="attendees" >
+                <Button className="w-fit-content"> guest list </Button>
+              </Link>
+              <Link to="schedule" >
+                <Button className="w-fit-content"> schedule </Button>
+              </Link>
+            </div>
+          }
         />
         : ''
       }

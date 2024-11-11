@@ -3,58 +3,9 @@ import { ProfileDialog } from "@/components/profile-dialog"
 import { SlideDownAndReveal } from "@/components/sliders"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { cn, flipBoolean } from "@/lib/utils"
-import { ArrowLeft, ChevronUp, User } from "lucide-react"
+import { ChevronUp, User } from "lucide-react"
 import { useState } from "react"
 import { Link } from "react-router-dom"
-
-
-type BackButtonProps = {
-  pathToLinkTo: string
-}
-
-export const BackButton = ({ pathToLinkTo }: BackButtonProps) => {
-  return (
-    <Link to={pathToLinkTo}>
-      <Button className="p-3 m-1 rounded-3xl">
-        <ArrowLeft className="w-4 h-4 text-white" />
-      </Button>
-    </Link>
-  )
-}
-
-
-
-// const eventRoutingLinks = [
-//   {
-//     to: eventIndex,
-//     text: "event home"
-//   },
-//   {
-//     to: "schedule",
-//     text: "schedule"
-//   },
-//   {
-//     to: "map",
-//     text: "map"
-//   },
-//   {
-//     to: "connections",
-//     text: "connections",
-//     disabled: !online
-//   },
-// ]
-
-// const showGuestList = eventStatus === "registered"
-//   || eventStatus === "attended"
-//   || eventHost === hostProfile.patp
-
-// if (showGuestList) {
-//   eventRoutingLinks.push({
-//     to: "attendees",
-//     text: "guest list"
-//   })
-// }
-
 
 type MobileMenuProps = {
   links: Array<{

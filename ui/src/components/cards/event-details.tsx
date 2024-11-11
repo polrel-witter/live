@@ -7,9 +7,29 @@ import { Link } from "react-router-dom";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ProfilePicture } from "@/components/profile-picture";
 import { MessagesSquare } from "lucide-react";
+import { ResponsiveContent } from "../responsive-content";
 
 
-const baseTextClass = "text-sm md:text-xl"
+const baseTextClass = "text-sm md:text-lg"
+
+const TlonGroupLink = ({ ship, name }: { ship: string, name: string }) => {
+  return (
+    <div className="flex items-center justify-center">
+      <Link
+        className={cn([
+          baseTextClass,
+          buttonVariants({ variant: "link" }), "bg-black", "text-accent", "p-3", "h-7"
+        ])}
+        to={`/apps/groups/groups/${ship}/${name}/channels`}
+        reloadDocument
+      >
+        <MessagesSquare className="h-4 w-4 mr-3" />
+        tlon:
+        {`${ship}/${name}`}
+      </Link>
+    </div>
+  )
+}
 
 const HostedByText: React.FC<{ profile: Profile | undefined, patp: Patp }> = ({ profile, patp }) => {
 
@@ -32,9 +52,10 @@ const HostedByText: React.FC<{ profile: Profile | undefined, patp: Patp }> = ({ 
 type Props = {
   details: EventDetails
   hostProfile: Profile
+  buttons: React.ReactNode
 }
 
-const EventDetailsCard: React.FC<Props> = ({ details, hostProfile }) => {
+const EventDetailsCard: React.FC<Props> = ({ details, hostProfile, buttons }) => {
 
   const {
     id: { ship },
@@ -47,76 +68,50 @@ const EventDetailsCard: React.FC<Props> = ({ details, hostProfile }) => {
   } = details
 
   return (
-    <Card className="mx-6 md:mx-12 lg:mx-96">
-      <CardHeader>
-        <p className="text-xl font-semibold"> {title} </p>
-      </CardHeader>
-      <CardContent
-        className="grid items-justify gap-y-6" >
-        <div className="flex-row md:flex items-center justify-center gap-x-2">
-          <div className={cn([baseTextClass, "pr-2"])}> hosted by </div>
-          <div className="flex justify-center items-center gap-x-4">
-            <ProfilePicture
-              avatarUrl={hostProfile?.avatar ?? undefined}
-              size="xs"
-              point={ship}
-            />
-            <HostedByText profile={hostProfile} patp={ship} />
-          </div>
-        </div>
-        <p className={cn([baseTextClass])}> starts:
-          {
-            startDate
-              ? formatEventDate(startDate)
-              : "TBD"
-          }
-        </p>
-        <p className={cn([baseTextClass])}> ends:
-          {
-            endDate
-              ? formatEventDate(endDate)
-              : "TBD"
-          }
-        </p>
-        {
-          group
-            ?
-            <div className="flex items-center justify-center">
-              <Link
-                className={cn([
-                  baseTextClass,
-                  buttonVariants({ variant: "link" }), "bg-black", "text-accent", "p-3", "h-7"
-                ])}
-                to={`/apps/groups/groups/${group.ship}/${group.name}/channels`}
-                reloadDocument
-              >
-                <MessagesSquare className="h-4 w-4 mr-3" />
-                tlon:
-                {`${group.ship}/${group.name}`}
-              </Link>
-            </div>
+    <ResponsiveContent>
+      <Card>
+        <CardHeader>
+          <p className="text-xl font-semibold text-center"> {title} </p>
+        </CardHeader>
+        <CardContent
+          className="grid items-justify gap-y-6 sm:mx-36" >
 
-            :
-            ''
-        }
-        <p className={cn([baseTextClass, "text-justify"])}> {description} </p>
-        <div className="flex justify-around">
-          <Link to="attendees" >
-            <Button className="w-fit-content">
-              guest list
-            </Button>
-          </Link>
-          <Link to="schedule" >
-            <Button className="w-fit-content">
-              schedule
-            </Button>
-          </Link>
-        </div>
-      </CardContent>
-      <CardFooter className="justify-center">
-        location: {location}
-      </CardFooter>
-    </Card>
+          <div className="flex items-center justify-around">
+            <div className={baseTextClass}> hosted by </div>
+
+            <div className="flex justify-center items-center gap-x-4">
+              <ProfilePicture
+                avatarUrl={hostProfile?.avatar ?? undefined}
+                size="xs"
+                point={ship}
+              />
+              <HostedByText profile={hostProfile} patp={ship} />
+            </div>
+          </div>
+
+          <div className="flex justify-between text-[11px] md:text-sm">
+            <div className="font-bold">starts:</div>
+            {startDate ? <div>{formatEventDate(startDate)}</div> : "TBD"}
+          </div>
+
+          <div className="flex justify-between text-[11px] md:text-sm">
+            <div className="font-bold">ends:</div>
+            {endDate ? <div>{formatEventDate(endDate)}</div> : "TBD"}
+          </div>
+
+          {group ? <TlonGroupLink ship={group.ship} name={group.name} /> : ''}
+
+          <p className={cn([baseTextClass, "text-justify", "py-8"])}> {description} </p>
+
+          <div>
+            {buttons}
+          </div>
+        </CardContent>
+        <CardFooter className="justify-center text-xs md:text-md">
+          location: {location}
+        </CardFooter>
+      </Card>
+    </ResponsiveContent>
   )
 }
 

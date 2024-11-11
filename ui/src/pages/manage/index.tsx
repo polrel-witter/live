@@ -1,12 +1,19 @@
-import { Attendee, Backend, emptyEventAsHost, EventAsHost, EventId, eventIdsEqual, Patp } from "@/backend"
-import { GlobalContext, GlobalCtx } from "@/globalContext"
 import { LoaderFunctionArgs, Params, useLoaderData } from "react-router-dom"
 import { useContext, useEffect, useState } from "react"
-import { EventDetailsCard } from "@/components/cards/event-details"
+
+import { Attendee, Backend, emptyEventAsHost, EventAsHost, EventId, eventIdsEqual, Patp } from "@/backend"
+import { GlobalContext, GlobalCtx } from "@/globalContext"
+
 import { NavbarWithSlots } from "@/components/frame/navbar"
 import { FooterWithSlots } from "@/components/frame/footer"
 import { ConnectionStatusBar } from "@/components/connection-status"
 import { AppFrame } from "@/components/frame"
+import { BackButton } from "@/components/back-button"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { SlideDownAndReveal } from "@/components/sliders"
+import { flipBoolean } from "@/lib/utils"
+import { ResponsiveContent } from "@/components/responsive-content"
 
 async function ManageParamsLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> {
@@ -57,6 +64,22 @@ async function buildState(
   }
 }
 
+const EditEvent = () => {
+  const [open, setOpen] = useState(false)
+  return (
+    <div>
+      <Button onClick={() => setOpen(flipBoolean)} >edit event</Button>
+      <SlideDownAndReveal
+        show={open}
+      >
+        <div className="w-20">
+          oooo
+        </div>
+      </SlideDownAndReveal>
+    </div>
+  )
+}
+
 const ManageIndex: React.FC<Props> = ({ backend }) => {
 
   const globalContext = useContext(GlobalContext)
@@ -72,6 +95,9 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
   const [event, setEvent] = useState<EventAsHost>(emptyEventAsHost)
   const [attendees, setAttendees] = useState<Attendee[]>([])
 
+  const [openGuestList, setOpenGuestList] = useState(false)
+
+  const basePath = import.meta.env.BASE_URL
 
   useEffect(
     () => {
@@ -91,10 +117,12 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
 
   const navbar =
     <NavbarWithSlots
-      left={<div> </div>}
+      left={<div>
+        <BackButton pathToLinkTo={basePath} />
+      </div>}
       right={<div> </div>}
     >
-      manage event: {name}
+      manage event
     </NavbarWithSlots>
 
 
@@ -122,12 +150,11 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
             bottom={footer}
           >
             <div className="grid size-full" >
-              <div className="pt-16">
-                <EventDetailsCard
-                  hostProfile={globalContext.profile}
-                  details={event.details}
-                />
-              </div>
+              <ResponsiveContent className="pt-16">
+                <Card>
+                  <EditEvent />
+                </Card>
+              </ResponsiveContent>
             </div>
           </AppFrame>
           : ''

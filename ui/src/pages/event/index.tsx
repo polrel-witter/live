@@ -13,7 +13,8 @@ import { ConnectionStatusBar } from '@/components/connection-status';
 import { LinkItem, MenuItemWithLinks, NavbarWithSlots } from '@/components/frame/navbar'
 import { useOnMobile } from '@/hooks/use-mobile';
 import { EventStatusButton } from './components/event-status-button';
-import { BackButton, MobileMenu, ProfileButton } from './components/navbar-components';
+import { MobileMenu, ProfileButton } from './components/navbar-components';
+import { BackButton } from '@/components/back-button';
 
 async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
   return Promise.all(a
