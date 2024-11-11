@@ -1,6 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Control, useForm } from "react-hook-form"
 import { z } from "zod"
+import { useEffect, useState } from "react"
+import { TZDate, } from "@date-fns/tz"
+import { ChevronUp, X } from "lucide-react"
 
 import {
   Form,
@@ -12,22 +15,20 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { CreateEventParams, emptyEventAsHost, EventAsHost } from "@/backend"
-import { SpinningButton } from "./spinning-button"
-import { useEffect, useState } from "react"
-import { TZDate, } from "@date-fns/tz"
-import { DateTimePicker } from "./ui/date-time-picker/date-time-picker"
-import { GenericComboBox } from "./ui/combo-box"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { Textarea } from "./ui/textarea"
-import { Card, CardContent, CardHeader } from "./ui/card"
-import { Button } from "./ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
-import { CreateSessionForm } from "./create-session-form"
+import { DateTimePicker } from "@/components/ui/date-time-picker/date-time-picker"
+import { GenericComboBox } from "@/components/ui/combo-box"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+
 import { convertDateToTZDate, flipBoolean } from "@/lib/utils"
-import { SessionCard } from "./cards/session"
-import { SlideDownAndReveal } from "./sliders"
-import { ChevronUp, X } from "lucide-react"
+import { CreateEventParams, emptyEventAsHost } from "@/backend"
+import { SpinningButton } from "@/components/spinning-button"
+import { CreateSessionForm } from "@/components/forms/create-session"
+import { SlideDownAndReveal } from "@/components/sliders"
+import { SessionCard } from "@/components/cards/session"
 
 /* ON TIME
  * throughout this page we're storing time in ordinary Dates in local time; the user doesn't know

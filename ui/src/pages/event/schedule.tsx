@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { EventContext } from './context'
-import SessionList from "@/components/schedule-list";
+import SessionList from "@/components/lists/session";
 import { Session } from "@/backend";
 
 import {

@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { EventContext } from './context'
-import { AttendeeList } from "@/components/attendee-list";
+import { AttendeeList } from "@/components/lists/attendee";
 import { Backend, Patp } from "@/backend";
 import { Card, CardContent } from "@/components/ui/card";
 

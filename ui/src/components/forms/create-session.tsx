@@ -1,27 +1,26 @@
-
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Control, useForm } from "react-hook-form"
 import { z } from "zod"
+import { X } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { TZDate } from "@date-fns/tz"
 
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { useEffect, useRef, useState } from "react"
-import { Textarea } from "./ui/textarea"
-import { Button } from "./ui/button"
-import { TimePicker } from "./ui/date-time-picker/time-picker"
-import { Badge } from "./ui/badge"
-import { X } from "lucide-react"
-import { SessionDateSelect } from "./session-date-select"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { TimePicker } from "@/components/ui/date-time-picker/time-picker"
+
 import { convertDateToTZDate, makeArrayOfEventDays } from "@/lib/utils"
-import { TZDate } from "@date-fns/tz"
+import { SessionDateSelect } from "@/components/session-date-select"
 
 
 // need this otherwise the <Input> in there is not happy

@@ -1,5 +1,5 @@
 
-import { EventList } from "@/components/event-list";
+import { EventList } from "@/components/lists/event";
 import { useContext, useState } from "react";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { GlobalContext } from "@/globalContext";

@@ -4,7 +4,7 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import ProfileForm from "./profile-form";
+import ProfileForm from "@/components/forms/profile";
 import { Backend, diffProfiles, Profile } from "@/backend";
 import { useEffect, useState } from "react";
 

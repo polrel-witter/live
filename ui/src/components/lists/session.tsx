@@ -1,5 +1,5 @@
 import { Session } from "@/backend"
-import { SessionCard } from "./cards/session"
+import { SessionCard } from "@/components/cards/session"
 import { compareAsc } from "date-fns"
 
 export default function SessionList(props: { sessions: Session[] }) {
