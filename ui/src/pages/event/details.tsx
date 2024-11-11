@@ -4,6 +4,7 @@ import { EventDetailsCard } from "@/components/cards/event-details";
 import { GlobalContext } from "@/globalContext";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { ResponsiveContent } from "@/components/responsive-content";
 
 const EventDetails: React.FC = () => {
   const globalCtx = useContext(GlobalContext)
@@ -19,7 +20,7 @@ const EventDetails: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 pt-10">
+    <ResponsiveContent className="flex justify-center space-y-6 pt-10">
       {ctx.fetched
         ? <EventDetailsCard
           hostProfile={globalCtx.profile}
@@ -37,7 +38,7 @@ const EventDetails: React.FC = () => {
         />
         : ''
       }
-    </div>
+    </ResponsiveContent>
   )
 }
 

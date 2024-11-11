@@ -1,9 +1,10 @@
-import { CreateEventParams, emptyEventAsHost } from "@/backend"
+import { CreateEventParams, emptyEventAsHost, EventAsHost } from "@/backend"
 import { EventForm } from "./event"
 import { convertDateToTZDate } from "@/lib/utils"
 
 type Props = {
-  createEvent: (newEvent: CreateEventParams) => Promise<boolean>
+  editEvent: (newEvent: CreateEventParams) => Promise<boolean>
+  event: EventAsHost
 }
 
 export const CreateEventForm = ({ createEvent }: Props) => {

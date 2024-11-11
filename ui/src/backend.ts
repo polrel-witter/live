@@ -74,6 +74,42 @@ interface Backend {
   // live - poke %create
   createEvent(evt: CreateEventParams): Promise<boolean>
 
+  // live - poke %info %about
+  editEventDetailsDescription(id: EventId, value: EventDetails["description"]): Promise<void>
+
+  // live - poke %info %timezone
+  editEventDetailsTimezone(id: EventId, value: EventDetails["timezone"]): Promise<void>
+
+  // live - poke %info %location
+  editEventDetailsLocation(id: EventId, value: EventDetails["location"]): Promise<void>
+
+  // live - poke %info %venue-map
+  editEventDetailsVenueMap(id: EventId, value: EventDetails["venueMap"]): Promise<void>
+
+  // live - poke %info %group
+  editEventDetailsGroup(id: EventId, value: EventDetails["group"]): Promise<void>
+
+  // live - poke %info %kind
+  editEventDetailsKind(id: EventId, value: EventDetails["kind"]): Promise<void>
+
+  // live - poke %info %latch
+  editEventDetailsLatch(id: EventId, value: EventDetails["latch"]): Promise<void>
+
+  // live - poke %info %create-session
+  addEventSession(id: EventId, value: Session): Promise<void>
+
+  // live - poke %info %edit-session
+  editEventSession(id: EventId, sessionId: string, value: Session): Promise<void>
+
+  // live - poke %info %delete-session
+  removeEventSession(id: EventId, sessionId: string): Promise<void>
+
+  // live - poke %secret
+  editEventSecret(id: EventId, secret: EventAsHost["secret"]): Promise<void>
+
+  // live - poke %limit
+  editEventLimit(id: EventId, limit: EventAsHost["limit"]): Promise<void>
+
   // remove, this is included in an event record
   // getSchedule(id: EventId): Promise<Session[]>
 
@@ -173,6 +209,7 @@ const emptyProfile: Profile = {
 }
 
 type Session = {
+  id: string;
   title: string;
   // backend doesn't send this yet
   mainSpeaker: string;
@@ -375,8 +412,9 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
     return res
   }
 
-  const sessions = Object.values(_sessions).map(({ session }): Session => {
+  const sessions = Object.entries(_sessions).map(([sessionId, { session }]): Session => {
     return {
+      id: sessionId,
       title: session.title,
       mainSpeaker: "",
       location: session.location,
@@ -611,60 +649,238 @@ function register(_api: Urbit): (id: EventId) => Promise<boolean> {
     return Promise.resolve(success)
   }
 }
+const tzDateToUnix = (d: TZDate | null) => d ? d.valueOf() : 0
 
-function createEvent(_api: Urbit, ship: Patp): (newEvent: CreateEventParams) => Promise<boolean> {
+const prepareSession = (session: Session) => {
+  return {
+    title: session.title,
+    panel: session.panel,
+    location: session.location,
+    about: session.about,
+    moment: {
+      start: tzDateToUnix(session.startTime),
+      end: tzDateToUnix(session.endTime)
+    }
+  }
+}
+
+function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => Promise<boolean> {
   return async ({ secret, limit, details }: CreateEventParams) => {
     const id: EventId = { ship, name: details.title }
     let success = false;
-    const tzDateToUnix = (d: TZDate | null) => d ? d.valueOf() : 0
-    const _poke = await _api.poke({
-      app: "live",
-      mark: "live-operation",
-      json: {
-        "id": { "ship": id.ship, "name": id.name.replaceAll(" ", "-") },
-        // the value for "register" should be null when used as a guest;
-        // a host might specify a ship name there to register/unregister
-        // guests from his events
-        "action": {
-          "create": {
-            secret: secret,
-            limit: limit,
-            info: {
-              title: details.title,
-              about: details.description,
-              moment: {
-                start: tzDateToUnix(details.startDate),
-                end: tzDateToUnix(details.endDate)
-              },
-              // TODO: properly handle timezone
-              timezone: { p: true, q: 1 },
-              location: details.location,
-              'venue-map': details.venueMap,
-              group: details.group,
-              kind: details.kind,
-              latch: details.latch,
-              sessions: details.sessions.map(session => {
-                return {
-                  title: session.title,
-                  panel: session.panel,
-                  location: session.location,
-                  about: session.about,
-                  moment: {
-                    start: tzDateToUnix(session.startTime),
-                    end: tzDateToUnix(session.endTime)
-                  }
-                }
-              })
-            }
+
+    const payload = {
+      "id": { "ship": id.ship, "name": id.name.replaceAll(" ", "-") },
+      // the value for "register" should be null when used as a guest;
+      // a host might specify a ship name there to register/unregister
+      // guests from his events
+      "action": {
+        "create": {
+          secret: secret,
+          limit: limit,
+          info: {
+            title: details.title,
+            about: details.description,
+            moment: {
+              start: tzDateToUnix(details.startDate),
+              end: tzDateToUnix(details.endDate)
+            },
+            // TODO: properly handle timezone
+            timezone: { p: true, q: 1 },
+            location: details.location,
+            'venue-map': details.venueMap,
+            group: details.group,
+            kind: details.kind,
+            latch: details.latch,
+            sessions: details.sessions.map(prepareSession)
           }
         }
-      },
+      }
+    }
+
+    const _poke = await api.poke({
+      app: "live",
+      mark: "live-operation",
+      json: payload,
       onSuccess: () => { success = true },
       onError: (err) => {
         console.error("error during create poke: ", err)
       }
     })
     return Promise.resolve(success)
+  }
+}
+
+
+type editableEventDetailsFields = "title" |
+  "about" |
+  "moment" |
+  "timezone" |
+  "location" |
+  "venue-map" |
+  "group" |
+  "kind" |
+  "latch" |
+  "create-session" |
+  "edit-session" |
+  "delete-session"
+
+function editEventDetails(api: Urbit): (
+  id: EventId,
+  field: editableEventDetailsFields,
+  value: any,
+) => Promise<void> {
+  return async (
+    id: EventId,
+    field: editableEventDetailsFields,
+    value: any,
+  ) => {
+
+    const _poke = await api.poke({
+      app: "live",
+      mark: "live-operation",
+      json: {
+        "id": { "ship": id.ship, "name": id.name },
+        "action": {
+          "info": {
+            [field]: value
+          }
+        }
+      },
+      onSuccess: () => { },
+      onError: (err) => {
+        console.error("error during create poke: ", err)
+      }
+    })
+
+    return Promise.resolve()
+  }
+}
+
+
+function editEventDetailsDescription(api: Urbit): (id: EventId, value: EventDetails["description"]) => Promise<void> {
+  return async (id: EventId, value: EventDetails["description"]) => {
+    return editEventDetails(api)(id, "about", value)
+  }
+}
+
+function editEventDetailsMoment(api: Urbit): (
+  id: EventId,
+  start: EventDetails["startDate"],
+  end: EventDetails["startDate"]
+) => Promise<void> {
+  return async (
+    id: EventId,
+    start: EventDetails["startDate"],
+    end: EventDetails["startDate"]
+  ) => {
+    return editEventDetails(api)(id, "moment", {
+      start: tzDateToUnix(start),
+      end: tzDateToUnix(end)
+    })
+  }
+}
+
+function editEventDetailsTimezone(api: Urbit): (id: EventId, value: EventDetails["timezone"]) => Promise<void> {
+  return async (id: EventId, value: EventDetails["timezone"]) => {
+    return editEventDetails(api)(id, "timezone", value)
+  }
+}
+
+function editEventDetailsLocation(api: Urbit): (id: EventId, value: EventDetails["location"]) => Promise<void> {
+  return async (id: EventId, value: EventDetails["location"]) => {
+    return editEventDetails(api)(id, "location", value)
+  }
+}
+
+function editEventDetailsVenueMap(api: Urbit): (id: EventId, value: EventDetails["venueMap"]) => Promise<void> {
+  return async (id: EventId, value: EventDetails["venueMap"]) => {
+    return editEventDetails(api)(id, "venue-map", value)
+  }
+}
+
+function editEventDetailsGroup(api: Urbit): (id: EventId, value: EventDetails["group"]) => Promise<void> {
+  return async (id: EventId, value: EventDetails["group"]) => {
+    return editEventDetails(api)(id, "group", value)
+  }
+}
+
+function editEventDetailsKind(api: Urbit): (id: EventId, value: EventDetails["kind"]) => Promise<void> {
+  return async (id: EventId, value: EventDetails["kind"]) => {
+    return editEventDetails(api)(id, "kind", value)
+  }
+}
+
+function editEventDetailsLatch(api: Urbit): (id: EventId, value: EventDetails["latch"]) => Promise<void> {
+  return async (id: EventId, value: EventDetails["latch"]) => {
+    return editEventDetails(api)(id, "latch", value)
+  }
+}
+
+
+function addEventSession(api: Urbit): (id: EventId, value: Session) => Promise<void> {
+  return async (id: EventId, value: Session) => {
+    return editEventDetails(api)(id, "create-session", prepareSession(value))
+  }
+}
+
+function editEventSession(api: Urbit): (id: EventId, sessionId: string, value: Session) => Promise<void> {
+  return async (id: EventId, sessionId: string, value: Session) => {
+    return editEventDetails(api)(id, "edit-session", { [sessionId]: prepareSession(value) })
+  }
+}
+
+function removeEventSession(api: Urbit): (id: EventId, sessionId: string) => Promise<void> {
+  return async (id: EventId, sessionId: string) => {
+    return editEventDetails(api)(id, "delete-session", sessionId)
+  }
+}
+
+
+function editEventSecret(api: Urbit): (id: EventId, secret: EventAsHost["secret"]) => Promise<void> {
+  return async (id: EventId, secret: EventAsHost["secret"]) => {
+    const _poke = await api.poke({
+      app: "live",
+      mark: "live-operation",
+      json: {
+        "id": { "ship": id.ship, "name": id.name },
+        "action": {
+          "info": {
+            "secret": secret
+          }
+        }
+      },
+      onSuccess: () => { },
+      onError: (err) => {
+        console.error("error during create poke: ", err)
+      }
+    })
+
+    return Promise.resolve()
+  }
+}
+
+function editEventLimit(api: Urbit): (id: EventId, limit: EventAsHost["limit"]) => Promise<void> {
+  return async (id: EventId, limit: EventAsHost["limit"]) => {
+    const _poke = await api.poke({
+      app: "live",
+      mark: "live-operation",
+      json: {
+        "id": { "ship": id.ship, "name": id.name },
+        "action": {
+          "info": {
+            "limit": limit
+          }
+        }
+      },
+      onSuccess: () => { },
+      onError: (err) => {
+        console.error("error during create poke: ", err)
+      }
+    })
+
+    return Promise.resolve()
+
   }
 }
 
@@ -1030,6 +1246,20 @@ function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
   // remeber that the `ship` parameter is without the `~`
   return {
     createEvent: createEvent(api, addSig(ship)),
+
+    editEventDetailsTimezone: editEventDetailsTimezone(api),
+    editEventDetailsDescription: editEventDetailsDescription(api),
+    editEventDetailsLocation: editEventDetailsLocation(api),
+    editEventDetailsVenueMap: editEventDetailsVenueMap(api),
+    editEventDetailsGroup: editEventDetailsGroup(api),
+    editEventDetailsKind: editEventDetailsKind(api),
+    editEventDetailsLatch: editEventDetailsLatch(api),
+    editEventSecret: editEventSecret(api),
+    editEventLimit: editEventLimit(api),
+    addEventSession: addEventSession(api),
+    editEventSession: editEventSession(api),
+    removeEventSession: removeEventSession(api),
+
     register: register(api),
     unregister: unregister(api),
     // getSchedule: getSchedule(api),

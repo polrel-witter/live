@@ -4,10 +4,9 @@ import { EventDetails, isComet, isMoon, Patp, Profile } from "@/backend";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { cn, formatEventDate } from "@/lib/utils";
 import { Link } from "react-router-dom";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { ProfilePicture } from "@/components/profile-picture";
 import { MessagesSquare } from "lucide-react";
-import { ResponsiveContent } from "../responsive-content";
 
 
 const baseTextClass = "text-sm md:text-lg"
@@ -53,9 +52,9 @@ type Props = {
   details: EventDetails
   hostProfile: Profile
   buttons: React.ReactNode
-}
+} & React.ComponentPropsWithoutRef<typeof Card>
 
-const EventDetailsCard: React.FC<Props> = ({ details, hostProfile, buttons }) => {
+const EventDetailsCard: React.FC<Props> = ({ details, hostProfile, buttons, className, ...rest }) => {
 
   const {
     id: { ship },
@@ -68,50 +67,48 @@ const EventDetailsCard: React.FC<Props> = ({ details, hostProfile, buttons }) =>
   } = details
 
   return (
-    <ResponsiveContent>
-      <Card>
-        <CardHeader>
-          <p className="text-xl font-semibold text-center"> {title} </p>
-        </CardHeader>
-        <CardContent
-          className="grid items-justify gap-y-6 sm:mx-36" >
+    <Card className={cn(["w-max", className])} {...rest}>
+      <CardHeader>
+        <p className="text-xl font-semibold text-center"> {title} </p>
+      </CardHeader>
+      <CardContent
+        className="grid justify-center gap-y-6"
+      >
+        <div className="flex items-center justify-around">
+          <div className={cn([baseTextClass, "pr-4"])}> hosted by </div>
 
-          <div className="flex items-center justify-around">
-            <div className={baseTextClass}> hosted by </div>
-
-            <div className="flex justify-center items-center gap-x-4">
-              <ProfilePicture
-                avatarUrl={hostProfile?.avatar ?? undefined}
-                size="xs"
-                point={ship}
-              />
-              <HostedByText profile={hostProfile} patp={ship} />
-            </div>
+          <div className="flex justify-center items-center gap-x-4">
+            <ProfilePicture
+              avatarUrl={hostProfile?.avatar ?? undefined}
+              size="xs"
+              point={ship}
+            />
+            <HostedByText profile={hostProfile} patp={ship} />
           </div>
+        </div>
 
-          <div className="flex justify-between text-[11px] md:text-sm">
-            <div className="font-bold">starts:</div>
-            {startDate ? <div>{formatEventDate(startDate)}</div> : "TBD"}
-          </div>
+        <div className="flex justify-between text-[11px] md:text-sm">
+          <div className="font-bold">starts:</div>
+          {startDate ? <div>{formatEventDate(startDate)}</div> : "TBD"}
+        </div>
 
-          <div className="flex justify-between text-[11px] md:text-sm">
-            <div className="font-bold">ends:</div>
-            {endDate ? <div>{formatEventDate(endDate)}</div> : "TBD"}
-          </div>
+        <div className="flex justify-between text-[11px] md:text-sm">
+          <div className="font-bold">ends:</div>
+          {endDate ? <div>{formatEventDate(endDate)}</div> : "TBD"}
+        </div>
 
-          {group ? <TlonGroupLink ship={group.ship} name={group.name} /> : ''}
+        {group ? <TlonGroupLink ship={group.ship} name={group.name} /> : ''}
 
-          <p className={cn([baseTextClass, "text-justify", "py-8"])}> {description} </p>
+        <p className={cn([baseTextClass, "text-justify", "py-8"])}> {description} </p>
 
-          <div>
-            {buttons}
-          </div>
-        </CardContent>
-        <CardFooter className="justify-center text-xs md:text-md">
-          location: {location}
-        </CardFooter>
-      </Card>
-    </ResponsiveContent>
+        <div>
+          {buttons}
+        </div>
+      </CardContent>
+      <CardFooter className="justify-center text-xs md:text-md">
+        location: {location}
+      </CardFooter>
+    </Card>
   )
 }
 

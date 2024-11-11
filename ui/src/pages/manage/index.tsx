@@ -10,10 +10,12 @@ import { ConnectionStatusBar } from "@/components/connection-status"
 import { AppFrame } from "@/components/frame"
 import { BackButton } from "@/components/back-button"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { SlideDownAndReveal } from "@/components/sliders"
 import { flipBoolean } from "@/lib/utils"
 import { ResponsiveContent } from "@/components/responsive-content"
+import { EventDetailsCard } from "@/components/cards/event-details"
+import { CreateEventForm } from "@/components/forms/create-event"
 
 async function ManageParamsLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> {
@@ -64,16 +66,30 @@ async function buildState(
   }
 }
 
-const EditEvent = () => {
+const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => {
   const [open, setOpen] = useState(false)
   return (
-    <div>
-      <Button onClick={() => setOpen(flipBoolean)} >edit event</Button>
+    <div className="p-4">
+      <Button
+        className="w-full"
+        onClick={() => setOpen(flipBoolean)}
+      >
+        edit event
+      </Button>
       <SlideDownAndReveal
         show={open}
+        maxHeight="max-h-[3000px]"
       >
-        <div className="w-20">
-          oooo
+        <div className="mt-2 w-full">
+          <Card>
+            <CardHeader> edit event </CardHeader>
+            <CardContent>
+              <CreateEventForm
+                createEvent={backend.createEvent}
+                event={evt}
+              />
+            </CardContent>
+          </Card>
         </div>
       </SlideDownAndReveal>
     </div>
@@ -149,13 +165,19 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
             top={navbar}
             bottom={footer}
           >
-            <div className="grid size-full" >
-              <ResponsiveContent className="pt-16">
-                <Card>
-                  <EditEvent />
+            <ResponsiveContent className="flex justify-center pt-16">
+              <div className="grid size-full w-min space-y-6" >
+                <EventDetailsCard
+                  hostProfile={globalContext.profile}
+                  details={event.details}
+                  buttons={<div></div>}
+                  className="px-16"
+                />
+                <Card className="w-full">
+                  <EditEvent backend={backend} evt={event} />
                 </Card>
-              </ResponsiveContent>
-            </div>
+              </div>
+            </ResponsiveContent>
           </AppFrame>
           : ''
       }

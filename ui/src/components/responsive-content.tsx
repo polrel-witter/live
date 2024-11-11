@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils"
 import { HTMLProps, ReactNode } from "react"
 
-type Props = HTMLProps<typeof HTMLDivElement> & { children: ReactNode }
+type Props = React.HTMLAttributes<HTMLDivElement> & { children: ReactNode }
 
 
 export const ResponsiveContent: React.FC<Props> = ({ children, className, ...rest }: Props) => {
