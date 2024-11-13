@@ -16,6 +16,7 @@ import { flipBoolean } from "@/lib/utils"
 import { ResponsiveContent } from "@/components/responsive-content"
 import { EventDetailsCard } from "@/components/cards/event-details"
 import { CreateEventForm } from "@/components/forms/create-event"
+import { EditEventForm } from "@/components/forms/edit-event"
 
 async function ManageParamsLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> {
@@ -84,8 +85,8 @@ const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => 
           <Card>
             <CardHeader> edit event </CardHeader>
             <CardContent>
-              <CreateEventForm
-                createEvent={backend.createEvent}
+              <EditEventForm
+                backend={backend}
                 event={evt}
               />
             </CardContent>

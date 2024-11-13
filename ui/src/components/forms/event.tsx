@@ -23,8 +23,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
-import { convertDateToTZDate, flipBoolean } from "@/lib/utils"
-import { CreateEventParams, emptyEventAsHost, EventAsHost } from "@/backend"
+import { flipBoolean } from "@/lib/utils"
+import { EventAsHost, validUTCOffsets } from "@/backend"
 import { SpinningButton } from "@/components/spinning-button"
 import { CreateSessionForm } from "@/components/forms/create-session"
 import { SlideDownAndReveal } from "@/components/sliders"
@@ -57,7 +57,6 @@ const BoldText: React.FC<{ text: string }> = ({ text }) => {
 
 const TextFormField: React.FC<TextFormFieldProps> =
   ({ formField, label, placeholder, control, textArea }) => {
-
     return (
       <FormField
         key={formField}
@@ -79,42 +78,13 @@ const TextFormField: React.FC<TextFormFieldProps> =
     )
   }
 
-const validUTCOffsets = [
-  "-00:00",
-  "-01:00",
-  "-02:00",
-  "-03:00",
-  "-04:00",
-  "-05:00",
-  "-06:00",
-  "-07:00",
-  "-08:00",
-  "-09:00",
-  "-10:00",
-  "-11:00",
-  "-12:00",
-  "+00:00",
-  "+01:00",
-  "+02:00",
-  "+03:00",
-  "+04:00",
-  "+05:00",
-  "+06:00",
-  "+07:00",
-  "+08:00",
-  "+09:00",
-  "+10:00",
-  "+11:00",
-  "+12:00",
-  "+13:00",
-  "+14:00",
-] as const
 
 const emptyStringSchema = z.literal("")
 const utcOffsetSchema = z.enum(validUTCOffsets)
 const dateTimeSchema = z.date()
 
 const sessionSchema = z.object({
+  id: z.string(),
   title: z.string(),
   // TODO: maybe validate that these are actually patps
   panel: z.array(z.string()),
@@ -157,6 +127,7 @@ const schemas = z.object({
 
 type Props = {
   onSubmit: (values: z.infer<typeof schemas>) => Promise<void>
+  submitButtonText: string
   event?: EventAsHost
 }
 
@@ -191,8 +162,8 @@ const makeDefaultValues = (event?: EventAsHost) => {
     defaultValues.location = event.details.location
     defaultValues.limit = event.limit ? event.limit : ""
     defaultValues.dateRange = {
-      start: event.details.startDate,
-      end: event.details.endDate,
+      from: event.details.startDate,
+      to: event.details.endDate,
     }
     defaultValues.utcOffset = event.details.timezone
     defaultValues.eventKind = event.details.kind
@@ -205,12 +176,19 @@ const makeDefaultValues = (event?: EventAsHost) => {
     defaultValues.eventDescription = event.details.description
     defaultValues.secret = event.secret
     defaultValues.sessions = event.details.sessions
+      .map(({ startTime, endTime, mainSpeaker: _, ...rest }) => {
+        return {
+          start: startTime ? new Date(startTime) : new Date(),
+          end: endTime ? new Date(endTime) : new Date(),
+          ...rest
+        }
+      })
   }
 
   return defaultValues
 }
 
-const EventForm: React.FC<Props> = ({ event, onSubmit }) => {
+const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
   const [spin, setSpin] = useState(false)
 
   const form = useForm<z.infer<typeof schemas>>({
@@ -592,7 +570,14 @@ const EventForm: React.FC<Props> = ({ event, onSubmit }) => {
                             }) => {
                               const newFieldValue = [
                                 ...field.value,
-                                { start, end, ...rest }
+                                {
+                                  // TODO: session id quickfix, this should be
+                                  // fairly unique
+                                  id: rest.title + start.toUTCString(),
+                                  start,
+                                  end,
+                                  ...rest
+                                }
                               ]
                               form.setValue("sessions", newFieldValue)
                               setOpenDialog(flipBoolean)
@@ -622,7 +607,7 @@ const EventForm: React.FC<Props> = ({ event, onSubmit }) => {
             onClick={() => { console.log(form.formState) }}
             type="submit"
             className="p-2 w-24 h-auto">
-            Create
+            {submitButtonText}
           </SpinningButton>
         </div>
       </form>

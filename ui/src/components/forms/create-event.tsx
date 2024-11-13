@@ -9,6 +9,7 @@ type Props = {
 export const CreateEventForm = ({ createEvent }: Props) => {
   return (
     <EventForm
+      submitButtonText="create"
       onSubmit={async (values) => {
         // Do something with the form values.
         // ✅ This will be type-safe and validated.

@@ -27,6 +27,7 @@ key:
   + @p's show up without the ~ prepended.
   - Respect calm engine settings
     - frontend just needs to scry this out. either show/hide the avatar and/or the nickname
+  - make use of %remote-events scry
 
 ## Refinements/bugs
 - create page

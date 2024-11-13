@@ -272,7 +272,6 @@ export function DateTimePicker({
                   e.preventDefault();
                   setDateRange(initDateRange)
                   onRangeChange(undefined)
-                  setDateRange(initDateRange)
                   setOpen(false);
                 }}
               >

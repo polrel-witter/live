@@ -25,7 +25,7 @@ function newEmptyCtx(): EventCtx {
         startDate: new TZDate(0),
         endDate: new TZDate(0),
         description: "",
-        timezone: "",
+        timezone: "+00:00",
         kind: "public",
         group: null,
         latch: "open",

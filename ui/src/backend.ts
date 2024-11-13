@@ -3,7 +3,7 @@ import Urbit from "@urbit/http-api";
 import { sub } from "date-fns";
 import { TZDate, tzOffset } from "@date-fns/tz";
 
-import { record, z, ZodError } from "zod" // this is an object validation library
+import { z, ZodError } from "zod" // this is an object validation library
 
 // Patp types and utilities
 
@@ -74,8 +74,18 @@ interface Backend {
   // live - poke %create
   createEvent(evt: CreateEventParams): Promise<boolean>
 
+  // live - poke %info %title
+  editEventDetailsTitle(id: EventId, value: EventDetails["title"]): Promise<void>
+
   // live - poke %info %about
   editEventDetailsDescription(id: EventId, value: EventDetails["description"]): Promise<void>
+
+  // live - poke %info %moment
+  editEventDetailsMoment(
+    id: EventId,
+    start: EventDetails["startDate"],
+    end: EventDetails["endDate"]
+  ): Promise<void>
 
   // live - poke %info %timezone
   editEventDetailsTimezone(id: EventId, value: EventDetails["timezone"]): Promise<void>
@@ -220,18 +230,77 @@ type Session = {
   endTime: TZDate | null;
 }
 
+const validUTCOffsets = [
+  "-00:00",
+  "-01:00",
+  "-02:00",
+  "-03:00",
+  "-04:00",
+  "-05:00",
+  "-06:00",
+  "-07:00",
+  "-08:00",
+  "-09:00",
+  "-10:00",
+  "-11:00",
+  "-12:00",
+  "+00:00",
+  "+01:00",
+  "+02:00",
+  "+03:00",
+  "+04:00",
+  "+05:00",
+  "+06:00",
+  "+07:00",
+  "+08:00",
+  "+09:00",
+  "+10:00",
+  "+11:00",
+  "+12:00",
+  "+13:00",
+  "+14:00",
+] as const
+
+type UTCOffset = typeof validUTCOffsets[number]
+
+// turns +14:00 into +14, but +04:00 into +4
+function stripUTCOffset(offset: UTCOffset): string {
+  if (offset.charAt(1) === "0") {
+    return offset.charAt(0) + offset.charAt(2)
+  }
+  return offset.slice(0, 3)
+}
+
+function stringToUTCOffset(str: string): UTCOffset | null {
+
+  if (str.charAt(0) !== "+" && str.charAt(0) !== "-") {
+    return null
+  }
+
+  for (const offset of validUTCOffsets) {
+    if (stripUTCOffset(offset) === str) {
+      return offset
+    }
+  }
+
+  return null
+}
+
+
 type EventDetails = {
   id: EventId;
   title: string;
   location: string;
   startDate: TZDate | null;
   endDate: TZDate | null;
-  timezone: string;
+  timezone: UTCOffset;
   description: string;
   group: { ship: string, name: string } | null;
   kind: "public" | "private" | "secret";
   latch: "open" | "closed" | "over";
   venueMap: string;
+  // TODO: this might've been better stored as Record<sessionID, Session>
+  // instead of an array
   sessions: Session[]
 }
 
@@ -258,7 +327,7 @@ const emptyEventDetails: EventDetails = {
   startDate: new TZDate(0),
   endDate: new TZDate(0),
   description: "",
-  timezone: "",
+  timezone: "-00:00",
   kind: "public",
   group: null,
   latch: "open",
@@ -386,10 +455,17 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
     ...infoRest
   } = info1
 
+  // true is + false is -
   const timezoneSign = timezone.p ? "+" : "-"
-  const timezoneNumber = timezone.q > 9 ? `${timezone.q}` : `0${timezone.q}`
+  const parsedTimezone = stringToUTCOffset(`${timezoneSign}${timezone.q}`)
 
-  const timezoneString = `${timezoneSign}${timezoneNumber}:00`
+  let timezoneString: UTCOffset = "+00:00"
+
+  if (parsedTimezone) {
+    timezoneString = parsedTimezone
+  } else {
+    console.error("couldn't parse timezone:", timezone)
+  }
 
   const newTZDateOrNull = (tsOrNull: number | null): TZDate | null => {
     if (!tsOrNull) { return null }
@@ -649,7 +725,10 @@ function register(_api: Urbit): (id: EventId) => Promise<boolean> {
     return Promise.resolve(success)
   }
 }
+
 const tzDateToUnix = (d: TZDate | null) => d ? d.valueOf() : 0
+
+const tzDateToUnixSeconds = (d: TZDate | null) => d ? d.valueOf() / 1000 : 0
 
 const prepareSession = (session: Session) => {
   return {
@@ -712,7 +791,8 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
 }
 
 
-type editableEventDetailsFields = "title" |
+type editableEventDetailsFields =
+  "title" |
   "about" |
   "moment" |
   "timezone" |
@@ -749,7 +829,7 @@ function editEventDetails(api: Urbit): (
       },
       onSuccess: () => { },
       onError: (err) => {
-        console.error("error during create poke: ", err)
+        console.error(`error during edit event poke (field: ${field}): `, err)
       }
     })
 
@@ -757,6 +837,11 @@ function editEventDetails(api: Urbit): (
   }
 }
 
+function editEventDetailsTitle(api: Urbit): (id: EventId, value: EventDetails["title"]) => Promise<void> {
+  return async (id: EventId, value: EventDetails["description"]) => {
+    return editEventDetails(api)(id, "title", value)
+  }
+}
 
 function editEventDetailsDescription(api: Urbit): (id: EventId, value: EventDetails["description"]) => Promise<void> {
   return async (id: EventId, value: EventDetails["description"]) => {
@@ -774,6 +859,7 @@ function editEventDetailsMoment(api: Urbit): (
     start: EventDetails["startDate"],
     end: EventDetails["startDate"]
   ) => {
+    // FIXME: shoud me seconds not milliseconds
     return editEventDetails(api)(id, "moment", {
       start: tzDateToUnix(start),
       end: tzDateToUnix(end)
@@ -783,7 +869,12 @@ function editEventDetailsMoment(api: Urbit): (
 
 function editEventDetailsTimezone(api: Urbit): (id: EventId, value: EventDetails["timezone"]) => Promise<void> {
   return async (id: EventId, value: EventDetails["timezone"]) => {
-    return editEventDetails(api)(id, "timezone", value)
+    const stripped = stripUTCOffset(value)
+    const payload = {
+      p: stripped.charAt(0) === "+" ? true : false,
+      q: Number.parseInt(stripped.slice(1))
+    }
+    return editEventDetails(api)(id, "timezone", payload)
   }
 }
 
@@ -842,6 +933,7 @@ function editEventSecret(api: Urbit): (id: EventId, secret: EventAsHost["secret"
     const _poke = await api.poke({
       app: "live",
       mark: "live-operation",
+      // FIXME: should be just action > secret
       json: {
         "id": { "ship": id.ship, "name": id.name },
         "action": {
@@ -865,6 +957,7 @@ function editEventLimit(api: Urbit): (id: EventId, limit: EventAsHost["limit"]) 
     const _poke = await api.poke({
       app: "live",
       mark: "live-operation",
+      // FIXME: should be just action > limit
       json: {
         "id": { "ship": id.ship, "name": id.name },
         "action": {
@@ -880,7 +973,6 @@ function editEventLimit(api: Urbit): (id: EventId, limit: EventAsHost["limit"]) 
     })
 
     return Promise.resolve()
-
   }
 }
 
@@ -1247,8 +1339,10 @@ function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
   return {
     createEvent: createEvent(api, addSig(ship)),
 
-    editEventDetailsTimezone: editEventDetailsTimezone(api),
+    editEventDetailsTitle: editEventDetailsTitle(api),
     editEventDetailsDescription: editEventDetailsDescription(api),
+    editEventDetailsMoment: editEventDetailsMoment(api),
+    editEventDetailsTimezone: editEventDetailsTimezone(api),
     editEventDetailsLocation: editEventDetailsLocation(api),
     editEventDetailsVenueMap: editEventDetailsVenueMap(api),
     editEventDetailsGroup: editEventDetailsGroup(api),
@@ -1285,6 +1379,10 @@ function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
 
 export { emptyEventAsGuest, emptyProfile, emptyEventAsHost, newBackend, eventIdsEqual, diffProfiles }
 
+export { validUTCOffsets, stripUTCOffset, stringToUTCOffset }
+export type { UTCOffset }
+
 export { stripSig, addSig, isComet, isMoon, isPlanet, isStar, isGalaxy }
 export type { Patp, PatpWithoutSig }
+
 export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, CreateEventParams, EventDetails, Session, Attendee, Profile, LiveUpdateEvent, Backend }

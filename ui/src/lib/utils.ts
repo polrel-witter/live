@@ -57,6 +57,7 @@ export function newTZDateInTimeZoneFromUnix(seconds: number, timezoneString: str
   return _newTZDateInTimeZone(new TZDate(seconds * 1000, "+00:00"), timezoneString)
 }
 
+// TODO: maybe rename this // add better documentation
 // normalizes date from local time to UTC
 export function convertDateToTZDate(date: Date, destinationTz: string): TZDate {
 
