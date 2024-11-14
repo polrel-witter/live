@@ -54,24 +54,26 @@ const NavbarWithSlots: React.FC<Props> = ({ left, right, className, ...props }) 
   return (
     <NavigationMenu
       className={cn(
-        "fixed border-b-2 w-full bg-white justify-center",
+        "h-12 fixed border-b-2 w-full bg-white justify-center",
         className
       )}
       {...props}
     >
       <NavigationMenuList>
-        <NavigationMenuItem className="fixed left-0">
+        <div className="fixed left-0">
           {left}
-        </NavigationMenuItem>
-          <NavigationMenuItem>
-            {props.children}
-          </NavigationMenuItem>
-        <NavigationMenuItem className="fixed right-0">
+        </div>
+        <div>
+          {props.children}
+        </div>
+        <div className="fixed right-0">
           {right}
-        </NavigationMenuItem>
+        </div>
       </NavigationMenuList>
     </NavigationMenu>
   )
 }
+
+export type { LinkItem }
 
 export { NavbarWithSlots, MenuItemWithLinks }

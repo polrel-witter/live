@@ -1,27 +1,28 @@
-
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Control, useForm } from "react-hook-form"
+import { Control, FieldValues, useForm } from "react-hook-form"
 import { z } from "zod"
+import { X } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { TZDate } from "@date-fns/tz"
 
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { useEffect, useRef, useState } from "react"
-import { Textarea } from "./ui/textarea"
-import { Button } from "./ui/button"
-import { TimePicker } from "./ui/date-time-picker/time-picker"
-import { Badge } from "./ui/badge"
-import { X } from "lucide-react"
-import { SessionDateSelect } from "./session-date-select"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { TimePicker } from "@/components/ui/date-time-picker/time-picker"
+
 import { convertDateToTZDate, makeArrayOfEventDays } from "@/lib/utils"
-import { TZDate } from "@date-fns/tz"
+import { SessionDateSelect } from "@/components/session-date-select"
+import { Session } from "@/backend"
+import { start } from "repl"
 
 
 // need this otherwise the <Input> in there is not happy
@@ -65,7 +66,6 @@ const TextFormField: React.FC<TextFormFieldProps> =
   }
 
 
-const patpSchema = z.string().startsWith("~").min(4)
 const emptyStringSchema = z.literal("")
 const sessionSchema = z.object({
   title: z.string().min(1, { message: "session title can't be empty" }),
@@ -81,28 +81,42 @@ const sessionSchema = z.object({
 
 type Props = {
   onSubmit(values: z.infer<typeof sessionSchema>): void
+  session?: z.infer<typeof sessionSchema>
   min: Date;
   max: Date;
 }
 
+function buildDefaultValues(min: Date, max: Date, session?: z.infer<typeof sessionSchema>) {
+  const defaultValues: FieldValues = {
+    title: "",
+    panel: [],
+    location: "" as const,
+    about: "" as const,
+    timeRange: {
+      start: min,
+      end: max,
+    },
+  }
+
+  if (session) {
+    defaultValues.title = session.title
+    defaultValues.panel = session.panel
+    defaultValues.location = session.location
+    defaultValues.about = session.about
+    defaultValues.timeRange = session.timeRange
+  }
+
+  return defaultValues
+}
+
 // cool feature:
 // https://stackoverflow.com/questions/70939652/focus-on-next-input-with-react-form-hook
-const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
-
+const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
   const form = useForm<z.infer<typeof sessionSchema>>({
     resolver: zodResolver(sessionSchema),
     mode: "onChange",
     // this is needed to avoid the error about uncontrolled input
-    defaultValues: {
-      title: "",
-      panel: [],
-      location: "" as const,
-      about: "" as const,
-      timeRange: {
-        start: min,
-        end: max,
-      },
-    },
+    defaultValues: buildDefaultValues(min, max, session),
   })
 
   const formRef = useRef<HTMLFormElement>(null);
@@ -111,7 +125,6 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
 
-    console.log("session", values)
     props.onSubmit(values)
   }
 
@@ -314,4 +327,4 @@ const CreateSessionForm: React.FC<Props> = ({ min, max, ...props }) => {
 }
 
 
-export { CreateSessionForm }  
+export { sessionSchema, SessionForm }  

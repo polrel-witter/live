@@ -67,7 +67,6 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
       top={navBar}
       bottom={footer}
     >
-
       <div className="pt-12">
         <Outlet />
       </div>

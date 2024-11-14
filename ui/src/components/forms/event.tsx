@@ -1,6 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Control, useForm } from "react-hook-form"
+import { Control, FieldValues, useForm } from "react-hook-form"
 import { z } from "zod"
+import { useEffect, useState } from "react"
+import { TZDate, } from "@date-fns/tz"
+import { ChevronUp, Pencil, X } from "lucide-react"
 
 import {
   Form,
@@ -12,22 +15,22 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { CreateEventParams, emptyEventAsHost, EventAsHost } from "@/backend"
-import { SpinningButton } from "./spinning-button"
-import { useEffect, useState } from "react"
-import { TZDate, } from "@date-fns/tz"
-import { DateTimePicker } from "./ui/date-time-picker/date-time-picker"
-import { GenericComboBox } from "./ui/combo-box"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { Textarea } from "./ui/textarea"
-import { Card, CardContent, CardHeader } from "./ui/card"
-import { Button } from "./ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
-import { CreateSessionForm } from "./create-session-form"
-import { convertDateToTZDate, flipBoolean } from "@/lib/utils"
-import { SessionCard } from "./session-card"
-import { SlideDownAndReveal } from "./sliders"
-import { ChevronUp, X } from "lucide-react"
+import { DateTimePicker } from "@/components/ui/date-time-picker/date-time-picker"
+import { GenericComboBox } from "@/components/ui/combo-box"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+
+import { cn, convertTZDateToDate, flipBoolean } from "@/lib/utils"
+import { EventAsHost, validUTCOffsets } from "@/backend"
+import { SpinningButton } from "@/components/spinning-button"
+import { CreateSessionForm } from "@/components/forms/create-session"
+import { SlideDownAndReveal } from "@/components/sliders"
+import { SessionCard } from "@/components/cards/session"
+import { EditSessionForm } from "./edit-session"
+import { se } from "date-fns/locale"
 
 /* ON TIME
  * throughout this page we're storing time in ordinary Dates in local time; the user doesn't know
@@ -56,7 +59,6 @@ const BoldText: React.FC<{ text: string }> = ({ text }) => {
 
 const TextFormField: React.FC<TextFormFieldProps> =
   ({ formField, label, placeholder, control, textArea }) => {
-
     return (
       <FormField
         key={formField}
@@ -78,42 +80,13 @@ const TextFormField: React.FC<TextFormFieldProps> =
     )
   }
 
-const validUTCOffsets = [
-  "-00:00",
-  "-01:00",
-  "-02:00",
-  "-03:00",
-  "-04:00",
-  "-05:00",
-  "-06:00",
-  "-07:00",
-  "-08:00",
-  "-09:00",
-  "-10:00",
-  "-11:00",
-  "-12:00",
-  "+00:00",
-  "+01:00",
-  "+02:00",
-  "+03:00",
-  "+04:00",
-  "+05:00",
-  "+06:00",
-  "+07:00",
-  "+08:00",
-  "+09:00",
-  "+10:00",
-  "+11:00",
-  "+12:00",
-  "+13:00",
-  "+14:00",
-] as const
 
 const emptyStringSchema = z.literal("")
 const utcOffsetSchema = z.enum(validUTCOffsets)
 const dateTimeSchema = z.date()
 
 const sessionSchema = z.object({
+  id: z.string(),
   title: z.string(),
   // TODO: maybe validate that these are actually patps
   panel: z.array(z.string()),
@@ -155,79 +128,81 @@ const schemas = z.object({
 })
 
 type Props = {
-  createEvent: (newEvent: CreateEventParams) => Promise<boolean>
+  onSubmit: (values: z.infer<typeof schemas>) => Promise<void>
+  submitButtonText: string
+  event?: EventAsHost
 }
 
-const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
+const makeDefaultValues = (event?: EventAsHost) => {
+  const defaultValues: FieldValues = {
+    title: "",
+    location: "",
+    limit: "",
+    // todo : , 
+    // use this but replace date picker with daterange picker:
+    // https://time.openstatus.dev/
+    // https://ui.shadcn.com/docs/components/date-picker#form
+    dateRange: undefined,
+    // use combobox for this
+    // https://ui.shadcn.com/docs/components/combobox#form
+    utcOffset: undefined,
+    // limit: undefined,
+    // select for these two
+    // https://ui.shadcn.com/docs/components/select#form
+    // add FormDescription for these and possibly others as well
+    eventKind: undefined,
+    eventLatch: undefined,
+    eventGroup: undefined,
+    venueMap: "" as const,
+    eventDescription: "",
+    eventSecret: "",
+    sessions: [],
+  }
+
+  if (event) {
+    defaultValues.title = event.details.title
+    defaultValues.location = event.details.location
+    defaultValues.limit = event.limit ?? ""
+    defaultValues.dateRange = {
+      from: event.details.startDate
+        ? convertTZDateToDate(event.details.startDate, event.details.timezone)
+        : new Date(),
+      to: event.details.endDate
+        ? convertTZDateToDate(event.details.endDate, event.details.timezone)
+        : new Date()
+    }
+    defaultValues.utcOffset = event.details.timezone
+    defaultValues.eventKind = event.details.kind
+    defaultValues.eventLatch = event.details.latch
+    defaultValues.eventGroup = event.details.group
+      ? { host: event.details.group.name, name: event.details.group.ship }
+      : undefined
+
+    defaultValues.venueMap = event.details.venueMap
+    defaultValues.eventDescription = event.details.description
+    defaultValues.secret = event.secret
+    defaultValues.sessions = event.details.sessions
+      .map(({ startTime, endTime, mainSpeaker: _, ...rest }) => {
+        return {
+          start: startTime ? convertTZDateToDate(startTime, event.details.timezone) : new Date(),
+          end: endTime ? convertTZDateToDate(endTime, event.details.timezone) : new Date(),
+          ...rest
+        }
+      })
+  }
+
+  return defaultValues
+}
+
+const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
   const [spin, setSpin] = useState(false)
 
   const form = useForm<z.infer<typeof schemas>>({
     resolver: zodResolver(schemas),
     mode: "onChange",
     // this is needed to avoid the error about uncontrolled input
-    defaultValues: {
-      title: "",
-      location: "",
-      limit: "",
-      // todo : , 
-      // use this but replace date picker with daterange picker:
-      // https://time.openstatus.dev/
-      // https://ui.shadcn.com/docs/components/date-picker#form
-      dateRange: undefined,
-      // use combobox for this
-      // https://ui.shadcn.com/docs/components/combobox#form
-      utcOffset: undefined,
-      // limit: undefined,
-      // select for these two
-      // https://ui.shadcn.com/docs/components/select#form
-      // add FormDescription for these and possibly others as well
-      eventKind: undefined,
-      eventLatch: undefined,
-      eventGroup: undefined,
-      venueMap: "" as const,
-      eventDescription: "",
-      eventSecret: "",
-      sessions: [],
-    },
+    defaultValues: makeDefaultValues(event),
   })
-
-  function onSubmit(values: z.infer<typeof schemas>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-
-    console.log("values", values)
-
-    let newEvent: CreateEventParams = emptyEventAsHost;
-
-    newEvent.limit = values.limit ? values.limit : null
-    newEvent.secret = values.eventSecret
-    // created automatically
-    // blankEvent.details.id = `${ship}${values.title}`
-
-    newEvent.details.title = values.title
-    newEvent.details.location = values.location
-    newEvent.details.startDate = convertDateToTZDate(values.dateRange.from, "+00:00")
-    newEvent.details.endDate = convertDateToTZDate(values.dateRange.to, "+00:00")
-    newEvent.details.description = values.eventDescription
-    newEvent.details.timezone = values.utcOffset
-    newEvent.details.kind = values.eventKind
-    // TODO: fill this in
-    newEvent.details.group = { ship: '~sampel-palnet', name: "group" }
-    newEvent.details.latch = values.eventLatch
-    newEvent.details.venueMap = values.venueMap !== "" ? values.venueMap : ""
-    newEvent.details.sessions = values.sessions.map(({ start, end, ...rest }) => {
-      return {
-        mainSpeaker: '',
-        startTime: convertDateToTZDate(end, "+00:00"),
-        endTime: convertDateToTZDate(end, "+00:00"),
-        ...rest
-      }
-    })
-
-
-    setSpin(true)
-    createEvent(newEvent).then(() => setSpin(false))
-  }
 
   // add static fields from tlon, saying we're importing from tlon
   return (
@@ -236,7 +211,12 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
     >
       <form
         aria-description="A form containing updatable profile entries"
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit((values) => {
+          setSpin(true)
+          onSubmit(values).then(() => {
+            setSpin(false)
+          })
+        })}
         className="space-y-6"
       >
         <TextFormField
@@ -261,6 +241,7 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
               <FormLabel className="text-left">limit</FormLabel>
               <FormControl>
                 <Input
+                  type="number"
                   placeholder="limit of attendees for this event (leave empty for no limit)"
                   {...field}
                   onChange={(e) =>
@@ -467,9 +448,10 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
           name={"sessions"}
           render={({ field }) => {
             const [openSessions, setOpenSessions] = useState<Map<string, boolean>>(new Map<string, boolean>())
-            const [openDialog, setOpenDialog] = useState(false)
-            const shouldDisplaySessionDialog = form.watch("dateRange") === undefined
-
+            const [openCreateSessionDialog, setOpenCreateSessionDialog] = useState(false)
+            const [openEditSessionDialog, setOpenEditSessionDialog] = useState(false)
+            const shouldDisplayCreateSessionDialog = form.watch("dateRange") === undefined
+            const [sessionToEdit, setSessionToEdit] = useState<string>("")
             useEffect(
               () => {
                 setOpenSessions((oldSessions: Map<string, boolean>) => {
@@ -529,6 +511,17 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                                 </Button>
                                 <Button
                                   type="button"
+                                  className="p-0 w-7 h-7 rounded-full hover:bg-amber-100"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setSessionToEdit(session.title)
+                                    setOpenEditSessionDialog(flipBoolean)
+                                  }}
+                                >
+                                  <Pencil className="w-4 h-4 text-amber-400" />
+                                </Button>
+                                <Button
+                                  type="button"
                                   className="p-0 w-7 h-7 rounded-full"
                                   variant="ghost"
                                   onClick={() => {
@@ -542,7 +535,10 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                                     })
                                   }}
                                 >
-                                  <ChevronUp className="w-4 h-4 font-black" />
+                                  <ChevronUp className={cn([
+                                    "w-4 h-4 font-black transition",
+                                    { "rotate-180": openSessions.get(session.title) === true }
+                                  ])} />
                                 </Button>
                               </div>
                             </div>
@@ -561,7 +557,7 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                       </ul>
 
                       {
-                        shouldDisplaySessionDialog
+                        shouldDisplayCreateSessionDialog
                           ? <Button
                             type="button"
                             className="w-full mt-1 bg-stone-100 hover:bg-stone-100 text-primary/50"
@@ -572,15 +568,15 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                             type="button"
                             variant="ghost"
                             className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100"
-                            onClick={() => { setOpenDialog(flipBoolean) }}
+                            onClick={() => { setOpenCreateSessionDialog(flipBoolean) }}
                           >
                             + add session
                           </Button>
                       }
 
                       <Dialog
-                        open={openDialog}
-                        onOpenChange={() => { setOpenDialog(flipBoolean) }}
+                        open={openCreateSessionDialog}
+                        onOpenChange={() => { setOpenCreateSessionDialog(flipBoolean) }}
                         aria-description="a dialog to add a new session to the event"
                       >
                         <DialogContent
@@ -596,10 +592,17 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                             }) => {
                               const newFieldValue = [
                                 ...field.value,
-                                { start, end, ...rest }
+                                {
+                                  // TODO: session id quickfix, this should be
+                                  // fairly unique
+                                  id: rest.title + start.toUTCString(),
+                                  start,
+                                  end,
+                                  ...rest
+                                }
                               ]
                               form.setValue("sessions", newFieldValue)
-                              setOpenDialog(flipBoolean)
+                              setOpenCreateSessionDialog(flipBoolean)
                             }
                             }
 
@@ -610,6 +613,70 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
                         </DialogContent>
                       </Dialog>
 
+                      {
+                        (() => {
+                          const _session = field.value.find((session) => {
+                            return session.title === sessionToEdit
+                          })
+
+                          if (!_session) { return "" }
+
+                          const session = {
+                            title: _session.title,
+                            about: _session.about ?? "",
+                            location: _session.location ?? "",
+                            timeRange: {
+                              start: _session.start,
+                              end: _session.end,
+                            },
+                            panel: _session.panel,
+                          }
+
+                          return (
+                            <Dialog
+                              open={openEditSessionDialog}
+                              onOpenChange={() => { setOpenEditSessionDialog(flipBoolean) }}
+                              aria-description="a dialog to edit a session"
+                            >
+                              <DialogContent
+                                aria-description="contains event fields and a form to instantiate them"
+                              >
+                                <DialogHeader>
+                                  <DialogTitle>edit session</DialogTitle>
+                                </DialogHeader>
+                                {/*
+                              */}
+                                <EditSessionForm
+                                  session={session}
+                                  onSubmit={({
+                                    timeRange: { start, end },
+                                    ...rest
+                                  }) => {
+                                    const newFieldValue = [
+                                      ...field.value.filter(session => session.title === rest.title),
+                                      {
+                                        // TODO: session id quickfix, this should be
+                                        // fairly unique
+                                        id: rest.title + start.toUTCString(),
+                                        start,
+                                        end,
+                                        ...rest
+                                      }
+                                    ]
+                                    form.setValue("sessions", newFieldValue)
+                                    setOpenCreateSessionDialog(flipBoolean)
+                                  }
+                                  }
+
+                                  min={form.watch("dateRange.from")}
+                                  max={form.watch("dateRange.to")}
+
+                                />
+                              </DialogContent>
+                            </Dialog>
+                          )
+                        })()
+                      }
                     </CardContent>
                   </Card>
                 </FormControl>
@@ -623,10 +690,10 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
         <div className="pt-4 md:pt-8 w-full flex justify-center">
           <SpinningButton
             spin={spin}
-            onClick={() => { console.log(form.formState) }}
+            onClick={() => { }}
             type="submit"
             className="p-2 w-24 h-auto">
-            Create
+            {submitButtonText}
           </SpinningButton>
         </div>
       </form>
@@ -634,4 +701,4 @@ const CreateEventForm: React.FC<Props> = ({ createEvent }) => {
   )
 }
 
-export default CreateEventForm;
+export { EventForm };

@@ -1,8 +1,9 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { TZDate, tzOffset } from "@date-fns/tz"
-import { add, format, isBefore, sub } from "date-fns"
+import { add, format, isBefore, isEqual, sub } from "date-fns"
 import { off } from "process"
+import { da } from "date-fns/locale"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -57,6 +58,7 @@ export function newTZDateInTimeZoneFromUnix(seconds: number, timezoneString: str
   return _newTZDateInTimeZone(new TZDate(seconds * 1000, "+00:00"), timezoneString)
 }
 
+// TODO: maybe rename this // add better documentation
 // normalizes date from local time to UTC
 export function convertDateToTZDate(date: Date, destinationTz: string): TZDate {
 
@@ -70,6 +72,35 @@ export function convertDateToTZDate(date: Date, destinationTz: string): TZDate {
   )
 
   return _newTZDateInTimeZone(res, destinationTz)
+}
+
+// this function returns a new Date object maintaining the same time as the
+// TZDate object passed in
+// this is the inverse of the above function
+export function convertTZDateToDate(date: TZDate, timezoneString: string): Date {
+
+  const offset = tzOffset(timezoneString, date)
+
+  const dateTimeUTC = add<TZDate, TZDate>(
+    new TZDate(date, timezoneString),
+    { minutes: offset }
+  )
+
+  const localTimeOffset = new Date().getTimezoneOffset()
+
+  const TZDateInLocal = add<TZDate, TZDate>(
+    dateTimeUTC,
+    { minutes: localTimeOffset },
+  )
+
+  return new Date(TZDateInLocal.valueOf())
+}
+
+export function nullableTZDatesEqual(d1: TZDate | null, d2: TZDate | null) {
+  if (d1 === null && d2 !== null) { return false }
+  if (d1 !== null && d2 === null) { return false }
+  if (d1 !== null && d2 !== null) { return isEqual(d1, d2) }
+  return true
 }
 
 //@ creates an array of all the days in the time range [startDate, endDate]

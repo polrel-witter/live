@@ -1,4 +1,5 @@
 import "@urbit/sigil-js"
+
 import { Config, sigil as sigilFn } from "@urbit/sigil-js"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn, isComet, isMoon } from "@/lib/utils"
@@ -103,7 +104,6 @@ const ProfilePicture: React.FC<Props> = ({
   const sp = getSizeParams(size)
 
   return (
-
     <Avatar className={cn([sp.wh, className])} {...restProps}>
       {(avatarUrl
         ? <AvatarImage src={avatarUrl} />
@@ -121,4 +121,4 @@ const ProfilePicture: React.FC<Props> = ({
   )
 }
 
-export default ProfilePicture;
+export { ProfilePicture };

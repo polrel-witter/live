@@ -80,7 +80,7 @@ const ConnectionStatusBar: React.FC<{ status?: ConnectionStatus }> = ({ status }
           <div className="flex items-center justify-center mt-[1px] md:mt-[2px]">
             <ConnectionDot status={status} />
           </div>
-          <p className="ml-2 text-sm md:text-xs">{getTextFromStatus(status)}</p>
+          <p className="w-20 ml-2 text-sm md:text-xs">{getTextFromStatus(status)}</p>
         </div>
       }
     </div>

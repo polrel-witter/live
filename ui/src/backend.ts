@@ -1,12 +1,50 @@
 import Urbit from "@urbit/http-api";
 
-import { sub } from "date-fns";
+import { isEqual, sub } from "date-fns";
 import { TZDate, tzOffset } from "@date-fns/tz";
 
 import { z, ZodError } from "zod" // this is an object validation library
-import { PathParam } from "react-router-dom";
+import { type } from "os";
+import { convertDateToTZDate, newTZDateInTimeZoneFromUnix, nullableTZDatesEqual } from "./lib/utils";
 
-interface EventId { ship: string, name: string };
+// Patp types and utilities
+
+type PatpWithoutSig = string
+type Patp = `~${PatpWithoutSig}`
+
+function isPatp(s: string): s is Patp {
+  return s.charAt(0) === '~' && s.length >= 4
+}
+
+function stripSig(patp: Patp): PatpWithoutSig {
+  return patp.slice(0, 1)
+}
+
+function addSig(patp: PatpWithoutSig): Patp {
+  return `~${patp}`
+}
+
+function isGalaxy(patp: Patp): boolean {
+  return patp.length === 4
+}
+
+function isStar(patp: Patp): boolean {
+  return patp.length === 7
+}
+
+function isPlanet(patp: Patp): boolean {
+  return patp.length === 14
+}
+
+function isMoon(patp: Patp): boolean {
+  return patp.length > 14 && patp.length < 29
+}
+
+function isComet(patp: Patp): boolean {
+  return patp.length > 29
+}
+
+interface EventId { ship: Patp, name: string };
 
 function eventIdsEqual(id1: EventId, id2: EventId): boolean {
   return id1.ship === id2.ship && id1.name === id2.name
@@ -37,6 +75,52 @@ interface Backend {
 
   // live - poke %create
   createEvent(evt: CreateEventParams): Promise<boolean>
+
+  // live - poke %info %title
+  editEventDetailsTitle(id: EventId, value: EventDetails["title"]): Promise<void>
+
+  // live - poke %info %about
+  editEventDetailsDescription(id: EventId, value: EventDetails["description"]): Promise<void>
+
+  // live - poke %info %moment
+  editEventDetailsMoment(
+    id: EventId,
+    start: EventDetails["startDate"],
+    end: EventDetails["endDate"]
+  ): Promise<void>
+
+  // live - poke %info %timezone
+  editEventDetailsTimezone(id: EventId, value: EventDetails["timezone"]): Promise<void>
+
+  // live - poke %info %location
+  editEventDetailsLocation(id: EventId, value: EventDetails["location"]): Promise<void>
+
+  // live - poke %info %venue-map
+  editEventDetailsVenueMap(id: EventId, value: EventDetails["venueMap"]): Promise<void>
+
+  // live - poke %info %group
+  editEventDetailsGroup(id: EventId, value: EventDetails["group"]): Promise<void>
+
+  // live - poke %info %kind
+  editEventDetailsKind(id: EventId, value: EventDetails["kind"]): Promise<void>
+
+  // live - poke %info %latch
+  editEventDetailsLatch(id: EventId, value: EventDetails["latch"]): Promise<void>
+
+  // live - poke %info %create-session
+  addEventSession(id: EventId, value: Session): Promise<void>
+
+  // live - poke %info %edit-session
+  editEventSession(id: EventId, sessionId: string, value: Session): Promise<void>
+
+  // live - poke %info %delete-session
+  removeEventSession(id: EventId, sessionId: string): Promise<void>
+
+  // live - poke %secret
+  editEventSecret(id: EventId, secret: EventAsHost["secret"]): Promise<void>
+
+  // live - poke %limit
+  editEventLimit(id: EventId, limit: EventAsHost["limit"]): Promise<void>
 
   // remove, this is included in an event record
   // getSchedule(id: EventId): Promise<Session[]>
@@ -78,43 +162,6 @@ interface Backend {
 
   // unsubscribe
   unsubscribeFromEvent(id: number): Promise<void>
-}
-
-// Patp types and utilities
-
-type PatpWithoutSig = string
-type Patp = `~${PatpWithoutSig}`
-
-function isPatp(s: string): s is Patp {
-  return s.charAt(0) === '~' && s.length >= 4
-}
-
-function stripSig(patp: Patp): PatpWithoutSig {
-  return patp.slice(0, 1)
-}
-
-function addSig(patp: PatpWithoutSig): Patp {
-  return `~${patp}`
-}
-
-function isGalaxy(patp: Patp): boolean {
-  return patp.length === 4
-}
-
-function isStar(patp: Patp): boolean {
-  return patp.length === 7
-}
-
-function isPlanet(patp: Patp): boolean {
-  return patp.length === 14
-}
-
-function isMoon(patp: Patp): boolean {
-  return patp.length > 14 && patp.length < 29
-}
-
-function isComet(patp: Patp): boolean {
-  return patp.length > 29
 }
 
 type MatchStatus = "unmatched" | "sent-request" | "matched";
@@ -174,6 +221,7 @@ const emptyProfile: Profile = {
 }
 
 type Session = {
+  id: string;
   title: string;
   // backend doesn't send this yet
   mainSpeaker: string;
@@ -184,18 +232,97 @@ type Session = {
   endTime: TZDate | null;
 }
 
+function panelsEqual(pA: string[] | null, pB: string[] | null) {
+  if (pA === null && pB !== null) { return false }
+  if (pA !== null && pB === null) { return false }
+  if (pA !== null && pB !== null) { return pA.join("") === pB.join("") }
+
+  return true
+
+}
+
+function sessionsEqual(a: Session, b: Session): boolean {
+  if (a.title !== b.title) { return false }
+  if (!panelsEqual(a.panel, b.panel)) { return false }
+  if (a.location !== b.location) { return false }
+  if (a.about !== b.about) { return false }
+  if (!nullableTZDatesEqual(a.startTime, b.startTime)) { return false }
+  if (!nullableTZDatesEqual(a.endTime, b.endTime)) { return false }
+
+  return true
+}
+
+const validUTCOffsets = [
+  "-00:00",
+  "-01:00",
+  "-02:00",
+  "-03:00",
+  "-04:00",
+  "-05:00",
+  "-06:00",
+  "-07:00",
+  "-08:00",
+  "-09:00",
+  "-10:00",
+  "-11:00",
+  "-12:00",
+  "+00:00",
+  "+01:00",
+  "+02:00",
+  "+03:00",
+  "+04:00",
+  "+05:00",
+  "+06:00",
+  "+07:00",
+  "+08:00",
+  "+09:00",
+  "+10:00",
+  "+11:00",
+  "+12:00",
+  "+13:00",
+  "+14:00",
+] as const
+
+type UTCOffset = typeof validUTCOffsets[number]
+
+// turns +14:00 into +14, but +04:00 into +4
+function stripUTCOffset(offset: UTCOffset): string {
+  if (offset.charAt(1) === "0") {
+    return offset.charAt(0) + offset.charAt(2)
+  }
+  return offset.slice(0, 3)
+}
+
+function stringToUTCOffset(str: string): UTCOffset | null {
+
+  if (str.charAt(0) !== "+" && str.charAt(0) !== "-") {
+    return null
+  }
+
+  for (const offset of validUTCOffsets) {
+    if (stripUTCOffset(offset) === str) {
+      return offset
+    }
+  }
+
+  return null
+}
+
+
 type EventDetails = {
   id: EventId;
   title: string;
   location: string;
   startDate: TZDate | null;
   endDate: TZDate | null;
-  timezone: string;
+  timezone: UTCOffset;
   description: string;
   group: { ship: string, name: string } | null;
   kind: "public" | "private" | "secret";
   latch: "open" | "closed" | "over";
   venueMap: string;
+  // TODO: this might've been better stored as Record<sessionID, Session>
+  // instead of an array
   sessions: Session[]
 }
 
@@ -214,7 +341,7 @@ type EventAsGuest = {
 
 const emptyEventDetails: EventDetails = {
   id: {
-    ship: "",
+    ship: "~",
     name: "",
   },
   title: "",
@@ -222,7 +349,7 @@ const emptyEventDetails: EventDetails = {
   startDate: new TZDate(0),
   endDate: new TZDate(0),
   description: "",
-  timezone: "",
+  timezone: "-00:00",
   kind: "public",
   group: null,
   latch: "open",
@@ -322,10 +449,23 @@ const backendInfo1Schema = z.object({
   ["venue-map"]: z.string().nullable(),
 })
 
+// const PatpSchema = z.custom<Patp>((val) => {
+//   return isPatp(val)
+//     // TODO: maybe add regex
+//     ? true
+//     : false;
+// });
+
+
+const PatpSchema = z
+  .string()
+  .startsWith("~")
+  .refine((s: string): s is Patp => isPatp(s), {
+    message: "string is not patp"
+  });
 
 function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof backendInfo1Schema>): EventDetails {
   const {
-    // TODO: if these are null, display 'TBD'
     moment: { start, end },
     about,
     location: _location,
@@ -336,34 +476,27 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
     ...infoRest
   } = info1
 
+  // true is + false is -
   const timezoneSign = timezone.p ? "+" : "-"
-  const timezoneNumber = timezone.q > 9 ? `${timezone.q}` : `0${timezone.q}`
+  const parsedTimezone = stringToUTCOffset(`${timezoneSign}${timezone.q}`)
 
-  const timezoneString = `${timezoneSign}${timezoneNumber}:00`
+  let timezoneString: UTCOffset = "+00:00"
+
+  if (parsedTimezone) {
+    timezoneString = parsedTimezone
+  } else {
+    console.error("couldn't parse timezone:", timezone)
+  }
 
   const newTZDateOrNull = (tsOrNull: number | null): TZDate | null => {
     if (!tsOrNull) { return null }
 
-    // unix timestamp is always assumed to be in UTC, if we add a timezone
-    // in the TZDate construtor it shifts the Date by the timezone
-    const dateInUTC = new TZDate(tsOrNull * 1000, "+00:00")
-
-    // so we first get set the TZDate to UTC, then we figure out the offset
-    // from that date to our event timezone, then we make a new TZDate with
-    // the timezone set, shifted negatively by the offset we got in the
-    // previous step
-    const offset = tzOffset(timezoneString, dateInUTC)
-
-    const res = sub<TZDate, TZDate>(
-      new TZDate(dateInUTC, timezoneString),
-      { minutes: offset }
-    )
-
-    return res
+    return newTZDateInTimeZoneFromUnix(tsOrNull, timezoneString)
   }
 
-  const sessions = Object.values(_sessions).map(({ session }): Session => {
+  const sessions = Object.entries(_sessions).map(([sessionId, { session }]): Session => {
     return {
+      id: sessionId,
       title: session.title,
       mainSpeaker: "",
       location: session.location,
@@ -422,14 +555,17 @@ function backendRecordToEventAsGuest(eventId: EventId, record: z.infer<typeof ba
 
 const allRecordsSchema = z.object({
   allRecords: z.record(
-    z.string(), // this is going to be `${hostShip}/${eventName}`
+    PatpSchema, // this is going to be `${hostShip}/${eventName}`
     z.record(
       z.string(), // this is `${guestShip}`
       z.object({ record: backendRecordSchema })
     ))
 }).transform((response) => response.allRecords)
 
-function getRecords(api: Urbit, ship: string): () => Promise<EventAsGuest[]> {
+// ship here was needed to verify that there was a record for our ship
+// but i removed that validation
+// we're trusting the backend for now
+function getRecords(api: Urbit, ship: Patp): () => Promise<EventAsGuest[]> {
   return async () => {
     const allRecords = await api.scry({
       app: "live",
@@ -442,38 +578,42 @@ function getRecords(api: Urbit, ship: string): () => Promise<EventAsGuest[]> {
       return Promise.resolve([])
     }
 
-    // console.log("parsed records: ", allRecords)
 
-    const allRecordsToEvents = (records: z.infer<typeof allRecordsSchema>): EventAsGuest[] => {
+    let records: EventAsGuest[] = []
 
-      const allRecords = Object.
-        entries(records).
-        filter(([idString,]) => {
-          const [hostShip,] = idString.split("/")
-          return hostShip !== "~" + ship
-        }).
-        map(([idString, records]): EventAsGuest => {
-          const [hostShip, eventName] = idString.split("/")
-          const eventId = { ship: hostShip, name: eventName }
+    const entries = Object
+      .entries(allRecords)
+    // .filter(([,records]) => {
+    //   if (records) {
 
-          if (Object.keys(records).length < 1) {
-            console.error("records has less than one key: ", records)
-            return emptyEventAsGuest
-          }
+    //   }
+    //   const [hostShip,] = idString.split("/")
+    //   return hostShip !== "~" + ship
+    // })
 
-          if (Object.keys(records).length > 1) {
-            console.error("records has more than one key: ", records)
-            return emptyEventAsGuest
-          }
+    // WARN: patp : casting to Patp here because schema validates it above; it's fine
+    for (const [idString, recordObj] of entries) {
+      if (recordObj) {
+        const [hostShip, eventName] = idString.split("/")
+        const eventId = { ship: hostShip as Patp, name: eventName }
 
-          return backendRecordToEventAsGuest(eventId, Object.values(records)[0].record)
-        })
-      // console.log(allRecords)
-      return allRecords
+        if (Object.keys(recordObj).length < 1) {
+          console.error("records has less than one key: ", records)
+          records.push(emptyEventAsGuest)
+          break
+        }
+
+        if (Object.keys(recordObj).length > 1) {
+          console.error("records has more than one key: ", records)
+          records.push(emptyEventAsGuest)
+          break
+        }
+
+        records.push(backendRecordToEventAsGuest(eventId, Object.values(recordObj)[0].record))
+      }
     }
 
-
-    return allRecordsToEvents(allRecords)
+    return records
   }
 }
 
@@ -518,7 +658,7 @@ function backendEventToEventAsHost(eventId: EventId, event: z.infer<typeof backe
 
 const allEventsSchema = z.object({
   allEvents: z.record(
-    z.string(), // this is going to be `${hostShip}/${eventName}`
+    PatpSchema, // this is going to be `${hostShip}/${eventName}`
     z.object({ event: backendEventSchema }))
 }).transform(({ allEvents }) => allEvents)
 
@@ -536,27 +676,20 @@ function getEvents(api: Urbit): () => Promise<EventAsHost[]> {
       return Promise.resolve([])
     }
 
-    const allBackendEventsToEvents = (events: z.infer<typeof allEventsSchema>): EventAsHost[] => {
 
-      const allRecords = Object.
-        entries(events).
-        // filter(([idString,]) => {
-        //   console.log(idString, ship)
-        //   const [hostShip,] = idString.split("/")
-        //   return hostShip !== "~" + ship
-        // }).
-        map(([idString, { event }]): EventAsHost => {
-          const [hostShip, eventName] = idString.split("/")
-          const eventId = { ship: hostShip, name: eventName }
+    let events: EventAsHost[] = []
 
-          return backendEventToEventAsHost(eventId, event)
-        })
-      // console.log(allRecords)
-      return allRecords
+    // WARN: patp : casting to Patp here because schema validates it above; it's fine
+    for (const [idString, evtObj] of Object.entries(allEvents)) {
+      if (evtObj) {
+        const [hostShip, eventName] = idString.split("/")
+        const eventId = { ship: hostShip as Patp, name: eventName }
+
+        events.push(backendEventToEventAsHost(eventId, evtObj.event))
+      }
     }
 
-
-    return allBackendEventsToEvents(allEvents)
+    return events
   }
 }
 
@@ -599,59 +732,257 @@ function register(_api: Urbit): (id: EventId) => Promise<boolean> {
   }
 }
 
-function createEvent(_api: Urbit, ship: string): (newEvent: CreateEventParams) => Promise<boolean> {
+// const tzDateToUnix = (d: TZDate | null) => d ? d.valueOf() : 0
+
+const tzDateToUnixMilliSeconds = (d: TZDate | null) => d ? d.valueOf() : 0
+
+const prepareSession = (session: Session) => {
+  return {
+    title: session.title,
+    panel: session.panel,
+    location: session.location,
+    about: session.about,
+    moment: {
+      start: tzDateToUnixMilliSeconds(session.startTime),
+      end: tzDateToUnixMilliSeconds(session.endTime)
+    }
+  }
+}
+
+function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => Promise<boolean> {
   return async ({ secret, limit, details }: CreateEventParams) => {
     const id: EventId = { ship, name: details.title }
     let success = false;
-    const tzDateToUnix = (d: TZDate | null) => d ? d.valueOf() : 0
-    const _poke = await _api.poke({
-      app: "live",
-      mark: "live-operation",
-      json: {
-        "id": { "ship": `~${id.ship}`, "name": id.name.replaceAll(" ", "-") },
-        // the value for "register" should be null when used as a guest;
-        // a host might specify a ship name there to register/unregister
-        // guests from his events
-        "action": {
-          "create": {
-            secret: secret,
-            limit: limit,
-            info: {
-              title: details.title,
-              about: details.description,
-              moment: {
-                start: tzDateToUnix(details.startDate),
-                end: tzDateToUnix(details.endDate)
-              },
-              // TODO: properly handle timezone
-              timezone: { p: true, q: 1 },
-              location: details.location,
-              'venue-map': details.venueMap,
-              group: details.group,
-              kind: details.kind,
-              latch: details.latch,
-              sessions: details.sessions.map(session => {
-                return {
-                  title: session.title,
-                  panel: session.panel,
-                  location: session.location,
-                  about: session.about,
-                  moment: {
-                    start: tzDateToUnix(session.startTime),
-                    end: tzDateToUnix(session.endTime)
-                  }
-                }
-              })
-            }
+
+    const timezoneStripped = stripUTCOffset(details.timezone)
+    const sign = timezoneStripped.charAt(0) === "+" ? true : false
+    const number = timezoneStripped.slice(1)
+    const groupObj = details.group
+      ? { ship: details.group.ship, term: details.group.name }
+      : null
+
+    const payload = {
+      "id": { "ship": id.ship, "name": id.name.replaceAll(" ", "-") },
+      // the value for "register" should be null when used as a guest;
+      // a host might specify a ship name there to register/unregister
+      // guests from his events
+      "action": {
+        "create": {
+          secret: secret,
+          limit: limit,
+          info: {
+            title: details.title,
+            about: details.description,
+            moment: {
+              start: tzDateToUnixMilliSeconds(details.startDate),
+              end: tzDateToUnixMilliSeconds(details.endDate)
+            },
+            timezone: { p: sign, q: number },
+            location: details.location,
+            'venue-map': details.venueMap,
+            group: groupObj,
+            kind: details.kind,
+            latch: details.latch,
+            sessions: details.sessions.map(prepareSession)
           }
         }
-      },
+      }
+    }
+
+    const _poke = await api.poke({
+      app: "live",
+      mark: "live-operation",
+      json: payload,
       onSuccess: () => { success = true },
       onError: (err) => {
         console.error("error during create poke: ", err)
       }
     })
     return Promise.resolve(success)
+  }
+}
+
+
+type editableEventDetailsFields =
+  "title" |
+  "about" |
+  "moment" |
+  "timezone" |
+  "location" |
+  "venue-map" |
+  "group" |
+  "kind" |
+  "latch" |
+  "create-session" |
+  "edit-session" |
+  "delete-session"
+
+function editEventDetails(api: Urbit): (
+  id: EventId,
+  field: editableEventDetailsFields,
+  value: any,
+) => Promise<void> {
+  return async (
+    id: EventId,
+    field: editableEventDetailsFields,
+    value: any,
+  ) => {
+
+    const _poke = await api.poke({
+      app: "live",
+      mark: "live-operation",
+      json: {
+        "id": { "ship": id.ship, "name": id.name },
+        "action": {
+          "info": {
+            [field]: value
+          }
+        }
+      },
+      onSuccess: () => { },
+      onError: (err) => {
+        console.error(`error during edit event poke (field: ${field}): `, err)
+      }
+    })
+
+    return Promise.resolve()
+  }
+}
+
+function editEventDetailsTitle(api: Urbit): (id: EventId, value: EventDetails["title"]) => Promise<void> {
+  return async (id: EventId, value: EventDetails["description"]) => {
+    return editEventDetails(api)(id, "title", value)
+  }
+}
+
+function editEventDetailsDescription(api: Urbit): (id: EventId, value: EventDetails["description"]) => Promise<void> {
+  return async (id: EventId, value: EventDetails["description"]) => {
+    return editEventDetails(api)(id, "about", value)
+  }
+}
+
+function editEventDetailsMoment(api: Urbit): (
+  id: EventId,
+  start: EventDetails["startDate"],
+  end: EventDetails["startDate"]
+) => Promise<void> {
+  return async (
+    id: EventId,
+    start: EventDetails["startDate"],
+    end: EventDetails["startDate"]
+  ) => {
+    const payload = {
+      start: tzDateToUnixMilliSeconds(start),
+      end: tzDateToUnixMilliSeconds(end)
+    }
+    console.log(start, end)
+    return editEventDetails(api)(id, "moment", payload)
+  }
+}
+
+function editEventDetailsTimezone(api: Urbit): (id: EventId, value: EventDetails["timezone"]) => Promise<void> {
+  return async (id: EventId, value: EventDetails["timezone"]) => {
+    const stripped = stripUTCOffset(value)
+    const payload = {
+      p: stripped.charAt(0) === "+" ? true : false,
+      q: Number.parseInt(stripped.slice(1))
+    }
+    return editEventDetails(api)(id, "timezone", payload)
+  }
+}
+
+function editEventDetailsLocation(api: Urbit): (id: EventId, value: EventDetails["location"]) => Promise<void> {
+  return async (id: EventId, value: EventDetails["location"]) => {
+    return editEventDetails(api)(id, "location", value)
+  }
+}
+
+function editEventDetailsVenueMap(api: Urbit): (id: EventId, value: EventDetails["venueMap"]) => Promise<void> {
+  return async (id: EventId, value: EventDetails["venueMap"]) => {
+    return editEventDetails(api)(id, "venue-map", value)
+  }
+}
+
+function editEventDetailsGroup(api: Urbit): (id: EventId, value: EventDetails["group"]) => Promise<void> {
+  return async (id: EventId, value: EventDetails["group"]) => {
+    const payload = value
+      ? { ship: value.ship, term: value.name }
+      : null
+    return editEventDetails(api)(id, "group", payload)
+  }
+}
+
+function editEventDetailsKind(api: Urbit): (id: EventId, value: EventDetails["kind"]) => Promise<void> {
+  return async (id: EventId, value: EventDetails["kind"]) => {
+    return editEventDetails(api)(id, "kind", value)
+  }
+}
+
+function editEventDetailsLatch(api: Urbit): (id: EventId, value: EventDetails["latch"]) => Promise<void> {
+  return async (id: EventId, value: EventDetails["latch"]) => {
+    return editEventDetails(api)(id, "latch", value)
+  }
+}
+
+
+function addEventSession(api: Urbit): (id: EventId, value: Session) => Promise<void> {
+  return async (id: EventId, value: Session) => {
+    return editEventDetails(api)(id, "create-session", prepareSession(value))
+  }
+}
+
+function editEventSession(api: Urbit): (id: EventId, sessionId: string, value: Session) => Promise<void> {
+  return async (id: EventId, sessionId: string, value: Session) => {
+    return editEventDetails(api)(id, "edit-session", { [sessionId]: prepareSession(value) })
+  }
+}
+
+function removeEventSession(api: Urbit): (id: EventId, sessionId: string) => Promise<void> {
+  return async (id: EventId, sessionId: string) => {
+    return editEventDetails(api)(id, "delete-session", sessionId)
+  }
+}
+
+
+function editEventSecret(api: Urbit): (id: EventId, secret: EventAsHost["secret"]) => Promise<void> {
+  return async (id: EventId, secret: EventAsHost["secret"]) => {
+    const _poke = await api.poke({
+      app: "live",
+      mark: "live-operation",
+      json: {
+        "id": { "ship": id.ship, "name": id.name },
+        "action": {
+          "secret": secret
+        }
+      },
+      onSuccess: () => { },
+      onError: (err) => {
+        console.error("error during create poke: ", err)
+      }
+    })
+
+    return Promise.resolve()
+  }
+}
+
+function editEventLimit(api: Urbit): (id: EventId, limit: EventAsHost["limit"]) => Promise<void> {
+  return async (id: EventId, limit: EventAsHost["limit"]) => {
+    const _poke = await api.poke({
+      app: "live",
+      mark: "live-operation",
+      json: {
+        "id": { "ship": id.ship, "name": id.name },
+        "action": {
+          "limit": limit
+        }
+      },
+      onSuccess: () => { },
+      onError: (err) => {
+        console.error("error during create poke: ", err)
+      }
+    })
+
+    return Promise.resolve()
   }
 }
 
@@ -679,11 +1010,16 @@ function unregister(_api: Urbit): (id: EventId) => Promise<boolean> {
 
 const liveUpdateEventSchema = z.object({
   id: z.object({
-    name: z.string(),
+    name: PatpSchema,
     ship: z.string(),
   }),
   ship: z.string(),
   record: backendRecordSchema,
+}).transform((e) => {
+  return {
+    ...e,
+    id: { ship: e.id.ship as Patp, name: e.id.ship }
+  }
 })
 
 function subscribeToLiveEvents(_api: Urbit): (handlers: {
@@ -697,6 +1033,7 @@ function subscribeToLiveEvents(_api: Urbit): (handlers: {
       path: "/updates",
       event: (evt) => {
         const updateEvent = liveUpdateEventSchema.parse(evt)
+
         onEvent({
           event: backendRecordToEventAsGuest(updateEvent.id, updateEvent.record),
           ship: updateEvent.ship
@@ -707,14 +1044,6 @@ function subscribeToLiveEvents(_api: Urbit): (handlers: {
     })
   }
 }
-
-const PatpSchema = z.custom<Patp>((val) => {
-  return isPatp(val)
-    // TODO: maybe add regex
-    ? true
-    : false;
-});
-
 
 const profileEntryObjSchema = z.object({
   term: z.string(),
@@ -1015,14 +1344,30 @@ function subscribeToMatcherEvents(_api: Urbit): (handlers: {
   }
 }
 
-function newBackend(api: Urbit, ship: string): Backend {
+function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
   // remeber that the `ship` parameter is without the `~`
   return {
-    createEvent: createEvent(api, ship),
+    createEvent: createEvent(api, addSig(ship)),
+
+    editEventDetailsTitle: editEventDetailsTitle(api),
+    editEventDetailsDescription: editEventDetailsDescription(api),
+    editEventDetailsMoment: editEventDetailsMoment(api),
+    editEventDetailsTimezone: editEventDetailsTimezone(api),
+    editEventDetailsLocation: editEventDetailsLocation(api),
+    editEventDetailsVenueMap: editEventDetailsVenueMap(api),
+    editEventDetailsGroup: editEventDetailsGroup(api),
+    editEventDetailsKind: editEventDetailsKind(api),
+    editEventDetailsLatch: editEventDetailsLatch(api),
+    editEventSecret: editEventSecret(api),
+    editEventLimit: editEventLimit(api),
+    addEventSession: addEventSession(api),
+    editEventSession: editEventSession(api),
+    removeEventSession: removeEventSession(api),
+
     register: register(api),
     unregister: unregister(api),
     // getSchedule: getSchedule(api),
-    getRecords: getRecords(api, ship),
+    getRecords: getRecords(api, addSig(ship)),
     getRecord: getRecord(api, ship),
     getEvents: getEvents(api),
     getEvent: getEvent(api),
@@ -1044,6 +1389,13 @@ function newBackend(api: Urbit, ship: string): Backend {
 
 export { emptyEventAsGuest, emptyProfile, emptyEventAsHost, newBackend, eventIdsEqual, diffProfiles }
 
-export { stripSig, addSig }
+export { validUTCOffsets, stripUTCOffset, stringToUTCOffset }
+export type { UTCOffset }
+
+export { stripSig, addSig, isComet, isMoon, isPlanet, isStar, isGalaxy }
 export type { Patp, PatpWithoutSig }
-export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, CreateEventParams, EventDetails, Session, Attendee, Profile, LiveUpdateEvent, Backend }
+
+export { sessionsEqual }
+export type { Session }
+
+export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, CreateEventParams, EventDetails, Attendee, Profile, LiveUpdateEvent, Backend }

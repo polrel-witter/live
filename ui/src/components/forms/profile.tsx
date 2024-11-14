@@ -1,20 +1,19 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
+import { useState } from "react"
 
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Backend, Profile } from "@/backend"
-import { SpinningButton } from "./spinning-button"
-import { useState } from "react"
+import { Profile } from "@/backend"
+import { SpinningButton } from "@/components/spinning-button"
 
 
 const emptyStringSchema = z.literal("")
@@ -92,7 +91,6 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfile }) => {
     editProfile(values).then(() => setSpin(false))
   }
 
-  type _editableFields = Exclude<keyof Profile, "patp" | "nickname" | "avatar" | "bio">
   const fields: [string, string][] = Object
     .entries(schemasAndPlaceHoldersForFields)
     .map(([key, val]) => [key, val.placeholder])
