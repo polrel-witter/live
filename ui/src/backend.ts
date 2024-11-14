@@ -466,7 +466,6 @@ const PatpSchema = z
 
 function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof backendInfo1Schema>): EventDetails {
   const {
-    // TODO: if these are null, display 'TBD'
     moment: { start, end },
     about,
     location: _location,
@@ -735,7 +734,7 @@ function register(_api: Urbit): (id: EventId) => Promise<boolean> {
 
 // const tzDateToUnix = (d: TZDate | null) => d ? d.valueOf() : 0
 
-const tzDateToUnixSeconds = (d: TZDate | null) => d ? d.valueOf() / 1000 : 0
+const tzDateToUnixMilliSeconds = (d: TZDate | null) => d ? d.valueOf() : 0
 
 const prepareSession = (session: Session) => {
   return {
@@ -744,8 +743,8 @@ const prepareSession = (session: Session) => {
     location: session.location,
     about: session.about,
     moment: {
-      start: tzDateToUnixSeconds(session.startTime),
-      end: tzDateToUnixSeconds(session.endTime)
+      start: tzDateToUnixMilliSeconds(session.startTime),
+      end: tzDateToUnixMilliSeconds(session.endTime)
     }
   }
 }
@@ -754,6 +753,13 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
   return async ({ secret, limit, details }: CreateEventParams) => {
     const id: EventId = { ship, name: details.title }
     let success = false;
+
+    const timezoneStripped = stripUTCOffset(details.timezone)
+    const sign = timezoneStripped.charAt(0) === "+" ? true : false
+    const number = timezoneStripped.slice(1)
+    const groupObj = details.group
+      ? { ship: details.group.ship, term: details.group.name }
+      : null
 
     const payload = {
       "id": { "ship": id.ship, "name": id.name.replaceAll(" ", "-") },
@@ -768,14 +774,13 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
             title: details.title,
             about: details.description,
             moment: {
-              start: tzDateToUnixSeconds(details.startDate),
-              end: tzDateToUnixSeconds(details.endDate)
+              start: tzDateToUnixMilliSeconds(details.startDate),
+              end: tzDateToUnixMilliSeconds(details.endDate)
             },
-            // TODO: properly handle timezone
-            timezone: { p: true, q: 1 },
+            timezone: { p: sign, q: number },
             location: details.location,
             'venue-map': details.venueMap,
-            group: details.group,
+            group: groupObj,
             kind: details.kind,
             latch: details.latch,
             sessions: details.sessions.map(prepareSession)
@@ -866,10 +871,12 @@ function editEventDetailsMoment(api: Urbit): (
     start: EventDetails["startDate"],
     end: EventDetails["startDate"]
   ) => {
-    return editEventDetails(api)(id, "moment", {
-      start: tzDateToUnixSeconds(start),
-      end: tzDateToUnixSeconds(end)
-    })
+    const payload = {
+      start: tzDateToUnixMilliSeconds(start),
+      end: tzDateToUnixMilliSeconds(end)
+    }
+    console.log(start, end)
+    return editEventDetails(api)(id, "moment", payload)
   }
 }
 
@@ -898,7 +905,10 @@ function editEventDetailsVenueMap(api: Urbit): (id: EventId, value: EventDetails
 
 function editEventDetailsGroup(api: Urbit): (id: EventId, value: EventDetails["group"]) => Promise<void> {
   return async (id: EventId, value: EventDetails["group"]) => {
-    return editEventDetails(api)(id, "group", value)
+    const payload = value
+      ? { ship: value.ship, term: value.name }
+      : null
+    return editEventDetails(api)(id, "group", payload)
   }
 }
 

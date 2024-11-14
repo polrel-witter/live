@@ -1,7 +1,6 @@
 import { Backend, EventAsHost, Session, sessionsEqual } from "@/backend"
 import { EventForm } from "./event"
 import { convertDateToTZDate, formatEventDate, nullableTZDatesEqual } from "@/lib/utils"
-import { isEqual } from "date-fns"
 
 type Props = {
   event: EventAsHost
@@ -37,22 +36,23 @@ export const EditEventForm = ({ backend, event }: Props) => {
           backend.editEventDetailsTitle(eventId, values.location)
         }
 
+        // FIXME: changing dates doesn't work
         const newStartDate = convertDateToTZDate(values.dateRange.from, values.utcOffset)
-        if (!nullableTZDatesEqual(event.details.startDate, newStartDate)) {
-          backend.editEventDetailsMoment(
-            eventId,
-            newStartDate,
-            event.details.endDate
-          )
+        const newEndDate = convertDateToTZDate(values.dateRange.to, values.utcOffset)
+
+        const startDateChanged = !nullableTZDatesEqual(event.details.startDate, newStartDate)
+        const endDateChanged = !nullableTZDatesEqual(event.details.endDate, newEndDate)
+
+        if (startDateChanged && !endDateChanged) {
+          backend.editEventDetailsMoment(eventId, newStartDate, event.details.endDate)
         }
 
-        const newEndDate = convertDateToTZDate(values.dateRange.to, values.utcOffset)
-        if (!nullableTZDatesEqual(event.details.endDate, newEndDate)) {
-          backend.editEventDetailsMoment(
-            eventId,
-            event.details.startDate,
-            newEndDate
-          )
+        if (!startDateChanged && endDateChanged) {
+          backend.editEventDetailsMoment(eventId, event.details.startDate, newEndDate)
+        }
+
+        if (startDateChanged && endDateChanged) {
+          backend.editEventDetailsMoment(eventId, newStartDate, newEndDate)
         }
 
         if (event.details.description !== values.eventDescription) {
@@ -116,8 +116,9 @@ export const EditEventForm = ({ backend, event }: Props) => {
 
         // loop newSessions:
         // - if a session is in oldSession but it isn;t equal, edit
+        //   - this doesn't work
         // - if a session isn't in oldSessions, create
-        for (const newSession of newSessionsMap.values().toArray()) {
+        for (const newSession of [...newSessionsMap.values()]) {
           const oldSession = oldSessionsMap.get(newSession.id)
           if (!oldSession) {
             backend.addEventSession(eventId, newSession)

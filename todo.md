@@ -11,7 +11,7 @@ key:
     - Record list with vetting (record status change buttons)
     - Record counts by status
         - each record should just include: ship name (avatar and nickname if set), status, and status date, with an action button next to it based on what their current status is (e.g. "invite" if unregistered, "register" if requested, "unregister" if registered, etc.)
-    - Edit an event
+    + Edit an event
     - Ship inviting
         - should be able to invite more than one at a time
   - event search

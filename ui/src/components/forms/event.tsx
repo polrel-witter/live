@@ -3,7 +3,7 @@ import { Control, FieldValues, useForm } from "react-hook-form"
 import { z } from "zod"
 import { useEffect, useState } from "react"
 import { TZDate, } from "@date-fns/tz"
-import { ChevronUp, X } from "lucide-react"
+import { ChevronUp, Pencil, X } from "lucide-react"
 
 import {
   Form,
@@ -23,12 +23,14 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
-import { convertTZDateToDate, flipBoolean } from "@/lib/utils"
+import { cn, convertTZDateToDate, flipBoolean } from "@/lib/utils"
 import { EventAsHost, validUTCOffsets } from "@/backend"
 import { SpinningButton } from "@/components/spinning-button"
 import { CreateSessionForm } from "@/components/forms/create-session"
 import { SlideDownAndReveal } from "@/components/sliders"
 import { SessionCard } from "@/components/cards/session"
+import { EditSessionForm } from "./edit-session"
+import { se } from "date-fns/locale"
 
 /* ON TIME
  * throughout this page we're storing time in ordinary Dates in local time; the user doesn't know
@@ -160,7 +162,7 @@ const makeDefaultValues = (event?: EventAsHost) => {
   if (event) {
     defaultValues.title = event.details.title
     defaultValues.location = event.details.location
-    defaultValues.limit = event.limit ? event.limit : ""
+    defaultValues.limit = event.limit ?? ""
     defaultValues.dateRange = {
       from: event.details.startDate
         ? convertTZDateToDate(event.details.startDate, event.details.timezone)
@@ -239,6 +241,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
               <FormLabel className="text-left">limit</FormLabel>
               <FormControl>
                 <Input
+                  type="number"
                   placeholder="limit of attendees for this event (leave empty for no limit)"
                   {...field}
                   onChange={(e) =>
@@ -445,9 +448,10 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
           name={"sessions"}
           render={({ field }) => {
             const [openSessions, setOpenSessions] = useState<Map<string, boolean>>(new Map<string, boolean>())
-            const [openDialog, setOpenDialog] = useState(false)
-            const shouldDisplaySessionDialog = form.watch("dateRange") === undefined
-
+            const [openCreateSessionDialog, setOpenCreateSessionDialog] = useState(false)
+            const [openEditSessionDialog, setOpenEditSessionDialog] = useState(false)
+            const shouldDisplayCreateSessionDialog = form.watch("dateRange") === undefined
+            const [sessionToEdit, setSessionToEdit] = useState<string>("")
             useEffect(
               () => {
                 setOpenSessions((oldSessions: Map<string, boolean>) => {
@@ -507,6 +511,17 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                                 </Button>
                                 <Button
                                   type="button"
+                                  className="p-0 w-7 h-7 rounded-full hover:bg-amber-100"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setSessionToEdit(session.title)
+                                    setOpenEditSessionDialog(flipBoolean)
+                                  }}
+                                >
+                                  <Pencil className="w-4 h-4 text-amber-400" />
+                                </Button>
+                                <Button
+                                  type="button"
                                   className="p-0 w-7 h-7 rounded-full"
                                   variant="ghost"
                                   onClick={() => {
@@ -520,7 +535,10 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                                     })
                                   }}
                                 >
-                                  <ChevronUp className="w-4 h-4 font-black" />
+                                  <ChevronUp className={cn([
+                                    "w-4 h-4 font-black transition",
+                                    { "rotate-180": openSessions.get(session.title) === true }
+                                  ])} />
                                 </Button>
                               </div>
                             </div>
@@ -539,7 +557,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                       </ul>
 
                       {
-                        shouldDisplaySessionDialog
+                        shouldDisplayCreateSessionDialog
                           ? <Button
                             type="button"
                             className="w-full mt-1 bg-stone-100 hover:bg-stone-100 text-primary/50"
@@ -550,15 +568,15 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                             type="button"
                             variant="ghost"
                             className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100"
-                            onClick={() => { setOpenDialog(flipBoolean) }}
+                            onClick={() => { setOpenCreateSessionDialog(flipBoolean) }}
                           >
                             + add session
                           </Button>
                       }
 
                       <Dialog
-                        open={openDialog}
-                        onOpenChange={() => { setOpenDialog(flipBoolean) }}
+                        open={openCreateSessionDialog}
+                        onOpenChange={() => { setOpenCreateSessionDialog(flipBoolean) }}
                         aria-description="a dialog to add a new session to the event"
                       >
                         <DialogContent
@@ -584,7 +602,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                                 }
                               ]
                               form.setValue("sessions", newFieldValue)
-                              setOpenDialog(flipBoolean)
+                              setOpenCreateSessionDialog(flipBoolean)
                             }
                             }
 
@@ -595,6 +613,70 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                         </DialogContent>
                       </Dialog>
 
+                      {
+                        (() => {
+                          const _session = field.value.find((session) => {
+                            return session.title === sessionToEdit
+                          })
+
+                          if (!_session) { return "" }
+
+                          const session = {
+                            title: _session.title,
+                            about: _session.about ?? "",
+                            location: _session.location ?? "",
+                            timeRange: {
+                              start: _session.start,
+                              end: _session.end,
+                            },
+                            panel: _session.panel,
+                          }
+
+                          return (
+                            <Dialog
+                              open={openEditSessionDialog}
+                              onOpenChange={() => { setOpenEditSessionDialog(flipBoolean) }}
+                              aria-description="a dialog to edit a session"
+                            >
+                              <DialogContent
+                                aria-description="contains event fields and a form to instantiate them"
+                              >
+                                <DialogHeader>
+                                  <DialogTitle>edit session</DialogTitle>
+                                </DialogHeader>
+                                {/*
+                              */}
+                                <EditSessionForm
+                                  session={session}
+                                  onSubmit={({
+                                    timeRange: { start, end },
+                                    ...rest
+                                  }) => {
+                                    const newFieldValue = [
+                                      ...field.value.filter(session => session.title === rest.title),
+                                      {
+                                        // TODO: session id quickfix, this should be
+                                        // fairly unique
+                                        id: rest.title + start.toUTCString(),
+                                        start,
+                                        end,
+                                        ...rest
+                                      }
+                                    ]
+                                    form.setValue("sessions", newFieldValue)
+                                    setOpenCreateSessionDialog(flipBoolean)
+                                  }
+                                  }
+
+                                  min={form.watch("dateRange.from")}
+                                  max={form.watch("dateRange.to")}
+
+                                />
+                              </DialogContent>
+                            </Dialog>
+                          )
+                        })()
+                      }
                     </CardContent>
                   </Card>
                 </FormControl>
