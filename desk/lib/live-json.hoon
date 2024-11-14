@@ -146,16 +146,20 @@
   =,  enjs:format
   |=  upd=update
   ^-  ^json
+  %-  pairs
   ?-    -.upd
       %record
-    %-  pairs
     :~  ['id' (en-id id.upd)]
         ['ship' s+(scot %p ship.upd)]
         ['record' (en-record record.upd)]
     ==
   ::
+      %event
+    :~  ['id' (en-id id.upd)]
+        ['event' (en-event `event.upd)]
+    ==
+  ::
       %result
-    %-  pairs
     :~  ['ship' s+(scot %p ship.upd)]
         ['name' `json`?~(name.upd ~ s+u.name.upd)]
         :-  'result'

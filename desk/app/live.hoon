@@ -312,7 +312,7 @@
     ?~  p.sign  cor
     =;  msg=tape
       =.  result  (crip msg)
-      (give-update [%result ship `name result])
+      (give-local-update [%result ship `name result])
     ?:  =('all' name)
       ~['No events found under' ' ' (scot %p ship)]
     ~[(crip "'{<name>}'") ' not found under ' (scot %p ship)]
@@ -351,7 +351,7 @@
         =/  name=(unit term)
           =/  =term  -:(flop path.sign-arvo)
           ?:(?=(%all term) ~ `term)
-        (give-update [%result ship name result])
+        (give-local-update [%result ship name result])
       ?~  roar.sign-arvo  msg
       =/  =roar:ames      u.roar.sign-arvo
       ?~  q.dat.roar      msg
@@ -373,7 +373,7 @@
         %-  crip
         ?~  name  ~['No events found under' ' ' (scot %p ship)]
         ~[(crip "'{<name>}'") ' not found under ' (scot %p ship)]
-      (give-update [%result ship name result])
+      (give-local-update [%result ship name result])
     ==
   ==
 ::
@@ -485,7 +485,7 @@
     =/  current=(unit record-1)
       (~(get bi records) [src.msg name] our.bowl)
     =.  cor
-      (give-update [%record [src.msg name] our.bowl rev])
+      (give-local-update [%record [src.msg name] our.bowl rev])
     =?  cor  (notify current rev)
       (emit (make-hark src.msg title.info.rev status.rev))
     cor(records (~(put bi records) [src.msg name] our.bowl rev))
@@ -544,9 +544,9 @@
   |=  [=wire who=ship app=term =cage]
   ^-  card
   [%pass wire %agent [who app] %poke cage]
-::  +give-update: produce a local $update
+::  +give-local-update: produce a local $update
 ::
-++  give-update
+++  give-local-update
   |=  upd=update
   ^+  cor
   %-  emit
@@ -625,7 +625,7 @@
   =.  result  *@t
   ?:  =(our.bowl ship)
     =.  result  'See home page for our events'
-    (give-update [%result ship name result])
+    (give-local-update [%result ship name result])
   =/  =wire
     %+  weld  /case/request/(scot %p ship)
     ?~  name  /all
@@ -658,7 +658,7 @@
     ::
     =;  msg=tape
       =.  result  (crip msg)
-      (give-update [%result src.bowl name result])
+      (give-local-update [%result src.bowl name result])
     ?~  name
       ~['No events found under' ' ' (scot %p src.bowl)]
     ~[(crip "{<(scow %tas u.name)>}") ' not found under ' (scot %p src.bowl)]
@@ -828,7 +828,7 @@
     |=  bag=(set stage)
     ^-  (list ship)
     =/  event-records=(map ship record-1)
-      (~(got by records) id)
+      ?~(r=(~(get by records) id) ~ u.r)
     %+  murn  ~(tap by event-records)
     |=  [s=ship r=record-1]
     ^-  (unit ship)
@@ -989,12 +989,13 @@
         ?~  (get-our-case `name.id)  cor
         %+  delete-remote-path  (need (get-our-case `name.id))
         /event/(scot %tas name.id)
+      =+  event=get-event
+      =.  cor  (give-local-update [%event id event])
       :: if event is %secret only update %invited, %registered, and
       :: %attended, otherwise send the update to all ships with a
       :: record
       ::
       %-  update-guests
-      =+  event=get-event
       ?.  ?=(%secret kind.info.event)  get-all-record-ships
       %-  get-ships-by-status
       (silt `(list stage)`~[%invited %registered %attended])
