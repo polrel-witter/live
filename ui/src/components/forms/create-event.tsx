@@ -30,15 +30,16 @@ export const CreateEventForm = ({ createEvent }: Props) => {
         newEvent.details.description = values.eventDescription
         newEvent.details.timezone = values.utcOffset
         newEvent.details.kind = values.eventKind
-        // TODO: fill this in
-        newEvent.details.group = { ship: '~sampel-palnet', name: "group" }
+        newEvent.details.group = values.eventGroup
+          ? { ship: values.eventGroup.host, name: values.eventGroup.name }
+          : null
         newEvent.details.latch = values.eventLatch
         newEvent.details.venueMap = values.venueMap !== "" ? values.venueMap : ""
         newEvent.details.sessions = values.sessions.map(({ start, end, ...rest }) => {
           return {
             mainSpeaker: '',
-            startTime: convertDateToTZDate(end, "+00:00"),
-            endTime: convertDateToTZDate(end, "+00:00"),
+            startTime: convertDateToTZDate(end, values.utcOffset),
+            endTime: convertDateToTZDate(end, values.utcOffset),
             ...rest
           }
         })

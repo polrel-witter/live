@@ -1,5 +1,5 @@
 import { Backend } from "@/backend";
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { GlobalContext } from "@/globalContext";
 import { CreateEventForm } from "@/components/forms/create-event";
 
@@ -10,8 +10,6 @@ const CreatePage: React.FC<{ backend: Backend }> = ({ backend }) => {
     console.error("globalContext is not set")
     return
   }
-
-  const [openProfile, setOpenProfile] = useState(false)
 
   return (
     <div className="flex w-full h-full justify-center pt-16">

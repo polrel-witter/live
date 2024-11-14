@@ -142,7 +142,10 @@ const makeDefaultValues = (event?: EventAsHost) => {
     // use this but replace date picker with daterange picker:
     // https://time.openstatus.dev/
     // https://ui.shadcn.com/docs/components/date-picker#form
-    dateRange: undefined,
+    dateRange: {
+      from: undefined,
+      to: undefined,
+    },
     // use combobox for this
     // https://ui.shadcn.com/docs/components/combobox#form
     utcOffset: undefined,

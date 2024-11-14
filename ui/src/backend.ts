@@ -756,7 +756,7 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
 
     const timezoneStripped = stripUTCOffset(details.timezone)
     const sign = timezoneStripped.charAt(0) === "+" ? true : false
-    const number = timezoneStripped.slice(1)
+    const number = Number.parseInt(timezoneStripped.slice(1))
     const groupObj = details.group
       ? { ship: details.group.ship, term: details.group.name }
       : null
