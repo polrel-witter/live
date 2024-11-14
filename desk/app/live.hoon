@@ -828,7 +828,7 @@
     |=  bag=(set stage)
     ^-  (list ship)
     =/  event-records=(map ship record-1)
-      (~(got by records) id)
+      ?~(r=(~(get by records) id) ~ u.r)
     %+  murn  ~(tap by event-records)
     |=  [s=ship r=record-1]
     ^-  (unit ship)
