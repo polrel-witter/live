@@ -33,7 +33,7 @@ export const EditEventForm = ({ backend, event }: Props) => {
         }
 
         if (event.details.location !== values.location) {
-          backend.editEventDetailsTitle(eventId, values.location)
+          backend.editEventDetailsLocation(eventId, values.location)
         }
 
         // FIXME: changing dates doesn't work
