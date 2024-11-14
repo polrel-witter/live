@@ -207,6 +207,10 @@ export function DateTimePicker({
     }
   }, [open, initDateRange]);
 
+  useEffect(() => {
+    setDateRange(dateRangeValue)
+  }, [dateRangeValue]);
+
   const displayValue = useMemo(() => {
     if (!open && valuesReset) return undefined;
     return dateRange;

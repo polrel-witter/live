@@ -23,7 +23,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
-import { flipBoolean } from "@/lib/utils"
+import { convertTZDateToDate, flipBoolean } from "@/lib/utils"
 import { EventAsHost, validUTCOffsets } from "@/backend"
 import { SpinningButton } from "@/components/spinning-button"
 import { CreateSessionForm } from "@/components/forms/create-session"
@@ -162,8 +162,12 @@ const makeDefaultValues = (event?: EventAsHost) => {
     defaultValues.location = event.details.location
     defaultValues.limit = event.limit ? event.limit : ""
     defaultValues.dateRange = {
-      from: event.details.startDate,
-      to: event.details.endDate,
+      from: event.details.startDate
+        ? convertTZDateToDate(event.details.startDate, event.details.timezone)
+        : new Date(),
+      to: event.details.endDate
+        ? convertTZDateToDate(event.details.endDate, event.details.timezone)
+        : new Date()
     }
     defaultValues.utcOffset = event.details.timezone
     defaultValues.eventKind = event.details.kind
@@ -178,8 +182,8 @@ const makeDefaultValues = (event?: EventAsHost) => {
     defaultValues.sessions = event.details.sessions
       .map(({ startTime, endTime, mainSpeaker: _, ...rest }) => {
         return {
-          start: startTime ? new Date(startTime) : new Date(),
-          end: endTime ? new Date(endTime) : new Date(),
+          start: startTime ? convertTZDateToDate(startTime, event.details.timezone) : new Date(),
+          end: endTime ? convertTZDateToDate(endTime, event.details.timezone) : new Date(),
           ...rest
         }
       })
@@ -604,7 +608,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
         <div className="pt-4 md:pt-8 w-full flex justify-center">
           <SpinningButton
             spin={spin}
-            onClick={() => { console.log(form.formState) }}
+            onClick={() => { }}
             type="submit"
             className="p-2 w-24 h-auto">
             {submitButtonText}

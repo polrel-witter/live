@@ -1,6 +1,7 @@
-import { Backend, CreateEventParams, emptyEventAsHost, EventAsHost, Session } from "@/backend"
+import { Backend, EventAsHost, Session, sessionsEqual } from "@/backend"
 import { EventForm } from "./event"
-import { convertDateToTZDate } from "@/lib/utils"
+import { convertDateToTZDate, formatEventDate, nullableTZDatesEqual } from "@/lib/utils"
+import { isEqual } from "date-fns"
 
 type Props = {
   event: EventAsHost
@@ -16,18 +17,12 @@ export const EditEventForm = ({ backend, event }: Props) => {
         // Do something with the form values.
         // ✅ This will be type-safe and validated.
 
-        console.log("values", values)
         const eventId = event.details.id
 
-        let newEvent: CreateEventParams = emptyEventAsHost;
+        const newLimit = values.limit !== "" ? values.limit : null
 
-        newEvent.limit = values.limit ? values.limit : null
-
-        if (event.limit !== values.limit) {
-          backend.editEventLimit(
-            eventId,
-            values.limit !== "" ? values.limit : null
-          )
+        if (event.limit !== newLimit) {
+          backend.editEventLimit(eventId, newLimit)
         }
 
         if (event.secret !== values.eventSecret) {
@@ -43,7 +38,7 @@ export const EditEventForm = ({ backend, event }: Props) => {
         }
 
         const newStartDate = convertDateToTZDate(values.dateRange.from, values.utcOffset)
-        if (event.details.startDate !== newStartDate) {
+        if (!nullableTZDatesEqual(event.details.startDate, newStartDate)) {
           backend.editEventDetailsMoment(
             eventId,
             newStartDate,
@@ -52,7 +47,7 @@ export const EditEventForm = ({ backend, event }: Props) => {
         }
 
         const newEndDate = convertDateToTZDate(values.dateRange.to, values.utcOffset)
-        if (event.details.endDate !== newEndDate) {
+        if (!nullableTZDatesEqual(event.details.endDate, newEndDate)) {
           backend.editEventDetailsMoment(
             eventId,
             event.details.startDate,
@@ -63,7 +58,6 @@ export const EditEventForm = ({ backend, event }: Props) => {
         if (event.details.description !== values.eventDescription) {
           backend.editEventDetailsDescription(eventId, values.eventDescription)
         }
-
 
         if (event.details.timezone !== values.utcOffset) {
           backend.editEventDetailsTimezone(eventId, values.utcOffset)
@@ -88,7 +82,6 @@ export const EditEventForm = ({ backend, event }: Props) => {
           }
         }
 
-
         if (event.details.latch !== values.eventLatch) {
           backend.editEventDetailsLatch(eventId, values.eventLatch)
         }
@@ -97,32 +90,22 @@ export const EditEventForm = ({ backend, event }: Props) => {
           backend.editEventDetailsVenueMap(eventId, values.venueMap)
         }
 
-        const sessionsEqual = (a: Session, b: Session): boolean => {
-          if (a.id !== b.id) { return false }
-          if (a.title !== b.title) { return false }
-          if (a.mainSpeaker !== b.mainSpeaker) { return false }
-          if (a.panel !== b.panel) { return false }
-          if (a.location !== b.location) { return false }
-          if (a.about !== b.about) { return false }
-          if (a.startTime !== b.startTime) { return false }
-          if (a.endTime !== b.endTime) { return false }
-
-          return true
-        }
 
         // index sessions for quick lookup
         const oldSessionsMap = new Map(event.details.sessions
           .map(session => [session.id, session]))
 
         const newSessionsMap: Map<string, Session> = new Map(values.sessions
-          .map(({ startTime: start, endTime: end, ...rest }) => [
-            rest.id,
-            {
-              mainSpeaker: "",
-              startTime: convertDateToTZDate(start, values.utcOffset),
-              endTime: convertDateToTZDate(end, values.utcOffset),
-              ...rest
-            }]))
+          .map(({ start, end, ...rest }) => {
+            return [
+              rest.id,
+              {
+                mainSpeaker: "",
+                startTime: convertDateToTZDate(start, values.utcOffset),
+                endTime: convertDateToTZDate(end, values.utcOffset),
+                ...rest
+              }]
+          }))
 
         // loop oldSession; if an oldSession isn't in values.sessions, delete
         for (const oldSession of event.details.sessions) {

@@ -45,7 +45,6 @@ async function buildState(
 
   let evt = globalContext.eventsAsHost
     .find((evt) => {
-      console.log(evt.details.id, evtId)
       return eventIdsEqual(evt.details.id, evtId)
     })
 
