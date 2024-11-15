@@ -24,13 +24,12 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 import { cn, convertTZDateToDate, flipBoolean } from "@/lib/utils"
-import { EventAsHost, validUTCOffsets } from "@/backend"
+import { EventAsHost, Session, Sessions, validUTCOffsets } from "@/backend"
 import { SpinningButton } from "@/components/spinning-button"
 import { CreateSessionForm } from "@/components/forms/create-session"
 import { SlideDownAndReveal } from "@/components/sliders"
 import { SessionCard } from "@/components/cards/session"
 import { EditSessionForm } from "./edit-session"
-import { se } from "date-fns/locale"
 
 /* ON TIME
  * throughout this page we're storing time in ordinary Dates in local time; the user doesn't know
@@ -86,7 +85,6 @@ const utcOffsetSchema = z.enum(validUTCOffsets)
 const dateTimeSchema = z.date()
 
 const sessionSchema = z.object({
-  id: z.string(),
   title: z.string(),
   // TODO: maybe validate that these are actually patps
   panel: z.array(z.string()),
@@ -124,7 +122,7 @@ const schemas = z.object({
     name: z.string()
   })),
   eventSecret: emptyStringSchema.or(z.string()),
-  sessions: z.array(sessionSchema)
+  sessions: z.record(z.string(), sessionSchema)
 })
 
 type Props = {
@@ -187,14 +185,18 @@ const makeDefaultValues = (event?: EventAsHost) => {
     defaultValues.venueMap = event.details.venueMap
     defaultValues.eventDescription = event.details.description
     defaultValues.eventSecret = event.secret
-    defaultValues.sessions = event.details.sessions
-      .map(({ startTime, endTime, mainSpeaker: _, ...rest }) => {
-        return {
-          start: startTime ? convertTZDateToDate(startTime, event.details.timezone) : new Date(),
-          end: endTime ? convertTZDateToDate(endTime, event.details.timezone) : new Date(),
-          ...rest
-        }
-      })
+    defaultValues.sessions = Object.fromEntries(
+      Object.entries(event.details.sessions)
+        .map(([id, { startTime, endTime, mainSpeaker: _, ...rest }]) => {
+          return [
+            [id],
+            {
+              start: startTime ? convertTZDateToDate(startTime, event.details.timezone) : new Date(),
+              end: endTime ? convertTZDateToDate(endTime, event.details.timezone) : new Date(),
+              ...rest
+            }
+          ]
+        }))
   }
 
   return defaultValues
@@ -457,26 +459,26 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
             const [openCreateSessionDialog, setOpenCreateSessionDialog] = useState(false)
             const [openEditSessionDialog, setOpenEditSessionDialog] = useState(false)
             const shouldDisplayCreateSessionDialog = form.watch("dateRange") === undefined
-            const [sessionToEdit, setSessionToEdit] = useState<string>("")
+            const [idOfSessionToEdit, setIdOfSessionToEdit] = useState<string>("")
             useEffect(
               () => {
                 setOpenSessions((oldSessions: Map<string, boolean>) => {
                   const newElems: string[] = []
                   const deleteElems: string[] = []
-                  field.value.forEach((session) => {
-                    if (oldSessions.get(session.title)) { return }
-                    newElems.push(session.title)
-                  })
+                  Object.keys(field.value)
+                    .forEach((sessionID) => {
+                      if (oldSessions.get(sessionID)) { return }
+                      newElems.push(sessionID)
+                    })
 
-                  const oldKeys = [...oldSessions.keys()]
+                  const oldSessionIDs = [...oldSessions.keys()]
 
 
-                  oldKeys.forEach((title) => {
-                    if (field.value.findIndex(
-                      ({ title: fieldTitle }) => fieldTitle === title) === -1
-                    ) {
-                      deleteElems.push(title)
-                    }
+                  oldSessionIDs.forEach((oldID) => {
+                    const sessionDeleted = Object
+                      .keys(field.value)
+                      .findIndex((currentID) => currentID === oldID) === -1
+                    if (sessionDeleted) { deleteElems.push(oldID) }
                   })
 
                   const newMap: Map<string, boolean> = new Map(oldSessions.entries())
@@ -497,7 +499,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                   <Card>
                     <CardContent className="p-1">
                       <ul>
-                        {field.value.map((session) => {
+                        {Object.entries(field.value).map(([id, session]) => {
                           return (<li
                             className="m-1"
                             key={session.title}>
@@ -509,8 +511,10 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                                   className="p-0 w-7 h-7 rounded-full hover:bg-red-200"
                                   variant="ghost"
                                   onClick={() => {
-                                    form.setValue("sessions", form.getValues("sessions")
-                                      .filter(_session => _session.title !== session.title))
+                                    form.setValue("sessions", Object.fromEntries(
+                                      Object.entries(form.getValues("sessions"))
+                                        .filter(([_id, _session]) => _session.title !== session.title))
+                                    )
                                   }}
                                 >
                                   <X className="w-4 h-4 text-red-400" />
@@ -520,7 +524,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                                   className="p-0 w-7 h-7 rounded-full hover:bg-amber-100"
                                   variant="ghost"
                                   onClick={() => {
-                                    setSessionToEdit(session.title)
+                                    setIdOfSessionToEdit(id)
                                     setOpenEditSessionDialog(flipBoolean)
                                   }}
                                 >
@@ -596,18 +600,20 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                               timeRange: { start, end },
                               ...rest
                             }) => {
-                              const newFieldValue = [
-                                ...field.value,
-                                {
-                                  // TODO: session id quickfix, this should be
-                                  // fairly unique
-                                  id: rest.title + start.toUTCString(),
-                                  start,
-                                  end,
-                                  ...rest
-                                }
+                              const newFieldValue: [string, z.infer<typeof sessionSchema>][] = [
+                                ...Object.entries(field.value),
+                                [
+                                  (new Date().valueOf()).toFixed(),
+                                  {
+                                    // TODO: session id quickfix, this should be
+                                    // fairly unique
+                                    start,
+                                    end,
+                                    ...rest
+                                  }
+                                ]
                               ]
-                              form.setValue("sessions", newFieldValue)
+                              form.setValue("sessions", Object.fromEntries(newFieldValue))
                               setOpenCreateSessionDialog(flipBoolean)
                             }
                             }
@@ -619,23 +625,26 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                         </DialogContent>
                       </Dialog>
 
+                      {/* IIFE so i can const the session properly */}
                       {
                         (() => {
-                          const _session = field.value.find((session) => {
-                            return session.title === sessionToEdit
+                          const maybeSession = Object.entries(field.value).find(([id,]) => {
+                            return id === idOfSessionToEdit
                           })
 
-                          if (!_session) { return "" }
+                          if (!maybeSession) { return "" }
+
+                          const [_, sessionToEdit] = maybeSession
 
                           const session = {
-                            title: _session.title,
-                            about: _session.about ?? "",
-                            location: _session.location ?? "",
+                            title: sessionToEdit.title,
+                            about: sessionToEdit.about ?? "",
+                            location: sessionToEdit.location ?? "",
                             timeRange: {
-                              start: _session.start,
-                              end: _session.end,
+                              start: sessionToEdit.start,
+                              end: sessionToEdit.end,
                             },
-                            panel: _session.panel,
+                            panel: sessionToEdit.panel,
                           }
 
                           return (
@@ -658,19 +667,17 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                                     timeRange: { start, end },
                                     ...rest
                                   }) => {
-                                    const newFieldValue = [
-                                      ...field.value.filter(session => session.title === rest.title),
-                                      {
-                                        // TODO: session id quickfix, this should be
-                                        // fairly unique
-                                        id: rest.title + start.toUTCString(),
+                                    const newFieldValue: [string, z.infer<typeof sessionSchema>][] = [
+                                      ...Object.entries(field.value)
+                                        .filter(([id,]) => id !== idOfSessionToEdit),
+                                      [idOfSessionToEdit, {
                                         start,
                                         end,
                                         ...rest
-                                      }
+                                      }]
                                     ]
-                                    form.setValue("sessions", newFieldValue)
-                                    setOpenCreateSessionDialog(flipBoolean)
+                                    form.setValue("sessions", Object.fromEntries(newFieldValue))
+                                    setOpenEditSessionDialog(flipBoolean)
                                   }
                                   }
 

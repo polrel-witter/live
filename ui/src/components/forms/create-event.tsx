@@ -35,14 +35,15 @@ export const CreateEventForm = ({ createEvent }: Props) => {
           : null
         newEvent.details.latch = values.eventLatch
         newEvent.details.venueMap = values.venueMap !== "" ? values.venueMap : ""
-        newEvent.details.sessions = values.sessions.map(({ start, end, ...rest }) => {
-          return {
-            mainSpeaker: '',
-            startTime: convertDateToTZDate(end, values.utcOffset),
-            endTime: convertDateToTZDate(end, values.utcOffset),
-            ...rest
-          }
-        })
+        newEvent.details.sessions = Object.fromEntries(Object.entries(values.sessions)
+          .map(([id, { start, end, ...rest }]) => {
+            return [id, {
+              mainSpeaker: '',
+              startTime: convertDateToTZDate(end, values.utcOffset),
+              endTime: convertDateToTZDate(end, values.utcOffset),
+              ...rest
+            }]
+          }))
 
         await createEvent(newEvent)
       }}

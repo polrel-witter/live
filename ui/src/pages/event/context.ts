@@ -29,7 +29,7 @@ function newEmptyCtx(): EventCtx {
         kind: "public",
         group: null,
         latch: "open",
-        sessions: [] as Session[],
+        sessions: {},
       },
       status: "invited",
       secret: "",

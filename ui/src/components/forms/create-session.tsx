@@ -9,6 +9,6 @@ type Props = {
 
 export const CreateSessionForm = (props: Props) => {
   return (
-    <SessionForm {...props} />
+    <SessionForm submitText="+ create session" {...props} />
   )
 }
