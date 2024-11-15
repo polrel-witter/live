@@ -1,11 +1,11 @@
 import Urbit from "@urbit/http-api";
 
-import { isEqual, sub } from "date-fns";
-import { TZDate, tzOffset } from "@date-fns/tz";
+import { TZDate } from "@date-fns/tz";
 
-import { object, z, ZodError } from "zod" // this is an object validation library
-import { type } from "os";
-import { convertDateToTZDate, newTZDateInTimeZoneFromUnix, nullableTZDatesEqual } from "./lib/utils";
+import { z, ZodError } from "zod" // this is an object validation library
+
+import { newTZDateInTimeZoneFromUnix, nullableTZDatesEqual } from "./lib/utils";
+import { Session } from "inspector/promises";
 
 // Patp types and utilities
 
@@ -110,11 +110,44 @@ interface Backend {
   // live - poke %info %create-session
   addEventSession(id: EventId, value: Session): Promise<void>
 
-  // live - poke %info %edit-session
-  editEventSession(id: EventId, sessionId: string, value: Session): Promise<void>
-
   // live - poke %info %delete-session
   removeEventSession(id: EventId, sessionId: string): Promise<void>
+
+  // live - poke %info %edit-session %title
+  editEventSessionTitle(
+    id: EventId,
+    sessionId: string,
+    value: Session["title"]
+  ): Promise<void>
+
+  // live - poke %info %edit-session %panel
+  editEventSessionPanel(
+    id: EventId,
+    sessionId: string,
+    value: Session["panel"]
+  ): Promise<void>
+
+  // live - poke %info %edit-session %location
+  editEventSessionLocation(
+    id: EventId,
+    sessionId: string,
+    value: Session["location"]
+  ): Promise<void>
+
+  // live - poke %info %edit-session %about
+  editEventSessionAbout(
+    id: EventId,
+    sessionId: string,
+    value: Session["about"]
+  ): Promise<void>
+
+  // live - poke %info %edit-session %moment
+  editEventSessionMoment(
+    id: EventId,
+    sessionId: string,
+    start: Session["startTime"],
+    end: Session["endTime"]
+  ): Promise<void>
 
   // live - poke %secret
   editEventSecret(id: EventId, secret: EventAsHost["secret"]): Promise<void>
@@ -230,26 +263,6 @@ type Session = {
   about: string | null;
   startTime: TZDate | null;
   endTime: TZDate | null;
-}
-
-function panelsEqual(pA: string[] | null, pB: string[] | null) {
-  if (pA === null && pB !== null) { return false }
-  if (pA !== null && pB === null) { return false }
-  if (pA !== null && pB !== null) { return pA.join("") === pB.join("") }
-
-  return true
-
-}
-
-function sessionsEqual(a: Session, b: Session): boolean {
-  if (a.title !== b.title) { return false }
-  if (!panelsEqual(a.panel, b.panel)) { return false }
-  if (a.location !== b.location) { return false }
-  if (a.about !== b.about) { return false }
-  if (!nullableTZDatesEqual(a.startTime, b.startTime)) { return false }
-  if (!nullableTZDatesEqual(a.endTime, b.endTime)) { return false }
-
-  return true
 }
 
 type Sessions = Record<string, Session>
@@ -740,7 +753,7 @@ const tzDateToUnixMilliSeconds = (d: TZDate | null) => d ? d.valueOf() : 0
 const prepareSession = (session: Session) => {
   return {
     title: session.title,
-    panel: session.panel?.join(" "),
+    panel: session.panel,
     location: session.location,
     about: session.about,
     moment: {
@@ -879,7 +892,6 @@ function editEventDetailsMoment(api: Urbit): (
       start: tzDateToUnixMilliSeconds(start),
       end: tzDateToUnixMilliSeconds(end)
     }
-    console.log(start, end)
     return editEventDetails(api)(id, "moment", payload)
   }
 }
@@ -935,9 +947,79 @@ function addEventSession(api: Urbit): (id: EventId, value: Session) => Promise<v
   }
 }
 
-function editEventSession(api: Urbit): (id: EventId, sessionId: string, value: Session) => Promise<void> {
-  return async (id: EventId, sessionId: string, value: Session) => {
-    return editEventDetails(api)(id, "edit-session", { p: sessionId, q: prepareSession(value) })
+function editEventSessionField(api: Urbit): (
+  id: EventId,
+  sessionId: string,
+  field: string,
+  value: any
+) => Promise<void> {
+  return async (
+    id: EventId,
+    sessionId: string,
+    field: string,
+    value: any
+  ) => {
+    return editEventDetails(api)(
+      id,
+      "edit-session",
+      { p: sessionId, q: { [field]: value } }
+    )
+  }
+}
+
+
+function editEventSessionTitle(api: Urbit): (
+  id: EventId,
+  sessionId: string,
+  value: Session["title"]
+) => Promise<void> {
+  return async (id: EventId, sessionId: string, value: Session["title"]) => {
+    return editEventSessionField(api)(id, sessionId, "title", value)
+  }
+}
+
+function editEventSessionPanel(api: Urbit): (
+  id: EventId,
+  sessionId: string,
+  value: Session["panel"]
+) => Promise<void> {
+  return async (id: EventId, sessionId: string, value: Session["panel"]) => {
+    return editEventSessionField(api)(id, sessionId, "panel", value)
+  }
+}
+
+function editEventSessionLocation(api: Urbit): (
+  id: EventId,
+  sessionId: string,
+  value: Session["location"]
+) => Promise<void> {
+  return async (id: EventId, sessionId: string, value: Session["location"]) => {
+    return editEventSessionField(api)(id, sessionId, "location", value)
+  }
+}
+
+function editEventSessionAbout(api: Urbit): (
+  id: EventId,
+  sessionId: string,
+  value: Session["about"]
+) => Promise<void> {
+  return async (id: EventId, sessionId: string, value: Session["about"]) => {
+    return editEventSessionField(api)(id, sessionId, "about", value)
+  }
+}
+
+function editEventSessionMoment(api: Urbit): (
+  id: EventId,
+  sessionId: string,
+  start: Session["startTime"],
+  end: Session["endTime"]
+) => Promise<void> {
+  return async (id: EventId, sessionId: string, start: Session["startTime"], end: Session["endTime"]) => {
+    const payload = {
+      start: tzDateToUnixMilliSeconds(start),
+      end: tzDateToUnixMilliSeconds(end)
+    }
+    return editEventSessionField(api)(id, sessionId, "moment", payload)
   }
 }
 
@@ -1365,7 +1447,11 @@ function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
     editEventSecret: editEventSecret(api),
     editEventLimit: editEventLimit(api),
     addEventSession: addEventSession(api),
-    editEventSession: editEventSession(api),
+    editEventSessionTitle: editEventSessionTitle(api),
+    editEventSessionPanel: editEventSessionPanel(api),
+    editEventSessionLocation: editEventSessionLocation(api),
+    editEventSessionAbout: editEventSessionAbout(api),
+    editEventSessionMoment: editEventSessionMoment(api),
     removeEventSession: removeEventSession(api),
 
     register: register(api),
@@ -1399,7 +1485,6 @@ export type { UTCOffset }
 export { stripSig, addSig, isComet, isMoon, isPlanet, isStar, isGalaxy }
 export type { Patp, PatpWithoutSig }
 
-export { sessionsEqual }
 export type { Session, Sessions }
 
 export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, CreateEventParams, EventDetails, Attendee, Profile, LiveUpdateEvent, Backend }

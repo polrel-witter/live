@@ -14,6 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+
 import { Input } from "@/components/ui/input"
 import { DateTimePicker } from "@/components/ui/date-time-picker/date-time-picker"
 import { GenericComboBox } from "@/components/ui/combo-box"
@@ -24,7 +25,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 import { cn, convertTZDateToDate, flipBoolean } from "@/lib/utils"
-import { EventAsHost, Session, Sessions, validUTCOffsets } from "@/backend"
+import { EventAsHost, validUTCOffsets } from "@/backend"
 import { SpinningButton } from "@/components/spinning-button"
 import { CreateSessionForm } from "@/components/forms/create-session"
 import { SlideDownAndReveal } from "@/components/sliders"
@@ -499,6 +500,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                   <Card>
                     <CardContent className="p-1">
                       <ul>
+                        {/* TODO: add time to session title and order by time*/}
                         {Object.entries(field.value).map(([id, session]) => {
                           return (<li
                             className="m-1"
@@ -536,10 +538,10 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                                   variant="ghost"
                                   onClick={() => {
                                     setOpenSessions((oldSessions) => {
-                                      const oldVal = oldSessions.get(session.title)
+                                      const oldVal = oldSessions.get(id)
                                       const newSessions = new Map(oldSessions.entries())
                                       if (oldVal !== undefined) {
-                                        newSessions.set(session.title, !oldVal)
+                                        newSessions.set(id, !oldVal)
                                       }
                                       return newSessions
                                     })
@@ -547,14 +549,14 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                                 >
                                   <ChevronUp className={cn([
                                     "w-4 h-4 font-black transition",
-                                    { "rotate-180": openSessions.get(session.title) === true }
+                                    { "rotate-180": openSessions.get(id) === true }
                                   ])} />
                                 </Button>
                               </div>
                             </div>
                             <SlideDownAndReveal
                               maxHeight="max-h-[1000px]"
-                              show={openSessions?.get(session.title) || false}
+                              show={openSessions?.get(id) || false}
                             >
                               <SessionCard session={{
                                 startTime: new TZDate(session.start),
@@ -683,7 +685,6 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
 
                                   min={form.watch("dateRange.from")}
                                   max={form.watch("dateRange.to")}
-
                                 />
                               </DialogContent>
                             </Dialog>

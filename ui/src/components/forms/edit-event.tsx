@@ -1,6 +1,6 @@
-import { Backend, EventAsHost, Session, sessionsEqual } from "@/backend"
+import { Backend, EventAsHost, Session } from "@/backend"
 import { EventForm } from "./event"
-import { convertDateToTZDate, formatEventDate, nullableTZDatesEqual } from "@/lib/utils"
+import { convertDateToTZDate, nullableTZDatesEqual } from "@/lib/utils"
 
 type Props = {
   event: EventAsHost
@@ -112,6 +112,15 @@ export const EditEventForm = ({ backend, event }: Props) => {
           }
         }
 
+        const panelsEqual = (pA: string[] | null, pB: string[] | null) => {
+          if (pA === null && pB !== null) { return false }
+          if (pA !== null && pB === null) { return false }
+          if (pA !== null && pB !== null) { return pA.join("") === pB.join("") }
+
+          return true
+
+        }
+
         // loop newSessions:
         // - if a session is in oldSession but it isn;t equal, edit
         //   - this doesn't work
@@ -122,12 +131,23 @@ export const EditEventForm = ({ backend, event }: Props) => {
           const oldSession = oldSessionsMap.get(sessionID)
           if (!oldSession) {
             backend.addEventSession(eventId, newSession)
-          } else if (!sessionsEqual(oldSession, newSession)) {
-            backend.editEventSession(eventId, sessionID, newSession)
+          } else if (oldSession.title !== newSession.title) {
+            backend.editEventSessionTitle(eventId, sessionID, newSession.title)
+          } else if (!panelsEqual(oldSession.panel, newSession.panel)) {
+            backend.editEventSessionPanel(eventId, sessionID, newSession.panel)
+          } else if (oldSession.location !== newSession.location) {
+            backend.editEventSessionLocation(eventId, sessionID, newSession.location)
+          } else if (oldSession.about !== newSession.about) {
+            backend.editEventSessionAbout(eventId, sessionID, newSession.about)
+          } else if (!nullableTZDatesEqual(oldSession.startTime, newSession.startTime)) {
+            console.log(oldSession.startTime)
+            console.log(oldSession.endTime)
+            backend.editEventSessionMoment(eventId, sessionID, newSession.startTime, oldSession.endTime)
+          } else if (!nullableTZDatesEqual(oldSession.endTime, newSession.endTime)) {
+            backend.editEventSessionMoment(eventId, sessionID, oldSession.startTime, newSession.endTime)
           }
         }
       }}
-
     />
   )
 }
