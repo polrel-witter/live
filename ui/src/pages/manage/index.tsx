@@ -1,7 +1,7 @@
 import { LoaderFunctionArgs, Params, useLoaderData } from "react-router-dom"
 import { useContext, useEffect, useState } from "react"
 
-import { Attendee, Backend, emptyEventAsHost, EventAsHost, EventId, eventIdsEqual, Patp } from "@/backend"
+import { Attendee, Backend, emptyEventAsGuest, emptyEventAsHost, EventAsGuest, EventAsHost, EventId, eventIdsEqual, Patp } from "@/backend"
 import { GlobalContext, GlobalCtx } from "@/globalContext"
 
 import { NavbarWithSlots } from "@/components/frame/navbar"
@@ -18,6 +18,7 @@ import { EventDetailsCard } from "@/components/cards/event-details"
 import { CreateEventForm } from "@/components/forms/create-event"
 import { EditEventForm } from "@/components/forms/edit-event"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { receiveMessageOnPort } from "worker_threads"
 
 async function ManageParamsLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> {
@@ -100,6 +101,66 @@ const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => 
   )
 }
 
+const Guests = ({ evt, backend }: { evt: EventAsGuest, backend: Backend }) => {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="p-1">
+      <Button
+        type="button"
+        variant="ghost"
+        className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100"
+        onClick={() => { setOpen(flipBoolean) }}
+      >
+        guest status
+      </Button>
+      <SlideDownAndReveal
+        show={open}
+        maxHeight="max-h-[3000px]"
+      >
+        <div className="mt-2 w-full">
+          <Card>
+            <CardContent className="pt-4">
+              <ScrollArea className="h-[300px] w-full rounded-md">
+                records
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+      </SlideDownAndReveal>
+    </div>
+  )
+}
+
+const InviteGuests = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="p-1">
+      <Button
+        type="button"
+        variant="ghost"
+        className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100"
+        onClick={() => { setOpen(flipBoolean) }}
+      >
+        invite guests
+      </Button>
+      <SlideDownAndReveal
+        show={open}
+        maxHeight="max-h-[3000px]"
+      >
+        <div className="mt-2 w-full">
+          <Card>
+            <CardContent className="pt-4">
+              <ScrollArea className="h-[300px] w-full rounded-md">
+                invites
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+      </SlideDownAndReveal>
+    </div>
+  )
+}
+
 const ManageIndex: React.FC<Props> = ({ backend }) => {
 
   const globalContext = useContext(GlobalContext)
@@ -113,6 +174,7 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
 
   const [fetched, setFetched] = useState<boolean>(false)
   const [event, setEvent] = useState<EventAsHost>(emptyEventAsHost)
+  const [record, setRecord] = useState<EventAsGuest>(emptyEventAsGuest)
   const [attendees, setAttendees] = useState<Attendee[]>([])
 
   const [openGuestList, setOpenGuestList] = useState(false)
@@ -164,20 +226,18 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
     <div>
       {
         fetched
-          ?
-          <AppFrame
-            top={navbar}
-            bottom={footer}
-          >
-            <ResponsiveContent className="flex justify-center pt-16">
+          ? <AppFrame top={navbar} bottom={footer}>
+            <ResponsiveContent className="flex justify-center pt-16 pb-8">
               <div className="w-min space-y-6" >
                 <EventDetailsCard
                   hostProfile={globalContext.profile}
                   details={event.details}
                   buttons={<div></div>}
                 />
-                <Card className="w-full">
+                <Card className="w-full p-2">
                   <EditEvent backend={backend} evt={event} />
+                  <Guests backend={backend} evt={record} />
+                  <InviteGuests backend={backend} evt={event} />
                 </Card>
               </div>
             </ResponsiveContent>
