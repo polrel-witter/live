@@ -9,8 +9,7 @@ type Props = {
 }
 
 export const EditSessionForm = (props: Props) => {
-  console.log("toedit", props.session)
-    return (
-    <SessionForm {...props} />
+  return (
+    <SessionForm submitText="edit session" {...props} />
   )
 }

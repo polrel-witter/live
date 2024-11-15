@@ -87,7 +87,7 @@ export function SchedulePage() {
   useEffect(() => {
     const { event: { details: { startDate, endDate, timezone } } } = ctx
 
-    const sessionTimes = ctx.event.details.sessions
+    const sessionTimes = Object.values(ctx.event.details.sessions)
       .map((session) => (session.startTime
         ? new TZDate(session.startTime)
         : new TZDate(0)))
@@ -125,7 +125,7 @@ export function SchedulePage() {
 
     // if there's a session witout time we ad a zero date so
     // the date picker knows what to do
-    if (hasSessionWithoutTimes(ctx.event.details.sessions)) {
+    if (hasSessionWithoutTimes(Object.values(ctx.event.details.sessions))) {
       setDates((dates) => {
         const z = new TZDate(0)
         return new Map([...dates.entries(), [dateToKey(z), z]])
@@ -160,7 +160,7 @@ export function SchedulePage() {
         currentDate={getCurrentDate(dates)}
       />
       <SessionList
-        sessions={ctx.event.details.sessions
+        sessions={Object.values(ctx.event.details.sessions)
           .filter(({ startTime }) => {
             let start = startTime ? startTime : new Date(0)
             return start.getDay() === activeDate.getDay()

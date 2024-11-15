@@ -21,9 +21,6 @@ import { TimePicker } from "@/components/ui/date-time-picker/time-picker"
 
 import { convertDateToTZDate, makeArrayOfEventDays } from "@/lib/utils"
 import { SessionDateSelect } from "@/components/session-date-select"
-import { Session } from "@/backend"
-import { start } from "repl"
-
 
 // need this otherwise the <Input> in there is not happy
 type adjustedFormType = Omit<z.infer<typeof sessionSchema>, "timeRange">
@@ -82,6 +79,7 @@ const sessionSchema = z.object({
 type Props = {
   onSubmit(values: z.infer<typeof sessionSchema>): void
   session?: z.infer<typeof sessionSchema>
+  submitText: string,
   min: Date;
   max: Date;
 }
@@ -318,7 +316,7 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
             variant="ghost"
             className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100"
           >
-            + add session
+            {props.submitText}
           </Button>
         </div>
       </form>

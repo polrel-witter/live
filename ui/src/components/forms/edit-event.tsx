@@ -92,13 +92,11 @@ export const EditEventForm = ({ backend, event }: Props) => {
 
 
         // index sessions for quick lookup
-        const oldSessionsMap = new Map(event.details.sessions
-          .map(session => [session.id, session]))
+        const oldSessionsMap = new Map(Object.entries(event.details.sessions))
 
-        const newSessionsMap: Map<string, Session> = new Map(values.sessions
-          .map(({ start, end, ...rest }) => {
-            return [
-              rest.id,
+        const newSessionsMap: Map<string, Session> = new Map(Object.entries(values.sessions)
+          .map(([id, { start, end, ...rest }]) => {
+            return [id,
               {
                 mainSpeaker: "",
                 startTime: convertDateToTZDate(start, values.utcOffset),
@@ -108,9 +106,9 @@ export const EditEventForm = ({ backend, event }: Props) => {
           }))
 
         // loop oldSession; if an oldSession isn't in values.sessions, delete
-        for (const oldSession of event.details.sessions) {
-          if (newSessionsMap.get(oldSession.id) === undefined) {
-            backend.removeEventSession(eventId, oldSession.id)
+        for (const sessionID of Object.keys(event.details.sessions)) {
+          if (newSessionsMap.get(sessionID) === undefined) {
+            backend.removeEventSession(eventId, sessionID)
           }
         }
 
@@ -118,12 +116,14 @@ export const EditEventForm = ({ backend, event }: Props) => {
         // - if a session is in oldSession but it isn;t equal, edit
         //   - this doesn't work
         // - if a session isn't in oldSessions, create
-        for (const newSession of [...newSessionsMap.values()]) {
-          const oldSession = oldSessionsMap.get(newSession.id)
+        for (const [sessionID, newSession] of [...newSessionsMap.entries()]) {
+          console.log(newSessionsMap)
+          console.log(oldSessionsMap)
+          const oldSession = oldSessionsMap.get(sessionID)
           if (!oldSession) {
             backend.addEventSession(eventId, newSession)
           } else if (!sessionsEqual(oldSession, newSession)) {
-            backend.editEventSession(eventId, oldSession.id, newSession)
+            backend.editEventSession(eventId, sessionID, newSession)
           }
         }
       }}

@@ -3,7 +3,7 @@ import Urbit from "@urbit/http-api";
 import { isEqual, sub } from "date-fns";
 import { TZDate, tzOffset } from "@date-fns/tz";
 
-import { z, ZodError } from "zod" // this is an object validation library
+import { object, z, ZodError } from "zod" // this is an object validation library
 import { type } from "os";
 import { convertDateToTZDate, newTZDateInTimeZoneFromUnix, nullableTZDatesEqual } from "./lib/utils";
 
@@ -221,7 +221,7 @@ const emptyProfile: Profile = {
 }
 
 type Session = {
-  id: string;
+  id?: string;
   title: string;
   // backend doesn't send this yet
   mainSpeaker: string;
@@ -251,6 +251,8 @@ function sessionsEqual(a: Session, b: Session): boolean {
 
   return true
 }
+
+type Sessions = Record<string, Session>
 
 const validUTCOffsets = [
   "-00:00",
@@ -323,7 +325,7 @@ type EventDetails = {
   venueMap: string;
   // TODO: this might've been better stored as Record<sessionID, Session>
   // instead of an array
-  sessions: Session[]
+  sessions: Sessions
 }
 
 type EventAsHost = {
@@ -354,7 +356,7 @@ const emptyEventDetails: EventDetails = {
   group: null,
   latch: "open",
   venueMap: "",
-  sessions: []
+  sessions: {}
 }
 
 
@@ -494,9 +496,8 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
     return newTZDateInTimeZoneFromUnix(tsOrNull, timezoneString)
   }
 
-  const sessions = Object.entries(_sessions).map(([sessionId, { session }]): Session => {
-    return {
-      id: sessionId,
+  const sessionEntries = Object.entries(_sessions).map(([sessionId, { session }]): [string, Session] => {
+    return [sessionId, {
       title: session.title,
       mainSpeaker: "",
       location: session.location,
@@ -505,7 +506,7 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
       // multiplying by 1000 since backend sends unix seconds
       startTime: newTZDateOrNull(session.moment.start),
       endTime: newTZDateOrNull(session.moment.end)
-    }
+    }]
   })
 
   return {
@@ -516,7 +517,7 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
     location: (_location ? _location : "no location"),
     group: (group ? { ship: group.ship, name: group.term } : null),
     timezone: timezoneString,
-    sessions: sessions,
+    sessions: Object.fromEntries(sessionEntries),
     venueMap: venueMap ?? "",
     ...infoRest
   }
@@ -739,7 +740,7 @@ const tzDateToUnixMilliSeconds = (d: TZDate | null) => d ? d.valueOf() : 0
 const prepareSession = (session: Session) => {
   return {
     title: session.title,
-    panel: session.panel,
+    panel: session.panel?.join(" "),
     location: session.location,
     about: session.about,
     moment: {
@@ -757,6 +758,7 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
     const timezoneStripped = stripUTCOffset(details.timezone)
     const sign = timezoneStripped.charAt(0) === "+" ? true : false
     const number = Number.parseInt(timezoneStripped.slice(1))
+    // FIXME: this might need to be a / separated string i don't remember
     const groupObj = details.group
       ? { ship: details.group.ship, term: details.group.name }
       : null
@@ -783,7 +785,9 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
             group: groupObj,
             kind: details.kind,
             latch: details.latch,
-            sessions: details.sessions.map(prepareSession)
+            sessions: Object
+              .values(details.sessions)
+              .map(prepareSession)
           }
         }
       }
@@ -906,7 +910,7 @@ function editEventDetailsVenueMap(api: Urbit): (id: EventId, value: EventDetails
 function editEventDetailsGroup(api: Urbit): (id: EventId, value: EventDetails["group"]) => Promise<void> {
   return async (id: EventId, value: EventDetails["group"]) => {
     const payload = value
-      ? { ship: value.ship, term: value.name }
+      ? `${value.ship}/${value.name}`
       : null
     return editEventDetails(api)(id, "group", payload)
   }
@@ -933,7 +937,7 @@ function addEventSession(api: Urbit): (id: EventId, value: Session) => Promise<v
 
 function editEventSession(api: Urbit): (id: EventId, sessionId: string, value: Session) => Promise<void> {
   return async (id: EventId, sessionId: string, value: Session) => {
-    return editEventDetails(api)(id, "edit-session", { [sessionId]: prepareSession(value) })
+    return editEventDetails(api)(id, "edit-session", { p: sessionId, q: prepareSession(value) })
   }
 }
 
@@ -1396,6 +1400,6 @@ export { stripSig, addSig, isComet, isMoon, isPlanet, isStar, isGalaxy }
 export type { Patp, PatpWithoutSig }
 
 export { sessionsEqual }
-export type { Session }
+export type { Session, Sessions }
 
 export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, CreateEventParams, EventDetails, Attendee, Profile, LiveUpdateEvent, Backend }
