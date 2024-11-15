@@ -155,7 +155,10 @@ const makeDefaultValues = (event?: EventAsHost) => {
     // add FormDescription for these and possibly others as well
     eventKind: undefined,
     eventLatch: undefined,
-    eventGroup: undefined,
+    eventGroup: {
+      host: undefined,
+      name: undefined
+    },
     venueMap: "" as const,
     eventDescription: "",
     eventSecret: "",
@@ -178,12 +181,12 @@ const makeDefaultValues = (event?: EventAsHost) => {
     defaultValues.eventKind = event.details.kind
     defaultValues.eventLatch = event.details.latch
     defaultValues.eventGroup = event.details.group
-      ? { host: event.details.group.name, name: event.details.group.ship }
+      ? { host: event.details.group.ship, name: event.details.group.name }
       : undefined
 
     defaultValues.venueMap = event.details.venueMap
     defaultValues.eventDescription = event.details.description
-    defaultValues.secret = event.secret
+    defaultValues.eventSecret = event.secret
     defaultValues.sessions = event.details.sessions
       .map(({ startTime, endTime, mainSpeaker: _, ...rest }) => {
         return {

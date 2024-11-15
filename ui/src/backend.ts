@@ -757,6 +757,7 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
     const timezoneStripped = stripUTCOffset(details.timezone)
     const sign = timezoneStripped.charAt(0) === "+" ? true : false
     const number = Number.parseInt(timezoneStripped.slice(1))
+    // FIXME: this might need to be a / separated string i don't remember
     const groupObj = details.group
       ? { ship: details.group.ship, term: details.group.name }
       : null
@@ -906,7 +907,7 @@ function editEventDetailsVenueMap(api: Urbit): (id: EventId, value: EventDetails
 function editEventDetailsGroup(api: Urbit): (id: EventId, value: EventDetails["group"]) => Promise<void> {
   return async (id: EventId, value: EventDetails["group"]) => {
     const payload = value
-      ? { ship: value.ship, term: value.name }
+      ? `${value.ship}/${value.name}`
       : null
     return editEventDetails(api)(id, "group", payload)
   }
