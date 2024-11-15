@@ -17,6 +17,7 @@ import { ResponsiveContent } from "@/components/responsive-content"
 import { EventDetailsCard } from "@/components/cards/event-details"
 import { CreateEventForm } from "@/components/forms/create-event"
 import { EditEventForm } from "@/components/forms/edit-event"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 async function ManageParamsLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> {
@@ -69,10 +70,12 @@ async function buildState(
 const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => {
   const [open, setOpen] = useState(false)
   return (
-    <div className="p-4">
+    <div className="p-1">
       <Button
-        className="w-full"
-        onClick={() => setOpen(flipBoolean)}
+        type="button"
+        variant="ghost"
+        className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100"
+        onClick={() => { setOpen(flipBoolean) }}
       >
         edit event
       </Button>
@@ -82,12 +85,13 @@ const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => 
       >
         <div className="mt-2 w-full">
           <Card>
-            <CardHeader> edit event </CardHeader>
-            <CardContent>
-              <EditEventForm
-                backend={backend}
-                event={evt}
-              />
+            <CardContent className="pt-4">
+              <ScrollArea className="h-[300px] w-full rounded-md">
+                <EditEventForm
+                  backend={backend}
+                  event={evt}
+                />
+              </ScrollArea>
             </CardContent>
           </Card>
         </div>
@@ -166,12 +170,11 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
             bottom={footer}
           >
             <ResponsiveContent className="flex justify-center pt-16">
-              <div className="grid size-full w-min space-y-6" >
+              <div className="w-min space-y-6" >
                 <EventDetailsCard
                   hostProfile={globalContext.profile}
                   details={event.details}
                   buttons={<div></div>}
-                  className="px-16"
                 />
                 <Card className="w-full">
                   <EditEvent backend={backend} evt={event} />

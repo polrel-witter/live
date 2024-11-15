@@ -68,12 +68,10 @@ const EventDetailsCard: React.FC<Props> = ({ details, hostProfile, buttons, clas
 
   return (
     <Card className={cn(["w-max", className])} {...rest}>
-      <CardHeader>
+      <CardHeader className="px-0">
         <p className="text-xl font-semibold text-center"> {title} </p>
       </CardHeader>
-      <CardContent
-        className="grid justify-center gap-y-6"
-      >
+      <CardContent className="grid justify-center gap-y-6 px-4" >
         <div className="flex items-center justify-around">
           <div className={cn([baseTextClass, "pr-4"])}> hosted by </div>
 
