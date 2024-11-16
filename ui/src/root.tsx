@@ -1,7 +1,8 @@
 import { PropsWithChildren, useEffect, useState } from "react"
-import { addSig, Backend, eventIdsEqual, LiveUpdateEvent } from "@/backend";
+import { addSig, Backend, EventAsAllGuests, eventIdsEqual, LiveUpdateEvent } from "@/backend";
 import { Toaster } from "./components/ui/toaster";
 import { buildIndexCtx, ConnectionStatus, GlobalContext, newEmptyIndexCtx } from "./globalContext";
+import { record } from "zod";
 
 
 // TODO: this should eventually check that the urbit we're connected to
@@ -84,21 +85,33 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
         // TODO: do we get updates on host events too?
         setCtx(({ eventsAsGuest: oldEventsAsGuest, ...restCtx }) => {
           const maybeIdx = oldEventsAsGuest
-            .map((evt) => evt.details.id)
-            .findIndex((oldId) => eventIdsEqual(oldId, updateEvent.event.details.id))
+            .findIndex(([_infos, details]) => eventIdsEqual(
+              details.id,
+              updateEvent.event.details.id
+            ))
 
+          // idk about this
           if (maybeIdx === -1) {
-            return {
-              eventsAsGuest: [...oldEventsAsGuest, updateEvent.event],
-              ...restCtx
-            }
+            return { eventsAsGuest: oldEventsAsGuest, ...restCtx }
           }
+
+          const [recordInfos,] = oldEventsAsGuest[maybeIdx]
+          recordInfos[updateEvent.ship] = {
+            secret: updateEvent.event.secret,
+            status: updateEvent.event.status,
+            lastChanged: updateEvent.event.lastChanged,
+          }
+          const updated: EventAsAllGuests = [
+            recordInfos,
+            updateEvent.event.details
+          ]
 
           return {
             eventsAsGuest: [
               ...oldEventsAsGuest.slice(0, maybeIdx),
+              updated,
               ...oldEventsAsGuest.slice(maybeIdx + 1, oldEventsAsGuest.length - 1),
-              updateEvent.event],
+            ],
             ...restCtx
           }
 

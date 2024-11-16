@@ -1,5 +1,4 @@
-import { Backend, EventAsGuest, EventAsHost, eventIdsEqual, LiveUpdateEvent, Patp, Profile } from "@/backend";
-import { type } from "os";
+import { Backend, EventAsAllGuests, EventAsGuest, EventAsHost, Patp, Profile } from "@/backend";
 import { createContext } from "react";
 
 
@@ -9,7 +8,7 @@ interface GlobalCtx {
   connectionStatus: ConnectionStatus;
   fetched: boolean;
   profile: Profile;
-  eventsAsGuest: EventAsGuest[]
+  eventsAsGuest: EventAsAllGuests[]
   eventsAsHost: EventAsHost[]
 }
 
@@ -30,8 +29,8 @@ function newEmptyIndexCtx(): GlobalCtx {
       signal: null,
       phone: null,
     },
-    eventsAsGuest: [] as EventAsGuest[],
-    eventsAsHost: [] as EventAsHost[],
+    eventsAsGuest: [],
+    eventsAsHost: [],
   }
 }
 

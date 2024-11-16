@@ -126,8 +126,6 @@ export const EditEventForm = ({ backend, event }: Props) => {
         //   - this doesn't work
         // - if a session isn't in oldSessions, create
         for (const [sessionID, newSession] of [...newSessionsMap.entries()]) {
-          console.log(newSessionsMap)
-          console.log(oldSessionsMap)
           const oldSession = oldSessionsMap.get(sessionID)
           if (!oldSession) {
             backend.addEventSession(eventId, newSession)
@@ -140,8 +138,6 @@ export const EditEventForm = ({ backend, event }: Props) => {
           } else if (oldSession.about !== newSession.about) {
             backend.editEventSessionAbout(eventId, sessionID, newSession.about)
           } else if (!nullableTZDatesEqual(oldSession.startTime, newSession.startTime)) {
-            console.log(oldSession.startTime)
-            console.log(oldSession.endTime)
             backend.editEventSessionMoment(eventId, sessionID, newSession.startTime, oldSession.endTime)
           } else if (!nullableTZDatesEqual(oldSession.endTime, newSession.endTime)) {
             backend.editEventSessionMoment(eventId, sessionID, oldSession.startTime, newSession.endTime)

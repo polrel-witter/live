@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import { Location, Outlet, useLoaderData, useLocation } from 'react-router-dom';
 import { LoaderFunctionArgs, Params } from "react-router-dom";
 
-import { Attendee, Backend, emptyEventAsGuest, EventId, eventIdsEqual, Patp, Profile } from '@/backend'
+import { Attendee, Backend, emptyEventAsGuest, EventAsGuest, EventId, eventIdsEqual, Patp, Profile } from '@/backend'
 
 import { GlobalContext, GlobalCtx } from '@/globalContext';
 import { EventContext, EventCtx, newEmptyCtx } from './context';
@@ -32,13 +32,25 @@ async function buildContextData(
   backend: Backend
 ): Promise<EventCtx> {
   const evtId: EventId = { ship: hostShip, name: eventName }
+  const ourShip = globalContext.profile.patp
 
-  let evt = globalContext.eventsAsGuest
-    .find((evt) => eventIdsEqual(evt.details.id, evtId))
+  let evtRecord: EventAsGuest = emptyEventAsGuest
+  // TODO: this is kind of hacky
+  let evtAsAllGuests = globalContext.eventsAsGuest
+    .find(([_recordInfo, details]) => eventIdsEqual(details.id, evtId))
 
-  if (!evt) {
+  if (evtAsAllGuests) {
+    const info = evtAsAllGuests[0]
+    if (ourShip in info) {
+      evtRecord.secret = info[ourShip].secret
+      evtRecord.status = info[ourShip].status
+      evtRecord.lastChanged = info[ourShip].lastChanged
+      evtRecord.details = evtAsAllGuests[1]
+    } else {
+      console.error("hostShip is not in eventAsAllGuests")
+    }
+  } else {
     console.error("couldn't find event with id ", evtId)
-    evt = emptyEventAsGuest
   }
 
   // remove ourselves from the list of guests / profles
@@ -49,7 +61,7 @@ async function buildContextData(
 
   return {
     fetched: true,
-    event: evt,
+    event: evtRecord,
     attendees: attendees,
     profiles: profiles,
   }

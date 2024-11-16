@@ -4,8 +4,7 @@ import { TZDate } from "@date-fns/tz";
 
 import { z, ZodError } from "zod" // this is an object validation library
 
-import { newTZDateInTimeZoneFromUnix, nullableTZDatesEqual } from "./lib/utils";
-import { Session } from "inspector/promises";
+import { convertTZDateToDate, newTZDateInTimeZoneFromUnix } from "./lib/utils";
 
 // Patp types and utilities
 
@@ -56,7 +55,7 @@ interface Backend {
   // --- live agent --- //
 
   // live - scry %all-records
-  getRecords(): Promise<EventAsGuest[]>
+  getRecords(): Promise<EventAsAllGuests[]>
 
   // live - scry %record
   getRecord(id: EventId): Promise<EventAsGuest>
@@ -347,12 +346,26 @@ type EventAsHost = {
   details: EventDetails
 }
 
-type EventAsGuest = {
-  secret: string | null,
-  status: EventStatus,
-  details: EventDetails
+// type EventAsGuest = {
+//   secret: string | null,
+//   status: EventStatus,
+//   details: EventDetails
+// }
+
+// TODO: maybe it could look like this
+// the key point where current solution breaks is when we have update events
+// the fact that we hve a single reactive value for details to update is v useful
+type RecordInfo = {
+  secret: string
+  status: EventStatus
+  lastChanged: TZDate
 }
 
+type EventAsGuest = {
+  details: EventDetails
+} & RecordInfo
+
+type EventAsAllGuests = [Record<Patp, RecordInfo>, EventDetails]
 
 const emptyEventDetails: EventDetails = {
   id: {
@@ -375,7 +388,8 @@ const emptyEventDetails: EventDetails = {
 
 const emptyEventAsGuest: EventAsGuest = {
   secret: "",
-  status: "" as EventStatus,
+  status: "unregistered",
+  lastChanged: new TZDate(),
   details: emptyEventDetails
 }
 
@@ -392,7 +406,7 @@ type CreateEventParams = {
 }
 
 type LiveUpdateEvent = {
-  ship: string,
+  ship: Patp,
   event: EventAsGuest,
 }
 
@@ -546,16 +560,11 @@ const backendRecordSchema = z.object({
 })
 
 function backendRecordToEventAsGuest(eventId: EventId, record: z.infer<typeof backendRecordSchema>): EventAsGuest {
-  const {
-    info,
-    status: { p: eventStatus, q: _inviteTime },
-    secret: _
-  } = record
-
   return {
-    secret: "",
-    status: eventStatus,
-    details: backendInfo1ToEventDetails(eventId, info)
+    secret: record.secret ? record.secret : "",
+    status: record.status.p,
+    lastChanged: newTZDateInTimeZoneFromUnix(record.status.q, "+00:00"),
+    details: backendInfo1ToEventDetails(eventId, record.info)
   }
 }
 
@@ -569,9 +578,9 @@ function backendRecordToEventAsGuest(eventId: EventId, record: z.infer<typeof ba
 
 const allRecordsSchema = z.object({
   allRecords: z.record(
-    PatpSchema, // this is going to be `${hostShip}/${eventName}`
+    z.string(), // this is going to be `${hostShip}/${eventName}`
     z.record(
-      z.string(), // this is `${guestShip}`
+      PatpSchema, // this is `${guestShip}`
       z.object({ record: backendRecordSchema })
     ))
 }).transform((response) => response.allRecords)
@@ -579,7 +588,7 @@ const allRecordsSchema = z.object({
 // ship here was needed to verify that there was a record for our ship
 // but i removed that validation
 // we're trusting the backend for now
-function getRecords(api: Urbit, ship: Patp): () => Promise<EventAsGuest[]> {
+function getRecords(api: Urbit, ship: Patp): () => Promise<EventAsAllGuests[]> {
   return async () => {
     const allRecords = await api.scry({
       app: "live",
@@ -592,8 +601,8 @@ function getRecords(api: Urbit, ship: Patp): () => Promise<EventAsGuest[]> {
       return Promise.resolve([])
     }
 
+    const result: EventAsAllGuests[] = []
 
-    let records: EventAsGuest[] = []
 
     const entries = Object
       .entries(allRecords)
@@ -605,29 +614,35 @@ function getRecords(api: Urbit, ship: Patp): () => Promise<EventAsGuest[]> {
     //   return hostShip !== "~" + ship
     // })
 
-    // WARN: patp : casting to Patp here because schema validates it above; it's fine
-    for (const [idString, recordObj] of entries) {
-      if (recordObj) {
-        const [hostShip, eventName] = idString.split("/")
-        const eventId = { ship: hostShip as Patp, name: eventName }
+    // WARN: casting to Patp here because schema validates it above; it's fine
+    for (const [idString, recordsForEvent] of entries) {
+      const [hostShip, eventName] = idString.split("/")
+      // WARN: casting to Patp here
+      const eventId = { ship: hostShip as Patp, name: eventName }
 
-        if (Object.keys(recordObj).length < 1) {
-          console.error("records has less than one key: ", records)
-          records.push(emptyEventAsGuest)
-          break
+
+      const recordInfos: Record<Patp, RecordInfo> = {}
+      let details: EventDetails = emptyEventDetails
+
+      for (const [guestPatp, recordObj] of Object.entries(recordsForEvent)) {
+        // WARN: casting to Patp here
+        if (recordObj) {
+          if (details === emptyEventDetails) {
+            details = backendInfo1ToEventDetails(eventId, recordObj.record.info)
+          }
+          recordInfos[guestPatp as Patp] = {
+            secret: recordObj.record.secret ? recordObj.record.secret : "",
+            status: recordObj.record.status.p,
+            lastChanged: newTZDateInTimeZoneFromUnix(recordObj.record.status.q, "+00:00")
+          }
+        } else {
+          console.error("getRecords: recordObj is undefined")
         }
-
-        if (Object.keys(recordObj).length > 1) {
-          console.error("records has more than one key: ", records)
-          records.push(emptyEventAsGuest)
-          break
-        }
-
-        records.push(backendRecordToEventAsGuest(eventId, Object.values(recordObj)[0].record))
       }
-    }
 
-    return records
+      result.push([recordInfos, details])
+    }
+    return result
   }
 }
 
@@ -1096,15 +1111,18 @@ function unregister(_api: Urbit): (id: EventId) => Promise<boolean> {
 
 const liveUpdateEventSchema = z.object({
   id: z.object({
-    name: PatpSchema,
-    ship: z.string(),
+    name: z.string(),
+    ship: PatpSchema,
   }),
   ship: z.string(),
   record: backendRecordSchema,
 }).transform((e) => {
   return {
     ...e,
-    id: { ship: e.id.ship as Patp, name: e.id.ship }
+    id: {
+      ship: e.id.ship as Patp,
+      name: e.id.name
+    }
   }
 })
 
@@ -1118,12 +1136,16 @@ function subscribeToLiveEvents(_api: Urbit): (handlers: {
       app: "live",
       path: "/updates",
       event: (evt) => {
-        const updateEvent = liveUpdateEventSchema.parse(evt)
-
-        onEvent({
-          event: backendRecordToEventAsGuest(updateEvent.id, updateEvent.record),
-          ship: updateEvent.ship
-        })
+        try {
+          const updateEvent = liveUpdateEventSchema.parse(evt)
+          onEvent({
+            event: backendRecordToEventAsGuest(updateEvent.id, updateEvent.record),
+            // WARN: casting as Patp
+            ship: updateEvent.ship as Patp
+          })
+        } catch (e) {
+          console.error("error parsing response for subscribeToLiveEvents", e)
+        }
       },
       err: (err, id) => onError(err, id),
       quit: (data) => onQuit(data)
@@ -1486,5 +1508,7 @@ export { stripSig, addSig, isComet, isMoon, isPlanet, isStar, isGalaxy }
 export type { Patp, PatpWithoutSig }
 
 export type { Session, Sessions }
+
+export type { EventAsAllGuests }
 
 export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, CreateEventParams, EventDetails, Attendee, Profile, LiveUpdateEvent, Backend }
