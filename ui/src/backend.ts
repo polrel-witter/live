@@ -4,7 +4,7 @@ import { TZDate } from "@date-fns/tz";
 
 import { z, ZodError } from "zod" // this is an object validation library
 
-import { convertTZDateToDate, newTZDateInTimeZoneFromUnix } from "./lib/utils";
+import { convertTZDateToDate, newTZDateInTimeZoneFromUnix, newTZDateInTimeZoneFromUnixMilli } from "./lib/utils";
 
 // Patp types and utilities
 
@@ -393,6 +393,8 @@ const emptyEventAsGuest: EventAsGuest = {
   details: emptyEventDetails
 }
 
+const emptyEventAsAllGuests: EventAsAllGuests = [{}, emptyEventDetails]
+
 const emptyEventAsHost: EventAsHost = {
   secret: "",
   limit: 0,
@@ -633,7 +635,7 @@ function getRecords(api: Urbit, ship: Patp): () => Promise<EventAsAllGuests[]> {
           recordInfos[guestPatp as Patp] = {
             secret: recordObj.record.secret ? recordObj.record.secret : "",
             status: recordObj.record.status.p,
-            lastChanged: newTZDateInTimeZoneFromUnix(recordObj.record.status.q, "+00:00")
+            lastChanged: newTZDateInTimeZoneFromUnixMilli(recordObj.record.status.q, "+00:00")
           }
         } else {
           console.error("getRecords: recordObj is undefined")
@@ -1510,5 +1512,6 @@ export type { Patp, PatpWithoutSig }
 export type { Session, Sessions }
 
 export type { EventAsAllGuests }
+export { emptyEventAsAllGuests }
 
 export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, CreateEventParams, EventDetails, Attendee, Profile, LiveUpdateEvent, Backend }

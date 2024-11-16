@@ -1,7 +1,7 @@
 import { LoaderFunctionArgs, Params, useLoaderData } from "react-router-dom"
 import { useContext, useEffect, useState } from "react"
 
-import { Attendee, Backend, emptyEventAsGuest, emptyEventAsHost, EventAsGuest, EventAsHost, EventId, eventIdsEqual, Patp } from "@/backend"
+import { Attendee, Backend, emptyEventAsAllGuests, emptyEventAsGuest, emptyEventAsHost, EventAsAllGuests, EventAsGuest, EventAsHost, EventId, eventIdsEqual, Patp } from "@/backend"
 import { GlobalContext, GlobalCtx } from "@/globalContext"
 
 import { NavbarWithSlots } from "@/components/frame/navbar"
@@ -12,13 +12,14 @@ import { BackButton } from "@/components/back-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { SlideDownAndReveal } from "@/components/sliders"
-import { flipBoolean } from "@/lib/utils"
+import { flipBoolean, formatEventDate, formatEventDateShort } from "@/lib/utils"
 import { ResponsiveContent } from "@/components/responsive-content"
 import { EventDetailsCard } from "@/components/cards/event-details"
 import { CreateEventForm } from "@/components/forms/create-event"
 import { EditEventForm } from "@/components/forms/edit-event"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { receiveMessageOnPort } from "worker_threads"
+import { stat } from "fs"
 
 async function ManageParamsLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> {
@@ -40,6 +41,7 @@ async function buildState(
   backend: Backend
 ): Promise<{
   event: EventAsHost
+  record: EventAsAllGuests
   attendees: Attendee[]
 }> {
 
@@ -55,6 +57,16 @@ async function buildState(
     evt = emptyEventAsHost
   }
 
+  let record = globalContext.eventsAsGuest
+    .find(([, details]) => {
+      return eventIdsEqual(details.id, evtId)
+    })
+
+  if (!record) {
+    console.error("couldn't find record with id ", evtId)
+    record = emptyEventAsAllGuests
+  }
+
   // remove ourselves from the list of guests / profles
   const attendees = (await backend.getAttendees(evtId))
     .filter((attendee) => attendee.patp !== globalContext.profile.patp)
@@ -64,6 +76,7 @@ async function buildState(
   return {
     event: evt,
     attendees: attendees,
+    record: record,
     // profiles: profiles,
   }
 }
@@ -86,8 +99,11 @@ const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => 
       >
         <div className="mt-2 w-full">
           <Card>
-            <CardContent className="pt-4">
-              <ScrollArea className="h-[300px] w-full rounded-md">
+            <CardContent>
+            {/* extract into component and use in all 3 sections */}
+              <ScrollArea
+              type="auto"
+              className="h-[300px] w-full rounded-md mt-4 px-4">
                 <EditEventForm
                   backend={backend}
                   event={evt}
@@ -101,7 +117,7 @@ const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => 
   )
 }
 
-const Guests = ({ evt, backend }: { evt: EventAsGuest, backend: Backend }) => {
+const Guests = ({ evt, backend }: { evt: EventAsAllGuests, backend: Backend }) => {
   const [open, setOpen] = useState(false)
   return (
     <div className="p-1">
@@ -122,6 +138,25 @@ const Guests = ({ evt, backend }: { evt: EventAsGuest, backend: Backend }) => {
             <CardContent className="pt-4">
               <ScrollArea className="h-[300px] w-full rounded-md">
                 records
+                <ul className="space-y-2 mt-2">
+                  {Object.entries(evt[0])
+                    .map(([patp, info]) => {
+                      return (
+                        <li key={patp}>
+                          {/* TODO: add button to change record sate */}
+                          {/* TODO: add lil column headers like 'status' 'lastChanged' */}
+                          {/* TODO: maybe could use a table for this idk */}
+                          <Card className="flex-row rounded-md p-2 space-y-1">
+                            <div className="bg-amber-100">{patp}</div>
+                            <div className="flex text-xs justify-between">
+                              <span>{info.status}</span>
+                              <span>{formatEventDateShort(info.lastChanged)}</span>
+                            </div>
+                          </Card>
+                        </li>
+                      )
+                    })}
+                </ul>
               </ScrollArea>
             </CardContent>
           </Card>
@@ -174,7 +209,7 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
 
   const [fetched, setFetched] = useState<boolean>(false)
   const [event, setEvent] = useState<EventAsHost>(emptyEventAsHost)
-  const [record, setRecord] = useState<EventAsGuest>(emptyEventAsGuest)
+  const [record, setRecord] = useState<EventAsAllGuests>(emptyEventAsAllGuests)
   const [attendees, setAttendees] = useState<Attendee[]>([])
 
   const [openGuestList, setOpenGuestList] = useState(false)
@@ -189,10 +224,11 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
           name,
           globalContext,
           backend
-        ).then(({ event, attendees }) => {
+        ).then(({ event, record, attendees }) => {
           setEvent(event)
           setAttendees(attendees)
           setFetched(true)
+          setRecord(record)
         })
       }
     }, [globalContext])
