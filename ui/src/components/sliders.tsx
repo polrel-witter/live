@@ -5,6 +5,7 @@ type PropsSlideDown = {
   show: boolean,
   maxHeight?: `max-h-[${number}px]`
   duration?: `duration-${number}`
+  timingFunction?: "ease-linear" | "ease-in" | "ease-out" | "ease-in-out"
 }
 
 
@@ -35,10 +36,11 @@ const SlideDownAndReveal: React.FC<PropsWithChildren<PropsSlideDown>> = ({
 type PropsSlideRight = {
   show: boolean,
   maxWidth?: `max-w-[${number}px]`
+  timingFunction?: "ease-linear" | "ease-in" | "ease-out" | "ease-in-out"
 }
 
 
-const SlideRightAndReveal: React.FC<PropsWithChildren<PropsSlideRight>> = ({ children, show, maxWidth = "max-w-[100px]" }) => {
+const SlideRightAndReveal: React.FC<PropsWithChildren<PropsSlideRight>> = ({ children, show, timingFunction, maxWidth = "max-w-[100px]" }) => {
   // for some reason there's a minimum max height we need in order for the transition to work; seems to be like 100px
   return (
     <div
@@ -47,6 +49,7 @@ const SlideRightAndReveal: React.FC<PropsWithChildren<PropsSlideRight>> = ({ chi
         // we can only transition between max-height values expressed in the
         // same way (px and px, rem and rem) but there isn't a "0 rem"
         // option, so have to define it in px
+        timingFunction,
         { [maxWidth]: show },
         { "max-w-0": !show },
       ])}

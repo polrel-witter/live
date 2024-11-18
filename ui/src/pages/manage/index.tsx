@@ -1,7 +1,7 @@
-import { LoaderFunctionArgs, Params, useLoaderData } from "react-router-dom"
-import { useContext, useEffect, useState } from "react"
+import { LoaderFunctionArgs, Params, useLoaderData, useSubmit } from "react-router-dom"
+import { ReactNode, useContext, useEffect, useState } from "react"
 
-import { Attendee, Backend, emptyEventAsAllGuests, emptyEventAsGuest, emptyEventAsHost, EventAsAllGuests, EventAsGuest, EventAsHost, EventId, eventIdsEqual, Patp } from "@/backend"
+import { Attendee, Backend, emptyEventAsAllGuests, emptyEventAsGuest, emptyEventAsHost, EventAsAllGuests, EventAsGuest, EventAsHost, EventId, eventIdsEqual, EventStatus, Patp, Profile } from "@/backend"
 import { GlobalContext, GlobalCtx } from "@/globalContext"
 
 import { NavbarWithSlots } from "@/components/frame/navbar"
@@ -12,14 +12,14 @@ import { BackButton } from "@/components/back-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { SlideDownAndReveal } from "@/components/sliders"
-import { flipBoolean, formatEventDate, formatEventDateShort } from "@/lib/utils"
+import { cn, flipBoolean, formatEventDateShort } from "@/lib/utils"
 import { ResponsiveContent } from "@/components/responsive-content"
 import { EventDetailsCard } from "@/components/cards/event-details"
-import { CreateEventForm } from "@/components/forms/create-event"
 import { EditEventForm } from "@/components/forms/edit-event"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { receiveMessageOnPort } from "worker_threads"
-import { stat } from "fs"
+import { nickNameOrPatp } from "@/components/util"
+import { GenericComboBox } from "@/components/ui/combo-box"
+import { Input } from "@/components/ui/input"
 
 async function ManageParamsLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> {
@@ -34,6 +34,15 @@ type Props = {
 }
 
 
+async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
+  return Promise.all(a
+    .map(attendee => b.getProfile(attendee.patp))
+  ).then((profiles) => {
+    return profiles
+      .filter((profile): profile is Profile => profile !== null)
+  })
+}
+
 async function buildState(
   hostShip: Patp,
   eventName: string,
@@ -43,6 +52,7 @@ async function buildState(
   event: EventAsHost
   record: EventAsAllGuests
   attendees: Attendee[]
+  profiles: Profile[]
 }> {
 
   const evtId: EventId = { ship: hostShip, name: eventName }
@@ -71,13 +81,13 @@ async function buildState(
   const attendees = (await backend.getAttendees(evtId))
     .filter((attendee) => attendee.patp !== globalContext.profile.patp)
 
-  // const profiles = await fetchProfiles(backend, attendees)
+  const profiles = await fetchProfiles(backend, attendees)
 
   return {
     event: evt,
     attendees: attendees,
     record: record,
-    // profiles: profiles,
+    profiles: profiles,
   }
 }
 
@@ -100,10 +110,10 @@ const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => 
         <div className="mt-2 w-full">
           <Card>
             <CardContent>
-            {/* extract into component and use in all 3 sections */}
+              {/* extract into component and use in all 3 sections */}
               <ScrollArea
-              type="auto"
-              className="h-[300px] w-full rounded-md mt-4 px-4">
+                type="auto"
+                className="h-[300px] w-full rounded-md mt-4 px-4">
                 <EditEventForm
                   backend={backend}
                   event={evt}
@@ -117,8 +127,165 @@ const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => 
   )
 }
 
-const Guests = ({ evt, backend }: { evt: EventAsAllGuests, backend: Backend }) => {
+
+type AnimatedButtonProps = {
+  defaultOpenIdx?: number,
+  minWidth?: `w-[${number}px]`
+  items: ReactNode[],
+  labels: ReactNode[]
+  classNames: ReactNode[]
+}
+
+const AnimatedButtons = ({ minWidth = "w-[0px]", items, labels, classNames, defaultOpenIdx }: AnimatedButtonProps) => {
+  const [expanded, setExpanded] = useState<number>(defaultOpenIdx || 0)
+  // check length of items and labels
+
+
+  if ((items.length !== labels.length) && (labels.length !== classNames.length)) {
+    console.error("arrays should be the same lenght")
+    return (<div> </div>)
+  }
+
+  if (items.length < 2) {
+    console.error("items and labels need to be at least 2 elements")
+    return (<div> </div>)
+  }
+
+  return (
+    <div className="flex">
+      {
+        items.map((item, index) => {
+          return (
+            <Button
+              key={index}
+              variant="ghost"
+              onClick={() => { setExpanded(index) }}
+              className={cn([
+                classNames[index],
+                "transition-[width] ease-in-out duration-250",
+                { [minWidth]: expanded !== index },
+                { "w-[500px]": expanded === index },
+              ])} >
+              {expanded === index
+                ? items[index]
+                : labels[index]
+              }
+            </Button>
+          )
+        })
+      }
+
+    </div>
+  )
+}
+
+const Guests = ({ evt, profiles, backend }: { evt: EventAsAllGuests, profiles: Profile[], backend: Backend }) => {
   const [open, setOpen] = useState(false)
+  type evtStatusAndAll = EventStatus | "all"
+  const [statusFilter, setStatusFilter] = useState<evtStatusAndAll>("all")
+  // const [patpFilter, setPatpFilter] = useState<Patp>("~sampel-palnet")
+  const StatusButton = ({ status }: { status: EventStatus }) => {
+    const baseClass = "w-full flex items-center justify-around"
+    switch (status) {
+      case "registered":
+        return (
+          <div className={baseClass}>
+            {status}
+            <Button
+              // hook up to backend
+              onClick={() => { }}
+              className="h-8 bg-red-400" >
+              unregister
+            </Button>
+          </div>
+        )
+      case "requested":
+        return (
+          <div className={baseClass}>
+            {status}
+            <Button
+              // hook up to backend
+              onClick={() => { }}
+              className="h-8 bg-gray-400" >
+              requested
+            </Button>
+          </div>
+        )
+      case "unregistered":
+        return (
+          <div className={baseClass}>
+            {status}
+            <Button
+              // hook up to backend
+              onClick={() => { }}
+              className="h-8 bg-gray-400" >
+              invite
+            </Button>
+          </div>
+        )
+      case "attended":
+        return (<div className={baseClass}> {status} </div>)
+      case "invited":
+        return (<div className={baseClass}> {status} </div>)
+    }
+  }
+
+  const [records, setRecords] = useState(Object.entries(evt[0]))
+  const [recordCount, setRecordCount] = useState<Record<evtStatusAndAll, number>>({
+    invited: 0,
+    requested: 0,
+    registered: 0,
+    unregistered: 0,
+    attended: 0,
+    all: 0,
+  })
+
+  const filterValues: Array<EventStatus | "all"> = [
+    "invited",
+    "requested",
+    "registered",
+    "unregistered",
+    "attended",
+    "all"
+  ] as const
+
+  useEffect(
+    () => {
+
+      const records = Object.entries(evt[0])
+      if (statusFilter === "all") {
+        setRecords(records)
+      } else {
+        setRecords(records.filter(record => record[1].status === statusFilter))
+      }
+    }, [statusFilter])
+
+
+  useEffect(
+    () => {
+      const obj: Record<evtStatusAndAll, number> = {
+        invited: 0,
+        requested: 0,
+        registered: 0,
+        unregistered: 0,
+        attended: 0,
+        all: 0,
+      }
+
+
+      const justStatuses = Object.values(evt[0])
+
+      for (const info of justStatuses) {
+        obj[info.status] += 1
+        obj.all += 1
+      }
+
+      setRecordCount(obj)
+
+    }, [evt])
+
+
+
   return (
     <div className="p-1">
       <Button
@@ -138,24 +305,60 @@ const Guests = ({ evt, backend }: { evt: EventAsAllGuests, backend: Backend }) =
             <CardContent className="pt-4">
               <ScrollArea className="h-[300px] w-full rounded-md">
                 records
+                <div className="flex w-full items-center justify-between space-x-2">
+                  {/* TODO: could add a search box eventually
+                    <Input
+                    placeholder="search guests..."
+                    value={patpFilter}
+                    >
+                    </Input>
+                  */}
+                  <Card className="w-full p-1 text-[10px] grid grid-rows-2 grid-flow-col justify-items-start">
+                    {Object.entries(recordCount)
+                      .map(([status, count]) => <span> {status}:{count}</span>)}
+                  </Card>
+
+                  <GenericComboBox<EventStatus|"all">
+                  value={statusFilter}
+                  items={filterValues.map((val) => {
+                    return { label: val, value: val }
+                  })}
+                  className="w-32"
+                  onSelect={(newVal) => { setStatusFilter(newVal) }}
+                  />
+                </div>
                 <ul className="space-y-2 mt-2">
-                  {Object.entries(evt[0])
-                    .map(([patp, info]) => {
-                      return (
-                        <li key={patp}>
-                          {/* TODO: add button to change record sate */}
-                          {/* TODO: add lil column headers like 'status' 'lastChanged' */}
-                          {/* TODO: maybe could use a table for this idk */}
-                          <Card className="flex-row rounded-md p-2 space-y-1">
-                            <div className="bg-amber-100">{patp}</div>
-                            <div className="flex text-xs justify-between">
-                              <span>{info.status}</span>
-                              <span>{formatEventDateShort(info.lastChanged)}</span>
-                            </div>
-                          </Card>
-                        </li>
-                      )
-                    })}
+                  {records.map(([patp, info]) => {
+                    return (
+                      <li key={patp} className="w-96">
+                        <Card className="flex-row rounded-md p-2 space-y-1 w-96">
+                          <CardHeader className="bg-gray-100 p-1 rounded-md">
+                            {/* WARN: casting as Patp */}
+                            {nickNameOrPatp(profiles
+                              .find(profile => profile.patp === patp),
+                              patp as Patp)}
+                          </CardHeader>
+                          <AnimatedButtons
+                            minWidth="w-[110px]"
+                            labels={[
+                              "status",
+                              "changed"]}
+                            classNames={[
+                              "bg-orange-100 hover:bg-orange-200 w-min",
+                              "bg-emerald-100 hover:bg-emerald-200 w-min"
+                            ]}
+                            items={[
+                              <div className="w-full flex items-center justify-around">
+                                <StatusButton status={info.status} />
+                              </div>,
+                              <div className="text-xs"> {formatEventDateShort(info.lastChanged)} </div>,
+                            ]}
+                          />
+                        </Card>
+
+                      </li>
+                    )
+                  })}
                 </ul>
               </ScrollArea>
             </CardContent>
@@ -211,6 +414,7 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
   const [event, setEvent] = useState<EventAsHost>(emptyEventAsHost)
   const [record, setRecord] = useState<EventAsAllGuests>(emptyEventAsAllGuests)
   const [attendees, setAttendees] = useState<Attendee[]>([])
+  const [profiles, setProfiles] = useState<Profile[]>([])
 
   const [openGuestList, setOpenGuestList] = useState(false)
 
@@ -224,11 +428,12 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
           name,
           globalContext,
           backend
-        ).then(({ event, record, attendees }) => {
+        ).then(({ event, record, attendees, profiles }) => {
           setEvent(event)
           setAttendees(attendees)
           setFetched(true)
           setRecord(record)
+          setProfiles(profiles)
         })
       }
     }, [globalContext])
@@ -272,7 +477,7 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
                 />
                 <Card className="w-full p-2">
                   <EditEvent backend={backend} evt={event} />
-                  <Guests backend={backend} evt={record} />
+                  <Guests backend={backend} profiles={profiles} evt={record} />
                   <InviteGuests backend={backend} evt={event} />
                 </Card>
               </div>

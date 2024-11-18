@@ -21,7 +21,7 @@ export function formatEventDate(d: TZDate): string {
 }
 
 export function formatEventDateShort(d: TZDate): string {
-  const fmt = format(d, `LL:dd:yy HH:mm aa (OO)`)
+  const fmt = format(d, `LL/dd/yy HH:mm aa (OO)`)
   // console.log("f", fmt)
   return fmt
 }
