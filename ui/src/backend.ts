@@ -5,6 +5,7 @@ import { TZDate } from "@date-fns/tz";
 import { z, ZodError } from "zod" // this is an object validation library
 
 import { convertTZDateToDate, newTZDateInTimeZoneFromUnix, newTZDateInTimeZoneFromUnixMilli } from "./lib/utils";
+import { type } from "os";
 
 // Patp types and utilities
 
@@ -67,10 +68,13 @@ interface Backend {
   getEvent(id: EventId): Promise<EventAsHost>
 
   // live - poke %register
-  register(id: EventId): Promise<boolean>
+  register(id: EventId, patp?: Patp): Promise<boolean>
 
   // live - poke %unregister
-  unregister(id: EventId): Promise<boolean>
+  unregister(id: EventId, patp?: Patp): Promise<boolean>
+
+  // live - poke %invite
+  invite(id: EventId, ships: Patp[]): Promise<boolean>
 
   // live - poke %create
   createEvent(evt: CreateEventParams): Promise<boolean>
@@ -159,7 +163,8 @@ interface Backend {
 
   // live - TBD
   subscribeToLiveEvents(handlers: {
-    onEvent: (e: LiveUpdateEvent) => void
+    onRecordUpdate: (e: LiveRecordUpdateEvent) => void
+    onEventUpdate: (e: LiveEventUpdateEvent) => void
     onError: (err: any, id: string) => void,
     onQuit: (data: any) => void,
   }): Promise<number>
@@ -407,9 +412,13 @@ type CreateEventParams = {
   details: Omit<EventDetails, "id">;
 }
 
-type LiveUpdateEvent = {
+type LiveRecordUpdateEvent = {
   ship: Patp,
   event: EventAsGuest,
+}
+
+type LiveEventUpdateEvent = {
+  event: EventAsHost,
 }
 
 
@@ -741,8 +750,8 @@ function getEvent(api: Urbit): (id: EventId) => Promise<EventAsHost> {
   }
 }
 
-function register(_api: Urbit): (id: EventId) => Promise<boolean> {
-  return async (_id: EventId) => {
+function register(_api: Urbit): (id: EventId, patp?: Patp) => Promise<boolean> {
+  return async (_id: EventId, patp?: Patp) => {
     let success = false;
     const _poke = await _api.poke({
       app: "live",
@@ -752,7 +761,29 @@ function register(_api: Urbit): (id: EventId) => Promise<boolean> {
         // the value for "register" should be null when used as a guest;
         // a host might specify a ship name there to register/unregister
         // guests from his events
-        "action": { "register": null }
+        "action": { "register": patp ?? null }
+      },
+      onSuccess: () => { success = true },
+      onError: (err) => {
+        console.error("error during register poke: ", err)
+      }
+    })
+    return Promise.resolve(success)
+  }
+}
+
+function invite(_api: Urbit): (id: EventId, ships: Patp[]) => Promise<boolean> {
+  return async (_id: EventId, ships: Patp[]) => {
+    let success = false;
+    const _poke = await _api.poke({
+      app: "live",
+      mark: "live-operation",
+      json: {
+        "id": { "ship": _id.ship, "name": _id.name },
+        // the value for "register" should be null when used as a guest;
+        // a host might specify a ship name there to register/unregister
+        // guests from his events
+        "action": { "invite": ships.map(ship => new String(ship)) }
       },
       onSuccess: () => { success = true },
       onError: (err) => {
@@ -1089,8 +1120,8 @@ function editEventLimit(api: Urbit): (id: EventId, limit: EventAsHost["limit"]) 
   }
 }
 
-function unregister(_api: Urbit): (id: EventId) => Promise<boolean> {
-  return async (_id: EventId) => {
+function unregister(_api: Urbit): (id: EventId, patp?: Patp) => Promise<boolean> {
+  return async (_id: EventId, patp?: Patp) => {
     let success = false;
     const _poke = await _api.poke({
       app: "live",
@@ -1100,7 +1131,7 @@ function unregister(_api: Urbit): (id: EventId) => Promise<boolean> {
         // the value for "unregister" should be null when used as a guest;
         // a host might specify a ship name there to register/unregister
         // guests from his events
-        "action": { "unregister": null }
+        "action": { "unregister": patp ?? null }
       },
       onSuccess: () => { success = true },
       onError: (err) => {
@@ -1111,7 +1142,7 @@ function unregister(_api: Urbit): (id: EventId) => Promise<boolean> {
   }
 }
 
-const liveUpdateEventSchema = z.object({
+const liveRecordUpdateEventSchema = z.object({
   id: z.object({
     name: z.string(),
     ship: PatpSchema,
@@ -1128,25 +1159,53 @@ const liveUpdateEventSchema = z.object({
   }
 })
 
+const liveEventUpdateEventSchema = z.object({
+  id: z.object({
+    name: z.string(),
+    ship: PatpSchema,
+  }),
+  event: backendEventSchema,
+}).transform((e) => {
+  return {
+    ...e,
+    id: {
+      // WARN: casting to Patp here because schema validates it above
+      ship: e.id.ship as Patp,
+      name: e.id.name
+    }
+  }
+})
+
 function subscribeToLiveEvents(_api: Urbit): (handlers: {
-  onEvent: (e: LiveUpdateEvent) => void
+  onRecordUpdate: (e: LiveRecordUpdateEvent) => void
+  onEventUpdate: (e: LiveEventUpdateEvent) => void
   onError: (err: any, id: string) => void,
   onQuit: (data: any) => void,
 }) => Promise<number> {
-  return async ({ onEvent, onError, onQuit }) => {
+  return async ({ onRecordUpdate, onEventUpdate, onError, onQuit }) => {
     return window.urbit.subscribe({
       app: "live",
       path: "/updates",
       event: (evt) => {
+        console.log(evt)
         try {
-          const updateEvent = liveUpdateEventSchema.parse(evt)
-          onEvent({
+          const updateEvent = liveRecordUpdateEventSchema.parse(evt)
+          onRecordUpdate({
             event: backendRecordToEventAsGuest(updateEvent.id, updateEvent.record),
             // WARN: casting as Patp
             ship: updateEvent.ship as Patp
           })
         } catch (e) {
-          console.error("error parsing response for subscribeToLiveEvents", e)
+          // ccould cast error to ZodError and verify that indeed the issue is
+          // that we're not receiving a record update
+          try {
+            const updateEvent = liveEventUpdateEventSchema.parse(evt)
+            onEventUpdate({
+              event: backendEventToEventAsHost(updateEvent.id, updateEvent.event),
+            })
+          } catch (e) {
+            console.error("error parsing response for subscribeToLiveEvents", e)
+          }
         }
       },
       err: (err, id) => onError(err, id),
@@ -1480,6 +1539,7 @@ function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
 
     register: register(api),
     unregister: unregister(api),
+    invite: invite(api),
     // getSchedule: getSchedule(api),
     getRecords: getRecords(api, addSig(ship)),
     getRecord: getRecord(api, ship),
@@ -1506,7 +1566,7 @@ export { emptyEventAsGuest, emptyProfile, emptyEventAsHost, newBackend, eventIds
 export { validUTCOffsets, stripUTCOffset, stringToUTCOffset }
 export type { UTCOffset }
 
-export { stripSig, addSig, isComet, isMoon, isPlanet, isStar, isGalaxy }
+export { stripSig, addSig, isComet, isMoon, isPlanet, isStar, isGalaxy, isPatp }
 export type { Patp, PatpWithoutSig }
 
 export type { Session, Sessions }
@@ -1514,4 +1574,6 @@ export type { Session, Sessions }
 export type { EventAsAllGuests }
 export { emptyEventAsAllGuests }
 
-export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, CreateEventParams, EventDetails, Attendee, Profile, LiveUpdateEvent, Backend }
+export type { LiveRecordUpdateEvent, LiveEventUpdateEvent }
+
+export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, CreateEventParams, EventDetails, Attendee, Profile, Backend }

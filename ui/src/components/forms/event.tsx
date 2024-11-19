@@ -310,6 +310,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                     return { label: `GMT${offset}`, value: offset }
                   })}
                   onSelect={(newVal) => { form.setValue("utcOffset", newVal) }}
+                  showInput
                 />
               </FormControl>
             </FormItem>
