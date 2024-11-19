@@ -20,6 +20,12 @@ export function formatEventDate(d: TZDate): string {
   return fmt
 }
 
+export function formatEventDateShort(d: TZDate): string {
+  const fmt = format(d, `LL/dd/yy HH:mm aa (OO)`)
+  // console.log("f", fmt)
+  return fmt
+}
+
 export function formatSessionTime(d: Date): string {
   const fmt = format(d, `hh:mm aa`)
   return fmt
@@ -56,6 +62,15 @@ export function newTZDateInTimeZoneFromUnix(seconds: number, timezoneString: str
   // so we first get set the TZDate to UTC, then we figure out the offset
 
   return _newTZDateInTimeZone(new TZDate(seconds * 1000, "+00:00"), timezoneString)
+}
+
+export function newTZDateInTimeZoneFromUnixMilli(milliseconds: number, timezoneString: string): TZDate {
+
+  // unix timestamp is always assumed to be in UTC, if we add a timezone
+  // in the TZDate construtor it shifts the Date by the timezone
+  // so we first get set the TZDate to UTC, then we figure out the offset
+
+  return _newTZDateInTimeZone(new TZDate(milliseconds, "+00:00"), timezoneString)
 }
 
 // TODO: maybe rename this // add better documentation

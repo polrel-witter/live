@@ -14,8 +14,6 @@ export const CreateEventForm = ({ createEvent }: Props) => {
         // Do something with the form values.
         // ✅ This will be type-safe and validated.
 
-        console.log("values", values)
-
         let newEvent: CreateEventParams = emptyEventAsHost;
 
         newEvent.limit = values.limit ? values.limit : null

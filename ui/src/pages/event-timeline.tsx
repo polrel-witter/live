@@ -12,6 +12,10 @@ const EventTimelinePage: React.FC = () => {
     return
   }
 
+  const eventsAsGuest = globalContext
+    .eventsAsGuest
+    .map(([_recordInfos, details]) => details)
+
   return (
     <div className="grid justify-center w-full space-y-6 py-20 text-center">
       <h1 className="text-3xl italic">events</h1>
@@ -28,7 +32,7 @@ const EventTimelinePage: React.FC = () => {
         </TabsContent>
         <TabsContent value="eventsAsGuest">
           <EventList
-            details={globalContext.eventsAsGuest.map((evt) => evt.details)}
+            details={eventsAsGuest}
             linkTo={(id) => `event/${id.ship}/${id.name}`}
           />
         </TabsContent>

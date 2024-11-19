@@ -24,7 +24,6 @@ const SessionDateSelect: React.FC<{
 
   useEffect(
     () => {
-      console.log("foo")
       setDates(new Map(
         sessionDates
           .map((date) => [dateToKey(date), date])

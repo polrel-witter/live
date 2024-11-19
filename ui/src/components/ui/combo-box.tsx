@@ -21,9 +21,11 @@ type Props<T> = {
   items: { value: T, label: string }[]
   value: T
   onSelect: ((value: T) => void)
+  className?: string
+  showInput?: boolean
 }
 
-const GenericComboBox = <K extends string>({ items, onSelect, value }: Props<K>): ReactElement => {
+const GenericComboBox = <K extends string>({ items, showInput, onSelect, value, className }: Props<K>): ReactElement => {
   const [open, setOpen] = useState(false)
 
   return (
@@ -33,7 +35,7 @@ const GenericComboBox = <K extends string>({ items, onSelect, value }: Props<K>)
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[200px] justify-between"
+          className={cn(["w-[200px] justify-between", className])}
         >
           {value
             ? items.find((item) => item.value === value)?.label
@@ -43,7 +45,14 @@ const GenericComboBox = <K extends string>({ items, onSelect, value }: Props<K>)
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
         <Command>
-          <CommandInput placeholder="Search item..." className="h-9" />
+          {
+            showInput
+              ? <CommandInput
+                placeholder="Search item..."
+                className="h-9"
+              />
+              : ""
+          }
           <CommandList>
             <CommandEmpty>No item found.</CommandEmpty>
             <CommandGroup>

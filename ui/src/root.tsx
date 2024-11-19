@@ -1,14 +1,15 @@
 import { PropsWithChildren, useEffect, useState } from "react"
-import { addSig, Backend, eventIdsEqual, LiveUpdateEvent } from "@/backend";
+import { addSig, Backend, EventAsAllGuests, eventIdsEqual, LiveEventUpdateEvent, LiveRecordUpdateEvent } from "@/backend";
 import { Toaster } from "./components/ui/toaster";
 import { buildIndexCtx, ConnectionStatus, GlobalContext, newEmptyIndexCtx } from "./globalContext";
+import { record } from "zod";
 
 
 // TODO: this should eventually check that the urbit we're connected to
 // can communicate with other urbits (maybe i can to that with a poke?)
 function handleConnection(cb: (status: ConnectionStatus) => void) {
   return () => {
-    cb("connecting")
+    ("connecting")
     if (navigator.onLine) {
       isReachable(getServerUrl()).then(function(online) {
         if (online) {
@@ -80,25 +81,65 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
 
     // subscribe to event to update state dynamically
     backend.subscribeToLiveEvents({
-      onEvent: (updateEvent: LiveUpdateEvent) => {
+      onRecordUpdate: (updateEvent: LiveRecordUpdateEvent) => {
         // TODO: do we get updates on host events too?
         setCtx(({ eventsAsGuest: oldEventsAsGuest, ...restCtx }) => {
           const maybeIdx = oldEventsAsGuest
-            .map((evt) => evt.details.id)
-            .findIndex((oldId) => eventIdsEqual(oldId, updateEvent.event.details.id))
+            .findIndex(([_infos, details]) => eventIdsEqual(
+              details.id,
+              updateEvent.event.details.id
+            ))
 
+          // idk about this
           if (maybeIdx === -1) {
-            return {
-              eventsAsGuest: [...oldEventsAsGuest, updateEvent.event],
-              ...restCtx
-            }
+            console.error("couldn't find record in context, dropping update")
+            return { eventsAsGuest: oldEventsAsGuest, ...restCtx }
           }
+
+          const [recordInfos,] = oldEventsAsGuest[maybeIdx]
+          recordInfos[updateEvent.ship] = {
+            secret: updateEvent.event.secret,
+            status: updateEvent.event.status,
+            lastChanged: updateEvent.event.lastChanged,
+          }
+          const updated: EventAsAllGuests = [
+            recordInfos,
+            updateEvent.event.details
+          ]
 
           return {
             eventsAsGuest: [
               ...oldEventsAsGuest.slice(0, maybeIdx),
+              updated,
               ...oldEventsAsGuest.slice(maybeIdx + 1, oldEventsAsGuest.length - 1),
-              updateEvent.event],
+            ],
+            ...restCtx
+          }
+
+        })
+      },
+      onEventUpdate: (updateEvent: LiveEventUpdateEvent) => {
+        // TODO: do we get updates on host events too?
+        setCtx(({ eventsAsHost: oldEventsAsHost, ...restCtx }) => {
+          const maybeIdx = oldEventsAsHost
+            .findIndex(({ details }) => eventIdsEqual(
+              details.id,
+              updateEvent.event.details.id
+            ))
+
+          // idk about this
+          if (maybeIdx === -1) {
+            console.error("couldn't find event in context, dropping update")
+            return { eventsAsHost: oldEventsAsHost, ...restCtx }
+          }
+
+
+          return {
+            eventsAsHost: [
+              ...oldEventsAsHost.slice(0, maybeIdx),
+              updateEvent.event,
+              ...oldEventsAsHost.slice(maybeIdx + 1, oldEventsAsHost.length - 1),
+            ],
             ...restCtx
           }
 

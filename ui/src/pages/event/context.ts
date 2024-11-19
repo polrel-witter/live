@@ -33,6 +33,7 @@ function newEmptyCtx(): EventCtx {
       },
       status: "invited",
       secret: "",
+      lastChanged: new TZDate(),
     },
     profiles: [] as Profile[],
     attendees: [] as Attendee[],

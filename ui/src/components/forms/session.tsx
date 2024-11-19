@@ -272,7 +272,6 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
                           containerRef={formRef}
                           value={form.watch("timeRange.start")}
                           onChange={(newTime) => {
-                            console.log("newtime", newTime)
                             form.setValue("timeRange.start", newTime)
                           }}
                           use12HourFormat
@@ -292,7 +291,6 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
                           containerRef={formRef}
                           value={form.watch("timeRange.end")}
                           onChange={(newTime) => {
-                            console.log("newtime", newTime)
                             form.setValue("timeRange.end", newTime)
                           }}
                           use12HourFormat
