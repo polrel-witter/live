@@ -31,15 +31,7 @@ if (container) {
     <React.StrictMode>
       <RootComponent backend={backend} >
         <div className='mb-16'>
-          <GlobalContext.Consumer >
-            {ctx => {
-              return (
-                <div className="phantom">
-                  <AppRouter backend={backend} />
-                </div>
-              )
-            }}
-          </GlobalContext.Consumer >
+          <AppRouter backend={backend} />
         </div>
       </RootComponent>
     </React.StrictMode>

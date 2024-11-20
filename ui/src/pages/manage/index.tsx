@@ -423,6 +423,7 @@ const InviteGuests = ({ evt, invite }: InviteProps) => {
   const [ships, setShips] = useState<Patp[]>([])
   const [inputField, setInputField] = useState<string>("")
 
+  // TODO: add form to inputs so we can do validation
   // TODO: add validation error in case we're trying to add to the list
   // a string which is not a patp, and print back errors from backend when
   // the invites don't go through
@@ -606,7 +607,7 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
                   <InviteGuests
                     invite={(patp: Patp) => backend
                       .invite(event.details.id, [patp]).then()}
-                    evt={event}
+                    evt={record}
                   />
                 </Card>
               </div>
