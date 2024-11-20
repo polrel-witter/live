@@ -1,7 +1,7 @@
 import { LoaderFunctionArgs, Params, useLoaderData, useSubmit } from "react-router-dom"
 import { ReactNode, useContext, useEffect, useState } from "react"
 
-import { Attendee, Backend, emptyEventAsAllGuests, emptyEventAsGuest, emptyEventAsHost, EventAsAllGuests, EventAsGuest, EventAsHost, EventId, eventIdsEqual, EventStatus, Patp, Profile, addSig, isPatp } from "@/backend"
+import { Attendee, Backend, emptyEventAsAllGuests, emptyEventAsGuest, emptyEventAsHost, EventAsAllGuests, EventAsGuest, EventAsHost, EventId, eventIdsEqual, EventStatus, Patp, Profile, PatpSchema } from "@/backend"
 import { GlobalContext, GlobalCtx } from "@/globalContext"
 
 import { NavbarWithSlots } from "@/components/frame/navbar"
@@ -21,8 +21,12 @@ import { nickNameOrPatp } from "@/components/util"
 import { GenericComboBox } from "@/components/ui/combo-box"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { isPast } from "date-fns"
 import { X } from "lucide-react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { SpinningButton } from "@/components/spinning-button"
 
 async function ManageParamsLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> {
@@ -165,7 +169,7 @@ const AnimatedButtons = ({
   }
 
   return (
-    <div className="flex space-x-1">
+    <div className="flex justify-center space-x-1">
       {
         items.map((item, index) => {
           return (
@@ -227,7 +231,7 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
             <Button
               // hook up to backend
               onClick={async () => { await fns.unregister(patp) }}
-              className="h-8 bg-orange-300 hover:bg-orange-400 p-2"
+              className="h-8 bg-orange-300 hover:bg-orange-400 p-1"
               variant="ghost"
             >
               unregister
@@ -322,7 +326,7 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
 
 
   return (
-    <div className="p-0">
+    <div className="p-1">
       <Button
         type="button"
         variant="ghost"
@@ -335,8 +339,8 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
         show={open}
         maxHeight="max-h-[3000px]"
       >
-        <div className="mt-2 w-full">
-          <Card>
+        <div className="flex w-full justify-center mt-2">
+          <Card className="w-min">
             <CardContent className="pt-4 p-2 md:p-6">
               <ScrollArea className="h-[300px] w-full rounded-md">
                 <div className="flex w-full items-center justify-between space-x-2">
@@ -351,7 +355,7 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
                   <Card
                     className={cn([
                       "grid",
-                      "grid-rows-4 grid-flow-col justify-around justify-items-start",
+                      "grid-rows-3 grid-flow-col justify-around justify-items-start",
                       "sm:grid-rows-2",
                       "w-full p-1 text-[10px]"
                     ])}
@@ -372,8 +376,8 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
                 <ul className="space-y-2 mt-2">
                   {records.map(([patp, info]) => {
                     return (
-                      <li key={patp} className="w-full">
-                        <Card className="flex-row rounded-md p-2 space-y-1">
+                      <li key={patp} className="">
+                        <Card className="rounded-md p-2 space-y-1 text-xs sm:text-md">
                           <CardHeader className="bg-gray-100 p-1 rounded-md">
                             {/* WARN: casting as Patp */}
                             {nickNameOrPatp(profiles
@@ -428,6 +432,17 @@ const InviteGuests = ({ evt, invite }: InviteProps) => {
   // a string which is not a patp, and print back errors from backend when
   // the invites don't go through
 
+  const schema = z.object({
+    patp: PatpSchema.or(z.literal("")),
+  })
+
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
+    mode: "onChange",
+  })
+
+  const [spin, setSpin] = useState(false)
+
   return (
     <div className="p-1">
       <Button
@@ -446,9 +461,9 @@ const InviteGuests = ({ evt, invite }: InviteProps) => {
           <Card>
             <CardContent className="pt-4">
               <div className="flex-row space-y-1 pb-2">
-                {ships.map((ship) =>
+                {ships.map((ship, idx) =>
                   <Badge
-                    key={ship}
+                    key={ship + idx}
                     className="mx-1"
                   >
                     {ship}
@@ -458,6 +473,7 @@ const InviteGuests = ({ evt, invite }: InviteProps) => {
                       onClick={() => {
                         const idx = ships.findIndex((s) => s === ship)
                         setShips((oldShips) => {
+                          if (oldShips.length === 1) { return [] }
                           return [
                             ...oldShips.slice(0, idx),
                             ...oldShips.slice(idx + 1, undefined),
@@ -470,44 +486,56 @@ const InviteGuests = ({ evt, invite }: InviteProps) => {
                   </Badge>
                 )}
               </div>
-              <div className="flex space-x-4 mt-4">
-                <Input
-                  placeholder="name/patp of speaker"
-                  value={inputField}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      if (inputField && isPatp(inputField)) {
-                        setShips((oldShips) => {
-                          return [...oldShips, inputField]
-                        })
-                        setInputField("")
+              <div>
+                <Form {...form}>
+                  <form
+                    onSubmit={form.handleSubmit((values: z.infer<typeof schema>) => {
+                      if (values.patp !== "") {
+                        const p = values.patp
+                        setShips((oldShips) => [...oldShips, p])
+                        form.setValue("patp", "")
                       }
-                    }
-                  }}
-                  onChange={(e) => { setInputField(e.target.value) }}
-                />
-                <Button
-                  type="button"
-                  onClick={() => {
-                    if (inputField && isPatp(inputField)) {
-                      setShips((oldShips) => {
-                        return [...oldShips, inputField]
-                      })
-                      setInputField("")
-                    }
-                  }}>
-                  add to list
-                </Button>
+                    })}
+                  >
+                    <FormField
+                      control={form.control}
+                      name={"patp"}
+                      render={({ field }) => (
+                        <FormItem >
+                          <FormControl >
+                            <div className="flex flex-row space-x-4">
+                              <Input
+                                placeholder="name/patp of speaker"
+                                {...field}
+                              />
+
+                              <Button type="submit" > add to list </Button>
+                            </div>
+                          </FormControl>
+                          <FormDescription />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </form>
+                </Form>
+
               </div>
-              <Button
-                type="button"
+              <SpinningButton
                 className="mt-6 w-full"
+                spin={spin}
                 onClick={() => {
-                  ships.forEach((ship) => { invite(ship).then() })
+                  setSpin(true)
+                  Promise.all(
+                    ships.map((ship) => { return invite(ship) })
+                  ).then((res) => {
+                    // console.log("sent out all the invites")
+                    setShips([])
+                    setSpin(false)
+                  })
                 }}>
                 send invites
-              </Button>
+              </SpinningButton>
             </CardContent>
           </Card>
         </div>
@@ -585,32 +613,31 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
       {
         fetched
           ? <AppFrame top={navbar} bottom={footer}>
-            <ResponsiveContent className="flex justify-center pt-16 pb-8">
-              <div className="w-min space-y-6" >
-                <EventDetailsCard
-                  hostProfile={globalContext.profile}
-                  details={event.details}
-                  buttons={<div></div>}
+            <ResponsiveContent className="flex flex-col items-center space-y-2 pt-16 pb-8">
+              <EventDetailsCard
+                hostProfile={globalContext.profile}
+                details={event.details}
+                buttons={<div></div>}
+                className="w-full"
+              />
+              <Card className="p-2">
+                <EditEvent backend={backend} evt={event} />
+                <Guests
+                  profiles={profiles}
+                  evt={record}
+                  register={(patp: Patp) => backend
+                    .register(event.details.id, patp).then()}
+                  unregister={(patp: Patp) => backend
+                    .unregister(event.details.id, patp).then()}
+                  invite={(patp: Patp) => backend
+                    .invite(event.details.id, [patp]).then()}
                 />
-                <Card className="w-full p-2">
-                  <EditEvent backend={backend} evt={event} />
-                  <Guests
-                    profiles={profiles}
-                    evt={record}
-                    register={(patp: Patp) => backend
-                      .register(event.details.id, patp).then()}
-                    unregister={(patp: Patp) => backend
-                      .unregister(event.details.id, patp).then()}
-                    invite={(patp: Patp) => backend
-                      .invite(event.details.id, [patp]).then()}
-                  />
-                  <InviteGuests
-                    invite={(patp: Patp) => backend
-                      .invite(event.details.id, [patp]).then()}
-                    evt={record}
-                  />
-                </Card>
-              </div>
+                <InviteGuests
+                  invite={(patp: Patp) => backend
+                    .invite(event.details.id, [patp]).then()}
+                  evt={record}
+                />
+              </Card>
             </ResponsiveContent>
           </AppFrame>
           : ''
