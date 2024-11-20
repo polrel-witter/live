@@ -1622,6 +1622,7 @@ export { validUTCOffsets, stripUTCOffset, stringToUTCOffset }
 export type { UTCOffset }
 
 export { stripSig, addSig, isComet, isMoon, isPlanet, isStar, isGalaxy, isPatp }
+export { PatpSchema }
 export type { Patp, PatpWithoutSig }
 
 export type { Session, Sessions }
