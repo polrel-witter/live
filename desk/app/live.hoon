@@ -1356,6 +1356,8 @@
       |=  new-status=status
       ^+  cor
       =;  record=record-1
+        :: pass local update
+        =.  cor  (give-local-update [%record id ship record])
         (~(publish re ship) record)
       =/  record=record-1
         ~|  no-record+[id ship]
@@ -1390,11 +1392,11 @@
           [info.event ~ status]
         [info.event secret.event status]
       :: make path secret
-      =.  cor
-        (sss-pub-records (secret:du-records [path]~))
+      =.  cor  (sss-pub-records (secret:du-records [path]~))
       :: permission the guest for access
-      =.  cor
-        (sss-pub-records (allow:du-records [ship]~ [path]~))
+      =.  cor  (sss-pub-records (allow:du-records [ship]~ [path]~))
+      :: pass local update
+      =.  cor  (give-local-update [%record id ship record])
       :: give the guest the record
       (~(publish re ship) record)
     --
