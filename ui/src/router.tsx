@@ -26,7 +26,7 @@ const makeRouter = (backend: Backend) => {
       children: [
         {
           index: true,
-          element: <EventTimelinePage />,
+          element: <EventTimelinePage backend={backend} />,
           errorElement: <ErrorPage />,
         },
         {
@@ -41,33 +41,6 @@ const makeRouter = (backend: Backend) => {
       element: <ManageIndex backend={backend} />,
       loader: ManageParamsLoader,
       errorElement: <ErrorPage />,
-      // children: [
-      //   {
-      //     index: true,
-      //     loader: EventParamsLoader,
-      //     element: <EventDetails />
-      //   },
-      //   {
-      //     path: basePath + "/event/:hostShip/:name/attendees",
-      //     loader: EventParamsLoader,
-      //     element: <AttendeesPage backend={backend} />
-      //   },
-      //   {
-      //     path: basePath + "/event/:hostShip/:name/schedule",
-      //     loader: EventParamsLoader,
-      //     element: <SchedulePage />
-      //   },
-      //   {
-      //     path: basePath + "/event/:hostShip/:name/map",
-      //     loader: EventParamsLoader,
-      //     element: <MapPage />
-      //   },
-      //   {
-      //     path: basePath + "/event/:hostShip/:name/connections",
-      //     loader: EventParamsLoader,
-      //     element: <ConnectionsPage backend={backend} />
-      //   },
-      // ],
     },
     {
       path: basePath + "/event/:hostShip/:name",
