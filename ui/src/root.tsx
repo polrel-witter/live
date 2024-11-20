@@ -1,5 +1,5 @@
 import { PropsWithChildren, useEffect, useState } from "react"
-import { addSig, Backend, EventAsAllGuests, eventIdsEqual, LiveEventUpdateEvent, LiveRecordUpdateEvent } from "@/backend";
+import { addSig, Backend, EventAsAllGuests, eventIdsEqual, LiveEventUpdateEvent, LiveFindEvent, LiveRecordUpdateEvent } from "@/backend";
 import { Toaster } from "./components/ui/toaster";
 import { buildIndexCtx, ConnectionStatus, GlobalContext, newEmptyIndexCtx } from "./globalContext";
 import { record } from "zod";
@@ -133,7 +133,6 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
             return { eventsAsHost: oldEventsAsHost, ...restCtx }
           }
 
-
           return {
             eventsAsHost: [
               ...oldEventsAsHost.slice(0, maybeIdx),
@@ -143,6 +142,11 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
             ...restCtx
           }
 
+        })
+      },
+      onFindResponse: (updateEvent: LiveFindEvent) => {
+        setCtx(({ searchedEvents, ...oldCtx }) => {
+          return { searchedEvents: updateEvent.events, ...oldCtx }
         })
       },
       onError: (err, _id) => { console.log("%live err: ", err) },

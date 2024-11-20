@@ -1,4 +1,4 @@
-import { Backend, EventAsAllGuests, EventAsGuest, EventAsHost, Patp, Profile } from "@/backend";
+import { Backend, EventAsAllGuests, EventAsGuest, EventAsHost, EventDetails, EventId, Patp, Profile } from "@/backend";
 import { createContext } from "react";
 
 
@@ -10,6 +10,7 @@ interface GlobalCtx {
   profile: Profile;
   eventsAsGuest: EventAsAllGuests[]
   eventsAsHost: EventAsHost[]
+  searchedEvents: [EventId, EventDetails][]
 }
 
 function newEmptyIndexCtx(): GlobalCtx {
@@ -31,6 +32,7 @@ function newEmptyIndexCtx(): GlobalCtx {
     },
     eventsAsGuest: [],
     eventsAsHost: [],
+    searchedEvents: [],
   }
 }
 

@@ -4,8 +4,8 @@ import { TZDate } from "@date-fns/tz";
 
 import { z, ZodError } from "zod" // this is an object validation library
 
-import { convertTZDateToDate, newTZDateInTimeZoneFromUnix, newTZDateInTimeZoneFromUnixMilli } from "./lib/utils";
-import { type } from "os";
+import { newTZDateInTimeZoneFromUnix, newTZDateInTimeZoneFromUnixMilli } from "./lib/utils";
+import { de } from "date-fns/locale";
 
 // Patp types and utilities
 
@@ -64,6 +64,9 @@ interface Backend {
   // live - scry %all-events
   getEvents(): Promise<EventAsHost[]>
 
+  // live - scry %remote-events
+  find(host: Patp, name: string | null): Promise<boolean>
+
   // live - scry %event
   getEvent(id: EventId): Promise<EventAsHost>
 
@@ -75,6 +78,9 @@ interface Backend {
 
   // live - poke %invite
   invite(id: EventId, ships: Patp[]): Promise<boolean>
+
+  // live - poke %create
+  createEvent(evt: CreateEventParams): Promise<boolean>
 
   // live - poke %create
   createEvent(evt: CreateEventParams): Promise<boolean>
@@ -165,6 +171,7 @@ interface Backend {
   subscribeToLiveEvents(handlers: {
     onRecordUpdate: (e: LiveRecordUpdateEvent) => void
     onEventUpdate: (e: LiveEventUpdateEvent) => void
+    onFindResponse: (e: LiveFindEvent) => void
     onError: (err: any, id: string) => void,
     onQuit: (data: any) => void,
   }): Promise<number>
@@ -419,6 +426,10 @@ type LiveRecordUpdateEvent = {
 
 type LiveEventUpdateEvent = {
   event: EventAsHost,
+}
+
+type LiveFindEvent = {
+  events: [EventId, EventDetails][]
 }
 
 
@@ -698,7 +709,7 @@ function backendEventToEventAsHost(eventId: EventId, event: z.infer<typeof backe
 
 const allEventsSchema = z.object({
   allEvents: z.record(
-    PatpSchema, // this is going to be `${hostShip}/${eventName}`
+    z.string(), // this is going to be `${hostShip}/${eventName}`
     z.object({ event: backendEventSchema }))
 }).transform(({ allEvents }) => allEvents)
 
@@ -730,6 +741,26 @@ function getEvents(api: Urbit): () => Promise<EventAsHost[]> {
     }
 
     return events
+  }
+}
+
+
+function find(api: Urbit): (host: Patp, name: string | null) => Promise<boolean> {
+  return async (host: Patp, name: string | null) => {
+    let success = false;
+    const _poke = await api.poke({
+      app: "live",
+      mark: "live-dial",
+      json: {
+        // could need a %
+        "find": { ship: host, name: name }
+      },
+      onSuccess: () => { success = true },
+      onError: (err) => {
+        console.error("error during register poke: ", err)
+      }
+    })
+    return Promise.resolve(success)
   }
 }
 
@@ -1176,13 +1207,23 @@ const liveEventUpdateEventSchema = z.object({
   }
 })
 
+const liveFindEventSchema = z.object({
+  name: z.string().nullable(),
+  ship: PatpSchema,
+  result: z.record(
+    z.string(),
+    z.object({ info: backendInfo1Schema })
+  )
+})
+
 function subscribeToLiveEvents(_api: Urbit): (handlers: {
   onRecordUpdate: (e: LiveRecordUpdateEvent) => void
   onEventUpdate: (e: LiveEventUpdateEvent) => void
+  onFindResponse: (e: LiveFindEvent) => void
   onError: (err: any, id: string) => void,
   onQuit: (data: any) => void,
 }) => Promise<number> {
-  return async ({ onRecordUpdate, onEventUpdate, onError, onQuit }) => {
+  return async ({ onRecordUpdate, onEventUpdate, onFindResponse, onError, onQuit }) => {
     return window.urbit.subscribe({
       app: "live",
       path: "/updates",
@@ -1196,7 +1237,7 @@ function subscribeToLiveEvents(_api: Urbit): (handlers: {
             ship: updateEvent.ship as Patp
           })
         } catch (e) {
-          // ccould cast error to ZodError and verify that indeed the issue is
+          // could cast error to ZodError and verify that indeed the issue is
           // that we're not receiving a record update
           try {
             const updateEvent = liveEventUpdateEventSchema.parse(evt)
@@ -1204,7 +1245,20 @@ function subscribeToLiveEvents(_api: Urbit): (handlers: {
               event: backendEventToEventAsHost(updateEvent.id, updateEvent.event),
             })
           } catch (e) {
-            console.error("error parsing response for subscribeToLiveEvents", e)
+            try {
+              const findEvent = liveFindEventSchema.parse(evt)
+              onFindResponse({
+                events: Object.entries(findEvent.result)
+                  .map(([idString, info]) => {
+                    const [hostShip, eventName] = idString.split("/")
+                    // WARN: casting to Patp here
+                    const eventId = { ship: hostShip as Patp, name: eventName }
+                    return [eventId, backendInfo1ToEventDetails(eventId, info.info)]
+                  }),
+              })
+            } catch (e) {
+              console.error("error parsing response for subscribeToLiveEvents", e)
+            }
           }
         }
       },
@@ -1544,6 +1598,7 @@ function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
     getRecords: getRecords(api, addSig(ship)),
     getRecord: getRecord(api, ship),
     getEvents: getEvents(api),
+    find: find(api),
     getEvent: getEvent(api),
     subscribeToLiveEvents: subscribeToLiveEvents(api),
 
@@ -1574,6 +1629,6 @@ export type { Session, Sessions }
 export type { EventAsAllGuests }
 export { emptyEventAsAllGuests }
 
-export type { LiveRecordUpdateEvent, LiveEventUpdateEvent }
+export type { LiveRecordUpdateEvent, LiveEventUpdateEvent, LiveFindEvent }
 
 export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, CreateEventParams, EventDetails, Attendee, Profile, Backend }
