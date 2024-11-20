@@ -171,5 +171,6 @@
       [%all-records p=(mip id ship record-1)]       :: all records
       [%event-records p=(map ship record-1)]        :: all records for an event
       [%remote-events p=(map id info-1)]            :: discoverable events
+      [%result p=$@(@t (map id info-1))]            :: previous search result
   ==
 --

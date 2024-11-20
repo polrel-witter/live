@@ -162,11 +162,7 @@
       %result
     :~  ['ship' s+(scot %p ship.upd)]
         ['name' `json`?~(name.upd ~ s+u.name.upd)]
-        :-  'result'
-        ^-  ^json
-        ?@  result.upd
-          [%s ;;(cord result.upd)]
-        (en-remote-events result.upd)
+        ['result' (en-result result.upd)]
     ==
   ==
 ::
@@ -180,13 +176,20 @@
       %record-exists  ['recordExists' b+p.demand]
       %event          ['event' (en-event p.demand)]
       %session-ids    ['sessionIds' (en-session-ids p.demand)]
+      %record         ['record' ?~(p.demand ~ (en-record u.p.demand))]
       %counts         ['counts' (en-counts p.demand)]
-      %event-records  ['records' (en-records p.demand)]
-      %remote-events  ['remoteEvents' (en-remote-events p.demand)]
       %all-events     ['allEvents' (en-all-events p.demand)]
       %all-records    ['allRecords' (en-all-records p.demand)]
-      %record         ['record' ?~(p.demand ~ (en-record u.p.demand))]
+      %event-records  ['records' (en-records p.demand)]
+      %remote-events  ['remoteEvents' (en-remote-events p.demand)]
+      %result         ['result' (en-result p.demand)]
   ==
+::
+++  en-result
+  |=  a=$@(@t (map id info-1))
+  ^-  ^json
+  ?@  a  [%s ;;(cord a)]
+  (en-remote-events a)
 ::
 ++  en-unit-cord
   |=  a=(unit cord)
