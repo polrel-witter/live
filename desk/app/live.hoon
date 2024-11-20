@@ -311,8 +311,7 @@
     ?>  ?=(%poke-ack -.sign)
     ?~  p.sign  cor
     =;  msg=tape
-      =.  result  (crip msg)
-      (give-local-update [%result ship `name result])
+      cor(result (crip msg))
     ?:  =('all' name)
       ~['No events found under' ' ' (scot %p ship)]
     ~[(crip "'{<name>}'") ' not found under ' (scot %p ship)]
@@ -346,12 +345,7 @@
       =/  msg  'No events found'
       =;  rev=_result
         =?  rev  ?~(rev & |)  msg
-        =.  result  rev
-        =/  =ship  ship.sign-arvo
-        =/  name=(unit term)
-          =/  =term  -:(flop path.sign-arvo)
-          ?:(?=(%all term) ~ `term)
-        (give-local-update [%result ship name result])
+        cor(result rev)
       ?~  roar.sign-arvo  msg
       =/  =roar:ames      u.roar.sign-arvo
       ?~  q.dat.roar      msg
@@ -368,12 +362,11 @@
       =/  =ship     (slav %p i.t.t.t.wire)
       =/  case=@ud  (slav %ud i.t.t.t.t.wire)
       =/  =spur     (weld /g/x/(scot %ud case)/live end)
-      =.  cor  (emit [%pass /remote/scry/cancel %arvo %a %yawn ship spur])
       =.  result
         %-  crip
         ?~  name  ~['No events found under' ' ' (scot %p ship)]
         ~[(crip "'{<name>}'") ' not found under ' (scot %p ship)]
-      (give-local-update [%result ship name result])
+      (emit [%pass /remote/scry/cancel %arvo %a %yawn ship spur])
     ==
   ==
 ::
@@ -625,8 +618,7 @@
   ::
   =.  result  *@t
   ?:  =(our.bowl ship)
-    =.  result  'See home page for our events'
-    (give-local-update [%result ship name result])
+    cor(result 'See home page for our events')
   =/  =wire
     %+  weld  /case/request/(scot %p ship)
     ?~  name  /all
@@ -658,8 +650,7 @@
     :: the path in question
     ::
     =;  msg=tape
-      =.  result  (crip msg)
-      (give-local-update [%result src.bowl name result])
+      cor(result (crip msg))
     ?~  name
       ~['No events found under' ' ' (scot %p src.bowl)]
     ~[(crip "{<(scow %tas u.name)>}") ' not found under ' (scot %p src.bowl)]

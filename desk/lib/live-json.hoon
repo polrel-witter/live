@@ -158,12 +158,6 @@
     :~  ['id' (en-id id.upd)]
         ['event' (en-event `event.upd)]
     ==
-  ::
-      %result
-    :~  ['ship' s+(scot %p ship.upd)]
-        ['name' `json`?~(name.upd ~ s+u.name.upd)]
-        ['result' (en-result result.upd)]
-    ==
   ==
 ::
 ++  enjs-demand
