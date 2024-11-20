@@ -23,6 +23,7 @@ window.urbit.onRetry = () => console.log('urbit: retrying connection')
 window.urbit.onError = () => console.log('urbit: error connecting')
 
 const backend = newBackend(window.urbit, window.ship)
+backend.previousSearch().then(res => console.log(res))
 
 const container = document.getElementById('app');
 
