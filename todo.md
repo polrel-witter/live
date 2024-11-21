@@ -14,8 +14,8 @@ key:
     + Edit an event
     + Ship inviting
         + should be able to invite more than one at a time
-  - event search
-      - somewhere on this page we can see our previous search (can be scried from backend state)
+  + event search
+      + somewhere on this page we can see our previous search (can be scried from backend state)
   - guest should see their status and date it occured
   - add %pal toggle on profile form
       - 'Automatically add ships you match with as %pals and include the event title as a tag. This change will only take effect on future matches.'
