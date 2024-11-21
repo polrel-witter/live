@@ -5,8 +5,6 @@ import { TZDate } from "@date-fns/tz";
 import { z, ZodError } from "zod" // this is an object validation library
 
 import { newTZDateInTimeZoneFromUnix, newTZDateInTimeZoneFromUnixMilli } from "./lib/utils";
-import { de } from "date-fns/locale";
-import { error } from "console";
 
 // Patp types and utilities
 
@@ -67,6 +65,9 @@ interface Backend {
 
   // live - poke - dial - %find
   find(host: Patp, name: string | null): Promise<boolean>
+
+  // live - poke - dial - %find
+  find1(host: Patp, name: string | null): Promise<[EventId, EventDetails][] | string>
 
   // live - scry %remote-events
   previousSearch(): Promise<[EventId, EventDetails][] | string>
@@ -750,6 +751,28 @@ function getEvents(api: Urbit): () => Promise<EventAsHost[]> {
 
 
 function find(api: Urbit): (host: Patp, name: string | null) => Promise<boolean> {
+  return async (host: Patp, name: string | null) => {
+    let success = false;
+    const _poke = await api.poke({
+      app: "live",
+      mark: "live-dial",
+      json: {
+        // could need a %
+        "find": { ship: host, name: name }
+      },
+      onSuccess: () => { success = true },
+      onError: (err) => {
+        console.error("error during register poke: ", err)
+      }
+    })
+
+    console.log("number poke: ",_poke)
+    return Promise.resolve(success)
+  }
+}
+
+// TODO: implement as subscribe-poke-closesub 
+function find1(api: Urbit): (host: Patp, name: string | null) => Promise<boolean> {
   return async (host: Patp, name: string | null) => {
     let success = false;
     const _poke = await api.poke({
