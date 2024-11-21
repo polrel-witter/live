@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
 
+
 const ButtonSwitch: React.FC<
   {
     id: EventId,
@@ -14,75 +15,74 @@ const ButtonSwitch: React.FC<
     unregister: (id: EventId) => void
   }
 > = ({ id, status, spin, ...fns }) => {
-  const baseClass = "w-32 h-8 p-0"
+  const containerClass = "flex justify-center"
+  const baseClass = "w-32 h-8 p-0 px-2 transition-colors"
 
-  const makeUnregisterButton = (_spin: boolean) => {
-    return (
-      <div className="flex-auto">
-        <SpinningButton
-          spin={_spin}
-          className={cn([baseClass, "bg-red-900"])}
-          onClick={() => { fns.unregister(id) }}
-        >
-          unregister
-        </SpinningButton>
-      </div>
-    )
+  const makeOnClick = () => {
+    switch (status) {
+      case "invited":
+      case "unregistered":
+        return () => { fns.register(id) }
+      case "registered":
+        // TODO: add a slide-out thingy that says: are you sure?
+        return () => { fns.unregister(id) }
+    }
+  }
 
+  const makeClassName = () => {
+    switch (status) {
+      case "invited":
+      case "unregistered":
+        return "bg-stone-700 hover:bg-stone-800"
+      case "registered":
+        return "bg-rose-800 hover:bg-rose-900"
+      case "attended":
+        return "bg-emerald-800 hover:bg-emerald-900"
+      case "requested":
+        return ""
+    }
   }
-  switch (status) {
-    case "invited":
-    case "unregistered":
-      return (
-        <div className="flex-auto">
-          <SpinningButton
-            className={cn([baseClass])}
-            onClick={() => { fns.register(id) }}
-            spin={spin}
-          >
-            register
-          </SpinningButton>
-        </div>
-      )
-    case "registered":
-      // TODO: add a slide-out thingy that says: are you sure?
-      return (makeUnregisterButton(spin))
-    case "attended":
-      return (
-        <div className="flex-auto">
-          <Button
-            className={cn([baseClass, "hover:bg-emerald-900"])}
-            disabled
-          >
-            attended
-          </Button>
-        </div>
-      )
-    case "requested":
-      // const [reveal, setReveal] = useState(false)
-      return (
-        <Button className={cn([baseClass])} disabled > requested </Button>
-      )
-      {/*
-          <div className="h-8">
-          <Button
-          className={cn([baseClass, "bg-stone-400", "w-full", "mb-2"])}
-          onClick={() => { setReveal(flipBoolean) }}
-          >
-          requested
-          </Button>
-          <SlideDownAndReveal
-          show={reveal}
-          >
-          {makeUnregisterButton(spin)}
-          </SlideDownAndReveal>
-          </div>
-          */}
-    default:
-      console.error(`unexpected evt status: ${status}`)
-      return (<div></div>)
+
+  const makeText = () => {
+    switch (status) {
+      case "invited":
+      case "unregistered":
+        return "register"
+      case "registered":
+        return "unregister"
+      case "attended":
+        return "attended"
+      case "requested":
+        return "requested"
+    }
   }
+
+
+  const makeSpin = () => {
+    switch (status) {
+      case "invited":
+      case "unregistered":
+      case "registered":
+        return spin
+      case "attended":
+      case "requested":
+        return false
+    }
+  }
+
+  return (
+    <SpinningButton
+      className={cn([baseClass, makeClassName()])}
+      onClick={makeOnClick()}
+      spin={makeSpin()}
+    >
+      {makeText()}
+    </SpinningButton>
+  )
+
+
 }
+
 
 
 function makeToastMessage(status: EventStatus): string {
@@ -111,6 +111,8 @@ const EventStatusButton = ({ event, fetched, backend }: EventStatusButtonProps) 
   const { toast } = useToast()
   const [sentPoke, setSentPoke] = useState(false)
 
+  // TODO: maybe if this is too quick add a timer that makes the animation
+  // last a lil bit
   const registerHandler = (eventId: EventId) => {
     backend.register(eventId).then(setSentPoke)
   }

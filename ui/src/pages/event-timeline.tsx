@@ -49,7 +49,7 @@ const PreviousSearchButton = ({
 
 export type SearchFormProps = {
   findEvents: Backend["find"]
-  clearSearch(): void
+  clearSearch(): void,
 }
 
 const SearchForm = ({ ...fns }: SearchFormProps) => {
@@ -60,7 +60,11 @@ const SearchForm = ({ ...fns }: SearchFormProps) => {
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    mode: "onChange"
+    mode: "onChange",
+    defaultValues: {
+      name: "",
+      hostShip: "",
+    }
   })
 
   const onSubmit = ({ hostShip, name }: z.infer<typeof schema>) => {

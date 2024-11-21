@@ -67,7 +67,7 @@ interface Backend {
   find(host: Patp, name: string | null): Promise<boolean>
 
   // live - poke - dial - %find
-  find1(host: Patp, name: string | null): Promise<[EventId, EventDetails][] | string>
+  // find1(host: Patp, name: string | null): Promise<[EventId, EventDetails][] | string>
 
   // live - scry %remote-events
   previousSearch(): Promise<[EventId, EventDetails][] | string>
@@ -1667,6 +1667,7 @@ function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
     getRecord: getRecord(api, ship),
     getEvents: getEvents(api),
     find: find(api),
+    // find1: find1(api),
     previousSearch: previousSearch(api),
     getEvent: getEvent(api),
     subscribeToLiveEvents: subscribeToLiveEvents(api),

@@ -17,7 +17,6 @@ import { MobileMenu, ProfileButton } from './components/navbar-components';
 import { BackButton } from '@/components/back-button';
 import { SlideRightAndReveal } from '@/components/sliders';
 import { Button } from '@/components/ui/button';
-import { Chevron } from 'react-day-picker';
 import { ChevronUp } from 'lucide-react';
 
 async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
@@ -39,7 +38,6 @@ async function buildContextData(
   const ourShip = globalContext.profile.patp
 
   let evtRecord: EventAsGuest = emptyEventAsGuest
-  // TODO: this is kind of hacky
   let evtAsAllGuests = globalContext.eventsAsGuest
     .find(([_recordInfo, details]) => eventIdsEqual(details.id, evtId))
 
@@ -148,20 +146,22 @@ function makeNavbarAndFooter(
   const EventStatusChanged = () => {
     const [show, setShow] = useState(false)
     return (
-      <Button
-        variant={"ghost"}
-        className="bg-stone-200 rounded-full w-6 h-6 p-0"
-        onClick={() => { setShow(flipBoolean) }}
-      >
-        <ChevronUp className={cn([
-          "h-3 w-3"
-        ])} />
-        <SlideRightAndReveal show={show} >
-          <p className="text-xs">
-            {formatEventDateShort(eventContext.event.lastChanged)}
-          </p>
-        </SlideRightAndReveal>
-      </Button >
+      <div className="flex flex-row">
+        <Button
+          variant={"ghost"}
+          className="bg-stone-200 rounded-full w-full h-7 p-2"
+          onClick={() => { setShow(flipBoolean) }}
+        >
+          <ChevronUp className={cn([
+            "h-3 w-3"
+          ])} />
+          <SlideRightAndReveal maxWidth="max-w-[500px]" show={show} >
+            <p className="text-[10px] text-wrap ml-2">
+              {formatEventDateShort(eventContext.event.lastChanged)}
+            </p>
+          </SlideRightAndReveal>
+        </Button >
+      </div>
     )
   }
 
@@ -173,7 +173,6 @@ function makeNavbarAndFooter(
         <div className="flex items-center">
           {<BackButton pathToLinkTo={getPathForBackButton()} />}
           {!onMobile && <StatusButton />}
-          {!onMobile && <EventStatusChanged />}
         </div>
       }
       right={
@@ -191,7 +190,8 @@ function makeNavbarAndFooter(
 
   const footer = <FooterWithSlots
     left={<div className="h-full mt-3 ml-16 flex justify-center">
-      {onMobile && <StatusButton />}
+      {onMobile && <StatusButton />
+      }
     </div>}
     right={
       <div>
