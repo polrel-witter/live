@@ -6,6 +6,7 @@ import { z, ZodError } from "zod" // this is an object validation library
 
 import { newTZDateInTimeZoneFromUnix, newTZDateInTimeZoneFromUnixMilli } from "./lib/utils";
 import { de } from "date-fns/locale";
+import { error } from "console";
 
 // Patp types and utilities
 
@@ -64,93 +65,96 @@ interface Backend {
   // live - scry %all-events
   getEvents(): Promise<EventAsHost[]>
 
-  // live - scry %remote-events
+  // live - poke - dial - %find
   find(host: Patp, name: string | null): Promise<boolean>
+
+  // live - scry %remote-events
+  previousSearch(): Promise<[EventId, EventDetails][] | string>
 
   // live - scry %event
   getEvent(id: EventId): Promise<EventAsHost>
 
-  // live - poke %register
+  // live - poke - action - %register
   register(id: EventId, patp?: Patp): Promise<boolean>
 
-  // live - poke %unregister
+  // live - poke - action - %unregister
   unregister(id: EventId, patp?: Patp): Promise<boolean>
 
-  // live - poke %invite
+  // live - poke - action - %invite
   invite(id: EventId, ships: Patp[]): Promise<boolean>
 
-  // live - poke %create
+  // live - poke - action - %create
   createEvent(evt: CreateEventParams): Promise<boolean>
 
-  // live - poke %create
+  // live - poke - action - %create
   createEvent(evt: CreateEventParams): Promise<boolean>
 
-  // live - poke %info %title
+  // live - poke - action - %info %title
   editEventDetailsTitle(id: EventId, value: EventDetails["title"]): Promise<void>
 
-  // live - poke %info %about
+  // live - poke - action - %info %about
   editEventDetailsDescription(id: EventId, value: EventDetails["description"]): Promise<void>
 
-  // live - poke %info %moment
+  // live - poke - action - %info %moment
   editEventDetailsMoment(
     id: EventId,
     start: EventDetails["startDate"],
     end: EventDetails["endDate"]
   ): Promise<void>
 
-  // live - poke %info %timezone
+  // live - poke - action - %info %timezone
   editEventDetailsTimezone(id: EventId, value: EventDetails["timezone"]): Promise<void>
 
-  // live - poke %info %location
+  // live - poke - action - %info %location
   editEventDetailsLocation(id: EventId, value: EventDetails["location"]): Promise<void>
 
-  // live - poke %info %venue-map
+  // live - poke - action - %info %venue-map
   editEventDetailsVenueMap(id: EventId, value: EventDetails["venueMap"]): Promise<void>
 
-  // live - poke %info %group
+  // live - poke - action - %info %group
   editEventDetailsGroup(id: EventId, value: EventDetails["group"]): Promise<void>
 
-  // live - poke %info %kind
+  // live - poke - action - %info %kind
   editEventDetailsKind(id: EventId, value: EventDetails["kind"]): Promise<void>
 
-  // live - poke %info %latch
+  // live - poke - action - %info %latch
   editEventDetailsLatch(id: EventId, value: EventDetails["latch"]): Promise<void>
 
-  // live - poke %info %create-session
+  // live - poke - action - %info %create-session
   addEventSession(id: EventId, value: Session): Promise<void>
 
-  // live - poke %info %delete-session
+  // live - poke - action - %info %delete-session
   removeEventSession(id: EventId, sessionId: string): Promise<void>
 
-  // live - poke %info %edit-session %title
+  // live - poke - action - %info %edit-session %title
   editEventSessionTitle(
     id: EventId,
     sessionId: string,
     value: Session["title"]
   ): Promise<void>
 
-  // live - poke %info %edit-session %panel
+  // live - poke - action - %info %edit-session %panel
   editEventSessionPanel(
     id: EventId,
     sessionId: string,
     value: Session["panel"]
   ): Promise<void>
 
-  // live - poke %info %edit-session %location
+  // live - poke - action - %info %edit-session %location
   editEventSessionLocation(
     id: EventId,
     sessionId: string,
     value: Session["location"]
   ): Promise<void>
 
-  // live - poke %info %edit-session %about
+  // live - poke - action - %info %edit-session %about
   editEventSessionAbout(
     id: EventId,
     sessionId: string,
     value: Session["about"]
   ): Promise<void>
 
-  // live - poke %info %edit-session %moment
+  // live - poke - action - %info %edit-session %moment
   editEventSessionMoment(
     id: EventId,
     sessionId: string,
@@ -158,10 +162,10 @@ interface Backend {
     end: Session["endTime"]
   ): Promise<void>
 
-  // live - poke %secret
+  // live - poke - action - %secret
   editEventSecret(id: EventId, secret: EventAsHost["secret"]): Promise<void>
 
-  // live - poke %limit
+  // live - poke - action - %limit
   editEventLimit(id: EventId, limit: EventAsHost["limit"]): Promise<void>
 
   // remove, this is included in an event record
@@ -187,13 +191,13 @@ interface Backend {
   // matcher - scry %peers
   getAttendees(id: EventId): Promise<Attendee[]>
 
-  // matcher - poke %edit-profile
+  // matcher - poke - action - %edit-profile
   editProfileField(field: string, value: string | null): Promise<void>
 
-  // matcher - poke %shake y
+  // matcher - poke - action - %shake y
   match(id: EventId, patp: Patp): Promise<void>;
 
-  // matcher - poke %shake n
+  // matcher - poke - action - %shake n
   unmatch(id: EventId, patp: Patp): Promise<void>;
 
   // matcher - TBD
@@ -761,6 +765,47 @@ function find(api: Urbit): (host: Patp, name: string | null) => Promise<boolean>
       }
     })
     return Promise.resolve(success)
+  }
+}
+
+const previousSearchSchema = z.object({
+  result: z.record(
+    z.string(),
+    z.object({ info: backendInfo1Schema })
+  )
+})
+
+function previousSearch(api: Urbit): () => Promise<[EventId, EventDetails][] | string> {
+  return async () => {
+    const findEvent = await api.scry({
+      app: "live",
+      path: `/result`
+    }).catch((err) => { console.error("error during getEvent api call", err) })
+
+    if (!findEvent) {
+      return Promise.resolve([])
+    }
+
+    let parsed: z.infer<typeof previousSearchSchema>;
+
+    try {
+      const obj = z.object({
+        result: z.string()
+      }).parse(findEvent)
+      // if we get here it means it parse it correctly and we can return
+      return obj.result
+    } catch (e) {
+      parsed = previousSearchSchema.parse(findEvent)
+    }
+
+    return Object.entries(parsed.result)
+      .map(([idString, info]) => {
+        const [hostShip, eventName] = idString.split("/")
+        // WARN: casting to Patp here
+        const eventId = { ship: hostShip as Patp, name: eventName }
+        return [eventId, backendInfo1ToEventDetails(eventId, info.info)]
+      })
+
   }
 }
 
@@ -1599,6 +1644,7 @@ function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
     getRecord: getRecord(api, ship),
     getEvents: getEvents(api),
     find: find(api),
+    previousSearch: previousSearch(api),
     getEvent: getEvent(api),
     subscribeToLiveEvents: subscribeToLiveEvents(api),
 
