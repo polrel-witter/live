@@ -40,7 +40,6 @@ type Props = {
   backend: Backend
 }
 
-
 async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
   return Promise.all(a
     .map(attendee => b.getProfile(attendee.patp))
@@ -425,9 +424,7 @@ type InviteProps = {
 const InviteGuests = ({ evt, invite }: InviteProps) => {
   const [open, setOpen] = useState(false)
   const [ships, setShips] = useState<Patp[]>([])
-  const [inputField, setInputField] = useState<string>("")
 
-  // TODO: add form to inputs so we can do validation
   // TODO: add validation error in case we're trying to add to the list
   // a string which is not a patp, and print back errors from backend when
   // the invites don't go through

@@ -5,52 +5,13 @@ import { GlobalContext } from "@/globalContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
-import { Backend, EventDetails, EventId, isPatp, Patp } from "@/backend";
+import { Backend, EventDetails, EventId, PatpSchema } from "@/backend";
 import { cn } from "@/lib/utils";
 import { ResponsiveContent } from "@/components/responsive-content";
-
-type SearchButtonProps = {
-  host: string,
-  eventName: string | null
-  findEvents(host: Patp, name: string | null): void
-  resetFields(): void
-}
-
-const SearchButton = (props: SearchButtonProps) => {
-
-  const { host, eventName, findEvents, resetFields } = props
-
-  if (host !== "" || eventName !== null) {
-    return (
-      <Button
-        type="button"
-        variant="ghost"
-        className="bg-stone-300 w-full sm:w-min"
-        onClick={() => {
-          if (isPatp(host)) {
-            findEvents(
-              host,
-              eventName === "" ? null : eventName
-            )
-          }
-        }}>
-        <span>search</span>
-      </Button>
-    )
-  }
-
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      className="bg-stone-300 w-full sm:w-min"
-      onClick={resetFields}
-    >
-      <X className="w-4 h-4 text-black" />
-      <span className="pl-2">clear</span>
-    </Button>
-  )
-}
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from "@/components/ui/form";
 
 type PreviousSearchButtonProps = {
   setPreviousSearch: () => void,
@@ -63,7 +24,6 @@ const PreviousSearchButton = ({
   message,
   result,
 }: PreviousSearchButtonProps) => {
-
   if (message !== "") {
     return (
       <Button variant="ghost" className="w-auto" disabled >
@@ -75,7 +35,6 @@ const PreviousSearchButton = ({
   }
 
   if (result.length > 0) {
-    {/* TODO: wrap text */ }
     return (
       <Button variant="ghost" className="h-auto" onClick={() => { setPreviousSearch() }}>
         <div className="text-wrap">
@@ -86,7 +45,108 @@ const PreviousSearchButton = ({
   }
 
   return (<div></div>)
+}
 
+export type SearchFormProps = {
+  findEvents: Backend["find"]
+  clearSearch(): void
+}
+
+const SearchForm = ({ ...fns }: SearchFormProps) => {
+  const schema = z.object({
+    hostShip: PatpSchema.or(z.literal("")),
+    name: z.string().nullable()
+  })
+
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
+    mode: "onChange"
+  })
+
+  const onSubmit = ({ hostShip, name }: z.infer<typeof schema>) => {
+    if (hostShip !== "") {
+      fns.findEvents(hostShip, name === "" ? null : name)
+    }
+  }
+
+  const SearchButton = ({ className }: { className: string }) => {
+    if (form.formState.isSubmitted) {
+      return (
+        <Button
+          type="button"
+          variant="ghost"
+          className={cn(["bg-stone-300", className])}
+          onClick={() => {
+            form.reset()
+            form.setValue("hostShip", "")
+            form.setValue("name", null)
+            fns.clearSearch()
+          }}
+        >
+          <X className="w-4 h-4 text-black" />
+          <span className="pl-2">clear</span>
+        </Button>
+      )
+    }
+
+    return (
+      <Button
+        type="submit"
+        variant="ghost"
+        className={cn(["bg-stone-300", className])}
+      >
+        <span>search</span>
+      </Button>
+    )
+  }
+
+  return (
+    <Form {...form}>
+      <form
+        className={cn([
+          "flex flex-col justify-center align-center space-y-2",
+          "md:flex-row md:space-x-2 md:space-y-0"
+        ])}
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
+        <FormField
+          control={form.control}
+          name={"hostShip"}
+          render={({ field }) => (
+            <FormItem >
+              <FormControl >
+                <Input
+                  placeholder="patp of host ship"
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+              <FormDescription />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name={"name"}
+          render={({ field }) => (
+            <FormItem >
+              <FormControl >
+                <Input
+                  placeholder="event name"
+                  value={field.value ? field.value : ""}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+              <FormDescription />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <SearchButton className="w-full md:w-min" />
+      </form>
+    </Form>
+  )
 }
 
 const EventTimelinePage = ({ backend }: { backend: Backend }) => {
@@ -101,9 +161,6 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
   const eventsAsGuest = globalContext
     .eventsAsGuest
     .map(([_recordInfos, details]) => details)
-
-  const [hostShip, setHostShip] = useState<string>("")
-  const [eventName, setEventName] = useState<string | "">("")
 
   const [searchResult, setSearchResult] = useState<[EventId, EventDetails][]>([])
 
@@ -123,8 +180,6 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
       }
     })
   }, [])
-
-  // TODO: add form to inputs so we can do validation
 
   return (
     <ResponsiveContent className="flex justify-center">
@@ -152,56 +207,11 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
           </TabsContent>
           <TabsContent value="search">
             <p className="my-4">search for public events</p>
-            <div className={cn([
-              "grid grid-col-1 space-y-2 mx-4",
-            ])}>
-              <div className={cn([
-                "flex flex-col justify-center align-center space-y-2",
-                "sm:flex-row sm:space-x-2 sm:space-y-0"
-              ])}>
-                <Input
-                  placeholder="patp of host ship"
-                  value={hostShip}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      if (isPatp(hostShip)) {
-                        backend.find(
-                          hostShip,
-                          eventName === "" ? null : eventName
-                        )
-                      }
-                    }
-                  }}
-                  onChange={(e) => { setHostShip(e.target.value) }}
-                />
-                <Input
-                  placeholder="event name"
-                  value={eventName}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      if (isPatp(hostShip)) {
-                        backend.find(
-                          hostShip,
-                          eventName === "" ? null : eventName
-                        )
-                      }
-                    }
-                  }}
-                  onChange={(e) => { setEventName(e.target.value) }}
-                />
-                <div className="sm:ml-2">
-                  <SearchButton
-                    eventName={eventName}
-                    host={hostShip}
-                    findEvents={async (hostShip, name) => {
-                      await backend.find(hostShip, name)
-                    }}
-                    resetFields={() => { setHostShip(""); setEventName("") }}
-                  />
-                </div>
-              </div>
+            <div className="grid grid-col-1 space-y-2 mx-4">
+              <SearchForm
+                findEvents={backend.find}
+                clearSearch={() => { setSearchResult([]) }}
+              />
               <PreviousSearchButton
                 message={previousSearchMessage}
                 result={previousSearchResult}
