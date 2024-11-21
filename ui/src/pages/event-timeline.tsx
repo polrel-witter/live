@@ -5,9 +5,52 @@ import { GlobalContext } from "@/globalContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
-import { Backend, EventDetails, EventId, isPatp } from "@/backend";
+import { Backend, EventDetails, EventId, isPatp, Patp } from "@/backend";
 import { cn } from "@/lib/utils";
 import { ResponsiveContent } from "@/components/responsive-content";
+
+type SearchButtonProps = {
+  host: string,
+  eventName: string | null
+  findEvents(host: Patp, name: string | null): void
+  resetFields(): void
+}
+
+const SearchButton = (props: SearchButtonProps) => {
+
+  const { host, eventName, findEvents, resetFields } = props
+
+  if (host !== "" || eventName !== null) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        className="bg-stone-300 w-full sm:w-min"
+        onClick={() => {
+          if (isPatp(host)) {
+            findEvents(
+              host,
+              eventName === "" ? null : eventName
+            )
+          }
+        }}>
+        <span>search</span>
+      </Button>
+    )
+  }
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      className="bg-stone-300 w-full sm:w-min"
+      onClick={resetFields}
+    >
+      <X className="w-4 h-4 text-black" />
+      <span className="pl-2">clear</span>
+    </Button>
+  )
+}
 
 type PreviousSearchButtonProps = {
   setPreviousSearch: () => void,
@@ -149,40 +192,22 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
                   onChange={(e) => { setEventName(e.target.value) }}
                 />
                 <div className="sm:ml-2">
-                  {
-                    hostShip !== "" || eventName !== null
-                      ?
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="bg-stone-300 w-full sm:w-min"
-                        onClick={() => {
-                          if (isPatp(hostShip)) {
-                            backend.find(
-                              hostShip,
-                              eventName === "" ? null : eventName
-                            )
-                          }
-                        }}>
-                        <span>search</span>
-                      </Button>
-                      :
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="bg-stone-300 w-full sm:w-min"
-                        onClick={() => { setHostShip(""); setEventName("") }}
-                      >
-                        <X className="w-4 h-4 text-black" />
-                        <span className="pl-2">clear</span>
-                      </Button>
-                  }
+                  <SearchButton
+                    eventName={eventName}
+                    host={hostShip}
+                    findEvents={async (hostShip, name) => {
+                      await backend.find(hostShip, name)
+                    }}
+                    resetFields={() => { setHostShip(""); setEventName("") }}
+                  />
                 </div>
               </div>
               <PreviousSearchButton
                 message={previousSearchMessage}
                 result={previousSearchResult}
-                setPreviousSearch={() => { setSearchResult(previousSearchResult) }}
+                setPreviousSearch={() => {
+                  setSearchResult(previousSearchResult)
+                }}
               />
             </div>
             <EventList
