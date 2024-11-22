@@ -16,7 +16,7 @@ key:
         + should be able to invite more than one at a time
   + event search
       + somewhere on this page we can see our previous search (can be scried from backend state)
-  - guest should see their status and date it occured
+  + guest should see their status and date it occured
   - add %pal toggle on profile form
       - 'Automatically add ships you match with as %pals and include the event title as a tag. This change will only take effect on future matches.'
   - there's brief delay when clicking into an event which feels like a crash because we get a blank page until the data appears. It's probably the time it takes for the scry to retrieve the data, but the user should know the app is still functioning. I think we should add a loading spinner in the middle of the page, or somewhere where it's obvious, so the user knows the app is doing something. This should appear anytime the frontend is scrying for data or knows it's waiting for an update from the backend (e.g. poking another ship and waiting for some data change).
@@ -27,7 +27,6 @@ key:
   + @p's show up without the ~ prepended.
   - Respect calm engine settings
     - frontend just needs to scry this out. either show/hide the avatar and/or the nickname
-  - make use of %remote-events scry
 
 ## Refinements/bugs
 - create page

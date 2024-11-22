@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { buttonVariants } from "@/components/ui/button";
 import { ProfilePicture } from "@/components/profile-picture";
 import { MessagesSquare } from "lucide-react";
+import { AnimatedButtons } from "../animated-buttons";
 
 
 const baseTextClass = "text-sm md:text-lg"
@@ -71,9 +72,12 @@ const EventDetailsCard: React.FC<Props> = ({ details, hostProfile, buttons, clas
       <CardHeader className="px-0">
         <p className="text-xl font-semibold text-center"> {title} </p>
       </CardHeader>
-      <CardContent className="grid justify-center gap-y-6 px-4" >
-        <div className="flex items-center justify-around">
-          <div className={cn([baseTextClass, "pr-4"])}> hosted by </div>
+      <CardContent className="grid justify-center gap-y-6 px-8" >
+        <div className={cn([
+          "flex flex-col items-center",
+          "sm:flex-row sm:items-center sm:justify-between sm:space-x-4",
+        ])}>
+          <div className={cn([baseTextClass])}> hosted by </div>
 
           <div className="flex justify-center items-center gap-x-4">
             <ProfilePicture
@@ -85,13 +89,21 @@ const EventDetailsCard: React.FC<Props> = ({ details, hostProfile, buttons, clas
           </div>
         </div>
 
-        <div className="flex justify-between text-[11px] md:text-sm">
-          <div className="font-bold">starts:</div>
+        <div className={cn([
+          "flex flex-col text-[11px] items-center",
+          "sm:flex-row sm:items-center sm:justify-between",
+          "md:text-sm"
+        ])}>
+          <div className="font-bold">starts</div>
           {startDate ? <div>{formatEventDate(startDate)}</div> : "TBD"}
         </div>
 
-        <div className="flex justify-between text-[11px] md:text-sm">
-          <div className="font-bold">ends:</div>
+        <div className={cn([
+          "flex flex-col text-[11px] items-center",
+          "sm:flex-row sm:items-center sm:justify-between",
+          "md:text-sm"
+        ])}>
+          <div className="font-bold">ends</div>
           {endDate ? <div>{formatEventDate(endDate)}</div> : "TBD"}
         </div>
 
@@ -101,6 +113,9 @@ const EventDetailsCard: React.FC<Props> = ({ details, hostProfile, buttons, clas
 
         <div>
           {buttons}
+        </div>
+
+        <div>
         </div>
       </CardContent>
       <CardFooter className="justify-center text-xs md:text-md">

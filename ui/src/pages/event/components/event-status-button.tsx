@@ -58,23 +58,23 @@ const ButtonSwitch: React.FC<
   }
 
 
-  const makeSpin = () => {
-    switch (status) {
-      case "invited":
-      case "unregistered":
-      case "registered":
-        return spin
-      case "attended":
-      case "requested":
-        return false
-    }
+  if (status === "attended" || status === "requested") {
+    return (
+      <Button
+        className={cn([baseClass, makeClassName()])}
+        onClick={makeOnClick()}
+        disabled
+      >
+        {makeText()}
+      </Button>
+    )
   }
 
   return (
     <SpinningButton
       className={cn([baseClass, makeClassName()])}
       onClick={makeOnClick()}
-      spin={makeSpin()}
+      spin={spin}
     >
       {makeText()}
     </SpinningButton>
@@ -114,11 +114,17 @@ const EventStatusButton = ({ event, fetched, backend }: EventStatusButtonProps) 
   // TODO: maybe if this is too quick add a timer that makes the animation
   // last a lil bit
   const registerHandler = (eventId: EventId) => {
-    backend.register(eventId).then(setSentPoke)
+    backend.register(eventId).then((b: boolean) => {
+      console.log(b)
+      setSentPoke(b)
+    })
   }
 
   const unregisterHandler = (eventId: EventId) => {
-    backend.unregister(eventId).then(setSentPoke)
+    backend.unregister(eventId).then((b: boolean) => {
+      console.log(b)
+      setSentPoke(b)
+    })
   }
 
   useEffect(() => {
@@ -127,9 +133,7 @@ const EventStatusButton = ({ event, fetched, backend }: EventStatusButtonProps) 
       return
     }
 
-    if (!sentPoke) {
-      return
-    }
+    console.log("t")
 
     toast({
       title: `${id.ship}/${id.name}`,

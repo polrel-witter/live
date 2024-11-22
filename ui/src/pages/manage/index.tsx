@@ -1,7 +1,7 @@
 import { LoaderFunctionArgs, Params, useLoaderData, useSubmit } from "react-router-dom"
-import { ReactNode, useContext, useEffect, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 
-import { Attendee, Backend, emptyEventAsAllGuests, emptyEventAsGuest, emptyEventAsHost, EventAsAllGuests, EventAsGuest, EventAsHost, EventId, eventIdsEqual, EventStatus, Patp, Profile, PatpSchema } from "@/backend"
+import { Attendee, Backend, emptyEventAsAllGuests, emptyEventAsHost, EventAsAllGuests, EventAsHost, EventId, eventIdsEqual, EventStatus, Patp, Profile, PatpSchema } from "@/backend"
 import { GlobalContext, GlobalCtx } from "@/globalContext"
 
 import { NavbarWithSlots } from "@/components/frame/navbar"
@@ -101,7 +101,7 @@ async function buildState(
 const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => {
   const [open, setOpen] = useState(false)
   return (
-    <div className="p-1">
+    <div className="p-2">
       <Button
         type="button"
         variant="ghost"
@@ -263,7 +263,7 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
 
 
   return (
-    <div className="p-1">
+    <div className="p-2">
       <Button
         type="button"
         variant="ghost"
@@ -277,10 +277,14 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
         maxHeight="max-h-[3000px]"
       >
         <div className="flex w-full justify-center mt-2">
-          <Card className="w-min">
-            <CardContent className="pt-4 p-2 md:p-6">
+          <Card className="w-full">
+            <CardContent className="pt-4 p-0">
               <ScrollArea className="h-[300px] w-full rounded-md">
-                <div className="flex w-full items-center justify-between space-x-2">
+                <div className={cn([
+                  "flex flex-col items-center justify-between",
+                  "w-full space-y-2 p-2",
+                  "sm:flex-row sm:space-y-0 sm:space-x-2"
+                ])}>
                   {/* TODO: could add a search box eventually
                     <Input
                     placeholder="search guests..."
@@ -291,9 +295,10 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
 
                   <Card
                     className={cn([
-                      "grid",
-                      "grid-rows-3 grid-flow-col justify-around justify-items-start",
-                      "sm:grid-rows-2",
+                      "grid w-min",
+                      "grid-rows-2 grid-flow-col justify-around justify-items-start",
+                      "sm:grid-rows-3",
+                      "md:grid-rows-2",
                       "w-full p-1 text-[10px]"
                     ])}
                   >
@@ -306,14 +311,17 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
                     items={filterValues.map((val) => {
                       return { label: val, value: val }
                     })}
-                    className="w-36"
+                    className="w-full sm:w-36"
                     onSelect={(newVal) => { setStatusFilter(newVal) }}
                   />
                 </div>
-                <ul className="space-y-2 mt-2">
+                <ul className={cn([
+                  "grid grid-cols-1 space-y-2 mt-2",
+                  "sm:space-y-0 sm:grid-cols-2"
+                ])}>
                   {records.map(([patp, info]) => {
                     return (
-                      <li key={patp} className="">
+                      <li key={patp} className="p-2">
                         <Card className="rounded-md p-2 space-y-1 text-xs sm:text-md">
                           <CardHeader className="bg-gray-100 p-1 rounded-md">
                             {/* WARN: casting as Patp */}
@@ -322,8 +330,8 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
                               patp as Patp)}
                           </CardHeader>
                           <AnimatedButtons
-                            minWidth={["w-[90px]", "sm:w-[125px]"]}
-                            maxWidth={["w-[200px]", "sm:w-[250px]"]}
+                            minWidth={["w-[80px]", "sm:w-[125px]"]}
+                            maxWidth={["w-[190px]", "sm:w-[250px]"]}
                             labels={[
                               "status",
                               "changed"]}
@@ -336,7 +344,7 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
                                 {/* WARN: casting as Patp */}
                                 <StatusButton status={info.status} patp={patp as Patp} />
                               </div>,
-                              <div className="text-xs"> {formatEventDateShort(info.lastChanged)} </div>,
+                              <div className="text-xs truncate"> {formatEventDateShort(info.lastChanged)} </div>,
                             ]}
                           />
                         </Card>
@@ -379,7 +387,7 @@ const InviteGuests = ({ evt, invite }: InviteProps) => {
   const [spin, setSpin] = useState(false)
 
   return (
-    <div className="p-1">
+    <div className="p-2">
       <Button
         type="button"
         variant="ghost"
@@ -555,7 +563,7 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
                 buttons={<div></div>}
                 className="w-full"
               />
-              <Card className="p-2">
+              <Card>
                 <EditEvent backend={backend} evt={event} />
                 <Guests
                   profiles={profiles}

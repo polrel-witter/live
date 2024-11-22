@@ -1,12 +1,14 @@
 import { cn } from "@/lib/utils"
 import { ReactNode, useState } from "react"
 
+type modifiers = "sm:" | "md:" | "lg:"
+
 type AnimatedButtonProps = {
   defaultOpenIdx?: number,
   //  `w-[${number}px]`
-  minWidth?: string[]
+  minWidth?: `${modifiers | ""}w-[${number}px]`[]
   //  `w-[${number}px]`
-  maxWidth?: string[]
+  maxWidth?: `${modifiers | ""}w-[${number}px]`[]
   items: ReactNode[],
   labels: ReactNode[]
   classNames: ReactNode[]
