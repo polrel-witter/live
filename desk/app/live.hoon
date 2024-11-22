@@ -274,6 +274,7 @@
   ^+  cor
   ?>  (team:title our.bowl src.bowl)
   ?+  pol  ~|(bad-watch+pol cor)
+    [%search ~]  cor
     [%updates ~]  cor
   ==
 ::
