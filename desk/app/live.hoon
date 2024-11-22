@@ -311,7 +311,8 @@
     ?>  ?=(%poke-ack -.sign)
     ?~  p.sign  cor
     =;  msg=tape
-      cor(result (crip msg))
+      =.  result  (crip msg)
+      (give-local-update [%result ship `name result])
     ?:  =('all' name)
       ~['No events found under' ' ' (scot %p ship)]
     ~[(crip "'{<name>}'") ' not found under ' (scot %p ship)]
@@ -345,7 +346,12 @@
       =/  msg  'No events found'
       =;  rev=_result
         =?  rev  ?~(rev & |)  msg
-        cor(result rev)
+        =.  result  rev
+        =/  =ship  ship.sign-arvo
+        =/  name=(unit term)
+          =/  =term  -:(flop path.sign-arvo)
+          ?:(?=(%all term) ~ `term)
+        (give-local-update [%result ship name result])
       ?~  roar.sign-arvo  msg
       =/  =roar:ames      u.roar.sign-arvo
       ?~  q.dat.roar      msg
@@ -362,11 +368,12 @@
       =/  =ship     (slav %p i.t.t.t.wire)
       =/  case=@ud  (slav %ud i.t.t.t.t.wire)
       =/  =spur     (weld /g/x/(scot %ud case)/live end)
+      =.  cor  (emit [%pass /remote/scry/cancel %arvo %a %yawn ship spur])
       =.  result
         %-  crip
         ?~  name  ~['No events found under' ' ' (scot %p ship)]
         ~[(crip "'{<name>}'") ' not found under ' (scot %p ship)]
-      (emit [%pass /remote/scry/cancel %arvo %a %yawn ship spur])
+      (give-local-update [%result ship name result])
     ==
   ==
 ::
@@ -544,7 +551,9 @@
   |=  upd=update
   ^+  cor
   %-  emit
-  [%give %fact ~[/updates] live-update+!>(`update`upd)]
+  =/  =path
+    ?-(-.upd %result /search, ?(%record %event) /updates)
+  [%give %fact ~[path] live-update+!>(`update`upd)]
 ::  +make-operation: produce an $operation cage
 ::
 ++  make-operation
@@ -618,7 +627,8 @@
   ::
   =.  result  *@t
   ?:  =(our.bowl ship)
-    cor(result 'See home page for our events')
+    =.  result  'See home page for our events'
+    (give-local-update [%result ship name result])
   =/  =wire
     %+  weld  /case/request/(scot %p ship)
     ?~  name  /all
@@ -650,7 +660,8 @@
     :: the path in question
     ::
     =;  msg=tape
-      cor(result (crip msg))
+      =.  result  (crip msg)
+      (give-local-update [%result src.bowl name result])
     ?~  name
       ~['No events found under' ' ' (scot %p src.bowl)]
     ~[(crip "{<(scow %tas u.name)>}") ' not found under ' (scot %p src.bowl)]
