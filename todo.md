@@ -6,8 +6,9 @@ key:
 
 
 # Frontend
+## Features
   + Event creation
-  - Host dashboard
+  + Host dashboard
     + Record list with vetting (record status change buttons)
     + Record counts by status
         - each record should just include: ship name (avatar and nickname if set), status, and status date, with an action button next to it based on what their current status is (e.g. "invite" if unregistered, "register" if requested, "unregister" if registered, etc.)
@@ -16,65 +17,135 @@ key:
         + should be able to invite more than one at a time
   - event search
       - somewhere on this page we can see our previous search (can be scried from backend state)
-  - guest should see their status and date it occured
+  + guest should see their status and date it occured
   - add %pal toggle on profile form
       - 'Automatically add ships you match with as %pals and include the event title as a tag. This change will only take effect on future matches.'
-  - there's brief delay when clicking into an event which feels like a crash because we get a blank page until the data appears. It's probably the time it takes for the scry to retrieve the data, but the user should know the app is still functioning. I think we should add a loading spinner in the middle of the page, or somewhere where it's obvious, so the user knows the app is doing something. This should appear anytime the frontend is scrying for data or knows it's waiting for an update from the backend (e.g. poking another ship and waiting for some data change).
   + on mobile: the frame for the event page is a bit wide; shouldn't have to scroll to the right/left. the boxes and text should be flush with the screen.
-    - i think i fixed this already, there's no left-right scroll anymore
-  - Event/session descriptions should recognize breaks, links, and images
+    + i think i fixed this already, there's no left-right scroll anymore
   + need to remove the avatar, patp, and nickname from the profile. the patp should just be next to the avatar image, or if a nickname is set in parethesis next to it.
   + @p's show up without the ~ prepended.
-  - Respect calm engine settings
-    - frontend just needs to scry this out. either show/hide the avatar and/or the nickname
-  - make use of %remote-events scry
 
 ## Refinements/bugs
-- create page
-    - on the event creation page, if about, location, venue map, or secret are empty they should be `null`. for both event and sessions. right now they're defaulting to empty strings.
-    - session times are off. the start time takes the same time as the end.
-    - clicking on create event opens the profile window.
-    - entering a limit highlights it red and makes it so we can't submit.
-    - there's a message that says the location field can't be empty, but it can
-    - some field titles have 'event' in front. can get rid of this.
-    - in the event date picker, if we select a date range and click out without clicking 'done' the dates appear to set, but the 'add session' button is greyed out.
-    - the secret text box should be paragraph form and allow downward expansion.
-    - i think there should be some intuitive examples in the group fields to coax correct syntax. for host: ~hoster-palnet; for group name: the-group-name
-    - next to the secret header, include in parenthesis: (only guests marked "registered" or "attended" receive this message)
-    - the session "about" section should reflect the event: "description"
-    - it's nice that the session date picker doesn't allow them to select anything outside the event range, but all times were greyed out on the start time until I changed the end time to PM. the same thing happened when selecting a date on the last day of the event, except I had to select AM.
-    - there should be a back button to return to the timeline
-    - lastly, a few slight changes to the latch and kind descriptions:
-        kind:
-        the privacy level, which affects the way guests can register.
-        public: discoverable and allow guests to register on their own.
-        private: discoverable, but guests must request to be registered and you need to approve them manually.
-        secret: not discoverable and invite-only. once guests receive your invite they can register.
+- profile page
+    - the profile form is cut off at the top/bottom of the screen, for
+      instance on a 13" macbook. seems like it just needs some padding
+      on the top and bottom?
+- timeline page
+    - while i like the tab distinction between host and guests, i don't
+      think there's a clear way we can describe the guest portion, as
+      they can techincally be invited, request entry, or already be
+      registered. so i think the optimal way to create the timeline is
+      distinguishing by color: host titles are either black or grey and
+      guest tiles are white. having them weaved also improves the UX for
+      when you click into a host event and then go back; currently it
+      defaults to the guest tab. should definitely keep the search tab
+      though.
+    - also, there should be an archived tab for events with a latch set
+      to %over. this will keep the host and guest tabs clean. other than
+      this, I don't think we need to distinguish the latch on the
+      timeline page.
+    - i like that it just lists the start time/date on the tile, but
+      should read: "starts at XX:XX (GMT X) on Some Date". Also note to
+      remove the AM/PM.
+    - search tab
+        - the header text should just read, "search for events" since
+          they can technically search for private events, too.
+        - the @p and event name fields should assert this format, but
+          also include examples to guide the user: '~sampel-palnet' and
+          'event-name'
+    - If there are no events, should see a message with a link out to the urbit events page: "Need event ideas? Check out events happening around the ecosystem at [urbit.org↗](http://urbit.org/events)"
+- host management page
+    - remove the AM/PM distinction since it displays a 24 hour clock.
+    - we should see `latch` and `kind` status somewhere on the event
+      card.
+    - edit event
+        - when clicking the event, the update comes through at the top,
+          but not in the form itself. i also think it should give a bit
+          more user feedback; e.g. closing the edit dropdown or changing
+          the edit button when it completes the change.
+        - similarly to the profile form, the session form is cut off on
+          the top and bottom of the page on certain screens. may need
+          some padding.
+        - it doesn't allow the user to edit the group host ship or name.
+        - in the session edit form, all times in the start time
+          selection are greyed out. when i select the end time, i can go
+          back and select a start time. occasionally, some times are
+          greyed out but not others.
+        - the timezone is effecting how the time is written to state.
+          e.g. if the host selects 8:00 and GMT-4 it'll be written as
+          4:00 to state. The backend functions on UTC 0, but it should
+          not be converting this as the user would then interpret the
+          time wrong. the times that are selected should be sent
+          directly to the backend without the conversion. this is
+          happening in both the event and session time pickers.
+        - occasionally, when I tried to submit a new edit - for instance
+          after submitting a previous edit - the session section would
+          highlight red. i couldn't figure out why, but it seemed to be
+          blocking the next update from going through.
+        - a few slight changes to the latch and kind descriptions
+          (should also be shown on the create page):
+              kind:
+              the privacy level, which affects the way guests can register.
+              public: discoverable and allow guests to register on their own.
+              private: discoverable, but guests must request to be registered and you'll need to approve them manually.
+              secret: not discoverable and invite-only. once guests receive your invite they can register.
 
-        latch:
-        the 'state' of the event.
-        open: actively accepting registrants.
-        closed: not accepting registrants; this gets triggered automatically when the event participant limit is met.
-        over: already took place; archived.
+              latch:
+              the 'state' of the event.
+              open: actively accepting registrants.
+              closed: not accepting registrants; this gets triggered automatically when the event participant limit is met.
+              over: already took place; archived.
+    - guest status
+        - this section should read: 'guest statuses'
+        - i think 'timestamp' is a bit clearer than 'changed' for the
+          green buttons that reveal the time of the status change.
+        - guest tiles don't expand to the full width of the container on
+          non-mobile screens: https://bowl.polrel-witter.xyz/bucket/random/2024.11.22..17.24.46-Screenshot%20from%202024-11-22%2012-24-32.png
+        - in general, really like how this looks/feels. great work.
+- guest page
+    - remove the AM/PM distinction since it displays a 24 hour clock.
+    - the description sometimes renders across the screen, i.e. no
+      linebreaks.
+    - we should see `latch` and `kind` status somewhere on the event
+      card.
+    - if a map url is set and then removed, the map still displays for
+      the user. although if the host changes it to a new url, the new one
+      displays.
+    - can get rid of the profile button on the event page; people won't be changing it often.
+    - when clicking the dm button on a guest, it redirects us to link
+      that has an additional '~' prepended to the ship, e.g. `http://localhost:8081/apps/groups/dm/~~bus', need to remove the second one.
+    - on the schedule page, if no session exists for an event date a message should be printed: 'no schedule is set for this date'
+- create page
+    - clicking 'add session' before filling in any details causes a
+      crash: `Cannot read properties of undefined (reading 'valueOf')`
+    - if i click the create button without filling in any fields, the
+      group section and sessions are also highlighted red. those aren't
+      required so no need to highlight. it also then won't let me create
+      the event if i then fill in the required fields.
+    - the profile button on this page should be a back button. no need
+      to have profile editing on here.
+    - on the event creation page, if about, location, venue map, or secret are empty they should be `null`. for both event and sessions. right now they're defaulting to empty strings.
+    - if the creation was successful it should redirect them to the
+      management page.
+    - there's a message that says the location field can't be empty, but it can
+    - some field titles have 'event' in front. can get rid of this; e.g.
+      'event title' > 'title'
+    - in the event date picker, if we select a date range and click out without clicking 'done' the dates appear to set, but then clicking the 'add session' button leads to a crash.
+    - i think there should be some intuitive examples in the group fields to coax correct syntax. for host: ~hoster-palnet; for group name: the-group-name
+        - also including the error messages if they're not properly
+          formatted, like in the invite field would be great.
+    - next to the secret header, include in parenthesis: (only guests marked "registered" or "attended" receive this message)
+- lastly, the connection status at the bottom right should be more prominant on desktop. when the app first opens it can take a few seconds before anything renders and without noticing the connection status it feels like nothing's happening. it's obvious on mobile, but on desktop it's hard to see. i think either making it bigger or adding a spinner in the middle of the page should fix.
+
 
 
 # Backend
-	+ Restrict a session's $moment to only happen within the bounds of its event $moment
-  + moment sanity check; make sure start comes before end
-  + by 10/28, Json conversions for the remainder of the actions
-    + live
-        + remaining demands
-        + find
-        + search result updates
-            + when scry result comes in, extract name from path
-            + test
-            + consolidate result update into one arm and call at each instance
-  + get-our-case is failing after second time we try to pass something through +change-info
-	+ Event-level tagging in %pals
-    + toggle %pals setting
-  + include a changelog.txt in desk
-  + Update README and get rid of %docs
-
+- inviting ships doesn't send a local update, to include the new record
+  in the guest statuses list. the count does change, though.
+    - need to include a records update for all records
+- parse group names no matter the input type.
+- parsing the panel is off; sometimes inserts double commas, and puts
+  commas between first and last names.
 
 
 # Archived
@@ -170,5 +241,18 @@ key:
   + host adds themselves to the peers mip; need to filter out
   + restore subs and pubs; currently being stubbed. just establish new ones for each event and record
   + for a private or secret event, if you're %registered and then become %unregistered, updates such as session additions, etc. are still sent. this should not happen.
-
-
+	+ Restrict a session's $moment to only happen within the bounds of its event $moment
+  + moment sanity check; make sure start comes before end
+  + by 10/28, Json conversions for the remainder of the actions
+    + live
+        + remaining demands
+        + find
+        + search result updates
+            + when scry result comes in, extract name from path
+            + test
+            + consolidate result update into one arm and call at each instance
+  + get-our-case is failing after second time we try to pass something through +change-info
+	+ Event-level tagging in %pals
+    + toggle %pals setting
+  + include a changelog.txt in desk
+  + Update README and get rid of %docs
