@@ -3,87 +3,22 @@ import { SpinningButton } from "@/components/spinning-button"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { useEffect, useState } from "react"
+import { stat } from "fs"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
-const ButtonSwitch: React.FC<
-  {
-    id: EventId,
-    status: EventStatus
-    spin: boolean,
-    register: (id: EventId) => void
-    unregister: (id: EventId) => void
-  }
-> = ({ id, status, spin, ...fns }) => {
-  const baseClass = "w-32 h-8 p-0"
-
-  const makeUnregisterButton = (_spin: boolean) => {
-    return (
-      <div className="flex-auto">
-        <SpinningButton
-          spin={_spin}
-          className={cn([baseClass, "bg-red-900"])}
-          onClick={() => { fns.unregister(id) }}
-        >
-          unregister
-        </SpinningButton>
-      </div>
-    )
-
-  }
+const makeClassName = (status: EventStatus) => {
   switch (status) {
     case "invited":
     case "unregistered":
-      return (
-        <div className="flex-auto">
-          <SpinningButton
-            className={cn([baseClass])}
-            onClick={() => { fns.register(id) }}
-            spin={spin}
-          >
-            register
-          </SpinningButton>
-        </div>
-      )
+      return "bg-stone-700 hover:bg-stone-800"
     case "registered":
-      // TODO: add a slide-out thingy that says: are you sure?
-      return (makeUnregisterButton(spin))
+      return "bg-rose-800 hover:bg-rose-900"
     case "attended":
-      return (
-        <div className="flex-auto">
-          <Button
-            className={cn([baseClass, "hover:bg-emerald-900"])}
-            disabled
-          >
-            attended
-          </Button>
-        </div>
-      )
+      return "bg-emerald-800 hover:bg-emerald-900"
     case "requested":
-      // const [reveal, setReveal] = useState(false)
-      return (
-        <Button className={cn([baseClass])} disabled > requested </Button>
-      )
-      {/*
-          <div className="h-8">
-          <Button
-          className={cn([baseClass, "bg-stone-400", "w-full", "mb-2"])}
-          onClick={() => { setReveal(flipBoolean) }}
-          >
-          requested
-          </Button>
-          <SlideDownAndReveal
-          show={reveal}
-          >
-          {makeUnregisterButton(spin)}
-          </SlideDownAndReveal>
-          </div>
-          */}
-    default:
-      console.error(`unexpected evt status: ${status}`)
-      return (<div></div>)
+      return ""
   }
 }
-
 
 function makeToastMessage(status: EventStatus): string {
   switch (status) {
@@ -111,41 +46,81 @@ const EventStatusButton = ({ event, fetched, backend }: EventStatusButtonProps) 
   const { toast } = useToast()
   const [sentPoke, setSentPoke] = useState(false)
 
-  const registerHandler = (eventId: EventId) => {
-    backend.register(eventId).then(setSentPoke)
+  // TODO: maybe if this is too quick add a timer that makes the animation
+  // last a lil bit
+  const registerHandler = () => {
+    backend.register(id).then((b: boolean) => {
+      setSentPoke(true)
+    })
   }
 
-  const unregisterHandler = (eventId: EventId) => {
-    backend.unregister(eventId).then(setSentPoke)
+  const unregisterHandler = () => {
+    backend.unregister(id).then((b: boolean) => {
+      setSentPoke(true)
+    })
   }
+
+  const buttonText = useMemo(() => {
+    switch (status) {
+      case "invited":
+      case "unregistered":
+        return "register"
+      case "registered":
+        return "unregister"
+      case "attended":
+        return "attended"
+      case "requested":
+        return "requested"
+    }
+  }, [status])
 
   useEffect(() => {
 
-    if (!fetched) {
-      return
-    }
-
-    if (!sentPoke) {
-      return
-    }
+    if (!fetched) { return }
+    if (!sentPoke) { return }
 
     toast({
       title: `${id.ship}/${id.name}`,
       description: makeToastMessage(status)
     })
 
-    setSentPoke(false)
 
-  }, [status])
+  }, [status, sentPoke])
 
+  const baseClass = "w-32 h-8 p-0 px-2 transition-[backgroud-color]"
+
+
+  const onClick = useCallback((status: EventStatus) => {
+    switch (status) {
+      case "invited":
+      case "unregistered":
+        registerHandler()
+      case "registered":
+        // TODO: add a slide-out thingy that says: are you sure?
+        unregisterHandler()
+    }
+  }, [])
+
+  // TODO: this doesn't transition the backgroud-color
+  // because the entire element is rerendered for some reason
   return (
-    <ButtonSwitch
-      id={id}
+    <SpinningButton
+      type="button"
+      className={cn([
+        baseClass,
+        "bg-stone-700 hover:bg-stone-800",
+        {
+          "bg-rose-800 hover:bg-rose-900": status === "registered"
+        },
+        {
+          "bg-emerald-800 hover:bg-emerald-900": status === "attended"
+        }])
+      }
+      onClick={() => { onClick(status) }}
       spin={sentPoke}
-      status={status}
-      register={registerHandler}
-      unregister={unregisterHandler}
-    />
+    >
+      {buttonText}
+    </SpinningButton>
   )
 }
 

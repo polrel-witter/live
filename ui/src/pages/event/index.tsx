@@ -6,7 +6,7 @@ import { Attendee, Backend, emptyEventAsGuest, EventAsGuest, EventId, eventIdsEq
 
 import { GlobalContext, GlobalCtx } from '@/globalContext';
 import { EventContext, EventCtx, newEmptyCtx } from './context';
-import { stripPatpSig } from '@/lib/utils';
+import { cn, flipBoolean, formatEventDateShort, stripPatpSig } from '@/lib/utils';
 import { AppFrame } from '@/components/frame';
 import { FooterWithSlots } from '@/components/frame/footer';
 import { ConnectionStatusBar } from '@/components/connection-status';
@@ -15,6 +15,9 @@ import { useOnMobile } from '@/hooks/use-mobile';
 import { EventStatusButton } from './components/event-status-button';
 import { MobileMenu, ProfileButton } from './components/navbar-components';
 import { BackButton } from '@/components/back-button';
+import { SlideRightAndReveal } from '@/components/sliders';
+import { Button } from '@/components/ui/button';
+import { ChevronUp } from 'lucide-react';
 
 async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
   return Promise.all(a
@@ -35,7 +38,6 @@ async function buildContextData(
   const ourShip = globalContext.profile.patp
 
   let evtRecord: EventAsGuest = emptyEventAsGuest
-  // TODO: this is kind of hacky
   let evtAsAllGuests = globalContext.eventsAsGuest
     .find(([_recordInfo, details]) => eventIdsEqual(details.id, evtId))
 
@@ -96,10 +98,8 @@ function makeEventRoutingLinks(indexPath: string, online: boolean, showGuestList
   }
 
   return eventRoutingLinks
-
 }
 
-// TODO: DX: further extract singular components; it's ok as is tho
 function makeNavbarAndFooter(
   // hooks
   onMobile: boolean,
@@ -143,6 +143,27 @@ function makeNavbarAndFooter(
       backend={backend}
     />
 
+  const EventStatusChanged = () => {
+    const [show, setShow] = useState(false)
+    return (
+      <div className="flex flex-row">
+        <Button
+          variant={"ghost"}
+          className="bg-stone-200 rounded-full w-full h-7 p-2"
+          onClick={() => { setShow(flipBoolean) }}
+        >
+          <ChevronUp className={cn([
+            "h-3 w-3"
+          ])} />
+          <SlideRightAndReveal maxWidth="max-w-[500px]" show={show} >
+            <p className="text-[10px] text-wrap ml-2">
+              {formatEventDateShort(eventContext.event.lastChanged)}
+            </p>
+          </SlideRightAndReveal>
+        </Button >
+      </div>
+    )
+  }
 
   const DesktopMenu = () => <MenuItemWithLinks linkItems={eventRoutingLinks} />
 
@@ -169,7 +190,8 @@ function makeNavbarAndFooter(
 
   const footer = <FooterWithSlots
     left={<div className="h-full mt-3 ml-16 flex justify-center">
-      {onMobile && <StatusButton />}
+      {onMobile && <StatusButton />
+      }
     </div>}
     right={
       <div>
