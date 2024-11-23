@@ -11,6 +11,8 @@ export function cn(...inputs: ClassValue[]) {
 
 export function flipBoolean(b: boolean) { return !b }
 
+export function delay(ms: number) { return new Promise(res => setTimeout(res, ms)) };
+
 // time utils
 
 // HH:MM AM/PM (Zone) on Month DD YYYY

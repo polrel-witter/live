@@ -44,6 +44,7 @@ const PreviousSearchButton = ({
     )
   }
 
+
   return (<div></div>)
 }
 
@@ -166,6 +167,7 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
     .eventsAsGuest
     .map(([_recordInfos, details]) => details)
 
+  const [searchMessage, setSearchMessage] = useState<string>("")
   const [searchResult, setSearchResult] = useState<[EventId, EventDetails][]>([])
 
   const [previousSearchMessage, setPreviousSearchMessage] = useState<string>("")
@@ -175,7 +177,22 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
     setSearchResult(globalContext.searchedEvents)
   }, [globalContext])
 
+
   useEffect(() => {
+
+    backend.subscribeToLiveSearchEvents({
+      onEvent: (evt: string | [EventId, EventDetails][]) => {
+        if (typeof evt === "string") {
+          setSearchMessage(evt)
+        } else {
+          setSearchResult(evt)
+        }
+      },
+      onError: () => { },
+      onQuit: () => { },
+    })
+
+
     backend.previousSearch().then((res) => {
       if (typeof res === "string") {
         setPreviousSearchMessage(res)
@@ -224,6 +241,12 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
                 }}
               />
             </div>
+            {searchMessage}
+            {/* TODO: this links to nothing because searched events don't
+              * show up in our records unless we first try to register or smth
+              * so in the event card i should put a register button and take
+              * out the link since that errors
+              */}
             <EventList
               details={searchResult.map(evts => evts[1]).flat()}
               linkTo={(id) => `event/${id.ship}/${id.name}`}
