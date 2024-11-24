@@ -152,7 +152,7 @@
 +$  update
   $%  [%record =id =ship record=record-1]      :: record change
       [%event =id event=event-1]               :: event change
-      $:  %result                              :: search result
+      $:  %result                              :: latest search result
           =ship
           name=(unit term)
           result=$@(@t (map id info-1))
