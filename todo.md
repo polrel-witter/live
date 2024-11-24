@@ -53,6 +53,8 @@ key:
         - the @p and event name fields should assert this format, but
           also include examples to guide the user: '~sampel-palnet' and
           'event-name'
+        - there should also be a spinner on the button that changes when
+          the result state updates.
     - If there are no events, should see a message with a link out to the urbit events page: "Need event ideas? Check out events happening around the ecosystem at [urbit.org↗](http://urbit.org/events)"
 - host management page
     - remove the AM/PM distinction since it displays a 24 hour clock.
@@ -136,6 +138,7 @@ key:
           formatted, like in the invite field would be great.
     - next to the secret header, include in parenthesis: (only guests marked "registered" or "attended" receive this message)
 - lastly, the connection status at the bottom right should be more prominant on desktop. when the app first opens it can take a few seconds before anything renders and without noticing the connection status it feels like nothing's happening. it's obvious on mobile, but on desktop it's hard to see. i think either making it bigger or adding a spinner in the middle of the page should fix.
+- color scheme
 
 
 
