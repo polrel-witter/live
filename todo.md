@@ -103,6 +103,7 @@ key:
           green buttons that reveal the time of the status change.
         - guest tiles don't expand to the full width of the container on
           non-mobile screens: https://bowl.polrel-witter.xyz/bucket/random/2024.11.22..17.24.46-Screenshot%20from%202024-11-22%2012-24-32.png
+      	- not handling %record updates. updates to records should arrive automatically in this area. e.g. when the host invites someone or an existing guest's status changes. 
         - in general, really like how this looks/feels. great work.
 - guest page
     - remove the AM/PM distinction since it displays a 24 hour clock.
@@ -117,6 +118,7 @@ key:
     - when clicking the dm button on a guest, it redirects us to link
       that has an additional '~' prepended to the ship, e.g. `http://localhost:8081/apps/groups/dm/~~bus', need to remove the second one.
     - on the schedule page, if no session exists for an event date a message should be printed: 'no schedule is set for this date'
+    - [~polrel-witter] panel strings aren't parsed correctly on sessions guest view. 
 - create page
     - clicking 'add session' before filling in any details causes a
       crash: `Cannot read properties of undefined (reading 'valueOf')`
@@ -143,12 +145,13 @@ key:
 
 
 # Backend
-- inviting ships doesn't send a local update, to include the new record
++ inviting ships doesn't send a local update, to include the new record
   in the guest statuses list. the count does change, though.
-    - need to include a records update for all records
+    + note: %record update is already included, just not being handled on the frontend
 - parse group names no matter the input type.
-- parsing the panel is off; sometimes inserts double commas, and puts
++ parsing the panel is off; sometimes inserts double commas, and puts
   commas between first and last names.
+    + note: backend is parsing the panel properly, the frontend just needs to render the string instead of reparsing.
 
 
 # Archived
