@@ -1,17 +1,56 @@
-import { EventList } from "@/components/lists/event";
-import { useContext, useEffect, useState } from "react";
+import { ReactNode, useContext, useEffect, useState } from "react";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { GlobalContext } from "@/globalContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
 import { Backend, EventDetails, EventId, PatpSchema } from "@/backend";
-import { cn } from "@/lib/utils";
+import { cn, formatEventDate } from "@/lib/utils";
 import { ResponsiveContent } from "@/components/responsive-content";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Link } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
+import { compareDesc } from "date-fns";
+
+type EventThumbnailProps = {
+  details: EventDetails,
+  linkTo: string,
+  headerSlot: ReactNode
+  className?: string;
+}
+
+const EventThumbnail: React.FC<EventThumbnailProps> = (
+  {
+    details: { id, startDate, timezone, location, ...restDetails },
+    linkTo,
+    headerSlot,
+    className
+  }
+) => {
+  return (
+    <li className="my-5">
+      <Link to={linkTo}>
+        <Card
+          className={className}
+        >
+          <CardHeader>
+            {headerSlot}
+            <CardDescription className="italics">hosted by {id.ship}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>starts on {startDate ? formatEventDate(startDate) : "TBD"}</p>
+            <p>location: {location}</p>
+          </CardContent>
+          <CardFooter>
+          </CardFooter>
+        </Card>
+      </Link>
+    </li>
+  )
+}
 
 type PreviousSearchButtonProps = {
   setPreviousSearch: () => void,
@@ -173,10 +212,50 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
   const [previousSearchMessage, setPreviousSearchMessage] = useState<string>("")
   const [previousSearchResult, setPreviousSearchResult] = useState<[EventId, EventDetails][]>([])
 
-  useEffect(() => {
-    setSearchResult(globalContext.searchedEvents)
-  }, [globalContext])
+  const [eventDetails, setEventDetails] = useState<["host" | "guest", EventDetails][]>([])
+  const [archivedDetails, setArchivedDetails] = useState<["host" | "guest", EventDetails][]>([])
 
+  useEffect(() => {
+
+    const events: typeof eventDetails = []
+    const archived: typeof eventDetails = []
+
+    for (const evt of globalContext.eventsAsHost) {
+      if (evt.details.latch === "over") {
+        archived.push(["host", evt.details])
+      } else {
+        events.push(["host", evt.details])
+      }
+    }
+
+    for (const [, details] of globalContext.eventsAsGuest) {
+      if (details.latch === "over") {
+        archived.push(["guest", details])
+      } else {
+        events.push(["guest", details])
+      }
+    }
+
+    events.sort(([, detailsA], [, detailsB]) => {
+      if (detailsA.startDate && detailsB.startDate) {
+        return compareDesc(detailsA.startDate, detailsB.startDate)
+      } else {
+        return -1
+      }
+    })
+
+    archived.sort(([, detailsA], [, detailsB]) => {
+      if (detailsA.startDate && detailsB.startDate) {
+        return compareDesc(detailsA.startDate, detailsB.startDate)
+      } else {
+        return -1
+      }
+    })
+
+    setEventDetails(events)
+    setArchivedDetails(archived)
+
+  }, [globalContext])
 
   useEffect(() => {
 
@@ -206,25 +285,60 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
     <ResponsiveContent className="flex justify-center">
       <div className="grid justify-center w-1/2 space-y-6 py-20 text-center">
         <h1 className="text-3xl italic">events</h1>
-        <Tabs defaultValue="eventsAsGuest">
+        <Tabs defaultValue="events">
           <TabsList>
-            <TabsTrigger value="eventsAsHost">you're hosting</TabsTrigger>
-            <TabsTrigger value="eventsAsGuest">you've been invited</TabsTrigger>
+            <TabsTrigger value="events">events</TabsTrigger>
+            <TabsTrigger value="archive">archive</TabsTrigger>
             <TabsTrigger value="search">
               <Search className="w-4 h-4 text-black" />
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="eventsAsHost">
-            <EventList
-              details={globalContext.eventsAsHost.map((evt) => evt.details)}
-              linkTo={(id) => `manage/${id.ship}/${id.name}`}
-            />
+          <TabsContent value="events">
+            <ul className="mx-4 md:m-0">
+              {eventDetails.map(([hostOrGuest, details]) =>
+                <EventThumbnail
+                  headerSlot={
+                    <div className="relative">
+                      <span className="font-bold text-xl">{details.title}</span>
+                      {
+                        hostOrGuest === "host" &&
+                        <span className="absolute right-0 text-[11px]">you're hosting</span>
+                      }
+                    </div>
+                  }
+                  key={`${details.id.ship}-${details.id.name}`}
+                  linkTo={
+                    hostOrGuest === "host"
+                      ? `manage/${details.id.ship}/${details.id.name}`
+                      : `event/${details.id.ship}/${details.id.name}`
+                  }
+                  details={details}
+                  className={cn([
+                    { "bg-stone-800 text-white": hostOrGuest === "host" }
+                  ])}
+                />
+              )}
+            </ul>
           </TabsContent>
-          <TabsContent value="eventsAsGuest">
-            <EventList
-              details={eventsAsGuest}
-              linkTo={(id) => `event/${id.ship}/${id.name}`}
-            />
+          <TabsContent value="archive">
+            <ul className="mx-4 md:m-0">
+              {archivedDetails.map(([hostOrGuest, details]) =>
+                <EventThumbnail
+                  headerSlot={
+                    <div className="relative">
+                      <span className="font-bold text-xl">{details.title}</span>
+                      {
+                        hostOrGuest === "host" &&
+                        <span className="absolute right-0 text-[11px]">you're hosting</span>
+                      }
+                    </div>
+                  }
+                  key={`${details.id.ship}-${details.id.name}`}
+                  linkTo="/apps/live"
+                  details={details}
+                />
+              )}
+            </ul>
           </TabsContent>
           <TabsContent value="search">
             <p className="my-4">search for public events</p>
@@ -247,10 +361,25 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
               * so in the event card i should put a register button and take
               * out the link since that errors
               */}
-            <EventList
-              details={searchResult.map(evts => evts[1]).flat()}
-              linkTo={(id) => `event/${id.ship}/${id.name}`}
-            />
+            <ul className="mx-4 md:m-0">
+              {archivedDetails.map(([hostOrGuest, details]) =>
+                <EventThumbnail
+                  headerSlot={
+                    <span className="font-bold text-xl">{details.title}</span>
+                  }
+                  key={`${details.id.ship}-${details.id.name}`}
+                  linkTo={
+                    hostOrGuest === "host"
+                      ? `manage/${details.id.ship}/${details.id.name}`
+                      : `event/${details.id.ship}/${details.id.name}`
+                  }
+                  details={details}
+                  className={cn([
+                    { "bg-stone-800 text-white": hostOrGuest === "host" }
+                  ])}
+                />
+              )}
+            </ul>
           </TabsContent>
         </Tabs>
       </div>

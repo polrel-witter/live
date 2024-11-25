@@ -39,6 +39,8 @@ import { EditSessionForm } from "./edit-session"
  * offset
  */
 
+// TODO: when latch is over disable all fields except for latch
+
 
 // need this otherwise the <Input> in there is not happy
 type adjustedFormType = Omit<z.infer<typeof schemas>, "dateRange" | "sessions" | "eventGroup">

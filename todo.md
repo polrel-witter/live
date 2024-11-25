@@ -31,7 +31,7 @@ key:
       instance on a 13" macbook. seems like it just needs some padding
       on the top and bottom?
 - *~widmes-hassen* timeline page
-    - while i like the tab distinction between host and guests, i don't
+    + while i like the tab distinction between host and guests, i don't
       think there's a clear way we can describe the guest portion, as
       they can techincally be invited, request entry, or already be
       registered. so i think the optimal way to create the timeline is
