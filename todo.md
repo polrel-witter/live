@@ -30,7 +30,7 @@ key:
     - the profile form is cut off at the top/bottom of the screen, for
       instance on a 13" macbook. seems like it just needs some padding
       on the top and bottom?
-- timeline page
+- *~widmes-hassen* timeline page
     - while i like the tab distinction between host and guests, i don't
       think there's a clear way we can describe the guest portion, as
       they can techincally be invited, request entry, or already be
