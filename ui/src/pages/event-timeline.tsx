@@ -1,19 +1,21 @@
 import { ReactNode, useContext, useEffect, useState } from "react";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
-import { GlobalContext } from "@/globalContext";
+import { GlobalContext, GlobalCtx } from "@/globalContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, X } from "lucide-react";
-import { Backend, EventDetails, EventId, PatpSchema } from "@/backend";
-import { cn, formatEventDate } from "@/lib/utils";
+import { ChevronUp, Search, X } from "lucide-react";
+import { Backend, EventDetails, EventId, eventIdsEqual, PatpSchema } from "@/backend";
+import { cn, flipBoolean, formatEventDate } from "@/lib/utils";
 import { ResponsiveContent } from "@/components/responsive-content";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Link } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { compareDesc } from "date-fns";
+import { SlideDownAndReveal } from "@/components/sliders";
+import { SpinningButton } from "@/components/spinning-button";
 
 type EventThumbnailProps = {
   details: EventDetails,
@@ -27,15 +29,13 @@ const EventThumbnail: React.FC<EventThumbnailProps> = (
     details: { id, startDate, timezone, location, ...restDetails },
     linkTo,
     headerSlot,
-    className
+    className,
   }
 ) => {
   return (
     <li className="my-5">
       <Link to={linkTo}>
-        <Card
-          className={className}
-        >
+        <Card className={className} >
           <CardHeader>
             {headerSlot}
             <CardDescription className="italics">hosted by {id.ship}</CardDescription>
@@ -44,12 +44,110 @@ const EventThumbnail: React.FC<EventThumbnailProps> = (
             <p>starts on {startDate ? formatEventDate(startDate) : "TBD"}</p>
             <p>location: {location}</p>
           </CardContent>
-          <CardFooter>
-          </CardFooter>
+          <CardFooter> </CardFooter>
         </Card>
       </Link>
     </li>
   )
+}
+type SearchThumbnailProps = {
+  details: EventDetails,
+  globalCtx: GlobalCtx,
+  register: () => void,
+}
+
+const SearchThumbnail: React.FC<SearchThumbnailProps> = (
+  {
+    details: { id, startDate, timezone, location, ...restDetails },
+    register,
+    globalCtx
+  }
+) => {
+  const [expand, setExpand] = useState(false)
+  const [spin, setSpin] = useState(false)
+  const [showRegister, setShowRegister] = useState(false)
+
+  useEffect(() => {
+
+    if (!spin) { return }
+
+    // WARN: for a lot of events this might introduce a perfomance bottleneck
+    for (const [, details] of globalCtx.eventsAsGuest) {
+      if (eventIdsEqual(details.id, id)) {
+        setSpin(false)
+        break
+      }
+    }
+  }, [globalCtx])
+
+  useEffect(() => {
+    // WARN: for a lot of events this might introduce a perfomance bottleneck
+    for (const [recordInfo, details] of globalCtx.eventsAsGuest) {
+      if (eventIdsEqual(details.id, id)) {
+        if (recordInfo[globalCtx.profile.patp].status === "unregistered") {
+          setShowRegister(true)
+        }
+      }
+    }
+  }, [globalCtx])
+
+
+  const footerContent =
+    <div className="flex flex-col w-full justify-around" >
+      <div className="flex-row">
+        <Button
+          variant="ghost"
+          onClick={() => { setExpand(flipBoolean) }}
+          className="bg-accent sm:bg-transparent"
+        >
+          description
+          <ChevronUp
+            className={cn([
+              "ml-2 transition-all h-4 w-4 duration-300",
+              { "rotate-180": expand }
+            ])}
+          />
+        </Button>
+        {showRegister &&
+          <SpinningButton
+            variant="ghost"
+            onClick={() => { setSpin(true); register() }}
+            className="bg-accent sm:bg-transparent"
+            spin={spin}
+          >
+            register
+          </SpinningButton>}
+      </div>
+      <SlideDownAndReveal show={expand}>
+        <p className="text-justify text-sm mt-2 p-2 rounded-md bg-accent">
+          {restDetails.description}
+        </p>
+      </SlideDownAndReveal>
+    </div>
+
+
+  return (
+    <li className="my-5">
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {restDetails.title}
+          </CardTitle>
+          <CardDescription className="italics">
+            hosted by {id.ship}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p>starts on {startDate ? formatEventDate(startDate) : "TBD"}</p>
+          <p>location: {location}</p>
+        </CardContent>
+        <CardFooter>
+          {footerContent}
+        </CardFooter>
+      </Card>
+    </li>
+  )
+
 }
 
 type PreviousSearchButtonProps = {
@@ -201,11 +299,6 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
     return
   }
 
-
-  const eventsAsGuest = globalContext
-    .eventsAsGuest
-    .map(([_recordInfos, details]) => details)
-
   const [searchMessage, setSearchMessage] = useState<string>("")
   const [searchResult, setSearchResult] = useState<[EventId, EventDetails][]>([])
 
@@ -334,7 +427,11 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
                     </div>
                   }
                   key={`${details.id.ship}-${details.id.name}`}
-                  linkTo="/apps/live"
+                  linkTo={
+                    hostOrGuest === "host"
+                      ? `manage/${details.id.ship}/${details.id.name}`
+                      : `event/${details.id.ship}/${details.id.name}`
+                  }
                   details={details}
                 />
               )}
@@ -356,27 +453,13 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
               />
             </div>
             {searchMessage}
-            {/* TODO: this links to nothing because searched events don't
-              * show up in our records unless we first try to register or smth
-              * so in the event card i should put a register button and take
-              * out the link since that errors
-              */}
             <ul className="mx-4 md:m-0">
-              {archivedDetails.map(([hostOrGuest, details]) =>
-                <EventThumbnail
-                  headerSlot={
-                    <span className="font-bold text-xl">{details.title}</span>
-                  }
+              {searchResult.map(([evtID, details]) =>
+                <SearchThumbnail
                   key={`${details.id.ship}-${details.id.name}`}
-                  linkTo={
-                    hostOrGuest === "host"
-                      ? `manage/${details.id.ship}/${details.id.name}`
-                      : `event/${details.id.ship}/${details.id.name}`
-                  }
                   details={details}
-                  className={cn([
-                    { "bg-stone-800 text-white": hostOrGuest === "host" }
-                  ])}
+                  register={() => { backend.register(details.id).then() }}
+                  globalCtx={globalContext}
                 />
               )}
             </ul>
