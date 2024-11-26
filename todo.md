@@ -40,7 +40,7 @@ key:
       when you click into a host event and then go back; currently it
       defaults to the guest tab. should definitely keep the search tab
       though.
-    - also, there should be an archived tab for events with a latch set
+    + also, there should be an archived tab for events with a latch set
       to %over. this will keep the host and guest tabs clean. other than
       this, I don't think we need to distinguish the latch on the
       timeline page.
