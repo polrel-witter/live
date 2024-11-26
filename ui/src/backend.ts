@@ -66,9 +66,6 @@ interface Backend {
   // live - poke - dial - %find
   find(host: Patp, name: string | null): Promise<boolean>
 
-  // live - poke - dial - %find
-  find1(host: Patp, name: string | null): Promise<[EventId, EventDetails][] | string>
-
   // live - scry %remote-events
   previousSearch(): Promise<[EventId, EventDetails][] | string>
 
@@ -177,6 +174,12 @@ interface Backend {
     onRecordUpdate: (e: LiveRecordUpdateEvent) => void
     onEventUpdate: (e: LiveEventUpdateEvent) => void
     onFindResponse: (e: LiveFindEvent) => void
+    onError: (err: any, id: string) => void,
+    onQuit: (data: any) => void,
+  }): Promise<number>
+
+  subscribeToLiveSearchEvents(handlers: {
+    onEvent: (evt: [EventId, EventDetails][] | string) => void,
     onError: (err: any, id: string) => void,
     onQuit: (data: any) => void,
   }): Promise<number>
@@ -513,6 +516,8 @@ const backendInfo1Schema = z.object({
 // });
 
 
+// Patp regex:
+// /^~([a-z]{3,6})(?:-([a-z]{6})){0,7}$/
 const PatpSchema = z
   .string()
   .startsWith("~")
@@ -768,51 +773,6 @@ function find(api: Urbit): (host: Patp, name: string | null) => Promise<boolean>
 
     console.log("number poke: ", _poke)
     return Promise.resolve(success)
-  }
-}
-
-// TODO: implement as subscribe-poke-closesub 
-function find1(api: Urbit): (host: Patp, name: string | null) => Promise<[EventId, EventDetails][]> {
-  return async (host: Patp, name: string | null) => {
-    let success = false;
-
-    let result: [EventId, EventDetails][] = []
-
-    const subscription = await api.subscribe({
-      app: "live",
-      path: "/search",
-      event: (data: any) => {
-        try {
-          const findEvent = liveFindEventSchema.parse(data)
-          result = Object.entries(findEvent.result)
-          .map(([idString, info]) => {
-            const [hostShip, eventName] = idString.split("/")
-            // WARN: casting to Patp here
-            const eventId = { ship: hostShip as Patp, name: eventName }
-            return [eventId, backendInfo1ToEventDetails(eventId, info.info)]
-          })
-        } catch (e) {
-          console.error("error parsing response for subscribeToLiveEvents", e)
-        }
-      }
-    })
-
-    const _poke = await api.poke({
-      app: "live",
-      mark: "live-dial",
-      json: {
-        // could need a %
-        "find": { ship: host, name: name }
-      },
-      onSuccess: () => { success = true },
-      onError: (err) => {
-        console.error("error during register poke: ", err)
-      }
-    })
-
-    console.log(result)
-
-    return Promise.resolve(result)
   }
 }
 
@@ -1309,7 +1269,41 @@ const liveFindEventSchema = z.object({
   )
 })
 
-function subscribeToLiveEvents(_api: Urbit): (handlers: {
+function subscribeToLiveSearchEvents(api: Urbit): (handlers: {
+  onEvent: (e: [EventId, EventDetails][] | string) => void
+  onError: (err: any, id: string) => void,
+  onQuit: (data: any) => void,
+}) => Promise<number> {
+  return async ({ onEvent, onError, onQuit }) => {
+    return api.subscribe({
+      app: "live",
+      path: "/search",
+      event: (data: any) => {
+        try {
+          const findEventStr = z.object({ result: z.string() }).parse(data)
+          return onEvent(findEventStr.result)
+        } catch (e) {
+          try {
+            const findEvent = liveFindEventSchema.parse(data)
+            return onEvent(Object.entries(findEvent.result)
+              .map(([idString, info]) => {
+                const [hostShip, eventName] = idString.split("/")
+                // WARN: casting to Patp here
+                const eventId = { ship: hostShip as Patp, name: eventName }
+                return [eventId, backendInfo1ToEventDetails(eventId, info.info)]
+              }))
+          } catch (e) {
+            console.error("error parsing response for event on /search path", e)
+          }
+        }
+      },
+      err: onError,
+      quit: onQuit
+    })
+  }
+}
+
+function subscribeToLiveEvents(api: Urbit): (handlers: {
   onRecordUpdate: (e: LiveRecordUpdateEvent) => void
   onEventUpdate: (e: LiveEventUpdateEvent) => void
   onFindResponse: (e: LiveFindEvent) => void
@@ -1317,7 +1311,7 @@ function subscribeToLiveEvents(_api: Urbit): (handlers: {
   onQuit: (data: any) => void,
 }) => Promise<number> {
   return async ({ onRecordUpdate, onEventUpdate, onFindResponse, onError, onQuit }) => {
-    return window.urbit.subscribe({
+    return api.subscribe({
       app: "live",
       path: "/updates",
       event: (evt) => {
@@ -1692,10 +1686,10 @@ function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
     getRecord: getRecord(api, ship),
     getEvents: getEvents(api),
     find: find(api),
-    find1: find1(api),
     previousSearch: previousSearch(api),
     getEvent: getEvent(api),
     subscribeToLiveEvents: subscribeToLiveEvents(api),
+    subscribeToLiveSearchEvents: subscribeToLiveSearchEvents(api),
 
     getProfile: getProfile(api),
     getProfiles: getProfiles(api),

@@ -52,7 +52,10 @@ async function buildContextData(
       console.error("hostShip is not in eventAsAllGuests")
     }
   } else {
-    console.error("couldn't find event with id ", evtId)
+    evtRecord = await backend.getRecord(evtId)
+    if (evtRecord === emptyEventAsGuest) {
+      console.error("couldn't find event with id ", evtId)
+    }
   }
 
   // remove ourselves from the list of guests / profles

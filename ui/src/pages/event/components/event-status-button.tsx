@@ -90,6 +90,7 @@ const EventStatusButton = ({ event, fetched, backend }: EventStatusButtonProps) 
   const baseClass = "w-32 h-8 p-0 px-2 transition-[backgroud-color]"
 
 
+
   const onClick = useCallback((status: EventStatus) => {
     switch (status) {
       case "invited":
