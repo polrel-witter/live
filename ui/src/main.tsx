@@ -14,8 +14,6 @@ import { newBackend } from '@/backend'
 import RootComponent from './root';
 // this component returns the router
 import AppRouter from './router';
-import { GlobalContext } from './globalContext';
-import { delay } from './lib/utils';
 
 window.urbit = new Urbit('');
 window.urbit.ship = window.ship
@@ -24,33 +22,6 @@ window.urbit.onRetry = () => console.log('urbit: retrying connection')
 window.urbit.onError = () => console.log('urbit: error connecting')
 
 const backend = newBackend(window.urbit, window.ship)
-
-// const subscription = window.urbit.subscribe({
-//   app: "live",
-//   path: "/search",
-//   event: (data: any) => {
-//     try {
-//       console.log("info", data)
-//     } catch (e) {
-//       console.error("error parsing response for subscribeToLiveEvents", e)
-//     }
-//   }
-// }).then(() => {
-//   const _poke = window.urbit.poke({
-//     app: "live",
-//     mark: "live-dial",
-//     json: {
-//       // could need a %
-//       "find": { ship: "~racdyr-dilren-widmes-hasseb", name: null }
-//     },
-//     onSuccess: () => { },
-//     onError: (err) => {
-//       console.error("error during register poke: ", err)
-//     }
-//   }).then()
-
-// })
-
 
 const container = document.getElementById('app');
 
