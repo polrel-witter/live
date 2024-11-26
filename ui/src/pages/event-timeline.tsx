@@ -17,6 +17,8 @@ import { compareDesc } from "date-fns";
 import { SlideDownAndReveal } from "@/components/sliders";
 import { SpinningButton } from "@/components/spinning-button";
 
+
+
 type EventThumbnailProps = {
   details: EventDetails,
   linkTo: string,
@@ -185,15 +187,23 @@ const PreviousSearchButton = ({
   return (<div></div>)
 }
 
+// if we need clearable inputs...
+// https://github.com/shadcn-ui/ui/discussions/3274#discussioncomment-10054930
 export type SearchFormProps = {
   findEvents: Backend["find"]
-  clearSearch(): void,
+  onSubmit: () => void;
+  spin: boolean;
 }
 
-const SearchForm = ({ ...fns }: SearchFormProps) => {
+const SearchForm = ({ spin, ...fns }: SearchFormProps) => {
   const schema = z.object({
     hostShip: PatpSchema.or(z.literal("")),
-    name: z.string().nullable()
+    name: z.custom<string>((val) => {
+      // regex enforces either "string" or strings delimited by dashes "str-ing"
+      return typeof val === "string" ? /^\w*(?:-\w+)*$/.test(val) : false;
+    }, {
+      message: "event name sould be in this form: event-name"
+    }).nullable(),
   })
 
   const form = useForm<z.infer<typeof schema>>({
@@ -208,38 +218,8 @@ const SearchForm = ({ ...fns }: SearchFormProps) => {
   const onSubmit = ({ hostShip, name }: z.infer<typeof schema>) => {
     if (hostShip !== "") {
       fns.findEvents(hostShip, name === "" ? null : name)
+      fns.onSubmit()
     }
-  }
-
-  const SearchButton = ({ className }: { className: string }) => {
-    if (form.formState.isSubmitted) {
-      return (
-        <Button
-          type="button"
-          variant="ghost"
-          className={cn(["bg-stone-300", className])}
-          onClick={() => {
-            form.reset()
-            form.setValue("hostShip", "")
-            form.setValue("name", null)
-            fns.clearSearch()
-          }}
-        >
-          <X className="w-4 h-4 text-black" />
-          <span className="pl-2">clear</span>
-        </Button>
-      )
-    }
-
-    return (
-      <Button
-        type="submit"
-        variant="ghost"
-        className={cn(["bg-stone-300", className])}
-      >
-        <span>search</span>
-      </Button>
-    )
   }
 
   return (
@@ -258,7 +238,7 @@ const SearchForm = ({ ...fns }: SearchFormProps) => {
             <FormItem >
               <FormControl >
                 <Input
-                  placeholder="patp of host ship"
+                  placeholder="~sampel-palnet"
                   value={field.value}
                   onChange={field.onChange}
                 />
@@ -275,7 +255,7 @@ const SearchForm = ({ ...fns }: SearchFormProps) => {
             <FormItem >
               <FormControl >
                 <Input
-                  placeholder="event name"
+                  placeholder="event-name"
                   value={field.value ? field.value : ""}
                   onChange={field.onChange}
                 />
@@ -285,7 +265,17 @@ const SearchForm = ({ ...fns }: SearchFormProps) => {
             </FormItem>
           )}
         />
-        <SearchButton className="w-full md:w-min" />
+        <SpinningButton
+          type="submit"
+          variant="ghost"
+          spin={spin}
+          className={cn([
+            "w-full md:w-20",
+            "bg-stone-300"
+          ])}
+        >
+          <span>search</span>
+        </SpinningButton>
       </form>
     </Form>
   )
@@ -299,14 +289,15 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
     return
   }
 
-  const [searchMessage, setSearchMessage] = useState<string>("")
-  const [searchResult, setSearchResult] = useState<[EventId, EventDetails][]>([])
+  const [searchResult, setSearchResult] = useState<[EventId, EventDetails][] | string>([])
 
   const [previousSearchMessage, setPreviousSearchMessage] = useState<string>("")
   const [previousSearchResult, setPreviousSearchResult] = useState<[EventId, EventDetails][]>([])
 
   const [eventDetails, setEventDetails] = useState<["host" | "guest", EventDetails][]>([])
   const [archivedDetails, setArchivedDetails] = useState<["host" | "guest", EventDetails][]>([])
+
+  const [spinSearch, setSpinSearch] = useState(false)
 
   useEffect(() => {
 
@@ -354,11 +345,8 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
 
     backend.subscribeToLiveSearchEvents({
       onEvent: (evt: string | [EventId, EventDetails][]) => {
-        if (typeof evt === "string") {
-          setSearchMessage(evt)
-        } else {
-          setSearchResult(evt)
-        }
+        setSearchResult(evt)
+        setSpinSearch(false)
       },
       onError: () => { },
       onQuit: () => { },
@@ -374,6 +362,57 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
     })
   }, [])
 
+  const EventsOrPlaceholder = () => {
+
+    if (eventDetails.length === 0) {
+      return (
+        <div className="flex w-full  justify-center mt-8">
+          <Card className="w-full sm:w-5/12 p-4">
+            Need event ideas? Check out events happening around the ecosystem at
+            <div className="inline-block relative w-24 ml-2 font-bold">
+              <span className="text-xs absolute left-0 bottom-[-3px]">↗</span>
+              <a href="http://urbit.org/events">urbit.org </a>
+            </div>
+          </Card>
+        </div>
+      )
+    }
+
+    return (
+      <ul>
+        {eventDetails.map(([hostOrGuest, details]) =>
+          <EventThumbnail
+            headerSlot={
+              <div className={cn([
+                "relative",
+                "pt-1 sm:p-0"
+              ])}>
+                <span className="font-bold text-xl">{details.title}</span>
+                {
+                  hostOrGuest === "host" &&
+                  <span className="absolute right-[-12px] top-[-12px] text-[11px]">
+                    you're hosting
+                  </span>
+                }
+              </div>
+            }
+            key={`${details.id.ship}-${details.id.name}`}
+            linkTo={
+              hostOrGuest === "host"
+                ? `manage/${details.id.ship}/${details.id.name}`
+                : `event/${details.id.ship}/${details.id.name}`
+            }
+            details={details}
+            className={cn([
+              { "bg-stone-800 text-white": hostOrGuest === "host" }
+            ])}
+          />
+        )}
+      </ul>
+    )
+
+  }
+
   return (
     <ResponsiveContent className="flex justify-center">
       <div className="grid justify-center w-full space-y-6 py-20 text-center">
@@ -387,36 +426,7 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="events">
-            <ul>
-              {eventDetails.map(([hostOrGuest, details]) =>
-                <EventThumbnail
-                  headerSlot={
-                    <div className={cn([
-                      "relative",
-                      "pt-1 sm:p-0"
-                    ])}>
-                      <span className="font-bold text-xl">{details.title}</span>
-                      {
-                        hostOrGuest === "host" &&
-                        <span className="absolute right-[-12px] top-[-12px] text-[11px]">
-                          you're hosting
-                        </span>
-                      }
-                    </div>
-                  }
-                  key={`${details.id.ship}-${details.id.name}`}
-                  linkTo={
-                    hostOrGuest === "host"
-                      ? `manage/${details.id.ship}/${details.id.name}`
-                      : `event/${details.id.ship}/${details.id.name}`
-                  }
-                  details={details}
-                  className={cn([
-                    { "bg-stone-800 text-white": hostOrGuest === "host" }
-                  ])}
-                />
-              )}
-            </ul>
+            <EventsOrPlaceholder />
           </TabsContent>
           <TabsContent value="archive">
             <ul className="mx-4 md:m-0">
@@ -443,11 +453,12 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
             </ul>
           </TabsContent>
           <TabsContent value="search">
-            <p className="my-4">search for public events</p>
+            <p className="my-4">search for events</p>
             <div className="grid grid-col-1 space-y-2 mx-4">
               <SearchForm
                 findEvents={backend.find}
-                clearSearch={() => { setSearchResult([]) }}
+                onSubmit={() => { setSpinSearch(true) }}
+                spin={spinSearch}
               />
               <PreviousSearchButton
                 message={previousSearchMessage}
@@ -457,17 +468,20 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
                 }}
               />
             </div>
-            {searchMessage}
-            <ul className="mx-4 md:m-0">
-              {searchResult.map(([evtID, details]) =>
-                <SearchThumbnail
-                  key={`${details.id.ship}-${details.id.name}`}
-                  details={details}
-                  register={() => { backend.register(details.id).then() }}
-                  globalCtx={globalContext}
-                />
-              )}
-            </ul>
+            {typeof searchResult === "string"
+              ? searchResult
+              :
+              <ul className="mx-4 md:m-0">
+                {searchResult.map(([evtID, details]) =>
+                  <SearchThumbnail
+                    key={`${details.id.ship}-${details.id.name}`}
+                    details={details}
+                    register={() => { backend.register(details.id).then() }}
+                    globalCtx={globalContext}
+                  />
+                )}
+              </ul>
+            }
           </TabsContent>
         </Tabs>
       </div>

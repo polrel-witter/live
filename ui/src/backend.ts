@@ -518,6 +518,8 @@ const backendInfo1Schema = z.object({
 // });
 
 
+// Patp regex:
+// /^~([a-z]{3,6})(?:-([a-z]{6})){0,7}$/
 const PatpSchema = z
   .string()
   .startsWith("~")

@@ -30,7 +30,7 @@ key:
     - the profile form is cut off at the top/bottom of the screen, for
       instance on a 13" macbook. seems like it just needs some padding
       on the top and bottom?
-- *~widmes-hassen* timeline page
++ *~widmes-hassen* timeline page
     + while i like the tab distinction between host and guests, i don't
       think there's a clear way we can describe the guest portion, as
       they can techincally be invited, request entry, or already be
@@ -47,17 +47,17 @@ key:
     + i like that it just lists the start time/date on the tile, but
       should read: "starts at XX:XX (GMT X) on Some Date". Also note to
       remove the AM/PM.
-    - search tab
-        - the header text should just read, "search for events" since
+    + search tab
+        + the header text should just read, "search for events" since
           they can technically search for private events, too.
-        - the @p and event name fields should assert this format, but
+        + the @p and event name fields should assert this format, but
           also include examples to guide the user: '~sampel-palnet' and
           'event-name'
-        - there should also be a spinner on the button that changes when
+        + there should also be a spinner on the button that changes when
           the result state updates.
-    - If there are no events, should see a message with a link out to the urbit events page: "Need event ideas? Check out events happening around the ecosystem at [urbit.org↗](http://urbit.org/events)"
+    + If there are no events, should see a message with a link out to the urbit events page: "Need event ideas? Check out events happening around the ecosystem at [urbit.org↗](http://urbit.org/events)"
 - host management page
-    - remove the AM/PM distinction since it displays a 24 hour clock.
+    + remove the AM/PM distinction since it displays a 24 hour clock.
     - we should see `latch` and `kind` status somewhere on the event
       card.
     - edit event
@@ -105,7 +105,7 @@ key:
           non-mobile screens: https://bowl.polrel-witter.xyz/bucket/random/2024.11.22..17.24.46-Screenshot%20from%202024-11-22%2012-24-32.png
         - in general, really like how this looks/feels. great work.
 - guest page
-    - remove the AM/PM distinction since it displays a 24 hour clock.
+    + remove the AM/PM distinction since it displays a 24 hour clock.
     - the description sometimes renders across the screen, i.e. no
       linebreaks.
     - we should see `latch` and `kind` status somewhere on the event

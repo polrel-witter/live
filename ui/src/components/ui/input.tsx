@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils"
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {}
 
+// if we need clearable inputs...
+// https://github.com/shadcn-ui/ui/discussions/3274#discussioncomment-10054930
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, ...props }, ref) => {
     return (
