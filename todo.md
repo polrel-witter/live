@@ -44,7 +44,7 @@ key:
       to %over. this will keep the host and guest tabs clean. other than
       this, I don't think we need to distinguish the latch on the
       timeline page.
-    - i like that it just lists the start time/date on the tile, but
+    + i like that it just lists the start time/date on the tile, but
       should read: "starts at XX:XX (GMT X) on Some Date". Also note to
       remove the AM/PM.
     - search tab

@@ -41,7 +41,7 @@ const EventThumbnail: React.FC<EventThumbnailProps> = (
             <CardDescription className="italics">hosted by {id.ship}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>starts on {startDate ? formatEventDate(startDate) : "TBD"}</p>
+            <p>starts at {startDate ? formatEventDate(startDate) : "TBD"}</p>
             <p>location: {location}</p>
           </CardContent>
           <CardFooter> </CardFooter>
@@ -138,7 +138,7 @@ const SearchThumbnail: React.FC<SearchThumbnailProps> = (
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p>starts on {startDate ? formatEventDate(startDate) : "TBD"}</p>
+          <p>starts at {startDate ? formatEventDate(startDate) : "TBD"}</p>
           <p>location: {location}</p>
         </CardContent>
         <CardFooter>
