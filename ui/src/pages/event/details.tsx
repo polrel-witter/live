@@ -44,9 +44,9 @@ const EventDetails: React.FC = () => {
                   minWidth={["w-[45px]", "sm:w-[100px]"]}
                   maxWidth={["w-[160px]", "sm:w-[300px]"]}
                   classNames={[
-                    "bg-gray-300",
-                    "bg-gray-300",
-                    "bg-gray-300",
+                    "bg-stone-300",
+                    "bg-stone-300",
+                    "bg-stone-300",
                   ]}
                   labels={[
                     <div className="text-xs md:text-lg" > status </div>,

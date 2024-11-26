@@ -376,7 +376,7 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
 
   return (
     <ResponsiveContent className="flex justify-center">
-      <div className="grid justify-center w-1/2 space-y-6 py-20 text-center">
+      <div className="grid justify-center w-full space-y-6 py-20 text-center">
         <h1 className="text-3xl italic">events</h1>
         <Tabs defaultValue="events">
           <TabsList>
@@ -387,15 +387,20 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="events">
-            <ul className="mx-4 md:m-0">
+            <ul>
               {eventDetails.map(([hostOrGuest, details]) =>
                 <EventThumbnail
                   headerSlot={
-                    <div className="relative">
+                    <div className={cn([
+                      "relative",
+                      "pt-1 sm:p-0"
+                    ])}>
                       <span className="font-bold text-xl">{details.title}</span>
                       {
                         hostOrGuest === "host" &&
-                        <span className="absolute right-0 text-[11px]">you're hosting</span>
+                        <span className="absolute right-[-12px] top-[-12px] text-[11px]">
+                          you're hosting
+                        </span>
                       }
                     </div>
                   }
