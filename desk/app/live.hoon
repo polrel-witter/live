@@ -407,7 +407,7 @@
     :-  %event
     (~(get by events) (slav %p host:pol) (slav %tas name:pol))
   ::
-     [%x %session %ids host=@ name=@ ~]
+      [%x %session %ids host=@ name=@ ~]
     :-  %session-ids
     =/  e=event-1
       (~(got by events) (slav %p host:pol) (slav %tas name:pol))

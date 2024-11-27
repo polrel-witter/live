@@ -180,7 +180,7 @@
   =;  =demand
     ``[%matcher-demand !>(demand)]
   ?+    pol  ~|(invalid-scry-path+pol !!)
-      [%u %pals %add ~]  [%add-pals add-pals]
+      [%x %pals %add ~]  [%add-pals add-pals]
       [%x %profile ship=@ ~]
     :-  %profile
     ?~  mp=(~(get by profiles) (slav %p ship:pol))  ~
