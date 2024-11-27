@@ -97,10 +97,18 @@
   ::
   ++  de-group
     |^  ^-  $-(json group)
-        (su:dejs-soft:format ;~((glue fas) ship ^sym))
+        (su:dejs-soft:format ;~((glue fas) ship sym))
     ::
-    ++  sym   (se %tas)
-    ++  ship  ;~(pfix sig fed:ag)
+    ++  ship  ;~(pose ;~(pfix sig fed:ag) fed:ag)
+    ++  sym
+      %+  cook
+        |=  a=tape
+        ^-  term
+        =.  a  (cass a)
+        =.  a  (turn a |=(c=@t ?:(|(=('.' c) =(' ' c)) '-' c)))
+        ?.  ((sane %tas) (crip a))  ~|(%bad-term !!)
+        (slav %tas (crip a))
+      ;~(pose (plus ;~(pose alp dot ace)))
     --
   ::
   ++  dl-session
