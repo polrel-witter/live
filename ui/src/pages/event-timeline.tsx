@@ -200,7 +200,7 @@ const SearchForm = ({ spin, ...fns }: SearchFormProps) => {
     hostShip: PatpSchema.or(z.literal("")),
     name: z.custom<string>((val) => {
       // regex enforces either "string" or strings delimited by dashes "str-ing"
-      return typeof val === "string" ? /^[a-z]+(?:-[a-z]+)*$/.test(val) : false;
+      return typeof val === "string" ? /^\w+(?:-\w+)*$/.test(val) : false;
     }, {
       message: "event name sould be in this form: event-name"
     }).nullable(),
