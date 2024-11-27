@@ -126,7 +126,7 @@
     |=  jon=json
     ^-  (unit cord)
     ?>  ?=([%a *] jon)
-    =-  ?~(- ~ `(crip (join ', ' -)))
+    =-  ?~(- ~ `(crip (join ',' -)))
     ^-  tape
     %+  turn  p.jon
     |=  j=json
@@ -351,6 +351,17 @@
         ['end' ?~(end.a ~ (sect u.end.a))]
     ==
   ::
+  ++  en-panel
+    |=  a=(unit cord)
+    ^-  json
+    ?~  a  [%a ~]
+    :-  %a
+    ^-  (list json)
+    %+  turn
+      (fall (rush u.a (more com ;~(pfix sig (plus ;~(pose alp dot))))) ~)
+    |=  t=(list cord)
+    `json`[%s (crip t)]
+  ::
   ++  en-all-sessions
     |=  a=(map term session)
     ^-  json
@@ -367,7 +378,7 @@
     ^-  ^json
     %-  pairs
     :~  ['title' s+title.a]
-        ['panel' (en-unit-cord panel.a)]
+        ['panel' (en-panel panel.a)]
         ['location' (en-unit-cord location.a)]
         ['about' (en-unit-cord about.a)]
         ['moment' (en-moment-1 moment.a)]
