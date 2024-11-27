@@ -1721,7 +1721,6 @@ function subscribeToMatcherAddPalsEvent(_api: Urbit): (handlers: {
         } catch (e) {
           throw e
         }
-
       },
       err: (err, id) => onError(err, id),
       quit: (data) => onQuit(data)
