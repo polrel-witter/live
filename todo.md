@@ -56,10 +56,13 @@ key:
         + there should also be a spinner on the button that changes when
           the result state updates.
     + If there are no events, should see a message with a link out to the urbit events page: "Need event ideas? Check out events happening around the ecosystem at [urbit.org↗](http://urbit.org/events)"
+    - timeline should be in ascending order by date (i.e. event closest
+      to today should be at the top)
 - host management page
     + remove the AM/PM distinction since it displays a 24 hour clock.
     - we should see `latch` and `kind` status somewhere on the event
       card.
+    - need a delete button - with a "are you sure?" pop-up. the poke to send is: `live-operation [[~sampel-palnet %some-event-id] [%delete ~]]` which is just `null`
     - edit event
         - when clicking the event, the update comes through at the top,
           but not in the form itself. i also think it should give a bit
@@ -141,7 +144,6 @@ key:
     - next to the secret header, include in parenthesis: (only guests marked "registered" or "attended" receive this message)
 - lastly, the connection status at the bottom right should be more prominant on desktop. when the app first opens it can take a few seconds before anything renders and without noticing the connection status it feels like nothing's happening. it's obvious on mobile, but on desktop it's hard to see. i think either making it bigger or adding a spinner in the middle of the page should fix.
 - color scheme
-
 
 
 # Backend
