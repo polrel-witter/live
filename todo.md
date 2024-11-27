@@ -151,7 +151,7 @@ key:
 + parsing the panel is off; sometimes inserts double commas, and puts
   commas between first and last names.
     + note: backend is parsing the panel properly, the frontend just needs to render the string instead of reparsing.
-- parse group names no matter the input type.
++ parse group names no matter the input type.
 
 
 # Archived
