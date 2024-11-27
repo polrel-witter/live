@@ -13,7 +13,7 @@ export function flipBoolean(b: boolean) { return !b }
 
 // HH:MM AM/PM (Zone) on Month DD YYYY
 export function formatEventDate(d: TZDate): string {
-  const fmt = format(d, `HH:mm aa (OO) 'on' LLLL do yyyy`)
+  const fmt = format(d, `HH:mm (OO) 'on' LLLL do yyyy`)
   // console.log("f", fmt)
   return fmt
 }
