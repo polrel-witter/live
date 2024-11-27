@@ -200,7 +200,7 @@ const SearchForm = ({ spin, ...fns }: SearchFormProps) => {
     hostShip: PatpSchema.or(z.literal("")),
     name: z.custom<string>((val) => {
       // regex enforces either "string" or strings delimited by dashes "str-ing"
-      return typeof val === "string" ? /^\w*(?:-\w+)*$/.test(val) : false;
+      return typeof val === "string" ? /^[a-z]+(?:-[a-z]+)*$/.test(val) : false;
     }, {
       message: "event name sould be in this form: event-name"
     }).nullable(),
@@ -413,10 +413,49 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
 
   }
 
+  const ArchivedOrPlaceholder = () => {
+
+    if (archivedDetails.length > 0) {
+      return (
+        <div className="flex w-full  justify-center mt-8">
+          <Card className="w-full sm:w-5/12 p-4">
+            You have no archived events.
+            Past events will automatically move here when the host declares them "over"
+          </Card>
+        </div>
+      )
+    }
+
+    return (
+      <ul className="mx-4 md:m-0">
+        {archivedDetails.map(([hostOrGuest, details]) =>
+          <EventThumbnail
+            headerSlot={
+              <div className="relative">
+                <span className="font-bold text-xl">{details.title}</span>
+                {
+                  hostOrGuest === "host" &&
+                  <span className="absolute right-0 text-[11px]">you're hosting</span>
+                }
+              </div>
+            }
+            key={`${details.id.ship}-${details.id.name}`}
+            linkTo={
+              hostOrGuest === "host"
+                ? `manage/${details.id.ship}/${details.id.name}`
+                : `event/${details.id.ship}/${details.id.name}`
+            }
+            details={details}
+          />
+        )}
+      </ul>
+    )
+
+  }
+
   return (
     <ResponsiveContent className="flex justify-center">
-      <div className="grid justify-center w-full space-y-6 py-20 text-center">
-        <h1 className="text-3xl italic">events</h1>
+      <div className="grid justify-center w-full space-y-6 py-10 text-center">
         <Tabs defaultValue="events">
           <TabsList>
             <TabsTrigger value="events">events</TabsTrigger>
@@ -429,28 +468,7 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
             <EventsOrPlaceholder />
           </TabsContent>
           <TabsContent value="archive">
-            <ul className="mx-4 md:m-0">
-              {archivedDetails.map(([hostOrGuest, details]) =>
-                <EventThumbnail
-                  headerSlot={
-                    <div className="relative">
-                      <span className="font-bold text-xl">{details.title}</span>
-                      {
-                        hostOrGuest === "host" &&
-                        <span className="absolute right-0 text-[11px]">you're hosting</span>
-                      }
-                    </div>
-                  }
-                  key={`${details.id.ship}-${details.id.name}`}
-                  linkTo={
-                    hostOrGuest === "host"
-                      ? `manage/${details.id.ship}/${details.id.name}`
-                      : `event/${details.id.ship}/${details.id.name}`
-                  }
-                  details={details}
-                />
-              )}
-            </ul>
+            <ArchivedOrPlaceholder />
           </TabsContent>
           <TabsContent value="search">
             <p className="my-4">search for events</p>
