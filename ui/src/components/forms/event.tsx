@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Control, FieldValues, useForm } from "react-hook-form"
+import { Control, FieldValues, useController, useForm } from "react-hook-form"
 import { z } from "zod"
 import { useEffect, useState } from "react"
 import { TZDate, } from "@date-fns/tz"
@@ -208,18 +208,27 @@ const makeDefaultValues = (event?: EventAsHost) => {
 const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
   const [spin, setSpin] = useState(false)
 
+  const defaultValues = makeDefaultValues(event)
+
   const form = useForm<z.infer<typeof schemas>>({
     resolver: zodResolver(schemas),
     mode: "onChange",
     // this is needed to avoid the error about uncontrolled input
-    defaultValues: makeDefaultValues(event),
+    defaultValues: defaultValues,
+    disabled: event?.details.latch === "over",
   })
+
+  useEffect(() => {
+    if (event) {
+      form.reset(defaultValues)
+    }
+  }, [event])
+
+
 
   // add static fields from tlon, saying we're importing from tlon
   return (
-    <Form
-      {...form}
-    >
+    <Form {...form} >
       <form
         aria-description="A form containing updatable profile entries"
         onSubmit={form.handleSubmit((values) => {
@@ -252,9 +261,9 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
               <FormLabel className="text-left">limit</FormLabel>
               <FormControl>
                 <Input
+                  {...field}
                   type="number"
                   placeholder="limit of attendees for this event (leave empty for no limit)"
-                  {...field}
                   onChange={(e) =>
                     isNaN(e.target.valueAsNumber)
                       ? field.onChange("")
@@ -266,7 +275,6 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
           )}
         />
 
-
         <FormField
           control={form.control}
           name={"dateRange"}
@@ -275,6 +283,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
               <FormLabel className="text-left">event dates</FormLabel>
               <FormControl>
                 <DateTimePicker
+                  {...field}
                   timePicker={{
                     hour: true,
                     minute: true,
@@ -307,7 +316,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
               <FormControl>
                 {/* is this magic? */}
                 <GenericComboBox<z.infer<typeof utcOffsetSchema>>
-                  value={field.value}
+                  {...field}
                   items={validUTCOffsets.map((offset) => {
                     return { label: `GMT${offset}`, value: offset }
                   })}
@@ -327,21 +336,24 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
               <FormLabel className="text-left">event kind</FormLabel>
               <FormControl>
                 {/* could turn this into generic also */}
-                <Select value={field.value} onValueChange={(newVal) => {
-                  switch (newVal) {
-                    case "public":
-                      form.setValue("eventKind", newVal)
-                      break
-                    case "private":
-                      form.setValue("eventKind", newVal)
-                      break
-                    case "secret":
-                      form.setValue("eventKind", newVal)
-                      break
-                    default:
-                      console.warn("uknown event kind:", newVal)
-                  }
-                }}>
+                <Select
+                  {...field}
+                  value={field.value}
+                  onValueChange={(newVal) => {
+                    switch (newVal) {
+                      case "public":
+                        form.setValue("eventKind", newVal)
+                        break
+                      case "private":
+                        form.setValue("eventKind", newVal)
+                        break
+                      case "secret":
+                        form.setValue("eventKind", newVal)
+                        break
+                      default:
+                        console.warn("uknown event kind:", newVal)
+                    }
+                  }}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="pick a kind" />
                   </SelectTrigger>
@@ -370,21 +382,29 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
               <FormLabel className="text-left">event latch</FormLabel>
               <FormControl>
                 {/* could turn this into generic also */}
-                <Select value={field.value} onValueChange={(newVal) => {
-                  switch (newVal) {
-                    case "open":
-                      form.setValue("eventLatch", newVal)
-                      break
-                    case "closed":
-                      form.setValue("eventLatch", newVal)
-                      break
-                    case "over":
-                      form.setValue("eventLatch", newVal)
-                      break
-                    default:
-                      console.warn("uknown event latch:", newVal)
-                  }
-                }}>
+                <Select
+                  {...field}
+                  // we want latch to never be disabled since all the other
+                  // fields will be disabled when the latch === "over"
+                  // so we want to be able to  get out of that state
+                  // by chaning the latch
+                  disabled={false}
+                  value={field.value}
+                  onValueChange={(newVal) => {
+                    switch (newVal) {
+                      case "open":
+                        form.setValue("eventLatch", newVal)
+                        break
+                      case "closed":
+                        form.setValue("eventLatch", newVal)
+                        break
+                      case "over":
+                        form.setValue("eventLatch", newVal)
+                        break
+                      default:
+                        console.warn("uknown event latch:", newVal)
+                    }
+                  }}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="pick a latch" />
                   </SelectTrigger>
@@ -438,11 +458,13 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
               <FormControl>
                 <div className="flex space-x-12">
                   <Input
+                    {...field}
                     placeholder="group host"
                     value={field.value?.host}
                     onChange={(e) => { form.setValue("eventGroup.host", e.target.value) }}
                   />
                   <Input
+                    {...field}
                     placeholder="group name"
                     value={field.value?.name}
                     onChange={(e) => { form.setValue("eventGroup.name", e.target.value) }}
@@ -513,6 +535,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                               <div className="flex">
                                 <Button
                                   type="button"
+                                  disabled={field.disabled}
                                   className="p-0 w-7 h-7 rounded-full hover:bg-red-200"
                                   variant="ghost"
                                   onClick={() => {
@@ -526,6 +549,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                                 </Button>
                                 <Button
                                   type="button"
+                                  disabled={field.disabled}
                                   className="p-0 w-7 h-7 rounded-full hover:bg-amber-100"
                                   variant="ghost"
                                   onClick={() => {
@@ -702,8 +726,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
           }}
         />
 
-
-
+        {/* TODO: add spin to this button */}
         <div className="pt-4 md:pt-8 w-full flex justify-center">
           <SpinningButton
             spin={spin}

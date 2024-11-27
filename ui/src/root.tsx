@@ -82,7 +82,6 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
     // subscribe to event to update state dynamically
     backend.subscribeToLiveEvents({
       onRecordUpdate: (updateEvent: LiveRecordUpdateEvent) => {
-        // TODO: do we get updates on host events too?
         setCtx(({ eventsAsGuest: oldEventsAsGuest, ...restCtx }) => {
           const maybeIdx = oldEventsAsGuest
             .findIndex(([_infos, details]) => eventIdsEqual(
@@ -115,11 +114,9 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
             ],
             ...restCtx
           }
-
         })
       },
       onEventUpdate: (updateEvent: LiveEventUpdateEvent) => {
-        // TODO: do we get updates on host events too?
         setCtx(({ eventsAsHost: oldEventsAsHost, ...restCtx }) => {
           const maybeIdx = oldEventsAsHost
             .findIndex(({ details }) => eventIdsEqual(

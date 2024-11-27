@@ -15,22 +15,24 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { ReactElement, useEffect, useState } from "react"
+import { ComponentProps, ReactElement, useEffect, useState } from "react"
 
 type Props<T> = {
   items: { value: T, label: string }[]
   value: T
   onSelect: ((value: T) => void)
-  className?: string
   showInput?: boolean
-}
+} & Omit<ComponentProps<typeof CommandInput>, "onSelect">
 
-const GenericComboBox = <K extends string>({ items, showInput, onSelect, value, className }: Props<K>): ReactElement => {
+const GenericComboBox = <K extends string>({ items, showInput, onSelect, value, className, ...commandProps }: Props<K>): ReactElement => {
   const [open, setOpen] = useState(false)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger
+        disabled={commandProps.disabled}
+        asChild
+      >
         <Button
           variant="outline"
           role="combobox"
