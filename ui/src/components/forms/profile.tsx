@@ -170,9 +170,10 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfile }) => {
             <FormItem>
               <FormControl>
                 <div className="flex flex-row justify-start items-center">
-                  <FormLabel> inegrate with %pals </FormLabel>
+                  <FormLabel className="pb-[1px] mr-4 my-2"> inegrate with %pals </FormLabel>
                   <ButtonToggle
                     pressed={field.value}
+                    pressedColor="bg-emerald-600"
                     onPressedChange={field.onChange}
                     aria-label="Toggle bold"
                   >

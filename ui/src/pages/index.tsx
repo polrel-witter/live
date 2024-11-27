@@ -51,6 +51,7 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
             open={openProfile}
             profile={globalContext.profile}
             editProfileField={backend.editProfileField}
+            setAddPals={backend.setAddPals}
           />
         </div>
       }

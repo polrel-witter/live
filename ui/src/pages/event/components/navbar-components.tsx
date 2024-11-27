@@ -77,9 +77,10 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
 type ProfileButtonProps = {
   profile: Profile,
   editProfileField: (field: string, value: string | null) => Promise<void>
+  setAddPals: (b:boolean) => Promise<void>
 }
 
-export const ProfileButton = ({ profile, editProfileField }: ProfileButtonProps) => {
+export const ProfileButton = ({ profile, ...fns }: ProfileButtonProps) => {
   const [openProfile, setOpenProfile] = useState(false)
 
   return (
@@ -95,7 +96,8 @@ export const ProfileButton = ({ profile, editProfileField }: ProfileButtonProps)
         onOpenChange={setOpenProfile}
         open={openProfile}
         profile={profile}
-        editProfileField={editProfileField}
+        editProfileField={fns.editProfileField}
+        setAddPals={fns.setAddPals}
       />
     </div>
   )

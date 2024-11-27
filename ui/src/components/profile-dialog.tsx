@@ -13,13 +13,15 @@ type Props = {
   profile: Profile;
   onOpenChange: (b: boolean) => void;
   editProfileField: Backend["editProfileField"]
+  setAddPals: Backend["setAddPals"]
 }
 
 const ProfileDialog: React.FC<Props> = ({
   open,
   onOpenChange,
   profile,
-  editProfileField
+  editProfileField,
+  setAddPals
 }) => {
 
   const [openDialog, setOpenDialog] = useState(false)
@@ -29,16 +31,18 @@ const ProfileDialog: React.FC<Props> = ({
   }, [open])
 
 
-  const editProfile = async (fields: Record<string, string>): Promise<void> => {
+  const editProfile = async (fields: Record<string, string>, addPals: boolean): Promise<void> => {
 
     let fieldsToChange: [string, string | null][] = []
 
     fieldsToChange = diffProfiles(profile, fields)
 
-    const _ = await Promise.all(fieldsToChange
+    await Promise.all(fieldsToChange
       .map(([field, val]) => {
         return editProfileField(field, val)
       }))
+
+    await setAddPals(addPals) 
 
     setOpenDialog(false)
     onOpenChange(false)
