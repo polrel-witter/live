@@ -1,7 +1,7 @@
 import { LoaderFunctionArgs, Params, useLoaderData, useSubmit } from "react-router-dom"
 import { useContext, useEffect, useState } from "react"
 
-import { Attendee, Backend, emptyEventAsAllGuests, emptyEventAsHost, EventAsAllGuests, EventAsHost, EventId, eventIdsEqual, EventStatus, Patp, Profile, PatpSchema } from "@/backend"
+import { Attendee, Backend, emptyEventAsAllGuests, emptyEventAsHost, EventAsAllGuests, EventAsHost, EventId, eventIdsEqual, EventStatus, Patp, Profile, PatpSchema, RecordInfo } from "@/backend"
 import { GlobalContext, GlobalCtx } from "@/globalContext"
 
 import { NavbarWithSlots } from "@/components/frame/navbar"
@@ -57,7 +57,7 @@ async function buildState(
   backend: Backend
 ): Promise<{
   event: EventAsHost
-  record: EventAsAllGuests
+  record: EventAsAllGuests | null
   attendees: Attendee[]
   profiles: Profile[]
 }> {
@@ -74,15 +74,11 @@ async function buildState(
     evt = emptyEventAsHost
   }
 
-  let record = globalContext.eventsAsGuest
+
+  const record = globalContext.eventsAsGuest
     .find(([, details]) => {
       return eventIdsEqual(details.id, evtId)
     })
-
-  if (!record) {
-    console.error("couldn't find record with id ", evtId)
-    record = emptyEventAsAllGuests
-  }
 
   // remove ourselves from the list of guests / profles
   const attendees = (await backend.getAttendees(evtId))
@@ -93,19 +89,22 @@ async function buildState(
   return {
     event: evt,
     attendees: attendees,
-    record: record,
+    // if there's no guests for this event there's going to be no records
+    // so we return a null in place
+    record: record ? record : null,
     profiles: profiles,
   }
 }
 
+
 const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => {
   const [open, setOpen] = useState(false)
   return (
-    <div className="p-2">
+    <div className="p-2 ">
       <Button
         type="button"
         variant="ghost"
-        className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100"
+        className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100 h-full flex-col"
         onClick={() => { setOpen(flipBoolean) }}
       >
         edit event
@@ -114,20 +113,29 @@ const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => 
         show={open}
         maxHeight="max-h-[3000px]"
       >
-        <div className="mt-2 w-full">
-          <Card>
-            <CardContent>
-              {/* extract into component and use in all 3 sections */}
-              <ScrollArea
-                type="auto"
-                className="h-[300px] w-full rounded-md mt-4 px-4">
-                <EditEventForm
-                  backend={backend}
-                  event={evt}
-                />
-              </ScrollArea>
-            </CardContent>
-          </Card>
+        {evt.details.latch === "over" &&
+          <Button
+            disabled
+            variant="ghost"
+            className={cn([
+              "inline-flex justify-center bg-stone-200 mt-4",
+              "text-sm text-balance"
+            ])}>
+            changes are disabled util latch is set to 'over'!
+          </Button>
+        }
+        <div className="flex justify-center mt-4">
+          <div className="p-2">
+            {/* extract into component and use in all 3 sections */}
+            <ScrollArea
+              type="auto"
+              className="h-[300px] rounded-md px-3">
+              <EditEventForm
+                backend={backend}
+                event={evt}
+              />
+            </ScrollArea>
+          </div>
         </div>
       </SlideDownAndReveal>
     </div>
@@ -135,7 +143,7 @@ const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => 
 }
 
 type GuestProps = {
-  evt: EventAsAllGuests,
+  evt: EventAsAllGuests | null,
   profiles: Profile[],
   invite(patp: Patp): Promise<void>
   register(patp: Patp): Promise<void>
@@ -144,59 +152,51 @@ type GuestProps = {
 
 const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
   const [open, setOpen] = useState(false)
-  type evtStatusAndAll = EventStatus | "all"
-  const [statusFilter, setStatusFilter] = useState<evtStatusAndAll>("all")
-  // const [patpFilter, setPatpFilter] = useState<Patp>("~sampel-palnet")
-  // (e.g. "invite" if unregistered, "register" if requested, "unregister" if registered, etc.)
+  const [spinButton, setSpinButton] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<EventStatus | "all">("all")
+
   const StatusButton = ({ status, patp }: { patp: Patp, status: EventStatus }) => {
     const baseClass = "w-full flex items-center justify-around font-bold"
     switch (status) {
       case "registered":
-        // return (
-        //   <div className={baseClass}>
-        //     <div className="w-1/2 bg-gray-400">
-        //     wllo
-        //     </div>
-        //     <div className="w-1/2 bg-gray-400">
-        //     bllo
-        //     </div>
-        //   </div>
-        // )
         return (
           <div className={baseClass}>
             {status}
-            <Button
+            <SpinningButton
               // hook up to backend
-              onClick={async () => { await fns.unregister(patp) }}
-              className="h-8 bg-orange-300 hover:bg-orange-400 p-1"
+              spin={spinButton}
+              onClick={async () => { setSpinButton(true); await fns.unregister(patp) }}
+              className="h-8 w-22 bg-orange-300 hover:bg-orange-400"
               variant="ghost"
             >
               unregister
-            </Button>
+            </SpinningButton>
           </div>
         )
       case "requested":
         return (
           <div className={baseClass}>
             {status}
-            <Button
+            <SpinningButton
               // hook up to backend
-              onClick={async () => { await fns.register(patp) }}
-              className="h-8 bg-gray-400" >
+              spin={spinButton}
+              onClick={async () => { setSpinButton(true); await fns.register(patp) }}
+              className="h-8 w-22 bg-gray-400" >
               register
-            </Button>
+            </SpinningButton>
           </div>
         )
       case "unregistered":
         return (
           <div className={baseClass}>
             {status}
-            <Button
+            <SpinningButton
               // hook up to backend
-              onClick={async () => { await fns.invite(patp) }}
-              className="h-8 bg-gray-400" >
+              spin={spinButton}
+              onClick={async () => { setSpinButton(true); await fns.invite(patp) }}
+              className="h-8 w-22 bg-stone-700" >
               invite
-            </Button>
+            </SpinningButton>
           </div>
         )
       case "attended":
@@ -206,8 +206,9 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
     }
   }
 
-  const [records, setRecords] = useState(Object.entries(evt[0]))
-  const [recordCount, setRecordCount] = useState<Record<evtStatusAndAll, number>>({
+
+  const [records, setRecords] = useState<[string, RecordInfo][]>([])
+  const [recordCount, setRecordCount] = useState<Record<EventStatus | "all", number>>({
     invited: 0,
     requested: 0,
     registered: 0,
@@ -227,6 +228,7 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
 
   useEffect(
     () => {
+      if (!evt) { return }
 
       const records = Object.entries(evt[0])
       if (statusFilter === "all") {
@@ -239,7 +241,13 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
 
   useEffect(
     () => {
-      const obj: Record<evtStatusAndAll, number> = {
+      if (!evt) { return }
+
+      setRecords(Object.entries(evt[0]))
+
+      if (spinButton) { setSpinButton(false) }
+
+      const obj: Record<EventStatus | "all", number> = {
         all: 0,
         invited: 0,
         requested: 0,
@@ -260,32 +268,52 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
 
     }, [evt])
 
+  const ButtonOrPlaceHolder = () => {
 
+    if (!evt) {
+      return (
+        <Button
+          type="button"
+          disabled
+          variant="ghost"
+          className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100 text-wrap"
+          onClick={() => { setOpen(flipBoolean) }}
+        >
+          invite guests to access guest panel
+        </Button>
+      )
+    }
 
-  return (
-    <div className="p-2">
+    return (
       <Button
         type="button"
         variant="ghost"
         className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100"
         onClick={() => { setOpen(flipBoolean) }}
       >
-        guest status
+        guest statuses
       </Button>
+    )
+
+  }
+
+
+  return (
+    <div className="p-2">
+      <ButtonOrPlaceHolder />
       <SlideDownAndReveal
         show={open}
         maxHeight="max-h-[3000px]"
       >
         <div className="flex w-full justify-center mt-2">
-          <Card className="w-full">
-            <CardContent className="pt-4 p-0">
-              <ScrollArea className="h-[300px] w-full rounded-md">
-                <div className={cn([
-                  "flex flex-col items-center justify-between",
-                  "w-full space-y-2 p-2",
-                  "sm:flex-row sm:space-y-0 sm:space-x-2"
-                ])}>
-                  {/* TODO: could add a search box eventually
+          <div className="w-full pt-4 p-0">
+            <ScrollArea className="h-[300px] w-full rounded-md">
+              <div className={cn([
+                "flex flex-col items-center justify-between",
+                "w-full space-y-2 p-2",
+                "sm:flex-row sm:space-y-0 sm:space-x-2"
+              ])}>
+                {/* TODO: could add a search box eventually
                     <Input
                     placeholder="search guests..."
                     value={patpFilter}
@@ -293,69 +321,69 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
                     </Input>
                   */}
 
-                  <Card
-                    className={cn([
-                      "grid w-min",
-                      "grid-rows-2 grid-flow-col justify-around justify-items-start",
-                      "sm:grid-rows-3",
-                      "md:grid-rows-2",
-                      "w-full p-1 text-[10px]"
-                    ])}
-                  >
-                    {Object.entries(recordCount)
-                      .map(([status, count]) => <span key={status}> {status}:{count}</span>)}
-                  </Card>
+                <Card
+                  className={cn([
+                    "grid w-min",
+                    "grid-rows-2 grid-flow-col justify-around justify-items-start",
+                    "sm:grid-rows-3",
+                    "md:grid-rows-2",
+                    "w-full p-1 text-[10px]"
+                  ])}
+                >
+                  {Object.entries(recordCount)
+                    .map(([status, count]) => <span key={status}> {status}:{count}</span>)}
+                </Card>
 
-                  <GenericComboBox<EventStatus | "all">
-                    value={statusFilter}
-                    items={filterValues.map((val) => {
-                      return { label: val, value: val }
-                    })}
-                    className="w-full sm:w-36"
-                    onSelect={(newVal) => { setStatusFilter(newVal) }}
-                  />
-                </div>
-                <ul className={cn([
-                  "grid grid-cols-1 space-y-2 mt-2",
-                  "sm:space-y-0 sm:grid-cols-2"
-                ])}>
-                  {records.map(([patp, info]) => {
-                    return (
-                      <li key={patp} className="p-2">
-                        <Card className="rounded-md p-2 space-y-1 text-xs sm:text-md">
-                          <CardHeader className="bg-gray-100 p-1 rounded-md">
-                            {/* WARN: casting as Patp */}
-                            {nickNameOrPatp(profiles
-                              .find(profile => profile.patp === patp),
-                              patp as Patp)}
-                          </CardHeader>
-                          <AnimatedButtons
-                            minWidth={["w-[80px]", "sm:w-[125px]"]}
-                            maxWidth={["w-[190px]", "sm:w-[250px]"]}
-                            labels={[
-                              "status",
-                              "changed"]}
-                            classNames={[
-                              "bg-orange-100 hover:bg-orange-200",
-                              "bg-emerald-100 hover:bg-emerald-200"
-                            ]}
-                            items={[
-                              <div className="w-full flex items-center justify-around">
-                                {/* WARN: casting as Patp */}
-                                <StatusButton status={info.status} patp={patp as Patp} />
-                              </div>,
-                              <div className="text-xs truncate"> {formatEventDateShort(info.lastChanged)} </div>,
-                            ]}
-                          />
-                        </Card>
-
-                      </li>
-                    )
+                <GenericComboBox<EventStatus | "all">
+                  value={statusFilter}
+                  items={filterValues.map((val) => {
+                    return { label: val, value: val }
                   })}
-                </ul>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+                  className="w-full sm:w-36"
+                  onSelect={(newVal) => { setStatusFilter(newVal) }}
+                />
+              </div>
+              <ul className={cn([
+                "grid grid-cols-1 space-y-2 mt-2",
+                "sm:space-y-0 sm:grid-cols-2"
+              ])}>
+                {records.map(([patp, info]) => {
+                  return (
+                    <li key={patp} className="p-2">
+                      <Card className="rounded-md p-2 space-y-1 text-xs sm:text-md">
+                        <CardHeader className="bg-gray-100 p-1 rounded-md">
+                          {/* WARN: casting as Patp */}
+                          {nickNameOrPatp(profiles
+                            .find(profile => profile.patp === patp),
+                            patp as Patp)}
+                        </CardHeader>
+                        <AnimatedButtons
+                          minWidth={["w-[80px]", "sm:w-[125px]"]}
+                          maxWidth={["w-[190px]", "sm:w-[250px]"]}
+                          labels={[
+                            "status",
+                            "timestamp"
+                          ]}
+                          classNames={[
+                            "bg-orange-100 hover:bg-orange-200",
+                            "bg-emerald-100 hover:bg-emerald-200"
+                          ]}
+                          items={[
+                            <div className="w-full flex items-center justify-around">
+                              {/* WARN: casting as Patp */}
+                              <StatusButton status={info.status} patp={patp as Patp} />
+                            </div>,
+                            <div className="text-xs truncate"> {formatEventDateShort(info.lastChanged)} </div>,
+                          ]}
+                        />
+                      </Card>
+
+                    </li>
+                  )
+                })}
+              </ul>
+            </ScrollArea>
+          </div>
         </div>
       </SlideDownAndReveal>
     </div>
@@ -363,11 +391,10 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
 }
 
 type InviteProps = {
-  evt: EventAsAllGuests,
   invite(patp: Patp): Promise<void>
 }
 
-const InviteGuests = ({ evt, invite }: InviteProps) => {
+const InviteGuests = ({ invite }: InviteProps) => {
   const [open, setOpen] = useState(false)
   const [ships, setShips] = useState<Patp[]>([])
 
@@ -488,7 +515,6 @@ const InviteGuests = ({ evt, invite }: InviteProps) => {
 }
 
 const ManageIndex: React.FC<Props> = ({ backend }) => {
-
   const globalContext = useContext(GlobalContext)
 
   if (!globalContext) {
@@ -500,7 +526,7 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
 
   const [fetched, setFetched] = useState<boolean>(false)
   const [event, setEvent] = useState<EventAsHost>(emptyEventAsHost)
-  const [record, setRecord] = useState<EventAsAllGuests>(emptyEventAsAllGuests)
+  const [record, setRecord] = useState<EventAsAllGuests | null>(null)
   const [attendees, setAttendees] = useState<Attendee[]>([])
   const [profiles, setProfiles] = useState<Profile[]>([])
 
@@ -560,7 +586,28 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
               <EventDetailsCard
                 hostProfile={globalContext.profile}
                 details={event.details}
-                buttons={<div></div>}
+                buttons={
+                  <AnimatedButtons
+                    minWidth={["w-[55px]", "sm:w-[125px]"]}
+                    maxWidth={["w-[200px]", "sm:w-[325px]"]}
+                    classNames={[
+                      "bg-stone-100",
+                      "bg-stone-100",
+                    ]}
+                    labels={[
+                      <div className="text-xs md:text-lg font-bold" > latch </div>,
+                      <div className="text-xs md:text-lg font-bold" > kind </div>,
+                    ]}
+                    items={[
+                      <div className="text-xs sm:text-base truncate">
+                        event is currently {event.details.latch}
+                      </div>,
+                      <div className="text-xs sm:text-base truncate">
+                        this event is {event.details.kind}
+                      </div>,
+                    ]}
+                  />
+                }
                 className="w-full"
               />
               <Card>
@@ -578,7 +625,6 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
                 <InviteGuests
                   invite={(patp: Patp) => backend
                     .invite(event.details.id, [patp]).then()}
-                  evt={record}
                 />
               </Card>
             </ResponsiveContent>

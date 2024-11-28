@@ -49,11 +49,7 @@ async function buildContextData(
       evtRecord.lastChanged = info[ourShip].lastChanged
       evtRecord.details = evtAsAllGuests[1]
     } else {
-      console.error("hostShip is not in eventAsAllGuests")
-    }
-  } else {
-    evtRecord = await backend.getRecord(evtId)
-    if (evtRecord === emptyEventAsGuest) {
+      // console.error("hostShip is not in eventAsAllGuests")
       console.error("couldn't find event with id ", evtId)
     }
   }

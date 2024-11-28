@@ -355,8 +355,6 @@ type EventDetails = {
   kind: "public" | "private" | "secret";
   latch: "open" | "closed" | "over";
   venueMap: string;
-  // TODO: this might've been better stored as Record<sessionID, Session>
-  // instead of an array
   sessions: Sessions
 }
 
@@ -366,15 +364,6 @@ type EventAsHost = {
   details: EventDetails
 }
 
-// type EventAsGuest = {
-//   secret: string | null,
-//   status: EventStatus,
-//   details: EventDetails
-// }
-
-// TODO: maybe it could look like this
-// the key point where current solution breaks is when we have update events
-// the fact that we hve a single reactive value for details to update is v useful
 type RecordInfo = {
   secret: string
   status: EventStatus
@@ -1315,7 +1304,6 @@ function subscribeToLiveEvents(api: Urbit): (handlers: {
       app: "live",
       path: "/updates",
       event: (evt) => {
-        console.log(evt)
         try {
           const updateEvent = liveRecordUpdateEventSchema.parse(evt)
           onRecordUpdate({
@@ -1551,8 +1539,6 @@ function editProfileField(_api: Urbit): (field: keyof Profile, value: string | n
   return async (field: keyof Profile, value: string | null) => {
     let actualField: string = field;
 
-    // TODO: add Promise<boolean> pattern
-
     // the backend expects "ens-domain" but the Profile type is keyed in
     // camelCase because otherwise i need to quote the key and it's annoying
     if (field === "ensDomain") {
@@ -1564,7 +1550,6 @@ function editProfileField(_api: Urbit): (field: keyof Profile, value: string | n
       mark: "matcher-deed",
       json: { "edit-profile": { term: actualField, entry: value } },
     })
-    // TODO: do something with this promise result
     console.log(num)
   }
 }
@@ -1716,7 +1701,7 @@ export type { Patp, PatpWithoutSig }
 
 export type { Session, Sessions }
 
-export type { EventAsAllGuests }
+export type { EventAsAllGuests, RecordInfo }
 export { emptyEventAsAllGuests }
 
 export type { LiveRecordUpdateEvent, LiveEventUpdateEvent, LiveFindEvent }

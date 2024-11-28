@@ -245,45 +245,41 @@ export function DateTimePicker({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        {renderTrigger ? (
-          renderTrigger({ value: displayValue, open, timezone, disabled, use12HourFormat, setOpen })
-        ) : (
-          <div
-            className={cn(
-              'flex w-full cursor-pointer items-center h-9 ps-3 pe-1 font-normal border border-input rounded-md text-sm shadow-sm',
-              !displayValue && 'text-muted-foreground',
-              (!clearable || !dateRangeValue) && 'pe-3',
-              disabled && 'opacity-50 cursor-not-allowed',
-              classNames?.trigger
-            )}
-            tabIndex={0}
-          >
-            <div className="flex-grow flex items-center text-[11px] sm:text-sm">
-              <CalendarIcon className="mr-2 size-4" />
-              {dislayFormat}
-            </div>
-            {clearable && dateRangeValue && (
-              <Button
-                disabled={disabled}
-                variant="ghost"
-                size="sm"
-                role="button"
-                aria-label="Clear date"
-                className="size-6 p-1 ms-1"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  setDateRange(initDateRange)
-                  onRangeChange(undefined)
-                  setOpen(false);
-                }}
-              >
-                <XCircle className="size-4" />
-              </Button>
-            )}
-          </div>
-        )}
+      <PopoverTrigger disabled={disabled} asChild>
+        {renderTrigger
+          ? (renderTrigger({ value: displayValue, open, timezone, disabled, use12HourFormat, setOpen }))
+          : (
+            <button
+              className={cn(
+                'flex w-full cursor-pointer items-center h-9 ps-3 pe-1 font-normal border border-input rounded-md text-sm shadow-sm',
+                !displayValue && 'text-muted-foreground',
+                (!clearable || !dateRangeValue) && 'pe-3',
+                disabled && 'opacity-50 cursor-not-allowed',
+                classNames?.trigger
+              )}
+              tabIndex={0}
+            >
+              <div className="flex-grow flex items-center">
+                <CalendarIcon className="mr-2 size-4" />
+                <span className="text-balance text-[11px] sm:text-sm">
+                  {dislayFormat}
+                </span>
+              </div>
+              {clearable && dateRangeValue && (
+                <XCircle
+                  aria-label="Clear date"
+                  className="size-6 size-4 p-1 ms-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setDateRange(initDateRange)
+                    onRangeChange(undefined)
+                    setOpen(false);
+                  }}
+                />
+              )}
+            </button>
+          )}
       </PopoverTrigger>
       <PopoverContent className="w-auto p-2">
         <div className="flex items-center justify-between">

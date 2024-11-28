@@ -415,7 +415,7 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
 
   const ArchivedOrPlaceholder = () => {
 
-    if (archivedDetails.length > 0) {
+    if (archivedDetails.length === 0) {
       return (
         <div className="flex w-full  justify-center mt-8">
           <Card className="w-full sm:w-5/12 p-4">
@@ -435,7 +435,7 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
                 <span className="font-bold text-xl">{details.title}</span>
                 {
                   hostOrGuest === "host" &&
-                  <span className="absolute right-0 text-[11px]">you're hosting</span>
+                  <span className="absolute right-0 text-[11px]">you've hosted</span>
                 }
               </div>
             }
@@ -446,6 +446,9 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
                 : `event/${details.id.ship}/${details.id.name}`
             }
             details={details}
+            className={cn([
+              { "bg-stone-800 text-white": hostOrGuest === "host" }
+            ])}
           />
         )}
       </ul>

@@ -57,11 +57,11 @@ const ProfileDialog: React.FC<Props> = ({
       >
         <DialogHeader>
           <DialogTitle>Your Profile</DialogTitle>
-          <ProfileForm
-            profileFields={profile}
-            editProfile={editProfile}
-          />
         </DialogHeader>
+        <ProfileForm
+          profileFields={profile}
+          editProfile={editProfile}
+        />
       </DialogContent>
     </Dialog>
   )

@@ -8,6 +8,7 @@ import { TZDate } from "@date-fns/tz"
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -107,6 +108,19 @@ function buildDefaultValues(min: Date, max: Date, session?: z.infer<typeof sessi
   return defaultValues
 }
 
+const newDateWithTimeAtStart = (d: Date) => {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
+}
+const newDateWithTimeAtEnd = (d: Date) => {
+  return new Date(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate(),
+    23,
+    55,
+  )
+}
+
 // cool feature:
 // https://stackoverflow.com/questions/70939652/focus-on-next-input-with-react-form-hook
 const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
@@ -117,12 +131,16 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
     defaultValues: buildDefaultValues(min, max, session),
   })
 
+  useEffect(() => {
+    form.setValue("timeRange.start", newDateWithTimeAtStart(min))
+    form.setValue("timeRange.end", newDateWithTimeAtEnd(min))
+  }, [])
+
   const formRef = useRef<HTMLFormElement>(null);
 
   function onSubmit(values: z.infer<typeof sessionSchema>) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
-
     props.onSubmit(values)
   }
 
@@ -240,8 +258,8 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
               () => {
                 const eventDays = makeArrayOfEventDays(new TZDate(min), new TZDate(max))
                 setEventDays(eventDays)
-                form.setValue("timeRange.start", eventDays[0])
-                form.setValue("timeRange.end", eventDays[0])
+                form.setValue("timeRange.start", newDateWithTimeAtStart(eventDays[0]))
+                form.setValue("timeRange.end", newDateWithTimeAtEnd(eventDays[0]))
               },
               [])
 
@@ -253,8 +271,8 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
                       <SessionDateSelect
                         sessionDates={eventDays}
                         onDateChange={(newDay: TZDate) => {
-                          form.setValue("timeRange.start", newDay)
-                          form.setValue("timeRange.end", newDay)
+                          form.setValue("timeRange.start", newDateWithTimeAtStart(newDay))
+                          form.setValue("timeRange.end", newDateWithTimeAtEnd(newDay))
                         }}
                         currentDate={convertDateToTZDate(form.watch("timeRange.start"), "+00:00")}
                       />
@@ -274,7 +292,6 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
                           onChange={(newTime) => {
                             form.setValue("timeRange.start", newTime)
                           }}
-                          use12HourFormat
                           min={min}
                           max={form.watch("timeRange.end") || max}
                         />
@@ -293,7 +310,6 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
                           onChange={(newTime) => {
                             form.setValue("timeRange.end", newTime)
                           }}
-                          use12HourFormat
                           min={form.watch("timeRange.start") || min}
                           max={max}
                         />
@@ -301,6 +317,9 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
                     </div>
                   </div>
                 </FormControl>
+                <FormDescription className="text-balance text-center">
+                greyed out times signify that you can't make the end time be before the start time, or vice-versa
+                </FormDescription>
               </FormItem>
             )
           }}
