@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Control, FieldValues, useController, useForm } from "react-hook-form"
+import { Control, FieldValues, useForm } from "react-hook-form"
 import { z } from "zod"
 import { useEffect, useState } from "react"
 import { TZDate, } from "@date-fns/tz"
@@ -24,7 +24,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
-import { cn, convertTZDateToDate, flipBoolean } from "@/lib/utils"
+import { cn, convertTZDateToDate, flipBoolean, formatSessionTime } from "@/lib/utils"
 import { EventAsHost, validUTCOffsets } from "@/backend"
 import { SpinningButton } from "@/components/spinning-button"
 import { CreateSessionForm } from "@/components/forms/create-session"
@@ -39,9 +39,6 @@ import { EditSessionForm } from "./edit-session"
  * offset
  */
 
-// TODO: when latch is over disable all fields except for latch
-
-
 // need this otherwise the <Input> in there is not happy
 type adjustedFormType = Omit<z.infer<typeof schemas>, "dateRange" | "sessions" | "eventGroup">
 
@@ -51,16 +48,17 @@ type TextFormFieldProps = {
   placeholder?: string,
   control: Control<z.infer<typeof schemas>>,
   textArea?: boolean;
+  disabled?: boolean;
 };
 
 const BoldText: React.FC<{ text: string }> = ({ text }) => {
   return (
-    <span className="font-bold">{text}</span>
+    <span className="font-bold text-wrap">{text}</span>
   )
 }
 
 const TextFormField: React.FC<TextFormFieldProps> =
-  ({ formField, label, placeholder, control, textArea }) => {
+  ({ formField, label, placeholder, control, textArea, disabled }) => {
     return (
       <FormField
         key={formField}
@@ -71,8 +69,16 @@ const TextFormField: React.FC<TextFormFieldProps> =
             <FormLabel>{label}</FormLabel>
             <FormControl>
               {textArea
-                ? <Textarea placeholder={placeholder} {...field} />
-                : <Input placeholder={placeholder} {...field} />
+                ? <Textarea
+                  disabled={disabled}
+                  placeholder={placeholder}
+                  {...field}
+                />
+                : <Input
+                  disabled={disabled}
+                  placeholder={placeholder}
+                  {...field}
+                />
               }
             </FormControl>
             <FormMessage />
@@ -100,22 +106,13 @@ const sessionSchema = z.object({
 const schemas = z.object({
   title: z.string().min(1, { message: "title can't be empty!" }),
   location: z.string().min(1, { message: "location can't be empty!" }),
-  // todo: add date or maybe date picker
-  // use this but replace date picker with daterange picker:
-  // https://time.openstatus.dev/
-  // https://ui.shadcn.com/docs/components/date-picker#form
   dateRange: z.object({
     from: dateTimeSchema,
     to: dateTimeSchema,
   }),
-  // use combobox for this
-  // https://ui.shadcn.com/docs/components/combobox#form
   utcOffset: utcOffsetSchema,
   limit: emptyStringSchema.or(z.number()
     .gt(1, { message: "can't have an event with 0 or 1 attendees" })),
-  // select for these two
-  // https://ui.shadcn.com/docs/components/select#form
-  // add FormDescription for these and possibly others as well
   eventKind: z.enum(["public", "private", "secret"]),
   eventLatch: z.enum(["open", "closed", "over"]),
   eventDescription: emptyStringSchema.or(z.string()),
@@ -139,21 +136,11 @@ const makeDefaultValues = (event?: EventAsHost) => {
     title: "",
     location: "",
     limit: "",
-    // todo : , 
-    // use this but replace date picker with daterange picker:
-    // https://time.openstatus.dev/
-    // https://ui.shadcn.com/docs/components/date-picker#form
     dateRange: {
       from: undefined,
       to: undefined,
     },
-    // use combobox for this
-    // https://ui.shadcn.com/docs/components/combobox#form
     utcOffset: undefined,
-    // limit: undefined,
-    // select for these two
-    // https://ui.shadcn.com/docs/components/select#form
-    // add FormDescription for these and possibly others as well
     eventKind: undefined,
     eventLatch: undefined,
     eventGroup: {
@@ -205,6 +192,45 @@ const makeDefaultValues = (event?: EventAsHost) => {
   return defaultValues
 }
 
+const makeValues = (event: EventAsHost): z.infer<typeof schemas> => {
+  return {
+    title: event.details.title,
+    location: event.details.location,
+    limit: event.limit ?? "",
+    dateRange: {
+      from: event.details.startDate
+        ? convertTZDateToDate(event.details.startDate, event.details.timezone)
+        : new Date(),
+      to: event.details.endDate
+        ? convertTZDateToDate(event.details.endDate, event.details.timezone)
+        : new Date()
+    },
+    utcOffset: event.details.timezone,
+    eventKind: event.details.kind,
+    eventLatch: event.details.latch,
+    eventGroup: event.details.group
+      ? { host: event.details.group.ship, name: event.details.group.name }
+      : undefined,
+    venueMap: event.details.venueMap,
+    eventDescription: event.details.description,
+    // TODO fix this
+    eventSecret: event.secret ? event.secret : "",
+    sessions: Object.fromEntries(
+      Object.entries(event.details.sessions)
+        .map(([id, { startTime, endTime, mainSpeaker: _, ...rest }]) => {
+          return [
+            [id],
+            {
+              start: startTime ? convertTZDateToDate(startTime, event.details.timezone) : new Date(),
+              end: endTime ? convertTZDateToDate(endTime, event.details.timezone) : new Date(),
+              ...rest
+            }
+          ]
+        })
+    ),
+  }
+}
+
 const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
   const [spin, setSpin] = useState(false)
 
@@ -213,12 +239,20 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
   const form = useForm<z.infer<typeof schemas>>({
     resolver: zodResolver(schemas),
     mode: "onChange",
+    // values: event ? makeValues(event) : undefined,
     // this is needed to avoid the error about uncontrolled input
     defaultValues: defaultValues,
-    disabled: event?.details.latch === "over",
+    // WARN: there is a bug where if we set form-wide disabled it will return a
+    // super ugly error in-console, so we're setting it individually per-field
+    // see:
+    // - https://github.com/shadcn-ui/ui/discussions/3770#discussioncomment-11050352
+    // - https://github.com/react-hook-form/react-hook-form/issues/10908#issuecomment-1714686452
+    // disabled: event?.details.latch === "over",
   })
 
   useEffect(() => {
+    if (spin) { setSpin(false) }
+
     if (event) {
       form.reset(defaultValues)
     }
@@ -233,9 +267,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
         aria-description="A form containing updatable profile entries"
         onSubmit={form.handleSubmit((values) => {
           setSpin(true)
-          onSubmit(values).then(() => {
-            setSpin(false)
-          })
+          onSubmit(values).then(() => { })
         })}
         className="space-y-6"
       >
@@ -244,6 +276,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
           label="event title"
           placeholder="the title of your event"
           control={form.control}
+          disabled={event?.details.latch === "over"}
         />
 
         <TextFormField
@@ -251,6 +284,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
           label="event location"
           placeholder="where the event is going to take place"
           control={form.control}
+          disabled={event?.details.latch === "over"}
         />
 
         <FormField
@@ -262,6 +296,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
               <FormControl>
                 <Input
                   {...field}
+                  disabled={event?.details.latch === "over"}
                   type="number"
                   placeholder="limit of attendees for this event (leave empty for no limit)"
                   onChange={(e) =>
@@ -283,14 +318,13 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
               <FormLabel className="text-left">event dates</FormLabel>
               <FormControl>
                 <DateTimePicker
-                  {...field}
+                  disabled={event?.details.latch === "over"}
                   timePicker={{
                     hour: true,
                     minute: true,
                     fiveMinuteBlocks: true,
                     second: false,
                   }}
-                  use12HourFormat
                   dateRangeValue={field.value}
                   onRangeChange={(newRange) => {
                     newRange
@@ -306,7 +340,6 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
         >
         </FormField>
 
-
         <FormField
           control={form.control}
           name={"utcOffset"}
@@ -316,7 +349,8 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
               <FormControl>
                 {/* is this magic? */}
                 <GenericComboBox<z.infer<typeof utcOffsetSchema>>
-                  {...field}
+                  value={field.value}
+                  disabled={event?.details.latch === "over"}
                   items={validUTCOffsets.map((offset) => {
                     return { label: `GMT${offset}`, value: offset }
                   })}
@@ -337,7 +371,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
               <FormControl>
                 {/* could turn this into generic also */}
                 <Select
-                  {...field}
+                  disabled={event?.details.latch === "over"}
                   value={field.value}
                   onValueChange={(newVal) => {
                     switch (newVal) {
@@ -365,10 +399,10 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                 </Select>
               </FormControl>
               <FormDescription>
-                this affects the way guests can register <br />
-                a <BoldText text="public" /> event will be discoverable and allow guests to regiser by themselves <br />
-                a <BoldText text="private" /> event will be discoverable but guests can only request to be registered and the host needs to approve them manually <br />
-                a <BoldText text="secret" /> event will be discoverable only when the host invites us (and users register immediately??)
+                the privacy level, which affects the way guests can register: <br />
+                <BoldText text="public" />: discoverable and allow guests to register on their own. <br />
+                <BoldText text="private" />: discoverable, but guests must request to be registered and you'll need to approve them manually. <br />
+                <BoldText text="secret" />: not discoverable and invite-only. once guests receive your invite they can register. <br />
               </FormDescription>
             </FormItem>
           )}
@@ -383,11 +417,6 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
               <FormControl>
                 {/* could turn this into generic also */}
                 <Select
-                  {...field}
-                  // we want latch to never be disabled since all the other
-                  // fields will be disabled when the latch === "over"
-                  // so we want to be able to  get out of that state
-                  // by chaning the latch
                   disabled={false}
                   value={field.value}
                   onValueChange={(newVal) => {
@@ -417,9 +446,9 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
               </FormControl>
               <FormDescription>
                 the 'state' of the event: <br />
-                an <BoldText text="open" /> event accepts registrations <br />
-                a <BoldText text="closed" /> event does not accept registrations anymore; this gets triggered automatically when the event participant number gets over the limit <br />
-                <BoldText text="over" />: this event state is for events that already took place
+                <BoldText text="open" />: actively accepting registrants.<br />
+                <BoldText text="closed" />: not accepting registrants; this gets triggered automatically when the event participant limit is met.<br />
+                <BoldText text="over" />: already took place; archived; in this state event details can't be mofified anymore unless the latch is modified first to 'open' or 'closed'
               </FormDescription>
             </FormItem>
           )}
@@ -430,15 +459,16 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
           label="description"
           placeholder="some text to describe your event"
           control={form.control}
+          disabled={event?.details.latch === "over"}
           textArea
         />
-
 
         <TextFormField
           formField="venueMap"
           label="venue map image"
           placeholder="url to a .jpg or .png of the venue map"
           control={form.control}
+          disabled={event?.details.latch === "over"}
         />
 
         <TextFormField
@@ -446,6 +476,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
           label="secret"
           placeholder="a secret message to send guests once they register (optional)"
           control={form.control}
+          disabled={event?.details.latch === "over"}
         />
 
         <FormField
@@ -459,12 +490,14 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                 <div className="flex space-x-12">
                   <Input
                     {...field}
+                    disabled={event?.details.latch === "over"}
                     placeholder="group host"
                     value={field.value?.host}
                     onChange={(e) => { form.setValue("eventGroup.host", e.target.value) }}
                   />
                   <Input
                     {...field}
+                    disabled={event?.details.latch === "over"}
                     placeholder="group name"
                     value={field.value?.name}
                     onChange={(e) => { form.setValue("eventGroup.name", e.target.value) }}
@@ -476,7 +509,6 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
           }
         />
 
-
         <FormField
           control={form.control}
           name={"sessions"}
@@ -486,6 +518,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
             const [openEditSessionDialog, setOpenEditSessionDialog] = useState(false)
             const shouldDisplayCreateSessionDialog = form.watch("dateRange") === undefined
             const [idOfSessionToEdit, setIdOfSessionToEdit] = useState<string>("")
+
             useEffect(
               () => {
                 setOpenSessions((oldSessions: Map<string, boolean>) => {
@@ -525,81 +558,87 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                   <Card>
                     <CardContent className="p-1">
                       <ul>
-                        {/* TODO: add time to session title and order by time*/}
-                        {Object.entries(field.value).map(([id, session]) => {
-                          return (<li
-                            className="m-1"
-                            key={session.title}>
-                            <div className="flex justify-between items-center w-full m-1">
-                              <p className="justify-self-start"> {session.title} </p>
-                              <div className="flex">
-                                <Button
-                                  type="button"
-                                  disabled={field.disabled}
-                                  className="p-0 w-7 h-7 rounded-full hover:bg-red-200"
-                                  variant="ghost"
-                                  onClick={() => {
-                                    form.setValue("sessions", Object.fromEntries(
-                                      Object.entries(form.getValues("sessions"))
-                                        .filter(([_id, _session]) => _session.title !== session.title))
-                                    )
-                                  }}
-                                >
-                                  <X className="w-4 h-4 text-red-400" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  disabled={field.disabled}
-                                  className="p-0 w-7 h-7 rounded-full hover:bg-amber-100"
-                                  variant="ghost"
-                                  onClick={() => {
-                                    setIdOfSessionToEdit(id)
-                                    setOpenEditSessionDialog(flipBoolean)
-                                  }}
-                                >
-                                  <Pencil className="w-4 h-4 text-amber-400" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  className="p-0 w-7 h-7 rounded-full"
-                                  variant="ghost"
-                                  onClick={() => {
-                                    setOpenSessions((oldSessions) => {
-                                      const oldVal = oldSessions.get(id)
-                                      const newSessions = new Map(oldSessions.entries())
-                                      if (oldVal !== undefined) {
-                                        newSessions.set(id, !oldVal)
-                                      }
-                                      return newSessions
-                                    })
-                                  }}
-                                >
-                                  <ChevronUp className={cn([
-                                    "w-4 h-4 font-black transition",
-                                    { "rotate-180": openSessions.get(id) === true }
-                                  ])} />
-                                </Button>
+                        {Object.entries(field.value)
+                          .sort(([, s1], [, s2]) => { return s1.start.valueOf() - s2.start.valueOf() })
+                          .map(([id, session]) => {
+                            return (<li
+                              className="m-1"
+                              key={session.title}>
+                              <div className="flex justify-between items-center w-full m-1">
+                                <p className="justify-self-start">
+                                  {session.title}
+                                  <span className="inline-block text-primary/50 text-xs pl-2">
+                                    - from {formatSessionTime(session.start)} {formatSessionTime(session.end)}
+                                  </span>
+                                </p>
+                                <div className="flex">
+                                  <Button
+                                    type="button"
+                                    disabled={event?.details.latch === "over"}
+                                    className="p-0 w-7 h-7 rounded-full hover:bg-red-200"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      form.setValue("sessions", Object.fromEntries(
+                                        Object.entries(form.getValues("sessions"))
+                                          .filter(([_id, _session]) => _session.title !== session.title))
+                                      )
+                                    }}
+                                  >
+                                    <X className="w-4 h-4 text-red-400" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    disabled={event?.details.latch === "over"}
+                                    className="p-0 w-7 h-7 rounded-full hover:bg-amber-100"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setIdOfSessionToEdit(id)
+                                      setOpenEditSessionDialog(flipBoolean)
+                                    }}
+                                  >
+                                    <Pencil className="w-4 h-4 text-amber-400" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    className="p-0 w-7 h-7 rounded-full"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setOpenSessions((oldSessions) => {
+                                        const oldVal = oldSessions.get(id)
+                                        const newSessions = new Map(oldSessions.entries())
+                                        if (oldVal !== undefined) {
+                                          newSessions.set(id, !oldVal)
+                                        }
+                                        return newSessions
+                                      })
+                                    }}
+                                  >
+                                    <ChevronUp className={cn([
+                                      "w-4 h-4 font-black transition",
+                                      { "rotate-180": openSessions.get(id) === true }
+                                    ])} />
+                                  </Button>
+                                </div>
                               </div>
-                            </div>
-                            <SlideDownAndReveal
-                              maxHeight="max-h-[1000px]"
-                              show={openSessions?.get(id) || false}
-                            >
-                              <SessionCard session={{
-                                startTime: new TZDate(session.start),
-                                endTime: new TZDate(session.end),
-                                ...session
-                              }} />
-                            </SlideDownAndReveal>
-                          </li>)
-                        })}
+                              <SlideDownAndReveal
+                                maxHeight="max-h-[1000px]"
+                                show={openSessions?.get(id) || false}
+                              >
+                                <SessionCard session={{
+                                  startTime: new TZDate(session.start),
+                                  endTime: new TZDate(session.end),
+                                  ...session
+                                }} />
+                              </SlideDownAndReveal>
+                            </li>)
+                          })}
                       </ul>
 
                       {
                         shouldDisplayCreateSessionDialog
                           ? <Button
                             type="button"
-                            className="w-full mt-1 bg-stone-100 hover:bg-stone-100 text-primary/50"
+                            className="w-full mt-1 bg-stone-100 hover:bg-stone-100 text-primary/50 text-wrap"
                           >
                             define start and end date to add sessions
                           </Button>
@@ -646,10 +685,8 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                               setOpenCreateSessionDialog(flipBoolean)
                             }
                             }
-
                             min={form.watch("dateRange.from")}
                             max={form.watch("dateRange.to")}
-
                           />
                         </DialogContent>
                       </Dialog>
@@ -709,7 +746,6 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                                     setOpenEditSessionDialog(flipBoolean)
                                   }
                                   }
-
                                   min={form.watch("dateRange.from")}
                                   max={form.watch("dateRange.to")}
                                 />
@@ -725,6 +761,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
             )
           }}
         />
+
 
         {/* TODO: add spin to this button */}
         <div className="pt-4 md:pt-8 w-full flex justify-center">

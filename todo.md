@@ -26,11 +26,11 @@ key:
   + @p's show up without the ~ prepended.
 
 ## Refinements/bugs
-- profile page
-    - the profile form is cut off at the top/bottom of the screen, for
+- profile pagel
+    ? the profile form is cut off at the top/bottom of the screen, for
       instance on a 13" macbook. seems like it just needs some padding
       on the top and bottom?
-+ *~widmes-hassen* timeline page
++ [~widmes-hassen] timeline page
     + while i like the tab distinction between host and guests, i don't
       think there's a clear way we can describe the guest portion, as
       they can techincally be invited, request entry, or already be
@@ -58,21 +58,21 @@ key:
     + If there are no events, should see a message with a link out to the urbit events page: "Need event ideas? Check out events happening around the ecosystem at [urbit.org↗](http://urbit.org/events)"
     - timeline should be in ascending order by date (i.e. event closest
       to today should be at the top)
-- host management page
+- [~widmes-hassen] host management page
     + remove the AM/PM distinction since it displays a 24 hour clock.
-    - we should see `latch` and `kind` status somewhere on the event
+    + we should see `latch` and `kind` status somewhere on the event
       card.
     - need a delete button - with a "are you sure?" pop-up. the poke to send is: `live-operation [[~sampel-palnet %some-event-id] [%delete ~]]` which is just `null`
     - edit event
-        - when clicking the event, the update comes through at the top,
+        + when clicking the event, the update comes through at the top,
           but not in the form itself. i also think it should give a bit
           more user feedback; e.g. closing the edit dropdown or changing
           the edit button when it completes the change.
-        - similarly to the profile form, the session form is cut off on
+        ? similarly to the profile form, the session form is cut off on
           the top and bottom of the page on certain screens. may need
           some padding.
-        - it doesn't allow the user to edit the group host ship or name.
-        - in the session edit form, all times in the start time
+        + it doesn't allow the user to edit the group host ship or name.
+        + in the session edit form, all times in the start time
           selection are greyed out. when i select the end time, i can go
           back and select a start time. occasionally, some times are
           greyed out but not others.
@@ -83,11 +83,11 @@ key:
           time wrong. the times that are selected should be sent
           directly to the backend without the conversion. this is
           happening in both the event and session time pickers.
-        - occasionally, when I tried to submit a new edit - for instance
+        + occasionally, when I tried to submit a new edit - for instance
           after submitting a previous edit - the session section would
           highlight red. i couldn't figure out why, but it seemed to be
           blocking the next update from going through.
-        - a few slight changes to the latch and kind descriptions
+        + a few slight changes to the latch and kind descriptions
           (should also be shown on the create page):
               kind:
               the privacy level, which affects the way guests can register.
@@ -100,14 +100,14 @@ key:
               open: actively accepting registrants.
               closed: not accepting registrants; this gets triggered automatically when the event participant limit is met.
               over: already took place; archived.
-    - guest status
-        - this section should read: 'guest statuses'
-        - i think 'timestamp' is a bit clearer than 'changed' for the
+    +  guest status
+        + this section should read: 'guest statuses'
+        + i think 'timestamp' is a bit clearer than 'changed' for the
           green buttons that reveal the time of the status change.
-        - guest tiles don't expand to the full width of the container on
+        ? guest tiles don't expand to the full width of the container on
           non-mobile screens: https://bowl.polrel-witter.xyz/bucket/random/2024.11.22..17.24.46-Screenshot%20from%202024-11-22%2012-24-32.png
-      	- not handling %record updates. updates to records should arrive automatically in this area. e.g. when the host invites someone or an existing guest's status changes.
-        - in general, really like how this looks/feels. great work.
+      	+ not handling %record updates. updates to records should arrive automatically in this area. e.g. when the host invites someone or an existing guest's status changes.
+        + in general, really like how this looks/feels. great work.
 - guest page
     + remove the AM/PM distinction since it displays a 24 hour clock.
     - the description sometimes renders across the screen, i.e. no

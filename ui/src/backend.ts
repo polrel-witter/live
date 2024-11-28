@@ -1304,7 +1304,6 @@ function subscribeToLiveEvents(api: Urbit): (handlers: {
       app: "live",
       path: "/updates",
       event: (evt) => {
-        console.log(evt)
         try {
           const updateEvent = liveRecordUpdateEventSchema.parse(evt)
           onRecordUpdate({
@@ -1702,7 +1701,7 @@ export type { Patp, PatpWithoutSig }
 
 export type { Session, Sessions }
 
-export type { EventAsAllGuests }
+export type { EventAsAllGuests, RecordInfo }
 export { emptyEventAsAllGuests }
 
 export type { LiveRecordUpdateEvent, LiveEventUpdateEvent, LiveFindEvent }
