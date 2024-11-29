@@ -56,13 +56,13 @@ key:
         + there should also be a spinner on the button that changes when
           the result state updates.
     + If there are no events, should see a message with a link out to the urbit events page: "Need event ideas? Check out events happening around the ecosystem at [urbit.org↗](http://urbit.org/events)"
-    - timeline should be in ascending order by date (i.e. event closest
+    + timeline should be in ascending order by date (i.e. event closest
       to today should be at the top)
 - [~widmes-hassen] host management page
     + remove the AM/PM distinction since it displays a 24 hour clock.
     + we should see `latch` and `kind` status somewhere on the event
       card.
-    - need a delete button - with a "are you sure?" pop-up. the poke to send is: `live-operation [[~sampel-palnet %some-event-id] [%delete ~]]` which is just `null`
+    + need a delete button - with a "are you sure?" pop-up. the poke to send is: `live-operation [[~sampel-palnet %some-event-id] [%delete ~]]` which is just `null`
     - edit event
         + when clicking the event, the update comes through at the top,
           but not in the form itself. i also think it should give a bit
@@ -123,7 +123,7 @@ key:
     - on the schedule page, if no session exists for an event date a message should be printed: 'no schedule is set for this date'
     + [~polrel-witter] panel strings aren't parsed correctly on sessions guest view.
 - create page
-    - clicking 'add session' before filling in any details causes a
+    + clicking 'add session' before filling in any details causes a
       crash: `Cannot read properties of undefined (reading 'valueOf')`
     - if i click the create button without filling in any fields, the
       group section and sessions are also highlighted red. those aren't
