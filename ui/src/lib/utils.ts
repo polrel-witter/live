@@ -36,6 +36,14 @@ export function formatSessionTime(d: Date): string {
 // when console log'd they will display in local time and be wrong;
 // when formaed with the helpers above they'll be right
 // todo: add helper to convert date back to a pair [utcDate, offset]
+//
+
+// new interface
+// fn: newTzDateFromDateInUTC(Date)
+// fn: shiftToTimezone(tzDate, utcOffset)
+//     - shiftToUTC(tzDate)
+// fn: newDateFromTzDateInUTC(TzDate)
+// TODO: remove that extra field from GlobalCtx
 
 // assuming date is in UTC, subtracts the timezoneString offset from it
 function _newTZDateInTimeZone(date: TZDate, timezoneString: string): TZDate {
