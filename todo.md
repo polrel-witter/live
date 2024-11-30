@@ -118,9 +118,8 @@ key:
       the user. although if the host changes it to a new url, the new one
       displays.
     - can get rid of the profile button on the event page; people won't be changing it often.
-    - [~polrel-witter] when clicking the dm button on a guest, it redirects us to link
+    + [~polrel-witter] when clicking the dm button on a guest, it redirects us to link
       that has an additional '~' prepended to the ship, e.g. `http://localhost:8081/apps/groups/dm/~~bus', need to remove the second one.
-    - [~polrel-witter] on the schedule page, if no session exists for an event date a message should be printed: 'no schedule is set for this date'
     + [~polrel-witter] panel strings aren't parsed correctly on sessions guest view.
 - create page
     - clicking 'add session' before filling in any details causes a
@@ -135,7 +134,7 @@ key:
     - if the creation was successful it should redirect them to the
       management page.
     - there's a message that says the location field can't be empty, but it can
-    - [~polrel-witter] some field titles have 'event' in front. can get rid of this; e.g.
+    + [~polrel-witter] some field titles have 'event' in front. can get rid of this; e.g.
       'event title' > 'title'
     - in the event date picker, if we select a date range and click out without clicking 'done' the dates appear to set, but then clicking the 'add session' button leads to a crash.
     - i think there should be some intuitive examples in the group fields to coax correct syntax. for host: ~hoster-palnet; for group name: the-group-name

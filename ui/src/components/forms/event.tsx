@@ -273,7 +273,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
       >
         <TextFormField
           formField="title"
-          label="event title"
+          label="title"
           placeholder="the title of your event"
           control={form.control}
           disabled={event?.details.latch === "over"}
@@ -281,7 +281,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
 
         <TextFormField
           formField="location"
-          label="event location"
+          label="location"
           placeholder="where the event is going to take place"
           control={form.control}
           disabled={event?.details.latch === "over"}
@@ -298,7 +298,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                   {...field}
                   disabled={event?.details.latch === "over"}
                   type="number"
-                  placeholder="limit of attendees for this event (leave empty for no limit)"
+                  placeholder="max number of guests (leave empty for no limit)"
                   onChange={(e) =>
                     isNaN(e.target.valueAsNumber)
                       ? field.onChange("")
@@ -315,7 +315,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
           name={"dateRange"}
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel className="text-left">event dates</FormLabel>
+              <FormLabel className="text-left">dates</FormLabel>
               <FormControl>
                 <DateTimePicker
                   disabled={event?.details.latch === "over"}
@@ -367,7 +367,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
           name={"eventKind"}
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel className="text-left">event kind</FormLabel>
+              <FormLabel className="text-left">kind</FormLabel>
               <FormControl>
                 {/* could turn this into generic also */}
                 <Select
@@ -413,7 +413,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
           name={"eventLatch"}
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel className="text-left">event latch</FormLabel>
+              <FormLabel className="text-left">latch</FormLabel>
               <FormControl>
                 {/* could turn this into generic also */}
                 <Select
