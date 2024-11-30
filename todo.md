@@ -117,10 +117,8 @@ key:
     - if a map url is set and then removed, the map still displays for
       the user. although if the host changes it to a new url, the new one
       displays.
-    - can get rid of the profile button on the event page; people won't be changing it often.
-    - [~polrel-witter] when clicking the dm button on a guest, it redirects us to link
+    + [~polrel-witter] when clicking the dm button on a guest, it redirects us to link
       that has an additional '~' prepended to the ship, e.g. `http://localhost:8081/apps/groups/dm/~~bus', need to remove the second one.
-    - [~polrel-witter] on the schedule page, if no session exists for an event date a message should be printed: 'no schedule is set for this date'
     + [~polrel-witter] panel strings aren't parsed correctly on sessions guest view.
 - create page
     - clicking 'add session' before filling in any details causes a
@@ -129,19 +127,19 @@ key:
       group section and sessions are also highlighted red. those aren't
       required so no need to highlight. it also then won't let me create
       the event if i then fill in the required fields.
-    - the profile button on this page should be a back button. no need
+    - [~polrel-witter] the profile button on this page should be a back button. no need
       to have profile editing on here.
-    - on the event creation page, if about, location, venue map, or secret are empty they should be `null`. for both event and sessions. right now they're defaulting to empty strings.
+    - [~polrel-witter] on the event creation page, if about, location, venue map, or secret are empty they should be `null`. for both event and sessions. right now they're defaulting to empty strings.
     - if the creation was successful it should redirect them to the
       management page.
     - there's a message that says the location field can't be empty, but it can
-    - [~polrel-witter] some field titles have 'event' in front. can get rid of this; e.g.
+    + [~polrel-witter] some field titles have 'event' in front. can get rid of this; e.g.
       'event title' > 'title'
     - in the event date picker, if we select a date range and click out without clicking 'done' the dates appear to set, but then clicking the 'add session' button leads to a crash.
-    - i think there should be some intuitive examples in the group fields to coax correct syntax. for host: ~hoster-palnet; for group name: the-group-name
+    - [~polrel-witter] i think there should be some intuitive examples in the group fields to coax correct syntax. for host: ~hoster-palnet; for group name: the-group-name
         - also including the error messages if they're not properly
           formatted, like in the invite field would be great.
-    - next to the secret header, include in parenthesis: (only guests marked "registered" or "attended" receive this message)
+    - [~polrel-witter] next to the secret header, include in parenthesis: (only guests marked "registered" or "attended" receive this message)
 - lastly, the connection status at the bottom right should be more prominant on desktop. when the app first opens it can take a few seconds before anything renders and without noticing the connection status it feels like nothing's happening. it's obvious on mobile, but on desktop it's hard to see. i think either making it bigger or adding a spinner in the middle of the page should fix.
 - color scheme
 
