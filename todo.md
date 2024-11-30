@@ -141,7 +141,12 @@ key:
           formatted, like in the invite field would be great.
     - [~polrel-witter] next to the secret header, include in parenthesis: (only guests marked "registered" or "attended" receive this message)
 - lastly, the connection status at the bottom right should be more prominant on desktop. when the app first opens it can take a few seconds before anything renders and without noticing the connection status it feels like nothing's happening. it's obvious on mobile, but on desktop it's hard to see. i think either making it bigger or adding a spinner in the middle of the page should fix.
-- color scheme
+- figure out color scheme
+- the register button isn't working right. it seems to send a register poke, but quickly follows with an unregister poke. sometimes the registration appears to go through, but the success pop-up says "you've successfully unregistered to this event".
+- when someone has a requested status, the 'status change button' shouldn't be clickable.
+- the status, latch and kind buttons on the guest and management event page should show cursor on hover
+- there should be a 'guest list' and 'schedule' button on the host management page. they should be able to interface with these two pages like guests.
+- the event address is currently hard to find. i think it should go below the end date, above the group link.
 
 
 # Backend
