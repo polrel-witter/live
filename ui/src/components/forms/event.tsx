@@ -491,14 +491,14 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                   <Input
                     {...field}
                     disabled={event?.details.latch === "over"}
-                    placeholder="group host"
+                    placeholder="~hoster-palnet"
                     value={field.value?.host}
                     onChange={(e) => { form.setValue("eventGroup.host", e.target.value) }}
                   />
                   <Input
                     {...field}
                     disabled={event?.details.latch === "over"}
-                    placeholder="group name"
+                    placeholder="group-name"
                     value={field.value?.name}
                     onChange={(e) => { form.setValue("eventGroup.name", e.target.value) }}
                   />
