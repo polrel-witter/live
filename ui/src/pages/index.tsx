@@ -1,11 +1,11 @@
 import { Backend } from "@/backend";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Plus, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileDialog } from "@/components/profile-dialog";
 import { flipBoolean } from "@/lib/utils";
 import { GlobalContext } from "@/globalContext";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useNavigate, useSearchParams } from "react-router-dom";
 import { AppFrame } from "@/components/frame";
 import { NavbarWithSlots } from "@/components/frame/navbar";
 import { FooterWithSlots } from "@/components/frame/footer";
@@ -19,9 +19,22 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
     console.error("globalContext is not set")
     return
   }
+  const basePath = import.meta.env.BASE_URL
 
   const [openProfile, setOpenProfile] = useState(false)
+
   const onMobile = useOnMobile()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
+  useEffect(() => {
+    if (!globalContext.fetched) { return }
+
+    if (searchParams.has("reloadEvents")) {
+      globalContext.refreshEventsAsHost()
+      navigate(basePath)
+    }
+  }, [searchParams])
 
   const navBar =
     <NavbarWithSlots

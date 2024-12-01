@@ -1,5 +1,5 @@
 import { PropsWithChildren, useEffect, useState } from "react"
-import { addSig, Backend, EventAsAllGuests, eventIdsEqual, LiveEventUpdateEvent, LiveFindEvent, LiveRecordUpdateEvent } from "@/backend";
+import { addSig, Backend, EventAsAllGuests, EventAsHost, eventIdsEqual, LiveEventUpdateEvent, LiveFindEvent, LiveRecordUpdateEvent } from "@/backend";
 import { Toaster } from "./components/ui/toaster";
 import { buildIndexCtx, ConnectionStatus, GlobalContext, newEmptyIndexCtx } from "./globalContext";
 import { record } from "zod";
@@ -66,6 +66,14 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
   }
 
 
+  const refreshEventsAsHost = () => {
+    backend.getEvents().then((eventsAsHost) => {
+      setCtx(({ eventsAsHost: oldEventsAsHost, ...rest }) => {
+        return { eventsAsHost, ...rest }
+      })
+    })
+  }
+
   useEffect(() => {
     const connectionStatusHandler = handleConnection(setConnectionStatusInCtx)
 
@@ -76,7 +84,25 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
     let liveSubId: number;
     let matcherSubId: number;
 
-    buildIndexCtx(backend, addSig(window.ship)).then(setCtx)
+    buildIndexCtx(backend, addSig(window.ship)).then(({
+      fetched,
+      connectionStatus,
+      profile,
+      eventsAsHost,
+      eventsAsGuest,
+      // TODO: remove
+      searchedEvents,
+    }) => {
+      setCtx({
+        fetched,
+        connectionStatus,
+        profile,
+        eventsAsHost,
+        eventsAsGuest,
+        searchedEvents,
+        refreshEventsAsHost
+      })
+    })
 
 
     // subscribe to event to update state dynamically
@@ -117,6 +143,21 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
         })
       },
       onEventUpdate: (updateEvent: LiveEventUpdateEvent) => {
+        // setEventsAsHost((oldEventsAsHost) => {
+        //   const maybeIdx = oldEventsAsHost
+        //     .findIndex(({ details }) => eventIdsEqual(
+        //       details.id,
+        //       updateEvent.event.details.id
+        //     ))
+        //     //
+        //   // idk about this
+        //   if (maybeIdx === -1) {
+        //     console.error("couldn't find event in context, dropping update")
+        //     return oldEventsAsHost
+        //   }
+
+        //   return 
+        // })
         setCtx(({ eventsAsHost: oldEventsAsHost, ...restCtx }) => {
           const maybeIdx = oldEventsAsHost
             .findIndex(({ details }) => eventIdsEqual(
