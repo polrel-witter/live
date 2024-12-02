@@ -130,9 +130,9 @@ key:
     + [~polrel-witter] the profile button on this page should be a back button. no need
       to have profile editing on here.
     + [~polrel-witter] on the event creation page, if about, location, venue map, or secret are empty they should be `null`. for both event and sessions. right now they're defaulting to empty strings.
-    - if the creation was successful it should redirect them to the
+    - [~polrel-witter] if the creation was successful it should redirect them to the
       management page.
-    - there's a message that says the location field can't be empty, but it can
+    - [~polrel-witter] there's a message that says the location field can't be empty, but it can
     + [~polrel-witter] some field titles have 'event' in front. can get rid of this; e.g.
       'event title' > 'title'
     - in the event date picker, if we select a date range and click out without clicking 'done' the dates appear to set, but then clicking the 'add session' button leads to a crash.
