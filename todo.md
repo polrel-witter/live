@@ -155,7 +155,6 @@ key:
   commas between first and last names.
     + note: backend is parsing the panel properly, the frontend just needs to render the string instead of reparsing.
 + parse group names no matter the input type.
-- merge 'backend-refinements' branch
 
 
 # Archived
