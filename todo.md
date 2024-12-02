@@ -56,13 +56,13 @@ key:
         + there should also be a spinner on the button that changes when
           the result state updates.
     + If there are no events, should see a message with a link out to the urbit events page: "Need event ideas? Check out events happening around the ecosystem at [urbit.org↗](http://urbit.org/events)"
-    - timeline should be in ascending order by date (i.e. event closest
+    + timeline should be in ascending order by date (i.e. event closest
       to today should be at the top)
 - [~widmes-hassen] host management page
     + remove the AM/PM distinction since it displays a 24 hour clock.
     + we should see `latch` and `kind` status somewhere on the event
       card.
-    - need a delete button - with a "are you sure?" pop-up. the poke to send is: `live-operation [[~sampel-palnet %some-event-id] [%delete ~]]` which is just `null`
+    + need a delete button - with a "are you sure?" pop-up. the poke to send is: `live-operation [[~sampel-palnet %some-event-id] [%delete ~]]` which is just `null`
     - edit event
         + when clicking the event, the update comes through at the top,
           but not in the form itself. i also think it should give a bit
@@ -117,32 +117,34 @@ key:
     - if a map url is set and then removed, the map still displays for
       the user. although if the host changes it to a new url, the new one
       displays.
-    - can get rid of the profile button on the event page; people won't be changing it often.
     + [~polrel-witter] when clicking the dm button on a guest, it redirects us to link
       that has an additional '~' prepended to the ship, e.g. `http://localhost:8081/apps/groups/dm/~~bus', need to remove the second one.
     + [~polrel-witter] panel strings aren't parsed correctly on sessions guest view.
 - create page
-    - clicking 'add session' before filling in any details causes a
+    + clicking 'add session' before filling in any details causes a
       crash: `Cannot read properties of undefined (reading 'valueOf')`
     - if i click the create button without filling in any fields, the
       group section and sessions are also highlighted red. those aren't
       required so no need to highlight. it also then won't let me create
       the event if i then fill in the required fields.
-    - the profile button on this page should be a back button. no need
+    + [~polrel-witter] the profile button on this page should be a back button. no need
       to have profile editing on here.
-    - on the event creation page, if about, location, venue map, or secret are empty they should be `null`. for both event and sessions. right now they're defaulting to empty strings.
+    + [~polrel-witter] on the event creation page, if about, location, venue map, or secret are empty they should be `null`. for both event and sessions. right now they're defaulting to empty strings.
     - if the creation was successful it should redirect them to the
       management page.
     - there's a message that says the location field can't be empty, but it can
     + [~polrel-witter] some field titles have 'event' in front. can get rid of this; e.g.
       'event title' > 'title'
     - in the event date picker, if we select a date range and click out without clicking 'done' the dates appear to set, but then clicking the 'add session' button leads to a crash.
-    - i think there should be some intuitive examples in the group fields to coax correct syntax. for host: ~hoster-palnet; for group name: the-group-name
-        - also including the error messages if they're not properly
-          formatted, like in the invite field would be great.
-    - next to the secret header, include in parenthesis: (only guests marked "registered" or "attended" receive this message)
-- lastly, the connection status at the bottom right should be more prominant on desktop. when the app first opens it can take a few seconds before anything renders and without noticing the connection status it feels like nothing's happening. it's obvious on mobile, but on desktop it's hard to see. i think either making it bigger or adding a spinner in the middle of the page should fix.
-- color scheme
+    + [~polrel-witter] i think there should be some intuitive examples in the group fields to coax correct syntax. for host: ~hoster-palnet; for group name: the-group-name
+    - also including the error messages if they're not properly formatted, like in the invite field would be great.
+- the connection status at the bottom right should be more prominant on desktop. when the app first opens it can take a few seconds before anything renders and without noticing the connection status it feels like nothing's happening. it's obvious on mobile, but on desktop it's hard to see. i think either making it bigger or adding a spinner in the middle of the page should fix.
+- figure out color scheme
+- the register button isn't working right. it seems to send a register poke, but quickly follows with an unregister poke. sometimes the registration appears to go through, but the success pop-up says "you've successfully unregistered to this event".
+- when someone has a requested status, the 'status change button' shouldn't be clickable.
+- the status, latch and kind buttons on the guest and management event page should show cursor on hover
+- there should be a 'guest list' and 'schedule' button on the host management page. they should be able to interface with these two pages like guests.
+- the event address is currently hard to find. i think it should go below the end date, above the group link.
 
 
 # Backend

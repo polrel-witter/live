@@ -31,6 +31,7 @@ import { CreateSessionForm } from "@/components/forms/create-session"
 import { SlideDownAndReveal } from "@/components/sliders"
 import { SessionCard } from "@/components/cards/session"
 import { EditSessionForm } from "./edit-session"
+import { useNavigate } from "react-router-dom"
 
 /* ON TIME
  * throughout this page we're storing time in ordinary Dates in local time; the user doesn't know
@@ -117,10 +118,10 @@ const schemas = z.object({
   eventLatch: z.enum(["open", "closed", "over"]),
   eventDescription: emptyStringSchema.or(z.string()),
   venueMap: emptyStringSchema.or(z.string()),
-  eventGroup: z.undefined().or(z.object({
-    host: z.string(),
-    name: z.string()
-  })),
+  eventGroup: z.object({
+    host: z.string().or(z.undefined()),
+    name: z.string().or(z.undefined())
+  }),
   eventSecret: emptyStringSchema.or(z.string()),
   sessions: z.record(z.string(), sessionSchema)
 })
@@ -150,7 +151,7 @@ const makeDefaultValues = (event?: EventAsHost) => {
     venueMap: "" as const,
     eventDescription: "",
     eventSecret: "",
-    sessions: [],
+    sessions: {},
   }
 
   if (event) {
@@ -192,45 +193,6 @@ const makeDefaultValues = (event?: EventAsHost) => {
   return defaultValues
 }
 
-const makeValues = (event: EventAsHost): z.infer<typeof schemas> => {
-  return {
-    title: event.details.title,
-    location: event.details.location,
-    limit: event.limit ?? "",
-    dateRange: {
-      from: event.details.startDate
-        ? convertTZDateToDate(event.details.startDate, event.details.timezone)
-        : new Date(),
-      to: event.details.endDate
-        ? convertTZDateToDate(event.details.endDate, event.details.timezone)
-        : new Date()
-    },
-    utcOffset: event.details.timezone,
-    eventKind: event.details.kind,
-    eventLatch: event.details.latch,
-    eventGroup: event.details.group
-      ? { host: event.details.group.ship, name: event.details.group.name }
-      : undefined,
-    venueMap: event.details.venueMap,
-    eventDescription: event.details.description,
-    // TODO fix this
-    eventSecret: event.secret ? event.secret : "",
-    sessions: Object.fromEntries(
-      Object.entries(event.details.sessions)
-        .map(([id, { startTime, endTime, mainSpeaker: _, ...rest }]) => {
-          return [
-            [id],
-            {
-              start: startTime ? convertTZDateToDate(startTime, event.details.timezone) : new Date(),
-              end: endTime ? convertTZDateToDate(endTime, event.details.timezone) : new Date(),
-              ...rest
-            }
-          ]
-        })
-    ),
-  }
-}
-
 const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
   const [spin, setSpin] = useState(false)
 
@@ -250,15 +212,9 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
     // disabled: event?.details.latch === "over",
   })
 
-  useEffect(() => {
-    if (spin) { setSpin(false) }
+  const basePath = import.meta.env.BASE_URL
 
-    if (event) {
-      form.reset(defaultValues)
-    }
-  }, [event])
-
-
+  const navigate = useNavigate()
 
   // add static fields from tlon, saying we're importing from tlon
   return (
@@ -268,6 +224,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
         onSubmit={form.handleSubmit((values) => {
           setSpin(true)
           onSubmit(values).then(() => { })
+          navigate(basePath + "?reloadEvents")
         })}
         className="space-y-6"
       >

@@ -87,6 +87,9 @@ interface Backend {
   // live - poke - action - %create
   createEvent(evt: CreateEventParams): Promise<boolean>
 
+  // live - poke - action - %delete
+  deleteEvent(evt: EventId): Promise<void>
+
   // live - poke - action - %info %title
   editEventDetailsTitle(id: EventId, value: EventDetails["title"]): Promise<void>
 
@@ -940,6 +943,23 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
   }
 }
 
+function deleteEvent(api: Urbit): (id: EventId) => Promise<void> {
+  return async (id: EventId) => {
+    // live-operation [[~sampel-palnet %some-event-id] [%delete ~]]
+    const _poke = await api.poke({
+      app: "live",
+      mark: "live-operation",
+      json: {
+        "id": { "ship": id.ship, "name": id.name },
+        "action": { "delete": null }
+      },
+      onSuccess: () => { },
+      onError: (err) => {
+        console.error("error during create poke: ", err)
+      }
+    })
+  }
+}
 
 type editableEventDetailsFields =
   "title" |
@@ -1643,6 +1663,7 @@ function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
   // remeber that the `ship` parameter is without the `~`
   return {
     createEvent: createEvent(api, addSig(ship)),
+    deleteEvent: deleteEvent(api),
 
     editEventDetailsTitle: editEventDetailsTitle(api),
     editEventDetailsDescription: editEventDetailsDescription(api),

@@ -1,5 +1,5 @@
-import { LoaderFunctionArgs, Params, useLoaderData, useSubmit } from "react-router-dom"
-import { useContext, useEffect, useState } from "react"
+import { LoaderFunctionArgs, Params, useLoaderData, useNavigate, useSubmit } from "react-router-dom"
+import { useContext, useEffect, useRef, useState } from "react"
 
 import { Attendee, Backend, emptyEventAsAllGuests, emptyEventAsHost, EventAsAllGuests, EventAsHost, EventId, eventIdsEqual, EventStatus, Patp, Profile, PatpSchema, RecordInfo } from "@/backend"
 import { GlobalContext, GlobalCtx } from "@/globalContext"
@@ -25,9 +25,10 @@ import { X } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { SpinningButton } from "@/components/spinning-button"
 import { AnimatedButtons } from "@/components/animated-buttons"
+import { Dialog, DialogHeader, DialogContent, DialogTitle } from "@/components/ui/dialog"
 
 async function ManageParamsLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> {
@@ -530,9 +531,9 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
   const [attendees, setAttendees] = useState<Attendee[]>([])
   const [profiles, setProfiles] = useState<Profile[]>([])
 
-  const [openGuestList, setOpenGuestList] = useState(false)
-
   const basePath = import.meta.env.BASE_URL
+
+  const navigate = useNavigate()
 
   useEffect(
     () => {
@@ -552,12 +553,22 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
       }
     }, [globalContext])
 
+  const [openDialog, setOpenDialog] = useState(false)
+
   const navbar =
     <NavbarWithSlots
       left={<div>
         <BackButton pathToLinkTo={basePath} />
       </div>}
-      right={<div> </div>}
+      right={<div>
+        <Button
+          variant="destructive"
+          className="rounded-full p-3 mr-1"
+          onClick={() => { setOpenDialog(flipBoolean) }}
+        >
+          <X className="w-4 h-4" />
+        </Button>
+      </div>}
     >
       manage event
     </NavbarWithSlots>
@@ -582,55 +593,91 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
       {
         fetched
           ? <AppFrame top={navbar} bottom={footer}>
-            <ResponsiveContent className="flex flex-col items-center space-y-2 pt-16 pb-8">
-              <EventDetailsCard
-                hostProfile={globalContext.profile}
-                details={event.details}
-                buttons={
-                  <AnimatedButtons
-                    minWidth={["w-[55px]", "sm:w-[125px]"]}
-                    maxWidth={["w-[200px]", "sm:w-[325px]"]}
-                    classNames={[
-                      "bg-stone-100",
-                      "bg-stone-100",
-                    ]}
-                    labels={[
-                      <div className="text-xs md:text-lg font-bold" > latch </div>,
-                      <div className="text-xs md:text-lg font-bold" > kind </div>,
-                    ]}
-                    items={[
-                      <div className="text-xs sm:text-base truncate">
-                        event is currently {event.details.latch}
-                      </div>,
-                      <div className="text-xs sm:text-base truncate">
-                        this event is {event.details.kind}
-                      </div>,
-                    ]}
+            <div >
+              <ResponsiveContent className="flex flex-col items-center space-y-2 pt-16 pb-8">
+                <EventDetailsCard
+                  hostProfile={globalContext.profile}
+                  details={event.details}
+                  buttons={
+                    <AnimatedButtons
+                      minWidth={["w-[55px]", "sm:w-[125px]"]}
+                      maxWidth={["w-[200px]", "sm:w-[325px]"]}
+                      classNames={[
+                        "bg-stone-100",
+                        "bg-stone-100",
+                      ]}
+                      labels={[
+                        <div className="text-xs md:text-lg font-bold" > latch </div>,
+                        <div className="text-xs md:text-lg font-bold" > kind </div>,
+                      ]}
+                      items={[
+                        <div className="text-xs sm:text-base truncate">
+                          event is currently {event.details.latch}
+                        </div>,
+                        <div className="text-xs sm:text-base truncate">
+                          this event is {event.details.kind}
+                        </div>,
+                      ]}
+                    />
+                  }
+                  className="w-full"
+                />
+                <Card>
+                  <EditEvent backend={backend} evt={event} />
+                  <Guests
+                    profiles={profiles}
+                    evt={record}
+                    register={(patp: Patp) => backend
+                      .register(event.details.id, patp).then()}
+                    unregister={(patp: Patp) => backend
+                      .unregister(event.details.id, patp).then()}
+                    invite={(patp: Patp) => backend
+                      .invite(event.details.id, [patp]).then()}
                   />
-                }
-                className="w-full"
-              />
-              <Card>
-                <EditEvent backend={backend} evt={event} />
-                <Guests
-                  profiles={profiles}
-                  evt={record}
-                  register={(patp: Patp) => backend
-                    .register(event.details.id, patp).then()}
-                  unregister={(patp: Patp) => backend
-                    .unregister(event.details.id, patp).then()}
-                  invite={(patp: Patp) => backend
-                    .invite(event.details.id, [patp]).then()}
-                />
-                <InviteGuests
-                  invite={(patp: Patp) => backend
-                    .invite(event.details.id, [patp]).then()}
-                />
-              </Card>
-            </ResponsiveContent>
+                  <InviteGuests
+                    invite={(patp: Patp) => backend
+                      .invite(event.details.id, [patp]).then()}
+                  />
+                </Card>
+              </ResponsiveContent>
+            </div>
           </AppFrame>
           : ''
       }
+      <Dialog
+        onOpenChange={setOpenDialog}
+        open={openDialog}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle> delete event </DialogTitle>
+          </DialogHeader>
+          <Card className="p-4 text-center">
+            are you sure you want to delete the event with id
+            <div className="inline-block relative bg-red-200 rounded-md p-[1px] px-1">
+              {event.details.id.ship} / {event.details.id.name}
+            </div>?
+            <div className="flex w-full justify-around mt-2">
+              <Button
+                variant="ghost"
+                onClick={() => { setOpenDialog(flipBoolean) }}
+              >
+                no, go back
+              </Button>
+              <Button
+                variant="ghost"
+                className="p-1 text-red-500 hover:text-red-500 hover:bg-red-100"
+                onClick={() => {
+                  backend.deleteEvent(event.details.id).then(() => { })
+                  navigate(basePath + "?reloadEvents")
+                }}
+              >
+                yes, delete event
+              </Button>
+            </div>
+          </Card>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

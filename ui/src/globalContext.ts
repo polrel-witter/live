@@ -11,6 +11,7 @@ interface GlobalCtx {
   eventsAsGuest: EventAsAllGuests[]
   eventsAsHost: EventAsHost[]
   searchedEvents: [EventId, EventDetails][]
+  refreshEventsAsHost: () => void
 }
 
 function newEmptyIndexCtx(): GlobalCtx {
@@ -33,6 +34,7 @@ function newEmptyIndexCtx(): GlobalCtx {
     eventsAsGuest: [],
     eventsAsHost: [],
     searchedEvents: [],
+    refreshEventsAsHost: () => { }
   }
 }
 
