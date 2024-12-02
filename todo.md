@@ -127,7 +127,7 @@ key:
       group section and sessions are also highlighted red. those aren't
       required so no need to highlight. it also then won't let me create
       the event if i then fill in the required fields.
-    - [~polrel-witter] the profile button on this page should be a back button. no need
+    + [~polrel-witter] the profile button on this page should be a back button. no need
       to have profile editing on here.
     - [~polrel-witter] on the event creation page, if about, location, venue map, or secret are empty they should be `null`. for both event and sessions. right now they're defaulting to empty strings.
     - if the creation was successful it should redirect them to the
