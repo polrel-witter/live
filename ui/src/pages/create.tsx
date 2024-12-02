@@ -46,6 +46,12 @@ const CreatePage: React.FC<{ backend: Backend }> = ({ backend }) => {
     >
     </FooterWithSlots >
 
+  const handleNavigation = (success: boolean) => {
+    if (success) {
+      router.push('/')
+    }
+  }
+
   return (
     <div>
       <AppFrame top={navbar} bottom={footer}>
@@ -53,6 +59,7 @@ const CreatePage: React.FC<{ backend: Backend }> = ({ backend }) => {
           <div className="w-11/12 m-4 sm:w-7/12 xl:w-1/3 md:m-0">
             <CreateEventForm
               createEvent={backend.createEvent}
+              navigateAfterSubmit={handleNavigation}
             />
           </div>
         </div>

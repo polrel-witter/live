@@ -4,9 +4,10 @@ import { convertDateToTZDate } from "@/lib/utils"
 
 type Props = {
   createEvent: (newEvent: CreateEventParams) => Promise<boolean>
+  navigateAfterSubmit?: (success: boolean) => void
 }
 
-export const CreateEventForm = ({ createEvent }: Props) => {
+export const CreateEventForm = ({ createEvent, navigateAfterSubmit }: Props) => {
   return (
     <EventForm
       submitButtonText="create"
@@ -43,7 +44,10 @@ export const CreateEventForm = ({ createEvent }: Props) => {
             }]
           }))
 
-        await createEvent(newEvent)
+        const success = await createEvent(newEvent)
+        if (navigateAfterSubmit) {
+          navigateAfterSubmit(success)
+        }
       }}
     />
   )
