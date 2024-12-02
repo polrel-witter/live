@@ -28,7 +28,7 @@ export const CreateEventForm = ({ createEvent }: Props) => {
         newEvent.details.description = values.eventDescription
         newEvent.details.timezone = values.utcOffset
         newEvent.details.kind = values.eventKind
-        newEvent.details.group = values.eventGroup
+        newEvent.details.group = values.eventGroup.host && values.eventGroup.name
           ? { ship: values.eventGroup.host, name: values.eventGroup.name }
           : null
         newEvent.details.latch = values.eventLatch

@@ -70,7 +70,7 @@ export const EditEventForm = ({ backend, event }: Props) => {
         const groupHostDifferent = event.details.group?.ship !== values.eventGroup?.host
         const groupNameDifferent = event.details.group?.name !== values.eventGroup?.name
         if (groupHostDifferent || groupNameDifferent) {
-          if (!values.eventGroup) {
+          if (!values.eventGroup.name || !values.eventGroup.host) {
             backend.editEventDetailsGroup(eventId, null)
           } else {
             backend.editEventDetailsGroup(
