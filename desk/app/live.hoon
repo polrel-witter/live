@@ -36,57 +36,56 @@
 ::
 ^-  agent:gall
 ::
-=<
-  |_  =bowl:gall
-  +*  this  .
-      def  ~(. (default-agent this %|) bowl)
-      cor  ~(. +> bowl)
-  ::
-  ++  on-init
-    ^-  (quip card _this)
-    =^  cards  state  abet:init:cor
-    [cards this]
-  ::
-  ++  on-save  !>(state)
-  ::
-  ++  on-load
-    |=  old=vase
-    ^-  (quip card _this)
-    =^  cards  state  abet:(load:cor old)
-    [cards this]
-  ::
-  ++  on-poke
-    |=  [=mark =vase]
-    ^-  (quip card _this)
-    =^  cards  state  abet:(poke:cor mark vase)
-    [cards this]
-  ::
-  ++  on-peek
-    |=  =path
-    ^-  (unit (unit cage))
-    (peek:cor path)
-  ::
-  ++  on-agent
-    |=  [=wire =sign:agent:gall]
-    ^-  (quip card _this)
-    =^  cards  state  abet:(agent:cor wire sign)
-    [cards this]
-  ::
-  ++  on-arvo
-    |=  [=wire =sign-arvo]
-    ^-  (quip card _this)
-    =^  cards  state  abet:(arvo:cor wire sign-arvo)
-    [cards this]
-  ::
-  ++  on-watch
-    |=  =path
-    ^-  (quip card _this)
-    =^  cards  state  abet:(watch:cor path)
-    [cards this]
-  ::
-  ++  on-fail  on-fail:def
-  ++  on-leave  on-leave:def
-  --
+=<  |_  =bowl:gall
+    +*  this  .
+        def  ~(. (default-agent this %|) bowl)
+        cor  ~(. +> bowl)
+    ::
+    ++  on-init
+      ^-  (quip card _this)
+      =^  cards  state  abet:init:cor
+      [cards this]
+    ::
+    ++  on-save  !>(state)
+    ::
+    ++  on-load
+      |=  old=vase
+      ^-  (quip card _this)
+      =^  cards  state  abet:(load:cor old)
+      [cards this]
+    ::
+    ++  on-poke
+      |=  [=mark =vase]
+      ^-  (quip card _this)
+      =^  cards  state  abet:(poke:cor mark vase)
+      [cards this]
+    ::
+    ++  on-peek
+      |=  =path
+      ^-  (unit (unit cage))
+      (peek:cor path)
+    ::
+    ++  on-agent
+      |=  [=wire =sign:agent:gall]
+      ^-  (quip card _this)
+      =^  cards  state  abet:(agent:cor wire sign)
+      [cards this]
+    ::
+    ++  on-arvo
+      |=  [=wire =sign-arvo]
+      ^-  (quip card _this)
+      =^  cards  state  abet:(arvo:cor wire sign-arvo)
+      [cards this]
+    ::
+    ++  on-watch
+      |=  =path
+      ^-  (quip card _this)
+      =^  cards  state  abet:(watch:cor path)
+      [cards this]
+    ::
+    ++  on-fail  on-fail:def
+    ++  on-leave  on-leave:def
+    --
 =|  cards=(list card)
 |_  =bowl:gall
 +*  cor  .
@@ -408,7 +407,7 @@
     :-  %event
     (~(get by events) (slav %p host:pol) (slav %tas name:pol))
   ::
-     [%x %session %ids host=@ name=@ ~]
+      [%x %session %ids host=@ name=@ ~]
     :-  %session-ids
     =/  e=event-1
       (~(got by events) (slav %p host:pol) (slav %tas name:pol))

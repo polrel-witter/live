@@ -180,7 +180,7 @@
   =;  =demand
     ``[%matcher-demand !>(demand)]
   ?+    pol  ~|(invalid-scry-path+pol !!)
-      [%u %pals %add ~]  [%add-pals add-pals]
+      [%x %pals %add ~]  [%add-pals add-pals]
       [%x %profile ship=@ ~]
     :-  %profile
     ?~  mp=(~(get by profiles) (slav %p ship:pol))  ~
@@ -282,7 +282,7 @@
         =.  cor
           =/  fields=(list [term entry])
             ~(tap by (~(got by profiles) our.bowl))
-          (local-update [%profile our.bowl fields])
+          (give-local-update [%profile our.bowl fields])
         pass-in-bulk
       ==
     ==
@@ -299,7 +299,7 @@
         %profile-diff    (update-peer-profile p.deed)
         %shake           (~(shake pe id.deed ship.deed) act.deed)
         %add-pals
-      =.  cor  (local-update [%add-pals p.deed])
+      =.  cor  (give-local-update [%add-pals p.deed])
       cor(add-pals p.deed)
     ==
   ::
@@ -380,12 +380,16 @@
   |=  [=wire who=ship app=term =path]
   ^-  card
   [%pass wire %agent [who app] %watch path]
-::  +local-update: pass an $update to local subscribers
+::  +give-local-update: produce a local $update
 ::
-++  local-update
+++  give-local-update
   |=  upd=update
   ^+  cor
-  (emit [%give %fact ~[/updates] matcher-update+!>(`update`upd)])
+  %-  emit
+  =/  =path
+    :: TODO eventually change; delination not right
+    ?-(-.upd %add-pals /add-pals, ?(%match %profile) /updates)
+  [%give %fact ~[path] matcher-update+!>(`update`upd)]
 ::  +event-exists: check if an event exists in our %live state
 ::
 ++  event-exists
@@ -437,7 +441,7 @@
   =.  cor
     =/  fields=(list [term entry])
       ~(tap by (~(got by profiles) our.bowl))
-    (local-update [%profile our.bowl fields])
+    (give-local-update [%profile our.bowl fields])
   pass-in-bulk
 ::  +update-peer-profile: modify a peer's profile
 ::
@@ -460,7 +464,7 @@
       src.bowl
     ?:  &(?=(~ profile) ?=(~ still))  ~
     ?^(`(map term entry)`still still ~)
-  (local-update [%profile our.bowl `(list [term entry])`~(tap by still)])
+  (give-local-update [%profile our.bowl `(list [term entry])`~(tap by still)])
 ::  +send-profile: send a profile update to a peer
 ::
 ++  send-profile
@@ -677,7 +681,7 @@
         (poke-pals culp)
       (send-profile %whole culp)
     =.  cor
-      (local-update [%match culp status])
+      (give-local-update [%match culp status])
     cor(peers (~(put bi peers) id culp status))
     ::  +poke-pals: send a %meet poke to %pals with event title as tag
     ::
