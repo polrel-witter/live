@@ -86,7 +86,12 @@
         sessions+de-sessions
     ==
   ::
-  ++  de-unit-cord  so:dejs-soft:format
+  ++  de-unit-cord
+    |=  jon=json
+    ^-  (unit cord)
+    ?>  =(%s -.jon)
+    ?~  +.jon  ~
+    (so:dejs-soft:format jon)
   ::
   ++  de-moment-1
     ^-  $-(json moment-1)
