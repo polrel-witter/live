@@ -29,12 +29,12 @@ const makeRouter = (backend: Backend) => {
           element: <EventTimelinePage backend={backend} />,
           errorElement: <ErrorPage />,
         },
-        {
-          path: basePath + "/create",
-          element: <CreatePage backend={backend} />,
-          errorElement: <ErrorPage />,
-        },
       ],
+    },
+    {
+      path: basePath + "/create",
+      element: <CreatePage backend={backend} />,
+      errorElement: <ErrorPage />,
     },
     {
       path: basePath + "/manage/:hostShip/:name",
