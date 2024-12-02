@@ -106,7 +106,7 @@ const sessionSchema = z.object({
 
 const schemas = z.object({
   title: z.string().min(1, { message: "title can't be empty!" }),
-  location: z.string().min(1, { message: "location can't be empty!" }),
+  location: emptyStringSchema.or(z.string()),
   dateRange: z.object({
     from: dateTimeSchema,
     to: dateTimeSchema,
@@ -430,8 +430,8 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
 
         <TextFormField
           formField="eventSecret"
-          label="secret"
-          placeholder="a secret message to send guests once they register (optional)"
+          label="secret (optional)"
+          placeholder="a secret message sent to guests once they register"
           control={form.control}
           disabled={event?.details.latch === "over"}
         />
