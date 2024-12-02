@@ -385,15 +385,15 @@ const emptyEventDetails: EventDetails = {
     name: "",
   },
   title: "",
-  location: "",
+  location: null,
   startDate: new TZDate(0),
   endDate: new TZDate(0),
-  description: "",
+  description: null,
   timezone: "-00:00",
   kind: "public",
   group: null,
   latch: "open",
-  venueMap: "",
+  venueMap: null,
   sessions: {}
 }
 
