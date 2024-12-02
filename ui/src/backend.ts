@@ -176,7 +176,6 @@ interface Backend {
   subscribeToLiveEvents(handlers: {
     onRecordUpdate: (e: LiveRecordUpdateEvent) => void
     onEventUpdate: (e: LiveEventUpdateEvent) => void
-    onFindResponse: (e: LiveFindEvent) => void
     onError: (err: any, id: string) => void,
     onQuit: (data: any) => void,
   }): Promise<number>
@@ -1315,11 +1314,10 @@ function subscribeToLiveSearchEvents(api: Urbit): (handlers: {
 function subscribeToLiveEvents(api: Urbit): (handlers: {
   onRecordUpdate: (e: LiveRecordUpdateEvent) => void
   onEventUpdate: (e: LiveEventUpdateEvent) => void
-  onFindResponse: (e: LiveFindEvent) => void
   onError: (err: any, id: string) => void,
   onQuit: (data: any) => void,
 }) => Promise<number> {
-  return async ({ onRecordUpdate, onEventUpdate, onFindResponse, onError, onQuit }) => {
+  return async ({ onRecordUpdate, onEventUpdate, onError, onQuit }) => {
     return api.subscribe({
       app: "live",
       path: "/updates",
@@ -1340,20 +1338,7 @@ function subscribeToLiveEvents(api: Urbit): (handlers: {
               event: backendEventToEventAsHost(updateEvent.id, updateEvent.event),
             })
           } catch (e) {
-            try {
-              const findEvent = liveFindEventSchema.parse(evt)
-              onFindResponse({
-                events: Object.entries(findEvent.result)
-                  .map(([idString, info]) => {
-                    const [hostShip, eventName] = idString.split("/")
-                    // WARN: casting to Patp here
-                    const eventId = { ship: hostShip as Patp, name: eventName }
-                    return [eventId, backendInfo1ToEventDetails(eventId, info.info)]
-                  }),
-              })
-            } catch (e) {
-              console.error("error parsing response for subscribeToLiveEvents", e)
-            }
+            console.error("error parsing response for subscribeToLiveEvents", e)
           }
         }
       },

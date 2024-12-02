@@ -91,7 +91,6 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
       eventsAsHost,
       eventsAsGuest,
       // TODO: remove
-      searchedEvents,
     }) => {
       setCtx({
         fetched,
@@ -99,7 +98,6 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
         profile,
         eventsAsHost,
         eventsAsGuest,
-        searchedEvents,
         refreshEventsAsHost
       })
     })
@@ -180,11 +178,6 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
             ...restCtx
           }
 
-        })
-      },
-      onFindResponse: (updateEvent: LiveFindEvent) => {
-        setCtx(({ searchedEvents, ...oldCtx }) => {
-          return { searchedEvents: updateEvent.events, ...oldCtx }
         })
       },
       onError: (err, _id) => { console.log("%live err: ", err) },

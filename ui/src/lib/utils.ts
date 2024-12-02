@@ -43,7 +43,6 @@ export function formatSessionTime(d: Date): string {
 // fn: shiftToTimezone(tzDate, utcOffset)
 //     - shiftToUTC(tzDate)
 // fn: newDateFromTzDateInUTC(TzDate)
-// TODO: remove that extra field from GlobalCtx
 
 // assuming date is in UTC, subtracts the timezoneString offset from it
 function _newTZDateInTimeZone(date: TZDate, timezoneString: string): TZDate {
