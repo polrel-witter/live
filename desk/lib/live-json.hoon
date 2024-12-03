@@ -2,6 +2,8 @@
 /+  *mip
 |%
 ::
+++  patp  ;~(pose ;~(pfix sig fed:ag) fed:ag)
+::
 ++  dejs-dial
   =,  dejs:format
   |=  jon=json
@@ -102,9 +104,8 @@
   ::
   ++  de-group
     |^  ^-  $-(json group)
-        (su:dejs-soft:format ;~((glue fas) ship sym))
+        (su:dejs-soft:format ;~((glue fas) patp sym))
     ::
-    ++  ship  ;~(pose ;~(pfix sig fed:ag) fed:ag)
     ++  sym
       %+  cook
         |=  a=tape
@@ -139,12 +140,12 @@
     |=  jon=json
     ^-  (unit cord)
     ?>  ?=([%a *] jon)
-    =-  ?~(- ~ `(crip (join ',' -)))
-    ^-  tape
-    %+  turn  p.jon
-    |=  j=json
-    ?>  ?=([%s *] j)
-    p.j
+    =/  t=(list cord)
+      %+  turn  p.jon
+      |=  j=json
+      ?>  ?=([%s *] j)
+      p.j
+    ?~(t ~ `(crip (join ', ' t)))
   ::
   ++  de-event-1
     ^-  $-(json event-1)
@@ -370,8 +371,11 @@
     ?~  a  [%a ~]
     :-  %a
     ^-  (list json)
+    :: TODO this doesn't work; +more is producing something other than a
+    :: tape. need to separate by delimeter, but then +cook into a list
+    :: of cords. review %work example
     %+  turn
-      (fall (rush u.a (more com ;~(pfix sig (plus ;~(pose alp dot))))) ~)
+      (fall (rust (trip u.a) (more ;~(plug com ace) ;~(pose patp (plus ;~(pose alp dot))))) ~)
     |=  t=(list cord)
     `json`[%s (crip t)]
   ::
@@ -391,7 +395,7 @@
     ^-  ^json
     %-  pairs
     :~  ['title' s+title.a]
-        ['panel' (en-panel panel.a)]
+        ['panel' ~&((en-panel panel.a) (en-panel panel.a))]
         ['location' (en-unit-cord location.a)]
         ['about' (en-unit-cord about.a)]
         ['moment' (en-moment-1 moment.a)]
