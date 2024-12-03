@@ -18,8 +18,8 @@ key:
   + event search
       + somewhere on this page we can see our previous search (can be scried from backend state)
   + guest should see their status and date it occured
-  - add %pal toggle on profile form
-      - 'Automatically add ships you match with as %pals and include the event title as a tag. This change will only take effect on future matches.'
+  + add %pal toggle on profile form
+      + 'Automatically add ships you match with as %pals and include the event title as a tag. This change will only take effect on future matches.'
   + on mobile: the frame for the event page is a bit wide; shouldn't have to scroll to the right/left. the boxes and text should be flush with the screen.
     + i think i fixed this already, there's no left-right scroll anymore
   + need to remove the avatar, patp, and nickname from the profile. the patp should just be next to the avatar image, or if a nickname is set in parethesis next to it.

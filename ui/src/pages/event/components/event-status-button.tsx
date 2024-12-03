@@ -1,6 +1,7 @@
 import { Backend, EventAsGuest, EventId, EventStatus } from "@/backend"
 import { SpinningButton } from "@/components/spinning-button"
 import { Button } from "@/components/ui/button"
+import { useDebounce } from "@/hooks/use-debounce"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { stat } from "fs"
@@ -87,41 +88,59 @@ const EventStatusButton = ({ event, fetched, backend }: EventStatusButtonProps) 
 
   }, [status, sentPoke])
 
-  const baseClass = "w-32 h-8 p-0 px-2 transition-[backgroud-color]"
 
+  const baseClass = "w-32 h-8 p-0 px-2 transition-[background-color] duration-1000"
 
 
   const onClick = useCallback((status: EventStatus) => {
     switch (status) {
       case "invited":
       case "unregistered":
-        registerHandler()
+        return () => {
+          registerHandler()
+          useDebounce(() => { setSentPoke(false) }, 5000)
+        }
       case "registered":
         // TODO: add a slide-out thingy that says: are you sure?
-        unregisterHandler()
+        return () => {
+          unregisterHandler()
+          useDebounce(() => { setSentPoke(false) }, 5000)
+        }
     }
   }, [])
 
-  // TODO: this doesn't transition the backgroud-color
+  // TODO: this doesn't transition the backgroud-color i think
   // because the entire element is rerendered for some reason
   return (
-    <SpinningButton
-      type="button"
-      className={cn([
-        baseClass,
-        "bg-stone-700 hover:bg-stone-800",
-        {
-          "bg-rose-800 hover:bg-rose-900": status === "registered"
-        },
-        {
-          "bg-emerald-800 hover:bg-emerald-900": status === "attended"
-        }])
-      }
-      onClick={() => { onClick(status) }}
-      spin={sentPoke}
-    >
-      {buttonText}
-    </SpinningButton>
+    <>
+      <SpinningButton
+        type="button"
+        className={cn([
+          baseClass,
+          {
+            "bg-rose-800 hover:bg-rose-900": status === "registered",
+          },
+          {
+            "bg-emerald-800 hover:bg-emerald-900": status === "attended",
+          }
+        ])
+        }
+        onClick={onClick(status)}
+        spin={sentPoke}
+      >
+        {buttonText}
+      </SpinningButton>
+      {/*
+          <div className={cn([
+          "transition-colors duration-1000",
+          { "bg-emerald-800": sentPoke },
+          { "bg-emerald-500": !sentPoke }
+          ])
+          }>
+          aaa
+          </div>
+        */}
+    </>
   )
 }
 

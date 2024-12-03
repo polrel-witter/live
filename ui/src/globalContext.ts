@@ -29,6 +29,7 @@ function newEmptyIndexCtx(): GlobalCtx {
       telegram: null,
       signal: null,
       phone: null,
+      addToPals: false,
     },
     eventsAsGuest: [],
     eventsAsHost: [],

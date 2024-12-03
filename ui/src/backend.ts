@@ -1,10 +1,10 @@
 import Urbit from "@urbit/http-api";
 
-import { tz, TZDate } from "@date-fns/tz";
+import { TZDate } from "@date-fns/tz";
 
 import { z, ZodError } from "zod" // this is an object validation library
-import { formatEventDate, formatEventDateShort, formatSessionTime, newTZDateInUTCFromDate, newTzDateInUTCFromUnixMilli, shiftTzDateInUTCToTimezone } from "./lib/time";
-import { de } from "date-fns/locale";
+
+import { newTZDateInUTCFromDate, newTzDateInUTCFromUnixMilli } from "./lib/time";
 
 // Patp types and utilities
 
@@ -197,19 +197,28 @@ interface Backend {
   // matcher - scry %peers
   getAttendees(id: EventId): Promise<Attendee[]>
 
-  // matcher - poke - action - %edit-profile
+  // matcher - poke - deed - %edit-profile
   editProfileField(field: string, value: string | null): Promise<void>
 
-  // matcher - poke - action - %shake y
+  // matcher - poke - deed - %add-pals y|n
+  setAddPals(b: boolean): Promise<void>;
+
+  // matcher - poke - deed - %shake y
   match(id: EventId, patp: Patp): Promise<void>;
 
-  // matcher - poke - action - %shake n
+  // matcher - poke - deed - %shake n
   unmatch(id: EventId, patp: Patp): Promise<void>;
 
   // matcher - TBD
   subscribeToMatcherEvents(handlers: {
     onMatch: (e: MatcherMatchEvent) => void
     onProfileChange: (e: MatcherProfileEvent) => void
+    onError: (err: any, id: string) => void,
+    onQuit: (data: any) => void,
+  }): Promise<number>
+
+  subscribeToMatcherAddPalsEvent(handlers: {
+    onEvent: (e: boolean) => void
     onError: (err: any, id: string) => void,
     onQuit: (data: any) => void,
   }): Promise<number>
@@ -239,6 +248,9 @@ type Profile = {
   telegram: string | null;
   signal: string | null;
   phone: string | null;
+
+  // extra fields
+  addToPals: boolean;
 }
 
 function diffProfiles(oldProfile: Profile, newFields: Record<string, string>): [string, string | null][] {
@@ -272,6 +284,8 @@ const emptyProfile: Profile = {
   telegram: null,
   signal: null,
   phone: null,
+
+  addToPals: false,
 }
 
 type Session = {
@@ -1360,7 +1374,11 @@ const getProfilesSchema = z.object({
 })
   .transform(result => result.allProfiles)
 
-function entryArrayToProfile(patp: Patp, fields: z.infer<typeof profileEntryObjSchema>[]): Profile {
+function entryArrayToProfile(
+  patp: Patp,
+  fields: z.infer<typeof profileEntryObjSchema>[],
+  addToPals: boolean,
+): Profile {
   const p: Profile = {
     patp: patp,
     avatar: null,
@@ -1373,6 +1391,7 @@ function entryArrayToProfile(patp: Patp, fields: z.infer<typeof profileEntryObjS
     telegram: null,
     signal: null,
     phone: null,
+    addToPals: addToPals
   }
 
   fields.forEach((field) => {
@@ -1431,11 +1450,27 @@ function getProfiles(_api: Urbit): () => Promise<Profile[]> {
       return []
     }
 
+
+    const addToPals = await _api.scry({
+      app: "matcher",
+      // in agent file it says host/name/ship ??
+      // pass guest ship
+      path: "/addPals"
+      // path: `/record/${id.ship}/${id.name}/~zod`
+    })
+      .then()
+      .catch((err) => { console.error("error during getProfiles api call", err.errors) })
+
+    if (!profileFields) {
+      return []
+    }
+
     let profiles = []
     // WARN: patp : casting to Patp here because schema validates it above; it's fine
     for (const [patp, arrs] of Object.entries(profileFields)) {
       if (arrs) {
-        profiles.push(entryArrayToProfile(patp as Patp, arrs))
+        // WARN: addPals false here because this is other ppl's profiles
+        profiles.push(entryArrayToProfile(patp as Patp, arrs, false))
       }
     }
 
@@ -1473,7 +1508,23 @@ function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
       return null
     }
 
-    return entryArrayToProfile(patp, profileFields)
+    let addPals = false
+
+    const addToPals = await _api.scry({
+      app: "matcher",
+      // in agent file it says host/name/ship ??
+      // pass guest ship
+      path: "/pals/add"
+      // path: `/record/${id.ship}/${id.name}/~zod`
+    })
+      .then(z.object({ addPals: z.boolean() }).parse)
+      .catch((err) => { console.error("error during getProfiles api call", err.errors) })
+
+    if (addToPals) {
+      addPals = addToPals.addPals
+    }
+
+    return entryArrayToProfile(patp, profileFields, addPals)
   }
 }
 
@@ -1558,6 +1609,22 @@ function editProfileField(_api: Urbit): (field: keyof Profile, value: string | n
   }
 }
 
+function setAddPals(api: Urbit): (b: boolean) => Promise<void> {
+  return async (b: boolean) => {
+    let success = false;
+    const poke = await api.poke({
+      app: "matcher",
+      mark: "matcher-deed",
+      json: { "add-pals": b },
+      onSuccess: () => { success = true },
+      onError: (err) => {
+        console.error("error during register poke: ", err)
+      }
+    })
+    return Promise.resolve()
+  }
+}
+
 function match(_api: Urbit): (id: EventId, patp: Patp) => Promise<void> {
   return async (id: EventId, patp: Patp) => {
     _api.poke({
@@ -1623,7 +1690,7 @@ function subscribeToMatcherEvents(_api: Urbit): (handlers: {
         try {
           const { ship, fields } = matcherProfileUpdateEventSchema.parse(evt)
           onProfileChange({
-            profile: entryArrayToProfile(ship, fields)
+            profile: entryArrayToProfile(ship, fields, false)
           })
         } catch {
           try {
@@ -1635,6 +1702,29 @@ function subscribeToMatcherEvents(_api: Urbit): (handlers: {
           } catch (e) {
             throw e
           }
+        }
+      },
+      err: (err, id) => onError(err, id),
+      quit: (data) => onQuit(data)
+    })
+  }
+}
+
+function subscribeToMatcherAddPalsEvent(_api: Urbit): (handlers: {
+  onEvent: (e: boolean) => void
+  onError: (err: any, id: string) => void,
+  onQuit: (data: any) => void,
+}) => Promise<number> {
+  return async ({ onEvent, onError, onQuit }) => {
+    return window.urbit.subscribe({
+      app: "matcher",
+      path: "/add-pals",
+      event: (evt) => {
+        try {
+          const matchEvt = z.object({ addPals: z.boolean() }).parse(evt)
+          onEvent(matchEvt.addPals)
+        } catch (e) {
+          throw e
         }
       },
       err: (err, id) => onError(err, id),
@@ -1685,9 +1775,11 @@ function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
     getProfiles: getProfiles(api),
     getAttendees: getAttendees(api),
     editProfileField: editProfileField(api),
+    setAddPals: setAddPals(api),
     match: match(api),
     unmatch: unmatch(api),
     subscribeToMatcherEvents: subscribeToMatcherEvents(api),
+    subscribeToMatcherAddPalsEvent: subscribeToMatcherAddPalsEvent(api),
 
     unsubscribeFromEvent: (id) => {
       return api.unsubscribe(id)

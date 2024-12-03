@@ -1,11 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { Control, useForm } from "react-hook-form"
 import { z } from "zod"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -14,6 +15,38 @@ import {
 import { Input } from "@/components/ui/input"
 import { Profile } from "@/backend"
 import { SpinningButton } from "@/components/spinning-button"
+import { Bold } from "lucide-react"
+import { ButtonToggle } from "../button-toggle"
+
+
+// need this otherwise the <Input> in there is not happy
+type adjustedFormType = Omit<z.infer<typeof formSchema>, "togglePalsIntegration">
+
+type TextFormFieldProps = {
+  formField: keyof adjustedFormType,
+  placeholder: string,
+  control: Control<z.infer<typeof formSchema>>,
+};
+
+const TextFormField: React.FC<TextFormFieldProps> =
+  ({ formField, placeholder, control }) => {
+    return (
+      <FormField
+        control={control}
+        key={formField}
+        name={formField}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{formField}</FormLabel>
+            <FormControl>
+              <Input placeholder={placeholder} {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    )
+  }
 
 
 const emptyStringSchema = z.literal("")
@@ -58,14 +91,26 @@ const schemasAndPlaceHoldersForFields = {
   },
 }
 
-const formSchema = z.object(Object
-  .fromEntries(Object
-    .entries(schemasAndPlaceHoldersForFields)
-    .map(([key, val]) => [key, val.schema])))
+const formSchema = z.object({
+  // profile fields all have the same type so we cut some corners
+  github: emptyStringSchema
+    .or(z.string().min(1, { message: "can't use empty string as username" })),
+  telegram: emptyStringSchema.or(usernameWithAtSchema),
+  phone: emptyStringSchema.or(phoneNumberSchema),
+  email: emptyStringSchema.or(emailSchema),
+  x: emptyStringSchema.or(usernameWithAtSchema),
+  ensDomain: emptyStringSchema
+    .or(z.string().includes(".", { message: "Must include a dot" })),
+  signal: emptyStringSchema.or(usernameWithAtSchema.or(phoneNumberSchema)),
+  togglePalsIntegration: z.boolean(),
+})
 
 type Props = {
   profileFields: Profile;
-  editProfile: (fields: Record<string, string>) => Promise<void>
+  editProfile: (
+    fields: Record<string, string>,
+    togglePalsIntegration: boolean
+  ) => Promise<void>
 }
 
 const ProfileForm: React.FC<Props> = ({ profileFields, editProfile }) => {
@@ -80,20 +125,27 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfile }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     mode: "onChange",
-    defaultValues: pf,
+    defaultValues: { ...pf, togglePalsIntegration: profileFields.addToPals },
   })
+
+  useEffect(() => {
+    form.reset({ ...pf, togglePalsIntegration: profileFields.addToPals })
+  }, [])
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
 
     setSpin(true)
-    editProfile(values).then(() => setSpin(false))
+
+    const { togglePalsIntegration, ...profileFields } = values
+
+    editProfile(profileFields, togglePalsIntegration).then(() => setSpin(false))
   }
 
-  const fields: [string, string][] = Object
+  const fields: [keyof adjustedFormType, string][] = Object
     .entries(schemasAndPlaceHoldersForFields)
-    .map(([key, val]) => [key, val.placeholder])
+    .map(([key, val]) => [key as keyof adjustedFormType, val.placeholder])
 
   // add static fields from tlon, saying we're importing from tlon
   return (
@@ -107,29 +159,39 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfile }) => {
       >
         {fields.map(([fieldName, placeholder]) => {
           return (
-            <FormField
-              key={fieldName}
+            <TextFormField
               control={form.control}
-              name={fieldName}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{fieldName}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={placeholder} {...field} />
-                  </FormControl>
-                  {/*
-                      <FormDescription>
-                      This is your public display name.
-                      </FormDescription>
-                    */}
-                  <FormMessage />
-                </FormItem>
-
-              )}
+              formField={fieldName}
+              placeholder={placeholder}
             />
           )
         })}
         <p className="text-sm">this info is only shared with ships you match with</p>
+        <FormField
+          control={form.control}
+          name={"togglePalsIntegration"}
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <div className="flex flex-row justify-start items-center">
+                  <FormLabel className="pb-[1px] mr-4 my-2"> integrate with %pals </FormLabel>
+                  <ButtonToggle
+                    pressed={field.value}
+                    pressedColor="bg-emerald-600"
+                    onPressedChange={field.onChange}
+                    aria-label="Toggle bold"
+                  >
+                    <Bold className="h-4 w-4" />
+                  </ButtonToggle>
+                </div>
+              </FormControl>
+              <FormMessage />
+              <FormDescription>
+                Automatically add ships you match with as %pals and include the event title as a tag. This change will only take effect on future matches.
+              </FormDescription>
+            </FormItem>
+          )}
+        />
         <div className="pt-4 md:pt-8 w-full flex justify-center">
           <SpinningButton
             spin={spin}

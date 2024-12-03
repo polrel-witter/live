@@ -23,6 +23,7 @@
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.1",
     "@radix-ui/react-toast": "^1.2.2",
+    "@radix-ui/react-toggle": "^1.1.0",
     "@urbit/api": "^2.3.0",
     "@urbit/http-api": "^2.3.0",
     "@urbit/sigil-js": "^2.2.0",
