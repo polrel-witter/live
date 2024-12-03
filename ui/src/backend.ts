@@ -1,10 +1,10 @@
 import Urbit from "@urbit/http-api";
 
-import { TZDate } from "@date-fns/tz";
+import { tz, TZDate } from "@date-fns/tz";
 
 import { z, ZodError } from "zod" // this is an object validation library
-
-import { newTZDateInTimeZoneFromUnix, newTZDateInTimeZoneFromUnixMilli } from "./lib/utils";
+import { formatEventDate, formatEventDateShort, formatSessionTime, newTZDateInUTCFromDate, newTzDateInUTCFromUnixMilli, shiftTzDateInUTCToTimezone } from "./lib/time";
+import { de } from "date-fns/locale";
 
 // Patp types and utilities
 
@@ -543,7 +543,7 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
   const newTZDateOrNull = (tsOrNull: number | null): TZDate | null => {
     if (!tsOrNull) { return null }
 
-    return newTZDateInTimeZoneFromUnix(tsOrNull, timezoneString)
+    return newTzDateInUTCFromUnixMilli(tsOrNull * 1000)
   }
 
   const sessionEntries = Object.entries(_sessions).map(([sessionId, { session }]): [string, Session] => {
@@ -553,7 +553,6 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
       location: session.location,
       about: session.about,
       panel: session.panel ? session.panel.split(" ") : null,
-      // multiplying by 1000 since backend sends unix seconds
       startTime: newTZDateOrNull(session.moment.start),
       endTime: newTZDateOrNull(session.moment.end)
     }]
@@ -586,7 +585,7 @@ function backendRecordToEventAsGuest(eventId: EventId, record: z.infer<typeof ba
   return {
     secret: record.secret ? record.secret : "",
     status: record.status.p,
-    lastChanged: newTZDateInTimeZoneFromUnix(record.status.q, "+00:00"),
+    lastChanged: newTZDateInUTCFromDate(new Date(record.status.q * 1000)),
     details: backendInfo1ToEventDetails(eventId, record.info)
   }
 }
@@ -656,7 +655,7 @@ function getRecords(api: Urbit, ship: Patp): () => Promise<EventAsAllGuests[]> {
           recordInfos[guestPatp as Patp] = {
             secret: recordObj.record.secret ? recordObj.record.secret : "",
             status: recordObj.record.status.p,
-            lastChanged: newTZDateInTimeZoneFromUnixMilli(recordObj.record.status.q, "+00:00")
+            lastChanged: newTZDateInUTCFromDate(new Date(recordObj.record.status.q))
           }
         } else {
           console.error("getRecords: recordObj is undefined")
@@ -850,7 +849,7 @@ function register(_api: Urbit): (id: EventId, patp?: Patp) => Promise<boolean> {
 function invite(_api: Urbit): (id: EventId, ships: Patp[]) => Promise<boolean> {
   return async (_id: EventId, ships: Patp[]) => {
     let success = false;
-    const _poke = await _api.poke({
+    const poke = await _api.poke({
       app: "live",
       mark: "live-operation",
       json: {
@@ -899,6 +898,17 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
       ? { ship: details.group.ship, term: details.group.name }
       : null
 
+    console.log(formatEventDate(details.startDate!))
+    console.log(formatEventDate(details.endDate!))
+    console.log(tzDateToUnixMilliSeconds(details.startDate!))
+    console.log(tzDateToUnixMilliSeconds(details.endDate!))
+    Object.values(details.sessions).forEach((s) => {
+      console.log(formatSessionTime(s.startTime!))
+      console.log(formatSessionTime(s.endTime!))
+      console.log(tzDateToUnixMilliSeconds(s.startTime!))
+      console.log(tzDateToUnixMilliSeconds(s.endTime!))
+    })
+
     const payload = {
       "id": { "ship": id.ship, "name": id.name.replaceAll(" ", "-") },
       // the value for "register" should be null when used as a guest;
@@ -928,6 +938,15 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
         }
       }
     }
+
+    // event
+    // start:   1733846420000
+    // end  :   1733846420000
+    // session:
+    // start  : 1733846400000
+    //          1733846400000
+    // end:     1733846400000
+    //          1733846400000
 
     const _poke = await api.poke({
       app: "live",

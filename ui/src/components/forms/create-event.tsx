@@ -1,6 +1,6 @@
 import { CreateEventParams, emptyEventAsHost } from "@/backend"
 import { EventForm } from "./event"
-import { convertDateToTZDate } from "@/lib/utils"
+import { newTZDateInUTCFromDate } from "@/lib/time"
 
 type Props = {
   createEvent: (newEvent: CreateEventParams) => Promise<boolean>
@@ -23,8 +23,8 @@ export const CreateEventForm = ({ createEvent }: Props) => {
 
         newEvent.details.title = values.title
         newEvent.details.location = values.location
-        newEvent.details.startDate = convertDateToTZDate(values.dateRange.from, "+00:00")
-        newEvent.details.endDate = convertDateToTZDate(values.dateRange.to, "+00:00")
+        newEvent.details.startDate = newTZDateInUTCFromDate(values.dateRange.from)
+        newEvent.details.endDate = newTZDateInUTCFromDate(values.dateRange.to)
         newEvent.details.description = values.eventDescription
         newEvent.details.timezone = values.utcOffset
         newEvent.details.kind = values.eventKind
@@ -37,8 +37,8 @@ export const CreateEventForm = ({ createEvent }: Props) => {
           .map(([id, { start, end, ...rest }]) => {
             return [id, {
               mainSpeaker: '',
-              startTime: convertDateToTZDate(end, values.utcOffset),
-              endTime: convertDateToTZDate(end, values.utcOffset),
+              startTime: newTZDateInUTCFromDate(start),
+              endTime: newTZDateInUTCFromDate(end),
               ...rest
             }]
           }))

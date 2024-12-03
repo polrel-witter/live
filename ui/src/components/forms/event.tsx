@@ -2,7 +2,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Control, FieldValues, useForm } from "react-hook-form"
 import { z } from "zod"
 import { useEffect, useState } from "react"
-import { TZDate, } from "@date-fns/tz"
 import { ChevronUp, Pencil, X } from "lucide-react"
 
 import {
@@ -24,7 +23,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
-import { cn, convertTZDateToDate, flipBoolean, formatSessionTime } from "@/lib/utils"
+import { cn, flipBoolean } from "@/lib/utils"
 import { EventAsHost, validUTCOffsets } from "@/backend"
 import { SpinningButton } from "@/components/spinning-button"
 import { CreateSessionForm } from "@/components/forms/create-session"
@@ -32,6 +31,7 @@ import { SlideDownAndReveal } from "@/components/sliders"
 import { SessionCard } from "@/components/cards/session"
 import { EditSessionForm } from "./edit-session"
 import { useNavigate } from "react-router-dom"
+import { formatSessionTime, newDateFromTZDateInUTC, newTZDateInUTCFromDate, shiftTzDateInUTCToTimezone } from "@/lib/time"
 
 /* ON TIME
  * throughout this page we're storing time in ordinary Dates in local time; the user doesn't know
@@ -160,10 +160,10 @@ const makeDefaultValues = (event?: EventAsHost) => {
     defaultValues.limit = event.limit ?? ""
     defaultValues.dateRange = {
       from: event.details.startDate
-        ? convertTZDateToDate(event.details.startDate, event.details.timezone)
+        ? newDateFromTZDateInUTC(event.details.startDate)
         : new Date(),
       to: event.details.endDate
-        ? convertTZDateToDate(event.details.endDate, event.details.timezone)
+        ? newDateFromTZDateInUTC(event.details.endDate)
         : new Date()
     }
     defaultValues.utcOffset = event.details.timezone
@@ -171,19 +171,24 @@ const makeDefaultValues = (event?: EventAsHost) => {
     defaultValues.eventLatch = event.details.latch
     defaultValues.eventGroup = event.details.group
       ? { host: event.details.group.ship, name: event.details.group.name }
-      : undefined
+      : { host: undefined, name: undefined }
 
     defaultValues.venueMap = event.details.venueMap
     defaultValues.eventDescription = event.details.description
     defaultValues.eventSecret = event.secret
     defaultValues.sessions = Object.fromEntries(
       Object.entries(event.details.sessions)
-        .map(([id, { startTime, endTime, mainSpeaker: _, ...rest }]) => {
+        .map(([id, { startTime, endTime, mainSpeaker: _, panel, ...rest }]) => {
           return [
             [id],
             {
-              start: startTime ? convertTZDateToDate(startTime, event.details.timezone) : new Date(),
-              end: endTime ? convertTZDateToDate(endTime, event.details.timezone) : new Date(),
+              start: startTime
+                ? newDateFromTZDateInUTC(startTime)
+                : new Date(),
+              end: endTime
+                ? newDateFromTZDateInUTC(endTime)
+                : new Date(),
+              panel: panel || [],
               ...rest
             }
           ]
@@ -283,9 +288,26 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                     second: false,
                   }}
                   dateRangeValue={field.value}
+                  // re-constructing dates here so seconds don't leak
+                  // from newRange to the form range value
                   onRangeChange={(newRange) => {
                     newRange
-                      ? form.setValue("dateRange", newRange)
+                      ? form.setValue("dateRange", {
+                        from: new Date(
+                          newRange.from.getFullYear(),
+                          newRange.from.getMonth(),
+                          newRange.from.getDate(),
+                          newRange.from.getHours(),
+                          newRange.from.getMinutes()
+                        ),
+                        to: new Date(
+                          newRange.to.getFullYear(),
+                          newRange.to.getMonth(),
+                          newRange.to.getDate(),
+                          newRange.to.getHours(),
+                          newRange.to.getMinutes()
+                        ),
+                      })
                       : form.resetField("dateRange")
                   }}
                   min={new Date()}
@@ -525,7 +547,11 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                                 <p className="justify-self-start">
                                   {session.title}
                                   <span className="inline-block text-primary/50 text-xs pl-2">
-                                    - from {formatSessionTime(session.start)} {formatSessionTime(session.end)}
+                                    - from {formatSessionTime(
+                                      newTZDateInUTCFromDate(session.start)
+                                    )} to {formatSessionTime(
+                                      newTZDateInUTCFromDate(session.end)
+                                    )}
                                   </span>
                                 </p>
                                 <div className="flex">
@@ -537,7 +563,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                                     onClick={() => {
                                       form.setValue("sessions", Object.fromEntries(
                                         Object.entries(form.getValues("sessions"))
-                                          .filter(([_id, _session]) => _session.title !== session.title))
+                                          .filter(([_id, _session]) => _id !== id))
                                       )
                                     }}
                                   >
@@ -581,11 +607,19 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                                 maxHeight="max-h-[1000px]"
                                 show={openSessions?.get(id) || false}
                               >
-                                <SessionCard session={{
-                                  startTime: new TZDate(session.start),
-                                  endTime: new TZDate(session.end),
-                                  ...session
-                                }} />
+                                <SessionCard
+                                  session={{
+                                    startTime: shiftTzDateInUTCToTimezone(
+                                      newTZDateInUTCFromDate(session.start),
+                                      form.watch("utcOffset")
+                                    ),
+                                    endTime: shiftTzDateInUTCToTimezone(
+                                      newTZDateInUTCFromDate(session.end),
+                                      form.watch("utcOffset")
+                                    ),
+                                    ...session
+                                  }}
+                                />
                               </SlideDownAndReveal>
                             </li>)
                           })}
@@ -628,12 +662,12 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                               const newFieldValue: [string, z.infer<typeof sessionSchema>][] = [
                                 ...Object.entries(field.value),
                                 [
+                                  // TODO: session id quickfix, this should be
+                                  // fairly unique
                                   (new Date().valueOf()).toFixed(),
                                   {
-                                    // TODO: session id quickfix, this should be
-                                    // fairly unique
-                                    start,
-                                    end,
+                                    start: start,
+                                    end: end,
                                     ...rest
                                   }
                                 ]

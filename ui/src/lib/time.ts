@@ -63,7 +63,7 @@ const validUTCOffsets = [
   "+14:00",
 ] as const
 
-type UTCOffset = typeof validUTCOffsets[number]
+export type UTCOffset = typeof validUTCOffsets[number]
 
 // -- time conversion functions -- //
 // we need these functions because, for display purposes, there isn't a way
@@ -79,12 +79,10 @@ export function newTZDateInUTCFromDate(date: Date): TZDate {
   // the date/time of the Date argument. For example if it's 13:00 in GMT+1
   // tzDateInUtc would be a TZDate set to 12:00 UTC+0
   const tzDateInUtc = new TZDate(date, "+00:00")
-  console.log(formatEventDateShort(tzDateInUtc))
 
   // so to make it keep the same time we need to subtract that offset to
   // return to the inital date/time
   const localTimeOffset = new Date().getTimezoneOffset()
-  console.log(localTimeOffset)
   const res = sub<TZDate, TZDate>(
     tzDateInUtc,
     { minutes: localTimeOffset }
@@ -105,6 +103,11 @@ export function newDateFromTZDateInUTC(date: TZDate): Date {
   )
 
   return new Date(res.valueOf())
+}
+
+// this creates a TZDate in UTC from a unix timestamp
+export function newTzDateInUTCFromUnixMilli(ms: number): TZDate {
+  return new TZDate(ms, "+00:00")
 }
 
 // this function returns a new TZDate object which keeps the same date/time as
@@ -155,6 +158,6 @@ export function formatEventDateShort(d: TZDate): string {
 }
 
 export function formatSessionTime(d: Date): string {
-  const fmt = format(d, `hh:mm aa`)
+  const fmt = format(d, `HH:mm`)
   return fmt
 }

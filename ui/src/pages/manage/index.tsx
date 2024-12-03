@@ -1,7 +1,7 @@
 import { LoaderFunctionArgs, Params, useLoaderData, useNavigate, useSubmit } from "react-router-dom"
 import { useContext, useEffect, useRef, useState } from "react"
 
-import { Attendee, Backend, emptyEventAsAllGuests, emptyEventAsHost, EventAsAllGuests, EventAsHost, EventId, eventIdsEqual, EventStatus, Patp, Profile, PatpSchema, RecordInfo } from "@/backend"
+import { Attendee, Backend, emptyEventAsHost, EventAsAllGuests, EventAsHost, EventId, eventIdsEqual, EventStatus, Patp, Profile, PatpSchema, RecordInfo } from "@/backend"
 import { GlobalContext, GlobalCtx } from "@/globalContext"
 
 import { NavbarWithSlots } from "@/components/frame/navbar"
@@ -12,7 +12,7 @@ import { BackButton } from "@/components/back-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { SlideDownAndReveal } from "@/components/sliders"
-import { cn, flipBoolean, formatEventDateShort } from "@/lib/utils"
+import { cn, flipBoolean } from "@/lib/utils"
 import { ResponsiveContent } from "@/components/responsive-content"
 import { EventDetailsCard } from "@/components/cards/event-details"
 import { EditEventForm } from "@/components/forms/edit-event"
@@ -29,6 +29,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } 
 import { SpinningButton } from "@/components/spinning-button"
 import { AnimatedButtons } from "@/components/animated-buttons"
 import { Dialog, DialogHeader, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { formatEventDateShort, shiftTzDateInUTCToTimezone } from "@/lib/time"
 
 async function ManageParamsLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> {
@@ -270,7 +271,6 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
     }, [evt])
 
   const ButtonOrPlaceHolder = () => {
-
     if (!evt) {
       return (
         <Button
@@ -295,7 +295,6 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
         guest statuses
       </Button>
     )
-
   }
 
 
@@ -374,7 +373,14 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
                               {/* WARN: casting as Patp */}
                               <StatusButton status={info.status} patp={patp as Patp} />
                             </div>,
-                            <div className="text-xs truncate"> {formatEventDateShort(info.lastChanged)} </div>,
+                            <div className="text-xs truncate">
+                              {formatEventDateShort(
+                                shiftTzDateInUTCToTimezone(
+                                  info.lastChanged,
+                                  (evt && evt[1].timezone) || "+00:00"
+                                )
+                              )}
+                            </div>,
                           ]}
                         />
                       </Card>
@@ -652,9 +658,9 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
           <DialogHeader>
             <DialogTitle> delete event </DialogTitle>
           </DialogHeader>
-          <Card className="p-4 text-center">
+          <Card className="p-4 text-balance">
             are you sure you want to delete the event with id
-            <div className="inline-block relative bg-red-200 rounded-md p-[1px] px-1">
+            <div className="inline-block relative bg-red-200 rounded-md p-[1px] px-1 ml-2">
               {event.details.id.ship} / {event.details.id.name}
             </div>?
             <div className="flex w-full justify-around mt-2">

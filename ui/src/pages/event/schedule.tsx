@@ -1,6 +1,5 @@
 import { useContext, useEffect, useState } from "react";
 import { EventContext } from './context'
-import SessionList from "@/components/lists/session";
 import { Session } from "@/backend";
 
 import {
@@ -16,6 +15,9 @@ import {
 import { TZDate } from "@date-fns/tz";
 import { SessionDateSelect } from "@/components/session-date-select";
 import { makeArrayOfEventDays } from "@/lib/utils";
+import { SessionCard } from "@/components/cards/session";
+import { newTZDateInUTCFromDate, shiftTzDateInUTCToTimezone } from "@/lib/time";
+import { start } from "repl";
 
 // these are now independent from session-date-select dateFromKey/dateToKey
 function dateToKey(d: TZDate): string {
@@ -159,13 +161,42 @@ export function SchedulePage() {
         }}
         currentDate={getCurrentDate(dates)}
       />
-      <SessionList
-        sessions={Object.values(ctx.event.details.sessions)
-          .filter(({ startTime }) => {
-            let start = startTime ? startTime : new Date(0)
-            return start.getDay() === activeDate.getDay()
-          })}
-      />
+      <ul className="grid gap-6">
+        {
+          Object.values(ctx.event.details.sessions)
+            .filter(({ startTime }) => {
+              let start = startTime ? startTime : new Date(0)
+              return start.getDay() === activeDate.getDay()
+            })
+            .sort((a, b) => {
+              if (a.startTime && b.startTime) {
+                return compareAsc(a.startTime, b.startTime)
+              } else {
+                return -1
+              }
+            })
+            .map(({ startTime, endTime, ...session }) => {
+              const startInTz = startTime && shiftTzDateInUTCToTimezone(
+                newTZDateInUTCFromDate(startTime),
+                ctx.event.details.timezone
+              )
+
+              const endInTz = endTime && shiftTzDateInUTCToTimezone(
+                newTZDateInUTCFromDate(endTime),
+                ctx.event.details.timezone
+              )
+              return (
+                <li key={session.title}>
+                  <SessionCard session={{
+                    startTime: startInTz,
+                    endTime: endInTz,
+                    ...session
+                  }} />
+                </li>
+              )
+            })
+        }
+      </ul>
     </div>
   )
 }

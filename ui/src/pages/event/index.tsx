@@ -6,7 +6,7 @@ import { Attendee, Backend, emptyEventAsGuest, EventAsGuest, EventId, eventIdsEq
 
 import { GlobalContext, GlobalCtx } from '@/globalContext';
 import { EventContext, EventCtx, newEmptyCtx } from './context';
-import { cn, flipBoolean, formatEventDateShort, stripPatpSig } from '@/lib/utils';
+import { cn, flipBoolean, stripPatpSig } from '@/lib/utils';
 import { AppFrame } from '@/components/frame';
 import { FooterWithSlots } from '@/components/frame/footer';
 import { ConnectionStatusBar } from '@/components/connection-status';
@@ -18,6 +18,7 @@ import { BackButton } from '@/components/back-button';
 import { SlideRightAndReveal } from '@/components/sliders';
 import { Button } from '@/components/ui/button';
 import { ChevronUp } from 'lucide-react';
+import { formatEventDateShort } from '@/lib/time';
 
 async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
   return Promise.all(a
