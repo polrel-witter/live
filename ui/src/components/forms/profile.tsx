@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Control, useForm } from "react-hook-form"
 import { z } from "zod"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import {
   Form,
@@ -102,7 +102,7 @@ const formSchema = z.object({
   ensDomain: emptyStringSchema
     .or(z.string().includes(".", { message: "Must include a dot" })),
   signal: emptyStringSchema.or(usernameWithAtSchema.or(phoneNumberSchema)),
-  togglePalsIntegration: z.boolean().default(false),
+  togglePalsIntegration: z.boolean(),
 })
 
 type Props = {
@@ -125,8 +125,12 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfile }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     mode: "onChange",
-    defaultValues: pf,
+    defaultValues: { ...pf, togglePalsIntegration: profileFields.addToPals },
   })
+
+  useEffect(() => {
+    form.reset({ ...pf, togglePalsIntegration: profileFields.addToPals })
+  }, [])
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Do something with the form values.
@@ -170,7 +174,7 @@ const ProfileForm: React.FC<Props> = ({ profileFields, editProfile }) => {
             <FormItem>
               <FormControl>
                 <div className="flex flex-row justify-start items-center">
-                  <FormLabel className="pb-[1px] mr-4 my-2"> inegrate with %pals </FormLabel>
+                  <FormLabel className="pb-[1px] mr-4 my-2"> integrate with %pals </FormLabel>
                   <ButtonToggle
                     pressed={field.value}
                     pressedColor="bg-emerald-600"

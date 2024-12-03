@@ -30,7 +30,6 @@ const ProfileDialog: React.FC<Props> = ({
     setOpenDialog(open)
   }, [open])
 
-
   const editProfile = async (fields: Record<string, string>, addPals: boolean): Promise<void> => {
 
     let fieldsToChange: [string, string | null][] = []

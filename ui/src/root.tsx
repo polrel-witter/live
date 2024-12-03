@@ -3,6 +3,7 @@ import { addSig, Backend, EventAsAllGuests, EventAsHost, eventIdsEqual, LiveEven
 import { Toaster } from "./components/ui/toaster";
 import { buildIndexCtx, ConnectionStatus, GlobalContext, newEmptyIndexCtx } from "./globalContext";
 import { record } from "zod";
+import { add } from "date-fns";
 
 
 // TODO: this should eventually check that the urbit we're connected to
@@ -83,6 +84,8 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
 
     let liveSubId: number;
     let matcherSubId: number;
+    let addPalsSubId: number;
+    
 
     buildIndexCtx(backend, addSig(window.ship)).then(({
       fetched,
@@ -201,10 +204,27 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
       onQuit: (data) => { console.log("%live closed subscription: ", data) }
     }).then((id) => { matcherSubId = id })
 
+    backend.subscribeToMatcherAddPalsEvent({
+      onEvent: (evt) => {
+        setCtx(({ profile: oldProfile, ...rest }) => {
+          return {
+            profile: {
+              ...oldProfile,
+              addToPals: evt
+            },
+            ...rest
+          }
+        })
+      },
+      onError: (err, _id) => { console.log("%live err: ", err) },
+      onQuit: (data) => { console.log("%live closed subscription: ", data) }
+    }).then((id) => { addPalsSubId = id })
+
     return () => {
       Promise.all([
         backend.unsubscribeFromEvent(liveSubId),
-        backend.unsubscribeFromEvent(matcherSubId)
+        backend.unsubscribeFromEvent(matcherSubId),
+        backend.unsubscribeFromEvent(addPalsSubId)
       ]).then(() => { console.log("unsubscribed from events") })
     }
 

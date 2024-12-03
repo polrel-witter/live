@@ -180,6 +180,7 @@ function makeNavbarAndFooter(
           <ProfileButton
             profile={hostProfile}
             editProfileField={backend.editProfileField}
+            setAddPals={backend.setAddPals}
           />
           {!onMobile && <DesktopMenu />}
         </div>

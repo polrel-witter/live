@@ -1,11 +1,10 @@
 import Urbit from "@urbit/http-api";
 
-import { tz, TZDate } from "@date-fns/tz";
+import { TZDate } from "@date-fns/tz";
 
 import { z, ZodError } from "zod" // this is an object validation library
 
-import { newTZDateInTimeZoneFromUnix, newTZDateInTimeZoneFromUnixMilli } from "./lib/utils";
-import { add } from "date-fns";
+import { newTZDateInUTCFromDate, newTzDateInUTCFromUnixMilli } from "./lib/time";
 
 // Patp types and utilities
 
@@ -220,7 +219,6 @@ interface Backend {
 
   subscribeToMatcherAddPalsEvent(handlers: {
     onEvent: (e: boolean) => void
-    onProfileChange: (e: MatcherProfileEvent) => void
     onError: (err: any, id: string) => void,
     onQuit: (data: any) => void,
   }): Promise<number>
@@ -1379,7 +1377,7 @@ const getProfilesSchema = z.object({
 function entryArrayToProfile(
   patp: Patp,
   fields: z.infer<typeof profileEntryObjSchema>[],
-  addToPals: false,
+  addToPals: boolean,
 ): Profile {
   const p: Profile = {
     patp: patp,
@@ -1509,6 +1507,8 @@ function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
       return null
     }
 
+    let addPals = false
+
     const addToPals = await _api.scry({
       app: "matcher",
       // in agent file it says host/name/ship ??
@@ -1516,10 +1516,14 @@ function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
       path: "/pals/add"
       // path: `/record/${id.ship}/${id.name}/~zod`
     })
-      .then()
+      .then(z.object({ addPals: z.boolean() }).parse)
       .catch((err) => { console.error("error during getProfiles api call", err.errors) })
 
-    return entryArrayToProfile(patp, profileFields, false)
+    if (addToPals) {
+      addPals = addToPals.addPals
+    }
+
+    return entryArrayToProfile(patp, profileFields, addPals)
   }
 }
 
@@ -1713,11 +1717,11 @@ function subscribeToMatcherAddPalsEvent(_api: Urbit): (handlers: {
   return async ({ onEvent, onError, onQuit }) => {
     return window.urbit.subscribe({
       app: "matcher",
-      path: "/addToPals",
+      path: "/add-pals",
       event: (evt) => {
         try {
-          const matchEvt = z.object({ addToPals: z.boolean() }).parse(evt)
-          onEvent(matchEvt.addToPals)
+          const matchEvt = z.object({ addPals: z.boolean() }).parse(evt)
+          onEvent(matchEvt.addPals)
         } catch (e) {
           throw e
         }
