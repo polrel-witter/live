@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronUp, Search, X } from "lucide-react";
 import { Backend, EventDetails, EventId, eventIdsEqual, PatpSchema } from "@/backend";
-import { cn, flipBoolean, formatEventDate } from "@/lib/utils";
+import { cn, flipBoolean } from "@/lib/utils";
 import { ResponsiveContent } from "@/components/responsive-content";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -16,6 +16,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { compareDesc } from "date-fns";
 import { SlideDownAndReveal } from "@/components/sliders";
 import { SpinningButton } from "@/components/spinning-button";
+import { formatEventDate, shiftTzDateInUTCToTimezone } from "@/lib/time";
 
 
 
@@ -43,7 +44,11 @@ const EventThumbnail: React.FC<EventThumbnailProps> = (
             <CardDescription className="italics">hosted by {id.ship}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>starts at {startDate ? formatEventDate(startDate) : "TBD"}</p>
+            <p>starts at {startDate 
+              ? formatEventDate(
+              shiftTzDateInUTCToTimezone(startDate, timezone)
+            ) 
+              : "TBD"}</p>
             <p>location: {location}</p>
           </CardContent>
           <CardFooter> </CardFooter>

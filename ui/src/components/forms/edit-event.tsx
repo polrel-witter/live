@@ -1,10 +1,19 @@
 import { Backend, EventAsHost, Session } from "@/backend"
 import { EventForm } from "./event"
-import { convertDateToTZDate, nullableTZDatesEqual } from "@/lib/utils"
+import { TZDate } from "@date-fns/tz"
+import { isEqual } from "date-fns"
+import { newTZDateInUTCFromDate } from "@/lib/time"
 
 type Props = {
   event: EventAsHost
   backend: Backend
+}
+
+export function nullableTZDatesEqual(d1: TZDate | null, d2: TZDate | null) {
+  if (d1 === null && d2 !== null) { return false }
+  if (d1 !== null && d2 === null) { return false }
+  if (d1 !== null && d2 !== null) { return isEqual(d1, d2) }
+  return true
 }
 
 export const EditEventForm = ({ backend, event }: Props) => {
@@ -36,9 +45,8 @@ export const EditEventForm = ({ backend, event }: Props) => {
           backend.editEventDetailsLocation(eventId, values.location)
         }
 
-        // FIXME: changing dates doesn't work
-        const newStartDate = convertDateToTZDate(values.dateRange.from, values.utcOffset)
-        const newEndDate = convertDateToTZDate(values.dateRange.to, values.utcOffset)
+        const newStartDate = newTZDateInUTCFromDate(values.dateRange.from)
+        const newEndDate = newTZDateInUTCFromDate(values.dateRange.to)
 
         const startDateChanged = !nullableTZDatesEqual(event.details.startDate, newStartDate)
         const endDateChanged = !nullableTZDatesEqual(event.details.endDate, newEndDate)
@@ -70,7 +78,7 @@ export const EditEventForm = ({ backend, event }: Props) => {
         const groupHostDifferent = event.details.group?.ship !== values.eventGroup?.host
         const groupNameDifferent = event.details.group?.name !== values.eventGroup?.name
         if (groupHostDifferent || groupNameDifferent) {
-          if (!values.eventGroup) {
+          if (!values.eventGroup.name || !values.eventGroup.host) {
             backend.editEventDetailsGroup(eventId, null)
           } else {
             backend.editEventDetailsGroup(
@@ -99,8 +107,8 @@ export const EditEventForm = ({ backend, event }: Props) => {
             return [id,
               {
                 mainSpeaker: "",
-                startTime: convertDateToTZDate(start, values.utcOffset),
-                endTime: convertDateToTZDate(end, values.utcOffset),
+                startTime: newTZDateInUTCFromDate(start),
+                endTime: newTZDateInUTCFromDate(end),
                 ...rest
               }]
           }))

@@ -5,6 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { newTZDateInUTCFromDate } from "@/lib/time"
 import { format, isEqual } from "date-fns"
 import { useEffect, useState } from "react"
 import { TZDate } from "react-day-picker"
@@ -14,9 +15,9 @@ function dateToKey(d: TZDate): string {
 }
 
 const SessionDateSelect: React.FC<{
-  sessionDates: Array<TZDate>,
+  sessionDates: Array<Date>,
   onDateChange: (s: TZDate) => void,
-  currentDate: TZDate
+  currentDate: Date
 }
 > = ({ sessionDates, onDateChange, currentDate }) => {
 
@@ -26,7 +27,10 @@ const SessionDateSelect: React.FC<{
     () => {
       setDates(new Map(
         sessionDates
-          .map((date) => [dateToKey(date), date])
+          .map((date) => [
+            dateToKey(newTZDateInUTCFromDate(date)),
+            newTZDateInUTCFromDate(date)
+          ])
       ))
     },
     [sessionDates])
@@ -46,7 +50,11 @@ const SessionDateSelect: React.FC<{
       }>
       <SelectTrigger className="w-[180px]">
         <SelectValue
-          defaultValue={currentDate ? dateToKey(currentDate) : "Select Date"}
+          defaultValue={
+            currentDate
+              ? dateToKey(newTZDateInUTCFromDate(currentDate))
+              : "Select Date"
+          }
           placeholder={
             (isEqual(currentDate, new Date(0))
               ? "no time set"

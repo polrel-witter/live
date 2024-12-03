@@ -63,7 +63,7 @@ key:
     + we should see `latch` and `kind` status somewhere on the event
       card.
     + need a delete button - with a "are you sure?" pop-up. the poke to send is: `live-operation [[~sampel-palnet %some-event-id] [%delete ~]]` which is just `null`
-    - edit event
+    + edit event
         + when clicking the event, the update comes through at the top,
           but not in the form itself. i also think it should give a bit
           more user feedback; e.g. closing the edit dropdown or changing
@@ -76,7 +76,7 @@ key:
           selection are greyed out. when i select the end time, i can go
           back and select a start time. occasionally, some times are
           greyed out but not others.
-        - the timezone is effecting how the time is written to state.
+        + the timezone is effecting how the time is written to state.
           e.g. if the host selects 8:00 and GMT-4 it'll be written as
           4:00 to state. The backend functions on UTC 0, but it should
           not be converting this as the user would then interpret the
@@ -112,7 +112,7 @@ key:
     + remove the AM/PM distinction since it displays a 24 hour clock.
     - the description sometimes renders across the screen, i.e. no
       linebreaks.
-    - we should see `latch` and `kind` status somewhere on the event
+    + [~widmes-hassen] we should see `latch` and `kind` status somewhere on the event
       card.
     - if a map url is set and then removed, the map still displays for
       the user. although if the host changes it to a new url, the new one
@@ -123,7 +123,7 @@ key:
 - create page
     + clicking 'add session' before filling in any details causes a
       crash: `Cannot read properties of undefined (reading 'valueOf')`
-    - if i click the create button without filling in any fields, the
+    + [~widmes-hassen] if i click the create button without filling in any fields, the
       group section and sessions are also highlighted red. those aren't
       required so no need to highlight. it also then won't let me create
       the event if i then fill in the required fields.

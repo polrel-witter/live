@@ -6,8 +6,8 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card"
+import { formatSessionTime, shiftTzDateInUTCToTimezone, UTCOffset } from "@/lib/time"
 
-import { formatSessionTime } from "@/lib/utils"
 import { TZDate } from "@date-fns/tz"
 
 function formatSessionPanel(panel: string[]): string {
@@ -33,9 +33,21 @@ type Props = {
     about: string | null;
     startTime: TZDate | null;
     endTime: TZDate | null;
-  }
+  },
 }
 const SessionCard: React.FC<Props> = ({ session }) => {
+
+  const SessionTime = ({ startTime, endTime }: {
+    startTime: TZDate,
+    endTime: TZDate
+  }) => {
+    return (
+      <span>
+        from {formatSessionTime(startTime)} to {formatSessionTime(endTime)}
+      </span>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -54,9 +66,11 @@ const SessionCard: React.FC<Props> = ({ session }) => {
               : ""
           }
           {
-            session.startTime && session.endTime
-              ? <span> from {formatSessionTime(session.startTime)} to {formatSessionTime(session.endTime)} </span>
-              : ''
+            (session.startTime && session.endTime) &&
+            <SessionTime
+              startTime={session.startTime}
+              endTime={session.endTime}
+            />
           }
         </CardDescription>
       </CardHeader>

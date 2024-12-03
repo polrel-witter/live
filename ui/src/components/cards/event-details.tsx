@@ -2,12 +2,13 @@ import React from "react"
 
 import { EventDetails, isComet, isMoon, Patp, Profile } from "@/backend";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { cn, formatEventDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { buttonVariants } from "@/components/ui/button";
 import { ProfilePicture } from "@/components/profile-picture";
 import { MessagesSquare } from "lucide-react";
 import { AnimatedButtons } from "../animated-buttons";
+import { formatEventDate, shiftTzDateInUTCToTimezone } from "@/lib/time";
 
 
 const baseTextClass = "text-sm md:text-lg"
@@ -63,6 +64,7 @@ const EventDetailsCard: React.FC<Props> = ({ details, hostProfile, buttons, clas
     group,
     startDate,
     endDate,
+    timezone,
     location,
     description
   } = details
@@ -95,7 +97,7 @@ const EventDetailsCard: React.FC<Props> = ({ details, hostProfile, buttons, clas
           "md:text-sm"
         ])}>
           <div className="font-bold">starts</div>
-          {startDate ? <div>{formatEventDate(startDate)}</div> : "TBD"}
+          {startDate ? <div>{formatEventDate(shiftTzDateInUTCToTimezone(startDate, timezone ))}</div> : "TBD"}
         </div>
 
         <div className={cn([
@@ -104,7 +106,7 @@ const EventDetailsCard: React.FC<Props> = ({ details, hostProfile, buttons, clas
           "md:text-sm"
         ])}>
           <div className="font-bold">ends</div>
-          {endDate ? <div>{formatEventDate(endDate)}</div> : "TBD"}
+          {endDate ? <div>{formatEventDate(shiftTzDateInUTCToTimezone(endDate, timezone ))}</div> : "TBD"}
         </div>
 
         {group ? <TlonGroupLink ship={group.ship} name={group.name} /> : ''}

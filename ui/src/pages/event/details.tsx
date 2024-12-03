@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ResponsiveContent } from "@/components/responsive-content";
 import { AnimatedButtons } from "@/components/animated-buttons";
-import { cn, formatEventDateShort } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatEventDateShort, shiftTzDateInUTCToTimezone } from "@/lib/time";
 
 const EventDetails: React.FC = () => {
   const globalCtx = useContext(GlobalContext)
@@ -61,7 +62,12 @@ const EventDetails: React.FC = () => {
                     ])}>
                       <span>{ctx.event.status}</span>
                       <span className="text-[10px] font-bold truncate">
-                        {formatEventDateShort(ctx.event.lastChanged)}
+                        {formatEventDateShort(
+                          shiftTzDateInUTCToTimezone(
+                            ctx.event.lastChanged,
+                            ctx.event.details.timezone,
+                          )
+                        )}
                       </span>
                     </div>,
                     <div className="text-xs sm:text-base truncate"> event is currently {ctx.event.details.latch} </div>,

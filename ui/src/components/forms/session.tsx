@@ -20,8 +20,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TimePicker } from "@/components/ui/date-time-picker/time-picker"
 
-import { convertDateToTZDate, makeArrayOfEventDays } from "@/lib/utils"
+import { makeArrayOfEventDays } from "@/lib/utils"
 import { SessionDateSelect } from "@/components/session-date-select"
+import { newTZDateInUTCFromDate } from "@/lib/time"
 
 // need this otherwise the <Input> in there is not happy
 type adjustedFormType = Omit<z.infer<typeof sessionSchema>, "timeRange">
@@ -108,21 +109,13 @@ function buildDefaultValues(min: Date, max: Date, session?: z.infer<typeof sessi
   return defaultValues
 }
 
-const newDateWithTimeAtStart = (d: Date) => {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
-}
-const newDateWithTimeAtEnd = (d: Date) => {
-  return new Date(
-    d.getFullYear(),
-    d.getMonth(),
-    d.getDate(),
-    23,
-    55,
-  )
+const newDateWithTime = (d: Date, hours: number, minutes: number) => {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), hours, minutes)
 }
 
 // cool feature:
 // https://stackoverflow.com/questions/70939652/focus-on-next-input-with-react-form-hook
+//
 const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
   const form = useForm<z.infer<typeof sessionSchema>>({
     resolver: zodResolver(sessionSchema),
@@ -132,8 +125,24 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
   })
 
   useEffect(() => {
-    form.setValue("timeRange.start", newDateWithTimeAtStart(min))
-    form.setValue("timeRange.end", newDateWithTimeAtEnd(min))
+    form.setValue("timeRange.start", newDateWithTime(
+      min,
+      session
+        ? session.timeRange.start.getHours()
+        : min.getHours(),
+      session
+        ? session.timeRange.start.getMinutes()
+        : min.getMinutes(),
+    ))
+    form.setValue("timeRange.end", newDateWithTime(
+      min,
+      session
+        ? session.timeRange.end.getHours()
+        : 23,
+      session
+        ? session.timeRange.end.getMinutes()
+        : 55,
+    ))
   }, [])
 
   const formRef = useRef<HTMLFormElement>(null);
@@ -258,8 +267,18 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
               () => {
                 const eventDays = makeArrayOfEventDays(new TZDate(min), new TZDate(max))
                 setEventDays(eventDays)
-                form.setValue("timeRange.start", newDateWithTimeAtStart(eventDays[0]))
-                form.setValue("timeRange.end", newDateWithTimeAtEnd(eventDays[0]))
+                // form.setValue("timeRange.start", new Date(
+                //   eventDays[0].getFullYear(),
+                //   eventDays[0].getMonth(),
+                //   eventDays[0].getDate(),
+                // ))
+                // form.setValue("timeRange.end", new Date(
+                //   eventDays[0].getFullYear(),
+                //   eventDays[0].getMonth(),
+                //   eventDays[0].getDate(),
+                //   23,
+                //   55
+                // ))
               },
               [])
 
@@ -271,10 +290,20 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
                       <SessionDateSelect
                         sessionDates={eventDays}
                         onDateChange={(newDay: TZDate) => {
-                          form.setValue("timeRange.start", newDateWithTimeAtStart(newDay))
-                          form.setValue("timeRange.end", newDateWithTimeAtEnd(newDay))
+                          form.setValue("timeRange.start", new Date(
+                            newDay.getFullYear(),
+                            newDay.getMonth(),
+                            newDay.getDate(),
+                          ))
+                          form.setValue("timeRange.end", new Date(
+                            newDay.getFullYear(),
+                            newDay.getMonth(),
+                            newDay.getDate(),
+                            23,
+                            55
+                          ))
                         }}
-                        currentDate={convertDateToTZDate(form.watch("timeRange.start"), "+00:00")}
+                        currentDate={form.watch("timeRange.start")}
                       />
                     </div>
                     <div className="flex justify-around">
@@ -288,12 +317,12 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
                             second: false,
                           }}
                           containerRef={formRef}
-                          value={form.watch("timeRange.start")}
+                          value={field.value.start}
                           onChange={(newTime) => {
                             form.setValue("timeRange.start", newTime)
                           }}
                           min={min}
-                          max={form.watch("timeRange.end") || max}
+                          max={field.value.end || max}
                         />
                       </div>
                       <div className="flex-col">
@@ -310,15 +339,20 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
                           onChange={(newTime) => {
                             form.setValue("timeRange.end", newTime)
                           }}
-                          min={form.watch("timeRange.start") || min}
-                          max={max}
+                          min={field.value.start || min}
+                          max={
+                            field.value.end.getDay() === max.getDay()
+                              ? max
+                              : newDateWithTime(form.watch("timeRange.end"), 23, 55)
+                          }
+
                         />
                       </div>
                     </div>
                   </div>
                 </FormControl>
                 <FormDescription className="text-balance text-center">
-                greyed out times signify that you can't make the end time be before the start time, or vice-versa
+                  greyed out times signify that you can't make the end time be before the start time, or vice-versa
                 </FormDescription>
               </FormItem>
             )
