@@ -130,9 +130,9 @@ key:
     + [~polrel-witter] the profile button on this page should be a back button. no need
       to have profile editing on here.
     + [~polrel-witter] on the event creation page, if about, location, venue map, or secret are empty they should be `null`. for both event and sessions. right now they're defaulting to empty strings.
-    - [~polrel-witter] if the creation was successful it should redirect them to the
+    + [~polrel-witter] if the creation was successful it should redirect them to the
       management page.
-    - [~polrel-witter] there's a message that says the location field can't be empty, but it can
+    + [~polrel-witter] there's a message that says the location field can't be empty, but it can
     + [~polrel-witter] some field titles have 'event' in front. can get rid of this; e.g.
       'event title' > 'title'
     - in the event date picker, if we select a date range and click out without clicking 'done' the dates appear to set, but then clicking the 'add session' button leads to a crash.
@@ -142,8 +142,8 @@ key:
 - figure out color scheme
 - the register button isn't working right. it seems to send a register poke, but quickly follows with an unregister poke. sometimes the registration appears to go through, but the success pop-up says "you've successfully unregistered to this event".
 - when someone has a requested status, the 'status change button' shouldn't be clickable.
-- the status, latch and kind buttons on the guest and management event page should show cursor on hover
-- there should be a 'guest list' and 'schedule' button on the host management page. they should be able to interface with these two pages like guests.
+- [~polrel-witter] the status, latch and kind buttons on the guest and management event page should show cursor on hover
+- [~polrel-witter] there should be a 'guest list' and 'schedule' button on the host management page. they should be able to interface with these two pages like guests.
 - the event address is currently hard to find. i think it should go below the end date, above the group link.
 
 
