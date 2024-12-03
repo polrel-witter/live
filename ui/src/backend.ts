@@ -478,7 +478,7 @@ const sessionSchema = z.object({
   location: z.string().nullable(),
   moment: moment1Schema,
   about: z.string().nullable(),
-  panel: z.string().nullable()
+  panel: z.array(z.string())
 })
 
 const backendInfo1Schema = z.object({
@@ -552,7 +552,7 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
       mainSpeaker: "",
       location: session.location,
       about: session.about,
-      panel: session.panel ? session.panel.split(" ") : null,
+      panel: session.panel,
       startTime: newTZDateOrNull(session.moment.start),
       endTime: newTZDateOrNull(session.moment.end)
     }]

@@ -110,7 +110,7 @@ key:
         + in general, really like how this looks/feels. great work.
 - guest page
     + remove the AM/PM distinction since it displays a 24 hour clock.
-    - the description sometimes renders across the screen, i.e. no
+    + the description sometimes renders across the screen, i.e. no
       linebreaks.
     + [~widmes-hassen] we should see `latch` and `kind` status somewhere on the event
       card.
