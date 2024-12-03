@@ -898,17 +898,6 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
       ? { ship: details.group.ship, term: details.group.name }
       : null
 
-    console.log(formatEventDate(details.startDate!))
-    console.log(formatEventDate(details.endDate!))
-    console.log(tzDateToUnixMilliSeconds(details.startDate!))
-    console.log(tzDateToUnixMilliSeconds(details.endDate!))
-    Object.values(details.sessions).forEach((s) => {
-      console.log(formatSessionTime(s.startTime!))
-      console.log(formatSessionTime(s.endTime!))
-      console.log(tzDateToUnixMilliSeconds(s.startTime!))
-      console.log(tzDateToUnixMilliSeconds(s.endTime!))
-    })
-
     const payload = {
       "id": { "ship": id.ship, "name": id.name.replaceAll(" ", "-") },
       // the value for "register" should be null when used as a guest;
@@ -938,15 +927,6 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
         }
       }
     }
-
-    // event
-    // start:   1733846420000
-    // end  :   1733846420000
-    // session:
-    // start  : 1733846400000
-    //          1733846400000
-    // end:     1733846400000
-    //          1733846400000
 
     const _poke = await api.poke({
       app: "live",
