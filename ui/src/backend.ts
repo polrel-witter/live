@@ -1469,6 +1469,7 @@ function getProfiles(_api: Urbit): () => Promise<Profile[]> {
     // WARN: patp : casting to Patp here because schema validates it above; it's fine
     for (const [patp, arrs] of Object.entries(profileFields)) {
       if (arrs) {
+        // WARN: addPals false here because this is other ppl's profiles
         profiles.push(entryArrayToProfile(patp as Patp, arrs, false))
       }
     }
