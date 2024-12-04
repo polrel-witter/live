@@ -1,10 +1,8 @@
 import { Backend, EventAsGuest, EventId, EventStatus } from "@/backend"
 import { SpinningButton } from "@/components/spinning-button"
-import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { stat } from "fs"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 const makeClassName = (status: EventStatus) => {
@@ -115,10 +113,14 @@ const EventStatusButton = ({ event, fetched, backend }: EventStatusButtonProps) 
     <>
       <SpinningButton
         type="button"
+        disabled={status === "requested"}
         className={cn([
           baseClass,
           {
             "bg-rose-800 hover:bg-rose-900": status === "registered",
+          },
+          {
+            "bg-stone-700 hover:bg-stone-800": status === "requested",
           },
           {
             "bg-emerald-800 hover:bg-emerald-900": status === "attended",

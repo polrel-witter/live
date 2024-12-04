@@ -70,60 +70,65 @@ const EventDetailsCard: React.FC<Props> = ({ details, hostProfile, buttons, clas
   } = details
 
   return (
-    <Card className={cn(["w-max", className])} {...rest}>
+    <Card className={cn([className])} {...rest}>
       <CardHeader className="px-0">
         <p className="text-xl font-semibold text-center"> {title} </p>
       </CardHeader>
-      <CardContent className="grid justify-center gap-y-6 px-8" >
-        <div className={cn([
-          "flex flex-col items-center",
-          "sm:flex-row sm:items-center sm:justify-between sm:space-x-4",
-        ])}>
-          <div className={cn([baseTextClass])}> hosted by </div>
+      <CardContent className="flex justify-center">
+        <div className="grid w-min justify-center gap-y-6">
+          <div className={cn([
+            "flex flex-col items-center",
+            "sm:flex-row sm:items-center sm:justify-between sm:space-x-4",
+          ])}>
+            <div className={cn([baseTextClass])}> hosted by </div>
 
-          <div className="flex justify-center items-center gap-x-4">
-            <ProfilePicture
-              avatarUrl={hostProfile?.avatar ?? undefined}
-              size="xs"
-              point={ship}
-            />
-            <HostedByText profile={hostProfile} patp={ship} />
+            <div className="flex justify-center items-center gap-x-4">
+              <ProfilePicture
+                avatarUrl={hostProfile?.avatar ?? undefined}
+                size="xs"
+                point={ship}
+              />
+              <HostedByText profile={hostProfile} patp={ship} />
+            </div>
+          </div>
+
+          <div className={cn([
+            "flex flex-col text-[11px] items-center",
+            "sm:flex-row sm:items-center sm:justify-between",
+            "md:text-sm"
+          ])}>
+            <div className="font-bold">starts</div>
+            {startDate ? <div>{formatEventDate(shiftTzDateInUTCToTimezone(startDate, timezone))}</div> : "TBD"}
+          </div>
+
+          <div className={cn([
+            "flex flex-col text-[11px] items-center",
+            "sm:flex-row sm:items-center sm:justify-between",
+            "md:text-sm"
+          ])}>
+            <div className="font-bold">ends</div>
+            {endDate ? <div>{formatEventDate(shiftTzDateInUTCToTimezone(endDate, timezone))}</div> : "TBD"}
+          </div>
+
+          <div className={cn([
+            "flex flex-col text-[11px] items-center",
+            "sm:flex-row sm:items-center sm:justify-between",
+            "md:text-sm"
+          ])}>
+            <div className="font-bold">location:</div>
+            {location}
+          </div>
+
+          {group ? <TlonGroupLink ship={group.ship} name={group.name} /> : ''}
+
+          <p className={cn([baseTextClass, "text-justify", "py-8"])}> {description} </p>
+
+          <div>
+            {buttons}
           </div>
         </div>
-
-        <div className={cn([
-          "flex flex-col text-[11px] items-center",
-          "sm:flex-row sm:items-center sm:justify-between",
-          "md:text-sm"
-        ])}>
-          <div className="font-bold">starts</div>
-          {startDate ? <div>{formatEventDate(shiftTzDateInUTCToTimezone(startDate, timezone ))}</div> : "TBD"}
-        </div>
-
-        <div className={cn([
-          "flex flex-col text-[11px] items-center",
-          "sm:flex-row sm:items-center sm:justify-between",
-          "md:text-sm"
-        ])}>
-          <div className="font-bold">ends</div>
-          {endDate ? <div>{formatEventDate(shiftTzDateInUTCToTimezone(endDate, timezone ))}</div> : "TBD"}
-        </div>
-
-        {group ? <TlonGroupLink ship={group.ship} name={group.name} /> : ''}
-
-        <p className={cn([baseTextClass, "text-justify", "py-8"])}> {description} </p>
-
-        <div>
-          {buttons}
-        </div>
-
-        <div>
-        </div>
       </CardContent>
-      <CardFooter className="justify-center text-xs md:text-md">
-        location: {location}
-      </CardFooter>
-    </Card>
+    </Card >
   )
 }
 
