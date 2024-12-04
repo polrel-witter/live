@@ -24,14 +24,14 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 import { cn, flipBoolean } from "@/lib/utils"
-import { EventAsHost, validUTCOffsets } from "@/backend"
+import { EventAsHost, PatpSchema, validUTCOffsets } from "@/backend"
 import { SpinningButton } from "@/components/spinning-button"
 import { CreateSessionForm } from "@/components/forms/create-session"
 import { SlideDownAndReveal } from "@/components/sliders"
 import { SessionCard } from "@/components/cards/session"
 import { EditSessionForm } from "./edit-session"
-import { useNavigate } from "react-router-dom"
 import { formatSessionTime, newDateFromTZDateInUTC, newTZDateInUTCFromDate, shiftTzDateInUTCToTimezone } from "@/lib/time"
+import { StringWithDashes } from "@/lib/schemas"
 
 /* ON TIME
  * throughout this page we're storing time in ordinary Dates in local time; the user doesn't know
@@ -119,8 +119,11 @@ const schemas = z.object({
   eventDescription: emptyStringSchema.or(z.string()),
   venueMap: emptyStringSchema.or(z.string()),
   eventGroup: z.object({
-    host: z.string().or(z.undefined()),
-    name: z.string().or(z.undefined())
+    host: PatpSchema.or(emptyStringSchema),
+    name: StringWithDashes.refine(
+      s => s,
+      () => ({ message: "group name sould be in this form: group-name" })
+    ).or(emptyStringSchema)
   }),
   eventSecret: emptyStringSchema.or(z.string()),
   sessions: z.record(z.string(), sessionSchema)
@@ -145,8 +148,8 @@ const makeDefaultValues = (event?: EventAsHost) => {
     eventKind: undefined,
     eventLatch: undefined,
     eventGroup: {
-      host: undefined,
-      name: undefined
+      host: "",
+      name: ""
     },
     venueMap: "" as const,
     eventDescription: "",
@@ -171,7 +174,7 @@ const makeDefaultValues = (event?: EventAsHost) => {
     defaultValues.eventLatch = event.details.latch
     defaultValues.eventGroup = event.details.group
       ? { host: event.details.group.ship, name: event.details.group.name }
-      : { host: undefined, name: undefined }
+      : { host: "", name: "" }
 
     defaultValues.venueMap = event.details.venueMap
     defaultValues.eventDescription = event.details.description
@@ -217,9 +220,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
     // disabled: event?.details.latch === "over",
   })
 
-  const basePath = import.meta.env.BASE_URL
-
-  const navigate = useNavigate()
+  useEffect(() => { setSpin(false) }, [event])
 
   // add static fields from tlon, saying we're importing from tlon
   return (
@@ -229,7 +230,6 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
         onSubmit={form.handleSubmit((values) => {
           setSpin(true)
           onSubmit(values).then(() => { })
-          navigate(basePath + "?reloadEvents")
         })}
         className="space-y-6"
       >
@@ -458,35 +458,47 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
           disabled={event?.details.latch === "over"}
         />
 
-        <FormField
-          key="eventGroup"
-          control={form.control}
-          name="eventGroup"
-          render={({ field }) =>
-            <FormItem>
-              <FormLabel>tlon group for event (optional)</FormLabel>
-              <FormControl>
-                <div className="flex space-x-12">
-                  <Input
-                    {...field}
-                    disabled={event?.details.latch === "over"}
-                    placeholder="~hoster-palnet"
-                    value={field.value?.host}
-                    onChange={(e) => { form.setValue("eventGroup.host", e.target.value) }}
-                  />
-                  <Input
-                    {...field}
-                    disabled={event?.details.latch === "over"}
-                    placeholder="group-name"
-                    value={field.value?.name}
-                    onChange={(e) => { form.setValue("eventGroup.name", e.target.value) }}
-                  />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          }
-        />
+        <FormItem>
+          <FormLabel>tlon group for event (optional)</FormLabel>
+          <div className="flex flex-row justify-between space-x-2">
+            <FormField
+              key="eventGroupHost"
+              control={form.control}
+              name="eventGroup.host"
+              render={({ field }) =>
+                <FormItem>
+                  <FormLabel>group host</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      disabled={event?.details.latch === "over"}
+                      placeholder="~hoster-palnet"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              }
+            />
+            <FormField
+              key="eventGroup"
+              control={form.control}
+              name="eventGroup.name"
+              render={({ field }) =>
+                <FormItem>
+                  <FormLabel>group name</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      disabled={event?.details.latch === "over"}
+                      placeholder="event-group"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              }
+            />
+          </div>
+        </FormItem>
 
         <FormField
           control={form.control}
@@ -495,7 +507,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
             const [openSessions, setOpenSessions] = useState<Map<string, boolean>>(new Map<string, boolean>())
             const [openCreateSessionDialog, setOpenCreateSessionDialog] = useState(false)
             const [openEditSessionDialog, setOpenEditSessionDialog] = useState(false)
-            const shouldDisplayCreateSessionDialog = form.watch("dateRange") === undefined
+            const shouldDisplayCreateSessionDialog = form.watch("dateRange.from") !== undefined && form.watch("dateRange.to") !== undefined
             const [idOfSessionToEdit, setIdOfSessionToEdit] = useState<string>("")
 
             useEffect(
@@ -629,17 +641,17 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                         shouldDisplayCreateSessionDialog
                           ? <Button
                             type="button"
-                            className="w-full mt-1 bg-stone-100 hover:bg-stone-100 text-primary/50 text-wrap"
-                          >
-                            define start and end date to add sessions
-                          </Button>
-                          : <Button
-                            type="button"
                             variant="ghost"
                             className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100"
                             onClick={() => { setOpenCreateSessionDialog(flipBoolean) }}
                           >
                             + add session
+                          </Button>
+                          : <Button
+                            type="button"
+                            className="w-full mt-1 bg-stone-100 hover:bg-stone-100 text-primary/50 text-wrap"
+                          >
+                            define start and end date to add sessions
                           </Button>
                       }
 
@@ -752,7 +764,6 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
             )
           }}
         />
-
 
         {/* TODO: add spin to this button */}
         <div className="pt-4 md:pt-8 w-full flex justify-center">
