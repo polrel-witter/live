@@ -30,7 +30,6 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TimeOption, TimePicker } from './time-picker';
-import { date } from 'zod';
 
 // changing internal DayPicker to be a range picker and calling it
 // if i ever need a date picker also i can abstract away the surronding
@@ -176,7 +175,7 @@ export function DateTimePicker({
     [setDateRange]
     // [setFromDate, setToDate, setMonth]
   );
-  const onSumbit = useCallback(() => {
+  const onSubmit = useCallback(() => {
     onRangeChange(dateRange)
     setOpen(false);
   }, [dateRange, onRangeChange]);
@@ -281,7 +280,10 @@ export function DateTimePicker({
             </button>
           )}
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-2">
+      <PopoverContent
+      onInteractOutside={onSubmit}
+      className="w-auto p-2"
+      >
         <div className="flex items-center justify-between">
           <div className="text-md font-bold ms-2 flex items-center cursor-pointer">
             <div>
@@ -388,7 +390,7 @@ export function DateTimePicker({
             </div>
           )}
           <div className="flex flex-row-reverse items-center justify-between">
-            <Button className="ms-2 h-7 px-2" onClick={onSumbit}>
+            <Button className="ms-2 h-7 px-2" onClick={onSubmit}>
               done
             </Button>
             {timezone && (
