@@ -108,13 +108,13 @@ key:
           non-mobile screens: https://bowl.polrel-witter.xyz/bucket/random/2024.11.22..17.24.46-Screenshot%20from%202024-11-22%2012-24-32.png
       	+ not handling %record updates. updates to records should arrive automatically in this area. e.g. when the host invites someone or an existing guest's status changes.
         + in general, really like how this looks/feels. great work.
-- guest page
++ guest page
     + remove the AM/PM distinction since it displays a 24 hour clock.
     + the description sometimes renders across the screen, i.e. no
       linebreaks.
     + [~widmes-hassen] we should see `latch` and `kind` status somewhere on the event
       card.
-    - if a map url is set and then removed, the map still displays for
+    + [~widmes-hassen] if a map url is set and then removed, the map still displays for
       the user. although if the host changes it to a new url, the new one
       displays.
     + [~polrel-witter] when clicking the dm button on a guest, it redirects us to link
@@ -135,9 +135,9 @@ key:
     + [~polrel-witter] there's a message that says the location field can't be empty, but it can
     + [~polrel-witter] some field titles have 'event' in front. can get rid of this; e.g.
       'event title' > 'title'
-    - in the event date picker, if we select a date range and click out without clicking 'done' the dates appear to set, but then clicking the 'add session' button leads to a crash.
+    - [~widmes-hassen] in the event date picker, if we select a date range and click out without clicking 'done' the dates appear to set, but then clicking the 'add session' button leads to a crash.
     + [~polrel-witter] i think there should be some intuitive examples in the group fields to coax correct syntax. for host: ~hoster-palnet; for group name: the-group-name
-    - also including the error messages if they're not properly formatted, like in the invite field would be great.
+    - [~widmes-hassen] also including the error messages if they're not properly formatted, like in the invite field would be great.
 - the connection status at the bottom right should be more prominant on desktop. when the app first opens it can take a few seconds before anything renders and without noticing the connection status it feels like nothing's happening. it's obvious on mobile, but on desktop it's hard to see. i think either making it bigger or adding a spinner in the middle of the page should fix.
 - figure out color scheme
 - the register button isn't working right. it seems to send a register poke, but quickly follows with an unregister poke. sometimes the registration appears to go through, but the success pop-up says "you've successfully unregistered to this event".
