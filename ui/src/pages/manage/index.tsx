@@ -131,7 +131,10 @@ const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => 
             {/* extract into component and use in all 3 sections */}
             <ScrollArea
               type="auto"
-              className="h-[300px] rounded-md px-3">
+              className={cn([
+                "h-[300px] rounded-md px-3",
+                "md:h-[500px]"
+              ])}>
               <EditEventForm
                 backend={backend}
                 event={evt}
@@ -350,7 +353,14 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
                 {records.map(([patp, info]) => {
                   return (
                     <li key={patp} className="p-2">
-                      <Card className="rounded-md p-2 space-y-1 text-xs sm:text-md">
+                      <Card className={cn([
+                        "rounded-md p-2 space-y-1 text-xs",
+                        "sm:text-md",
+                        // this w-min will make the cards overlap over a small
+                        // range of pxs but overall the effect is better imo
+                        // besides it only happens on super wide screens
+                        "2xl:w-min",
+                      ])}>
                         <CardHeader className="bg-gray-100 p-1 rounded-md">
                           {/* WARN: casting as Patp */}
                           {nickNameOrPatp(profiles
