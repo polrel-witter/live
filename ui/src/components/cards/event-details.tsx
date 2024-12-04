@@ -110,6 +110,15 @@ const EventDetailsCard: React.FC<Props> = ({ details, hostProfile, buttons, clas
             {endDate ? <div>{formatEventDate(shiftTzDateInUTCToTimezone(endDate, timezone))}</div> : "TBD"}
           </div>
 
+          <div className={cn([
+            "flex flex-col text-[11px] items-center",
+            "sm:flex-row sm:items-center sm:justify-between",
+            "md:text-sm"
+          ])}>
+            <div className="font-bold">location:</div>
+            {location}
+          </div>
+
           {group ? <TlonGroupLink ship={group.ship} name={group.name} /> : ''}
 
           <p className={cn([baseTextClass, "text-justify", "py-8"])}> {description} </p>
@@ -119,10 +128,7 @@ const EventDetailsCard: React.FC<Props> = ({ details, hostProfile, buttons, clas
           </div>
         </div>
       </CardContent>
-      <CardFooter className="justify-center text-xs md:text-md">
-        location: {location}
-      </CardFooter>
-    </Card>
+    </Card >
   )
 }
 
