@@ -10,7 +10,8 @@ const FooterWithSlots: React.FC<Props> = ({ left, right, className, ...props }) 
   return (
     <div
       className={cn(
-        "fixed bottom-0 w-full h-16 md:h-6 bg-accent",
+        "fixed bottom-0 w-full h-16 bg-accent",
+        "md:h-10",
         className
       )}
       {...props}>
