@@ -317,6 +317,11 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
     }
 
     for (const [, details] of globalContext.eventsAsGuest) {
+      // filter out our own events so they don't show up as guest events
+      if (details.id.ship === globalContext.profile.patp) {
+        continue
+      }
+
       if (details.latch === "over") {
         archived.push(["guest", details])
       } else {

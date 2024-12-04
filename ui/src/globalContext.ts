@@ -52,11 +52,7 @@ async function buildIndexCtx(backend: Backend, patp: Patp): Promise<GlobalCtx> {
     console.error(`profile for ${patp} not found`)
   }
 
-  const records = await backend.getRecords()
-  ctx.eventsAsGuest = records.filter((record) => {
-    return record[1].id.ship !== ownProfile?.patp
-  })
-
+  ctx.eventsAsGuest = await backend.getRecords()
   ctx.eventsAsHost = await backend.getEvents()
 
   ctx.fetched = true;
