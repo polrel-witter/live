@@ -17,6 +17,7 @@ import { compareDesc } from "date-fns";
 import { SlideDownAndReveal } from "@/components/sliders";
 import { SpinningButton } from "@/components/spinning-button";
 import { formatEventDate, shiftTzDateInUTCToTimezone } from "@/lib/time";
+import { StringWithDashes } from "@/lib/schemas";
 
 
 
@@ -44,10 +45,10 @@ const EventThumbnail: React.FC<EventThumbnailProps> = (
             <CardDescription className="italics">hosted by {id.ship}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>starts at {startDate 
+            <p>starts at {startDate
               ? formatEventDate(
-              shiftTzDateInUTCToTimezone(startDate, timezone)
-            ) 
+                shiftTzDateInUTCToTimezone(startDate, timezone)
+              )
               : "TBD"}</p>
             <p>location: {location}</p>
           </CardContent>
@@ -203,12 +204,10 @@ export type SearchFormProps = {
 const SearchForm = ({ spin, ...fns }: SearchFormProps) => {
   const schema = z.object({
     hostShip: PatpSchema.or(z.literal("")),
-    name: z.custom<string>((val) => {
-      // regex enforces either "string" or strings delimited by dashes "str-ing"
-      return typeof val === "string" ? /^\w+(?:-\w+)*$/.test(val) : false;
-    }, {
-      message: "event name sould be in this form: event-name"
-    }).nullable(),
+    name: StringWithDashes.refine(
+      s => s,
+      () => ({ message: "event name sould be in this form: event-name" })
+    ).nullable(),
   })
 
   const form = useForm<z.infer<typeof schema>>({

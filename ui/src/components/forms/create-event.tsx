@@ -1,18 +1,24 @@
 import { CreateEventParams, emptyEventAsHost } from "@/backend"
 import { EventForm } from "./event"
 import { newTZDateInUTCFromDate } from "@/lib/time"
+import { useNavigate } from "react-router-dom"
 
 type Props = {
   createEvent: (newEvent: CreateEventParams) => Promise<boolean>
 }
 
 export const CreateEventForm = ({ createEvent }: Props) => {
+  const basePath = import.meta.env.BASE_URL
+  const navigate = useNavigate()
+
   return (
     <EventForm
       submitButtonText="create"
       onSubmit={async (values) => {
         // Do something with the form values.
         // ✅ This will be type-safe and validated.
+
+        const groupIsSet = values.eventGroup.host !== "" && values.eventGroup.name !== ""
 
         let newEvent: CreateEventParams = emptyEventAsHost;
 
@@ -28,7 +34,7 @@ export const CreateEventForm = ({ createEvent }: Props) => {
         newEvent.details.description = values.eventDescription
         newEvent.details.timezone = values.utcOffset
         newEvent.details.kind = values.eventKind
-        newEvent.details.group = values.eventGroup.host && values.eventGroup.name
+        newEvent.details.group = groupIsSet
           ? { ship: values.eventGroup.host, name: values.eventGroup.name }
           : null
         newEvent.details.latch = values.eventLatch
@@ -44,6 +50,9 @@ export const CreateEventForm = ({ createEvent }: Props) => {
           }))
 
         await createEvent(newEvent)
+
+        // navigate to event timeline and prompt to reload event state
+        navigate(basePath + "?reloadEvents")
       }}
     />
   )
