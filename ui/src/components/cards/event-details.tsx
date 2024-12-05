@@ -1,13 +1,13 @@
 import React from "react"
 
-import { EventDetails, isComet, isMoon, Patp, Profile } from "@/lib/backend";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { EventDetails, Profile } from "@/lib/backend";
+import { isComet, isMoon, Patp } from "@/lib/types";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { buttonVariants } from "@/components/ui/button";
 import { ProfilePicture } from "@/components/profile-picture";
 import { MessagesSquare } from "lucide-react";
-import { AnimatedButtons } from "../animated-buttons";
 import { formatEventDate, shiftTzDateInUTCToTimezone } from "@/lib/time";
 
 

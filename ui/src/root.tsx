@@ -1,9 +1,8 @@
 import { PropsWithChildren, useEffect, useState } from "react"
-import { addSig, Backend, EventAsAllGuests, EventAsHost, eventIdsEqual, LiveEventUpdateEvent, LiveFindEvent, LiveRecordUpdateEvent } from "@/lib/backend";
+import { Backend, EventAsAllGuests,  eventIdsEqual, LiveEventUpdateEvent, LiveRecordUpdateEvent } from "@/lib/backend";
 import { Toaster } from "./components/ui/toaster";
 import { buildIndexCtx, ConnectionStatus, GlobalContext, newEmptyIndexCtx } from "./globalContext";
-import { record } from "zod";
-import { add } from "date-fns";
+import { addSig } from "./lib/types";
 
 
 // TODO: this should eventually check that the urbit we're connected to
@@ -87,6 +86,7 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
     let addPalsSubId: number;
     
 
+    // TODO: parse this through schema
     buildIndexCtx(backend, addSig(window.ship)).then(({
       fetched,
       connectionStatus,

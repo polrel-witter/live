@@ -2,13 +2,14 @@ import { useState } from "react"
 
 import { Card, CardContent } from "@/components/ui/card"
 
-import { Profile, Attendee, Patp } from "@/lib/backend"
+import { Profile, Attendee } from "@/lib/backend"
 import { flipBoolean } from "@/lib/utils"
 import { SlideDownAndReveal } from "@/components/sliders"
 import { ProfileCard } from "@/components/cards/profile"
 import { ProfilePicture } from "@/components/profile-picture"
 import { ProfileActionsMenu } from "@/components/profile-actions-menu"
 import { nickNameOrPatp } from "@/components/util"
+import { Patp } from "@/lib/types"
 
 const ProfileIfExist: React.FC<{ profile: Profile | undefined }> = ({ profile }) => {
 

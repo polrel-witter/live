@@ -2,11 +2,10 @@ import { useContext, useEffect, useState } from 'react';
 import { Location, Outlet, useLoaderData, useLocation } from 'react-router-dom';
 import { LoaderFunctionArgs, Params } from "react-router-dom";
 
-import { Attendee, Backend, emptyEventAsGuest, EventAsGuest, EventId, eventIdsEqual, Patp, Profile } from "@/lib/backend"
+import { Attendee, Backend, emptyEventAsGuest, EventAsGuest, EventId, eventIdsEqual, Profile } from "@/lib/backend"
 
 import { GlobalContext, GlobalCtx } from '@/globalContext';
 import { EventContext, EventCtx, newEmptyCtx } from './context';
-import { cn, flipBoolean, stripPatpSig } from '@/lib/utils';
 import { AppFrame } from '@/components/frame';
 import { FooterWithSlots } from '@/components/frame/footer';
 import { ConnectionStatusBar } from '@/components/connection-status';
@@ -15,12 +14,9 @@ import { useOnMobile } from '@/hooks/use-mobile';
 import { EventStatusButton } from './components/event-status-button';
 import { MobileMenu, ProfileButton } from './components/navbar-components';
 import { BackButton } from '@/components/back-button';
-import { SlideRightAndReveal } from '@/components/sliders';
-import { Button } from '@/components/ui/button';
-import { ChevronUp } from 'lucide-react';
-import { formatEventDateShort } from '@/lib/time';
 import { useToast, toast as toastFn } from '@/hooks/use-toast';
 import { debounce } from '@/hooks/use-debounce';
+import { Patp, stripSig } from '@/lib/types';
 
 async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
   return Promise.all(a
@@ -263,7 +259,7 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
           return {
             attendees: oldAttendees
               .map((attendee): Attendee => {
-                if (attendee.patp === stripPatpSig(evt.ship)) {
+                if (attendee.patp === stripSig(evt.ship)) {
                   return { patp: evt.ship, status: evt.status }
                 }
                 return attendee

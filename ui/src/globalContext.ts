@@ -1,5 +1,6 @@
-import { Backend, EventAsAllGuests, EventAsGuest, EventAsHost, EventDetails, EventId, Patp, Profile } from "@/lib/backend";
+import { Backend, EventAsAllGuests, EventAsHost, Profile } from "@/lib/backend";
 import { createContext } from "react";
+import { Patp } from "./lib/types";
 
 
 type ConnectionStatus = "online" | "connecting" | "offline"

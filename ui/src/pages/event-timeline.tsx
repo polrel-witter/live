@@ -4,7 +4,7 @@ import { GlobalContext, GlobalCtx } from "@/globalContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronUp, Search, X } from "lucide-react";
-import { Backend, EventDetails, EventId, eventIdsEqual, PatpSchema } from "@/lib/backend";
+import { Backend, EventDetails, EventId, eventIdsEqual } from "@/lib/backend";
 import { cn, flipBoolean } from "@/lib/utils";
 import { ResponsiveContent } from "@/components/responsive-content";
 import { useForm } from "react-hook-form";
@@ -17,9 +17,7 @@ import { compareDesc } from "date-fns";
 import { SlideDownAndReveal } from "@/components/sliders";
 import { SpinningButton } from "@/components/spinning-button";
 import { formatEventDate, shiftTzDateInUTCToTimezone } from "@/lib/time";
-import { StringWithDashes } from "@/lib/schemas";
-
-
+import { PatpSchema, StringWithDashes } from "@/lib/schemas";
 
 type EventThumbnailProps = {
   details: EventDetails,

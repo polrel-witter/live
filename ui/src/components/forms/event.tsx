@@ -24,14 +24,14 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 import { cn, flipBoolean } from "@/lib/utils"
-import { EventAsHost, PatpSchema, validUTCOffsets } from "@/lib/backend"
+import { EventAsHost, validUTCOffsets } from "@/lib/backend"
 import { SpinningButton } from "@/components/spinning-button"
 import { CreateSessionForm } from "@/components/forms/create-session"
 import { SlideDownAndReveal } from "@/components/sliders"
 import { SessionCard } from "@/components/cards/session"
 import { EditSessionForm } from "./edit-session"
 import { formatSessionTime, newDateFromTZDateInUTC, newTZDateInUTCFromDate, shiftTzDateInUTCToTimezone } from "@/lib/time"
-import { StringWithDashes } from "@/lib/schemas"
+import { PatpSchema, StringWithDashes } from "@/lib/schemas"
 
 /* ON TIME
  * throughout this page we're storing time in ordinary Dates in local time; the user doesn't know

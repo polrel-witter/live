@@ -4,44 +4,34 @@ import { TZDate } from "@date-fns/tz";
 
 import { z, ZodError } from "zod" // this is an object validation library
 
-import { newTZDateInUTCFromDate, newTzDateInUTCFromUnixMilli } from "@/lib/time";
+import {
+  newTZDateInUTCFromDate,
+  newTzDateInUTCFromUnixMilli
+} from "@/lib/time";
 
-// Patp types and utilities
+import {
+  AllEventsSchema,
+  AllRecordsSchema,
+  BackendEventSchema,
+  BackendInfo1Schema,
+  BackendRecordSchema,
+  GetProfileSchema,
+  GetProfilesSchema,
+  LiveEventUpdateEventSchema,
+  LiveFindEventSchema,
+  LiveRecordUpdateEventSchema,
+  MatcherMatchEventSchema,
+  MatcherProfileUpdateEventSchema,
+  MatchStatusSchema,
+  PatpSchema,
+  ProfileEntryObjSchema,
+} from "@/lib/schemas";
 
-type PatpWithoutSig = string
-type Patp = `~${PatpWithoutSig}`
-
-function isPatp(s: string): s is Patp {
-  return s.charAt(0) === '~' && s.length >= 4
-}
-
-function stripSig(patp: Patp): PatpWithoutSig {
-  return patp.slice(0, 1)
-}
-
-function addSig(patp: PatpWithoutSig): Patp {
-  return `~${patp}`
-}
-
-function isGalaxy(patp: Patp): boolean {
-  return patp.length === 4
-}
-
-function isStar(patp: Patp): boolean {
-  return patp.length === 7
-}
-
-function isPlanet(patp: Patp): boolean {
-  return patp.length === 14
-}
-
-function isMoon(patp: Patp): boolean {
-  return patp.length > 14 && patp.length < 29
-}
-
-function isComet(patp: Patp): boolean {
-  return patp.length > 29
-}
+import {
+  addSig,
+  Patp,
+  PatpWithoutSig
+} from "@/lib/types";
 
 interface EventId { ship: Patp, name: string };
 
@@ -456,81 +446,7 @@ type MatcherMatchEvent = {
   status: MatchStatus,
 }
 
-// function getSchedule(_api: Urbit): () => Promise<Session[]> {
-//   return async () => Promise.resolve()
-// }
-
-const eventStatusSchema = z.enum([
-  "invited",
-  "requested",
-  "registered",
-  "unregistered",
-  "attended",
-])
-
-const eventVisibilitySchema = z.enum([
-  "public",
-  "private",
-  "secret",
-])
-
-const eventLatchSchema = z.enum([
-  "open",
-  "closed",
-  "over",
-])
-
-const timeSchema = z.number()
-
-const moment1Schema = z.object({
-  start: z.number().nullable(),
-  end: z.number().nullable()
-})
-
-const sessionSchema = z.object({
-  title: z.string(),
-  location: z.string().nullable(),
-  moment: moment1Schema,
-  about: z.string().nullable(),
-  panel: z.array(z.string())
-})
-
-const backendInfo1Schema = z.object({
-  about: z.string().nullable(),
-  group: z.object({
-    ship: z.string(),
-    term: z.string(),
-  }).nullable(),
-  kind: eventVisibilitySchema,
-  latch: eventLatchSchema,
-  location: z.string().nullable(),
-  moment: z.object({ start: timeSchema.nullable(), end: timeSchema.nullable() }),
-  sessions: z.record(z.object({
-    session: sessionSchema
-  })),
-  timezone: z.object({ p: z.boolean(), q: z.number() }),
-  title: z.string(),
-  ["venue-map"]: z.string().nullable(),
-})
-
-// const PatpSchema = z.custom<Patp>((val) => {
-//   return isPatp(val)
-//     // TODO: maybe add regex
-//     ? true
-//     : false;
-// });
-
-
-// Patp regex:
-// /^~([a-z]{3,6})(?:-([a-z]{6})){0,7}$/
-const PatpSchema = z
-  .string()
-  .startsWith("~")
-  .refine((s: string): s is Patp => isPatp(s), {
-    message: "string is not patp"
-  });
-
-function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof backendInfo1Schema>): EventDetails {
+function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof BackendInfo1Schema>): EventDetails {
   const {
     moment: { start, end },
     about,
@@ -586,16 +502,7 @@ function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof back
   }
 }
 
-const backendRecordSchema = z.object({
-  info: backendInfo1Schema,
-  secret: z.string().nullable(),
-  status: z.object({
-    p: eventStatusSchema,
-    q: timeSchema
-  })
-})
-
-function backendRecordToEventAsGuest(eventId: EventId, record: z.infer<typeof backendRecordSchema>): EventAsGuest {
+function backendRecordToEventAsGuest(eventId: EventId, record: z.infer<typeof BackendRecordSchema>): EventAsGuest {
   return {
     secret: record.secret ? record.secret : "",
     status: record.status.p,
@@ -604,36 +511,19 @@ function backendRecordToEventAsGuest(eventId: EventId, record: z.infer<typeof ba
   }
 }
 
-// const allRecordsSchema = z.object({
-//   allRecords: z.object({})
-//     .catchall(z.object({})
-//       .catchall(z.object({
-//         record: recordSchema
-//       })))
-// })
-
-const allRecordsSchema = z.object({
-  allRecords: z.record(
-    z.string(), // this is going to be `${hostShip}/${eventName}`
-    z.record(
-      PatpSchema, // this is `${guestShip}`
-      z.object({ record: backendRecordSchema })
-    ))
-}).transform((response) => response.allRecords)
-
 // ship here was needed to verify that there was a record for our ship
 // but i removed that validation
 // we're trusting the backend for now
 function getRecords(api: Urbit, ship: Patp): () => Promise<EventAsAllGuests[]> {
   return async () => {
-    const allRecords = await api.scry({
+    const response = await api.scry({
       app: "live",
       path: "/records/all"
     })
-      .then(allRecordsSchema.parse)
+      .then(AllRecordsSchema.parse)
       .catch((err) => { console.error("error during getRecords api call", err) })
 
-    if (!allRecords) {
+    if (!response) {
       return Promise.resolve([])
     }
 
@@ -641,7 +531,7 @@ function getRecords(api: Urbit, ship: Patp): () => Promise<EventAsAllGuests[]> {
 
 
     const entries = Object
-      .entries(allRecords)
+      .entries(response.allRecords)
     // .filter(([,records]) => {
     //   if (records) {
 
@@ -688,7 +578,7 @@ function getRecord(api: Urbit, ship: string): (id: EventId) => Promise<EventAsGu
       app: "live",
       path: `/record/${id.ship}/${id.name}/~${ship}`
     })
-      .then(z.object({ record: backendRecordSchema }).parse)
+      .then(z.object({ record: BackendRecordSchema }).parse)
       .catch((err) => { console.error("error during getRecord api call", err) })
 
 
@@ -700,14 +590,7 @@ function getRecord(api: Urbit, ship: string): (id: EventId) => Promise<EventAsGu
   }
 }
 
-
-const backendEventSchema = z.object({
-  info: backendInfo1Schema,
-  secret: z.string().nullable(),
-  limit: z.number().nullable(),
-})
-
-function backendEventToEventAsHost(eventId: EventId, event: z.infer<typeof backendEventSchema>): EventAsHost {
+function backendEventToEventAsHost(eventId: EventId, event: z.infer<typeof BackendEventSchema>): EventAsHost {
   const {
     info,
     limit,
@@ -721,23 +604,16 @@ function backendEventToEventAsHost(eventId: EventId, event: z.infer<typeof backe
   }
 }
 
-const allEventsSchema = z.object({
-  allEvents: z.record(
-    z.string(), // this is going to be `${hostShip}/${eventName}`
-    z.object({ event: backendEventSchema }))
-}).transform(({ allEvents }) => allEvents)
-
-
 function getEvents(api: Urbit): () => Promise<EventAsHost[]> {
   return async () => {
-    const allEvents = await api.scry({
+    const response = await api.scry({
       app: "live",
       path: "/events/all"
     })
-      .then(allEventsSchema.parse)
+      .then(AllEventsSchema.parse)
       .catch((err) => { console.error("error during getEvents api call", err) })
 
-    if (!allEvents) {
+    if (!response) {
       return Promise.resolve([])
     }
 
@@ -745,7 +621,7 @@ function getEvents(api: Urbit): () => Promise<EventAsHost[]> {
     let events: EventAsHost[] = []
 
     // WARN: patp : casting to Patp here because schema validates it above; it's fine
-    for (const [idString, evtObj] of Object.entries(allEvents)) {
+    for (const [idString, evtObj] of Object.entries(response.allEvents)) {
       if (evtObj) {
         const [hostShip, eventName] = idString.split("/")
         const eventId = { ship: hostShip as Patp, name: eventName }
@@ -783,7 +659,7 @@ function find(api: Urbit): (host: Patp, name: string | null) => Promise<boolean>
 const previousSearchSchema = z.object({
   result: z.record(
     z.string(),
-    z.object({ info: backendInfo1Schema })
+    z.object({ info: BackendInfo1Schema })
   )
 })
 
@@ -827,7 +703,7 @@ function getEvent(api: Urbit): (id: EventId) => Promise<EventAsHost> {
       app: "live",
       path: `/event/${id.ship}/${id.name}`
     })
-      .then(z.object({ event: backendEventSchema }).parse)
+      .then(z.object({ event: BackendEventSchema }).parse)
       .catch((err) => { console.error("error during getEvent api call", err) })
 
     if (!event) {
@@ -1247,49 +1123,6 @@ function unregister(_api: Urbit): (id: EventId, patp?: Patp) => Promise<boolean>
   }
 }
 
-const liveRecordUpdateEventSchema = z.object({
-  id: z.object({
-    name: z.string(),
-    ship: PatpSchema,
-  }),
-  ship: z.string(),
-  record: backendRecordSchema,
-}).transform((e) => {
-  return {
-    ...e,
-    id: {
-      ship: e.id.ship as Patp,
-      name: e.id.name
-    }
-  }
-})
-
-const liveEventUpdateEventSchema = z.object({
-  id: z.object({
-    name: z.string(),
-    ship: PatpSchema,
-  }),
-  event: backendEventSchema,
-}).transform((e) => {
-  return {
-    ...e,
-    id: {
-      // WARN: casting to Patp here because schema validates it above
-      ship: e.id.ship as Patp,
-      name: e.id.name
-    }
-  }
-})
-
-const liveFindEventSchema = z.object({
-  name: z.string().nullable(),
-  ship: PatpSchema,
-  result: z.record(
-    z.string(),
-    z.object({ info: backendInfo1Schema })
-  )
-})
-
 function subscribeToLiveSearchEvents(api: Urbit): (handlers: {
   onEvent: (e: [EventId, EventDetails][] | string) => void
   onError: (err: any, id: string) => void,
@@ -1305,7 +1138,7 @@ function subscribeToLiveSearchEvents(api: Urbit): (handlers: {
           return onEvent(findEventStr.result)
         } catch (e) {
           try {
-            const findEvent = liveFindEventSchema.parse(data)
+            const findEvent = LiveFindEventSchema.parse(data)
             return onEvent(Object.entries(findEvent.result)
               .map(([idString, info]) => {
                 const [hostShip, eventName] = idString.split("/")
@@ -1336,7 +1169,7 @@ function subscribeToLiveEvents(api: Urbit): (handlers: {
       path: "/updates",
       event: (evt) => {
         try {
-          const updateEvent = liveRecordUpdateEventSchema.parse(evt)
+          const updateEvent = LiveRecordUpdateEventSchema.parse(evt)
           onRecordUpdate({
             event: backendRecordToEventAsGuest(updateEvent.id, updateEvent.record),
             // WARN: casting as Patp
@@ -1346,7 +1179,7 @@ function subscribeToLiveEvents(api: Urbit): (handlers: {
           // could cast error to ZodError and verify that indeed the issue is
           // that we're not receiving a record update
           try {
-            const updateEvent = liveEventUpdateEventSchema.parse(evt)
+            const updateEvent = LiveEventUpdateEventSchema.parse(evt)
             onEventUpdate({
               event: backendEventToEventAsHost(updateEvent.id, updateEvent.event),
             })
@@ -1361,22 +1194,9 @@ function subscribeToLiveEvents(api: Urbit): (handlers: {
   }
 }
 
-const profileEntryObjSchema = z.object({
-  term: z.string(),
-  entry: z.string().nullable()
-})
-
-const getProfilesSchema = z.object({
-  allProfiles: z.record(
-    PatpSchema,
-    z.array(profileEntryObjSchema)
-  )
-})
-  .transform(result => result.allProfiles)
-
 function entryArrayToProfile(
   patp: Patp,
-  fields: z.infer<typeof profileEntryObjSchema>[],
+  fields: z.infer<typeof ProfileEntryObjSchema>[],
   addToPals: boolean,
 ): Profile {
   const p: Profile = {
@@ -1436,17 +1256,17 @@ function entryArrayToProfile(
 
 function getProfiles(_api: Urbit): () => Promise<Profile[]> {
   return async () => {
-    const profileFields = await _api.scry({
+    const response = await _api.scry({
       app: "matcher",
       // in agent file it says host/name/ship ??
       // pass guest ship
       path: "/all/profiles"
       // path: `/record/${id.ship}/${id.name}/~zod`
     })
-      .then(getProfilesSchema.parse)
+      .then(GetProfilesSchema.parse)
       .catch((err) => { console.error("error during getProfiles api call", err.errors) })
 
-    if (!profileFields) {
+    if (!response) {
       return []
     }
 
@@ -1461,13 +1281,13 @@ function getProfiles(_api: Urbit): () => Promise<Profile[]> {
       .then()
       .catch((err) => { console.error("error during getProfiles api call", err.errors) })
 
-    if (!profileFields) {
+    if (!response) {
       return []
     }
 
     let profiles = []
     // WARN: patp : casting to Patp here because schema validates it above; it's fine
-    for (const [patp, arrs] of Object.entries(profileFields)) {
+    for (const [patp, arrs] of Object.entries(response.allProfiles)) {
       if (arrs) {
         // WARN: addPals false here because this is other ppl's profiles
         profiles.push(entryArrayToProfile(patp as Patp, arrs, false))
@@ -1478,21 +1298,31 @@ function getProfiles(_api: Urbit): () => Promise<Profile[]> {
   }
 }
 
-const getProfileSchema = z
-  .object({
-    profile: z
-      .record(z.string(), z.object({ entry: z.string().nullable() }))
-  })
-  .transform((entry) => {
-    // here we make the response's shape like the one in getProfiles
-    // so i can reuse the same transform function
+// const getProfileSchema = z
+//   .object({
+//     profile: z
+//       .record(z.string(), z.object({ entry: z.string().nullable() }))
+//   })
+//   .transform((entry) => {
+//     // here we make the response's shape like the one in getProfiles
+//     // so i can reuse the same transform function
+//     return Object
+//       .entries(entry.profile)
+//       .map(([term, { entry }]) => [term, { term: term, entry: entry }] as const)
+//       .map(([_, obj]) => obj)
+//   })
+
+function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
+
+  // here we make the response's shape like the one in getProfiles
+  // so i can reuse the same transform function (entryArrayToProfile)
+  const massagedSchema = GetProfileSchema.transform((entry) => {
     return Object
       .entries(entry.profile)
       .map(([term, { entry }]) => [term, { term: term, entry: entry }] as const)
       .map(([_, obj]) => obj)
   })
 
-function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
   return async (patp: Patp) => {
     const profileFields = await _api.scry({
       app: "matcher",
@@ -1501,7 +1331,7 @@ function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
       path: `/profile/${patp}`
       // path: `/record/${id.ship}/${id.name}/~zod`
     })
-      .then(getProfileSchema.parse)
+      .then(massagedSchema.parse)
       .catch((err: ZodError) => { console.error("error during getProfile api call", err.errors) })
 
     if (!profileFields) {
@@ -1512,10 +1342,7 @@ function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
 
     const addToPals = await _api.scry({
       app: "matcher",
-      // in agent file it says host/name/ship ??
-      // pass guest ship
       path: "/pals/add"
-      // path: `/record/${id.ship}/${id.name}/~zod`
     })
       .then(z.object({ addPals: z.boolean() }).parse)
       .catch((err) => { console.error("error during getProfiles api call", err.errors) })
@@ -1528,18 +1355,17 @@ function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
   }
 }
 
-const backendMatchStatusSchema = z.enum(["match", "reach"]).nullable()
 
 // !!! the peers object's keys are patps with ~
 const getAttendeesSchema = z.object({
   peers: z
     .record(PatpSchema, z
       .object({
-        status: backendMatchStatusSchema
+        status: MatchStatusSchema
       }))
 })
 
-function backendMatchStatusToMatchStatus(s: z.infer<typeof backendMatchStatusSchema>): MatchStatus {
+function backendMatchStatusToMatchStatus(s: z.infer<typeof MatchStatusSchema>): MatchStatus {
   switch (s) {
     case "match":
       return "matched"
@@ -1666,16 +1492,6 @@ function unmatch(_api: Urbit): (id: EventId, patp: Patp) => Promise<void> {
   }
 }
 
-const matcherMatchEventSchema = z.object({
-  ship: PatpSchema,
-  match: z.enum(["match", "reach"]).nullable()
-})
-
-const matcherProfileUpdateEventSchema = z.object({
-  ship: PatpSchema,
-  fields: z.array(profileEntryObjSchema)
-})
-
 function subscribeToMatcherEvents(_api: Urbit): (handlers: {
   onMatch: (e: MatcherMatchEvent) => void
   onProfileChange: (e: MatcherProfileEvent) => void
@@ -1688,13 +1504,13 @@ function subscribeToMatcherEvents(_api: Urbit): (handlers: {
       path: "/updates",
       event: (evt) => {
         try {
-          const { ship, fields } = matcherProfileUpdateEventSchema.parse(evt)
+          const { ship, fields } = MatcherProfileUpdateEventSchema.parse(evt)
           onProfileChange({
             profile: entryArrayToProfile(ship, fields, false)
           })
         } catch {
           try {
-            const matchEvt = matcherMatchEventSchema.parse(evt)
+            const matchEvt = MatcherMatchEventSchema.parse(evt)
             onMatch({
               ship: matchEvt.ship,
               status: backendMatchStatusToMatchStatus(matchEvt.match)
@@ -1792,9 +1608,6 @@ export { emptyEventAsGuest, emptyProfile, emptyEventAsHost, newBackend, eventIds
 export { validUTCOffsets, stripUTCOffset, stringToUTCOffset }
 export type { UTCOffset }
 
-export { stripSig, addSig, isComet, isMoon, isPlanet, isStar, isGalaxy, isPatp }
-export { PatpSchema }
-export type { Patp, PatpWithoutSig }
 
 export type { Session, Sessions }
 
