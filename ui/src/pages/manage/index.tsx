@@ -162,6 +162,7 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
 
   const StatusButton = ({ status, patp }: { patp: Patp, status: EventStatus }) => {
     const baseClass = "w-full flex items-center justify-around font-bold"
+    const baseButtonClass = "h-8 w-20"
     switch (status) {
       case "registered":
         return (
@@ -171,7 +172,10 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
               // hook up to backend
               spin={spinButton}
               onClick={async () => { setSpinButton(true); await fns.unregister(patp) }}
-              className="h-8 w-22 bg-orange-300 hover:bg-orange-400"
+              className={cn([
+                baseButtonClass,
+                "text-xs bg-orange-300 hover:bg-orange-400",
+              ])}
               variant="ghost"
             >
               unregister
@@ -186,7 +190,10 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
               // hook up to backend
               spin={spinButton}
               onClick={async () => { setSpinButton(true); await fns.register(patp) }}
-              className="h-8 w-22 bg-gray-400" >
+              className={cn([
+                baseButtonClass,
+                "bg-gray-400"
+              ])}>
               register
             </SpinningButton>
           </div>
@@ -199,7 +206,10 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
               // hook up to backend
               spin={spinButton}
               onClick={async () => { setSpinButton(true); await fns.invite(patp) }}
-              className="h-8 w-22 bg-stone-700" >
+              className={cn([
+                baseButtonClass,
+                "bg-stone-700"
+              ])}>
               invite
             </SpinningButton>
           </div>
@@ -347,8 +357,9 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
                 />
               </div>
               <ul className={cn([
-                "grid grid-cols-1 space-y-2 mt-2",
-                "sm:space-y-0 sm:grid-cols-2"
+                "grid grid-cols-1 space-y-2 mt-2 justify-items-center",
+                "sm:space-y-0 sm:grid-cols-2",
+                "2xl:grid-cols-3"
               ])}>
                 {records.map(([patp, info]) => {
                   return (
@@ -359,7 +370,7 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
                         // this w-min will make the cards overlap over a small
                         // range of pxs but overall the effect is better imo
                         // besides it only happens on super wide screens
-                        "2xl:w-min",
+                        "w-min",
                       ])}>
                         <CardHeader className="bg-gray-100 p-1 rounded-md">
                           {/* WARN: casting as Patp */}
@@ -368,8 +379,8 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
                             patp as Patp)}
                         </CardHeader>
                         <AnimatedButtons
-                          minWidth={["w-[80px]", "sm:w-[125px]"]}
-                          maxWidth={["w-[190px]", "sm:w-[250px]"]}
+                          minWidth={["w-[80px]", "sm:w-[70px]"]}
+                          maxWidth={["w-[190px]", "sm:w-[170px]"]}
                           labels={[
                             "status",
                             "timestamp"
@@ -638,6 +649,7 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
                   }
                   className="w-full"
                 />
+                {/* TODO: when i open one close the others */}
                 <Card>
                   <EditEvent backend={backend} evt={event} />
                   <Guests
