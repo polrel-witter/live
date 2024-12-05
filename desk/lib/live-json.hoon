@@ -2,6 +2,8 @@
 /+  *mip
 |%
 ::
+++  patp  ;~(pose ;~(pfix sig fed:ag) fed:ag)
+::
 ++  dejs-dial
   =,  dejs:format
   |=  jon=json
@@ -102,9 +104,8 @@
   ::
   ++  de-group
     |^  ^-  $-(json group)
-        (su:dejs-soft:format ;~((glue fas) ship sym))
+        (su:dejs-soft:format ;~((glue fas) patp sym))
     ::
-    ++  ship  ;~(pose ;~(pfix sig fed:ag) fed:ag)
     ++  sym
       %+  cook
         |=  a=tape
@@ -139,12 +140,12 @@
     |=  jon=json
     ^-  (unit cord)
     ?>  ?=([%a *] jon)
-    =-  ?~(- ~ `(crip (join ',' -)))
-    ^-  tape
-    %+  turn  p.jon
-    |=  j=json
-    ?>  ?=([%s *] j)
-    p.j
+    =/  t=(list cord)
+      %+  turn  p.jon
+      |=  j=json
+      ?>  ?=([%s *] j)
+      p.j
+    ?~(t ~ `(crip (join ', ' t)))
   ::
   ++  de-event-1
     ^-  $-(json event-1)
@@ -366,14 +367,34 @@
   ::
   ++  en-panel
     |=  a=(unit cord)
-    ^-  json
-    ?~  a  [%a ~]
-    :-  %a
-    ^-  (list json)
-    %+  turn
-      (fall (rush u.a (more com ;~(pfix sig (plus ;~(pose alp dot))))) ~)
-    |=  t=(list cord)
-    `json`[%s (crip t)]
+    |^  ^-  json
+        ?~  a  [%a ~]
+        =/  sliced=(list cord)
+          (comb (trip u.a))
+        :-  %a
+        ^-  (list json)
+        (turn sliced |=(=cord `json`[%s cord]))
+    ::
+    ++  comb
+      |=  in=(list cord)
+      ^+  in
+      =/  end=@ud
+        (lent in)
+      =|  out=(list cord)
+      =|  buffer=(list cord)
+      |-
+      ?~  in  out
+      ?:  (lte end 1)
+        (snoc out (crip (snoc buffer i.in)))
+      ?.  =(", " ~[i.in -.t.in])
+        $(buffer (snoc buffer i.in), end (dec end), in t.in)
+      %=  $
+        out     (snoc out (crip buffer))
+        buffer  *(list cord)
+        end     (sub end 2)
+        in      +.t.in
+      ==
+    --
   ::
   ++  en-all-sessions
     |=  a=(map term session)
