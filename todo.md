@@ -147,6 +147,7 @@ key:
 + [~widmes-hassen] the event address is currently hard to find. i think it should go below the end date, above the group link.
 - sometimes editing a session (e.g. adding a new session when one is already there) will highlight the header in red and won't let the user save the change.
 - search should allow the user to just pass the ship. the event name is not required.
+- under the search tab, the user should be able to request access or register to an event that appears here.
 - when we edit an event, it won't let us submit the form wihtout filling in the secret, but this isn't required
 - there should be a border around the edit event scroll box. it's sometimes difficult to know if you're at the bottom or not.
 
