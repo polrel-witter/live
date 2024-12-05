@@ -1,6 +1,6 @@
 import React from "react"
 
-import { EventDetails, Profile } from "@/lib/backend";
+import { EventDetails, Profile } from "@/lib/types";
 import { isComet, isMoon, Patp } from "@/lib/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";

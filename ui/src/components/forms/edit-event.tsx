@@ -1,8 +1,9 @@
-import { Backend, EventAsHost, Session } from "@/lib/backend"
+import { EventAsHost, Session } from "@/lib/types"
 import { EventForm } from "./event"
 import { TZDate } from "@date-fns/tz"
 import { isEqual } from "date-fns"
 import { newTZDateInUTCFromDate } from "@/lib/time"
+import { Backend } from "@/lib/backend"
 
 type Props = {
   event: EventAsHost

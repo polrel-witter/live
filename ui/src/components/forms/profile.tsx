@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Profile } from "@/lib/backend"
+import { Profile } from "@/lib/types"
 import { SpinningButton } from "@/components/spinning-button"
 import { Bold } from "lucide-react"
 import { ButtonToggle } from "../button-toggle"

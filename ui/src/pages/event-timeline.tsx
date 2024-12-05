@@ -1,23 +1,27 @@
-import { ReactNode, useContext, useEffect, useState } from "react";
-import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
-import { GlobalContext, GlobalCtx } from "@/globalContext";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ChevronUp, Search, X } from "lucide-react";
-import { Backend, EventDetails, EventId, eventIdsEqual } from "@/lib/backend";
-import { cn, flipBoolean } from "@/lib/utils";
-import { ResponsiveContent } from "@/components/responsive-content";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { Link } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ReactNode, useContext, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { compareDesc } from "date-fns";
-import { SlideDownAndReveal } from "@/components/sliders";
-import { SpinningButton } from "@/components/spinning-button";
+import { ChevronUp, Search } from "lucide-react";
+import { Link } from "react-router-dom";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+import { GlobalContext, GlobalCtx } from "@/globalContext";
+
+import { cn, flipBoolean } from "@/lib/utils";
+import { EventDetails, EventId, eventIdsEqual } from "@/lib/types";
 import { formatEventDate, shiftTzDateInUTCToTimezone } from "@/lib/time";
 import { PatpSchema, StringWithDashes } from "@/lib/schemas";
+
+import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ResponsiveContent } from "@/components/responsive-content";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { SlideDownAndReveal } from "@/components/sliders";
+import { SpinningButton } from "@/components/spinning-button";
+import { Backend } from "@/lib/backend";
 
 type EventThumbnailProps = {
   details: EventDetails,

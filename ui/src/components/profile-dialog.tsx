@@ -5,8 +5,9 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import ProfileForm from "@/components/forms/profile";
-import { Backend, diffProfiles, Profile } from "@/lib/backend";
+import { diffProfiles, Profile } from "@/lib/types";
 import { useEffect, useState } from "react";
+import { Backend } from "@/lib/backend";
 
 type Props = {
   open: boolean;
@@ -41,7 +42,7 @@ const ProfileDialog: React.FC<Props> = ({
         return editProfileField(field, val)
       }))
 
-    await setAddPals(addPals) 
+    await setAddPals(addPals)
 
     setOpenDialog(false)
     onOpenChange(false)

@@ -2,21 +2,24 @@ import { useContext, useEffect, useState } from 'react';
 import { Location, Outlet, useLoaderData, useLocation } from 'react-router-dom';
 import { LoaderFunctionArgs, Params } from "react-router-dom";
 
-import { Attendee, Backend, emptyEventAsGuest, EventAsGuest, EventId, eventIdsEqual, Profile } from "@/lib/backend"
+import { Attendee, emptyEventAsGuest, EventAsGuest, EventId, eventIdsEqual, Profile } from "@/lib/types"
 
 import { GlobalContext, GlobalCtx } from '@/globalContext';
 import { EventContext, EventCtx, newEmptyCtx } from './context';
+
+import { debounce } from '@/hooks/use-debounce';
+import { useOnMobile } from '@/hooks/use-mobile';
+import { useToast, toast as toastFn } from '@/hooks/use-toast';
+import { Patp, stripSig } from '@/lib/types';
+import { Backend } from '@/lib/backend';
+
 import { AppFrame } from '@/components/frame';
 import { FooterWithSlots } from '@/components/frame/footer';
 import { ConnectionStatusBar } from '@/components/connection-status';
 import { LinkItem, MenuItemWithLinks, NavbarWithSlots } from '@/components/frame/navbar'
-import { useOnMobile } from '@/hooks/use-mobile';
 import { EventStatusButton } from './components/event-status-button';
 import { MobileMenu, ProfileButton } from './components/navbar-components';
 import { BackButton } from '@/components/back-button';
-import { useToast, toast as toastFn } from '@/hooks/use-toast';
-import { debounce } from '@/hooks/use-debounce';
-import { Patp, stripSig } from '@/lib/types';
 
 async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
   return Promise.all(a

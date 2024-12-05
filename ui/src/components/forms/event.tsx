@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 import { cn, flipBoolean } from "@/lib/utils"
-import { EventAsHost, validUTCOffsets } from "@/lib/backend"
+import { validUTCOffsets } from "@/lib/time"
 import { SpinningButton } from "@/components/spinning-button"
 import { CreateSessionForm } from "@/components/forms/create-session"
 import { SlideDownAndReveal } from "@/components/sliders"
@@ -32,6 +32,7 @@ import { SessionCard } from "@/components/cards/session"
 import { EditSessionForm } from "./edit-session"
 import { formatSessionTime, newDateFromTZDateInUTC, newTZDateInUTCFromDate, shiftTzDateInUTCToTimezone } from "@/lib/time"
 import { PatpSchema, StringWithDashes } from "@/lib/schemas"
+import { EventAsHost } from "@/lib/types"
 
 /* ON TIME
  * throughout this page we're storing time in ordinary Dates in local time; the user doesn't know

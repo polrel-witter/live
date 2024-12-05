@@ -1,22 +1,22 @@
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel"
 import { useContext, useEffect, useState } from "react"
+import { Check, ChevronUp, Ellipsis, FileQuestion, IterationCw, Plus, X } from "lucide-react"
+
 import { EventContext } from "./context"
+
+import { Attendee } from "@/lib/types"
+import { cn, flipBoolean } from "@/lib/utils"
+import { Patp } from "@/lib/types"
+import { Backend } from "@/lib/backend"
+
 import { ProfilePicture } from "@/components/profile-picture"
-import { Attendee, Backend } from "@/lib/backend"
 import { ProfileCard } from "@/components/cards/profile"
 import { SpinningButton } from "@/components/spinning-button"
 import { CarouselApi } from "@/components/ui/carousel"
-import { Check, ChevronUp, Ellipsis, FileQuestion, IterationCw, Plus, X } from "lucide-react"
-import { cn, flipBoolean } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { SlideDownAndReveal, SlideRightAndReveal } from "@/components/sliders"
 import { Card } from "@/components/ui/card"
 import { nickNameOrPatp } from "@/components/util"
-import { Patp } from "@/lib/types"
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel"
 
 
 // TODO: these should stop spinning once the event from matcher comes in

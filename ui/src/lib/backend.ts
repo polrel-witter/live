@@ -6,7 +6,10 @@ import { z, ZodError } from "zod" // this is an object validation library
 
 import {
   newTZDateInUTCFromDate,
-  newTzDateInUTCFromUnixMilli
+  newTzDateInUTCFromUnixMilli,
+  stringToUTCOffset,
+  stripUTCOffset,
+  UTCOffset
 } from "@/lib/time";
 
 import {
@@ -29,17 +32,29 @@ import {
 
 import {
   addSig,
+  Attendee,
+  emptyEventAsGuest,
+  emptyEventAsHost,
+  emptyEventDetails,
+  EventAsAllGuests,
+  EventAsGuest,
+  EventAsHost,
+  EventDetails,
+  EventId,
+  EventStatus,
+  LiveEventUpdateEvent,
+  LiveFindEvent,
+  LiveRecordUpdateEvent,
+  MatcherMatchEvent,
+  MatcherProfileEvent,
+  MatchStatus,
   Patp,
-  PatpWithoutSig
+  PatpWithoutSig,
+  Profile,
+  RecordInfo,
+  Session,
+  Sessions
 } from "@/lib/types";
-
-interface EventId { ship: Patp, name: string };
-
-function eventIdsEqual(id1: EventId, id2: EventId): boolean {
-  return id1.ship === id2.ship && id1.name === id2.name
-}
-
-type EventStatus = "invited" | "requested" | "registered" | "unregistered" | "attended"
 
 interface Backend {
   // --- live agent --- //
@@ -217,233 +232,10 @@ interface Backend {
   unsubscribeFromEvent(id: number): Promise<void>
 }
 
-type MatchStatus = "unmatched" | "sent-request" | "matched";
-
-type Attendee = {
-  patp: Patp,
-  status: MatchStatus,
-}
-
-type Profile = {
-  patp: Patp;
-  // these are always fetched from tlon
-  avatar: string | null;
-  bio: string | null;
-  nickname: string | null;
-  // these are available only when we match
-  x: string | null;
-  ensDomain: string | null;
-  email: string | null;
-  github: string | null;
-  telegram: string | null;
-  signal: string | null;
-  phone: string | null;
-
-  // extra fields
-  addToPals: boolean;
-}
-
-function diffProfiles(oldProfile: Profile, newFields: Record<string, string>): [string, string | null][] {
-
-  const result: [string, string | null][] = []
-
-  const keysObj: any = oldProfile
-
-  for (const entry of Object.entries(newFields)) {
-    const [key, val] = entry
-    if (key in keysObj && val != keysObj[key]) {
-      result.push([key, val])
-    }
-  }
-
-  return result
-
-}
-
-const emptyProfile: Profile = {
-  patp: "~",
-  // these are always fetched from tlon
-  avatar: null,
-  bio: null,
-  nickname: null,
-  // these are available only when we match
-  x: null,
-  ensDomain: null,
-  email: null,
-  github: null,
-  telegram: null,
-  signal: null,
-  phone: null,
-
-  addToPals: false,
-}
-
-type Session = {
-  id?: string;
-  title: string;
-  // backend doesn't send this yet
-  mainSpeaker: string;
-  panel: string[] | null;
-  location: string | null;
-  about: string | null;
-  startTime: TZDate | null;
-  endTime: TZDate | null;
-}
-
-type Sessions = Record<string, Session>
-
-const validUTCOffsets = [
-  "-00:00",
-  "-01:00",
-  "-02:00",
-  "-03:00",
-  "-04:00",
-  "-05:00",
-  "-06:00",
-  "-07:00",
-  "-08:00",
-  "-09:00",
-  "-10:00",
-  "-11:00",
-  "-12:00",
-  "+00:00",
-  "+01:00",
-  "+02:00",
-  "+03:00",
-  "+04:00",
-  "+05:00",
-  "+06:00",
-  "+07:00",
-  "+08:00",
-  "+09:00",
-  "+10:00",
-  "+11:00",
-  "+12:00",
-  "+13:00",
-  "+14:00",
-] as const
-
-type UTCOffset = typeof validUTCOffsets[number]
-
-// turns +14:00 into +14, but +04:00 into +4
-function stripUTCOffset(offset: UTCOffset): string {
-  if (offset.charAt(1) === "0") {
-    return offset.charAt(0) + offset.charAt(2)
-  }
-  return offset.slice(0, 3)
-}
-
-function stringToUTCOffset(str: string): UTCOffset | null {
-
-  if (str.charAt(0) !== "+" && str.charAt(0) !== "-") {
-    return null
-  }
-
-  for (const offset of validUTCOffsets) {
-    if (stripUTCOffset(offset) === str) {
-      return offset
-    }
-  }
-
-  return null
-}
-
-
-type EventDetails = {
-  id: EventId;
-  title: string;
-  location: string;
-  startDate: TZDate | null;
-  endDate: TZDate | null;
-  timezone: UTCOffset;
-  description: string;
-  group: { ship: string, name: string } | null;
-  kind: "public" | "private" | "secret";
-  latch: "open" | "closed" | "over";
-  venueMap: string;
-  sessions: Sessions
-}
-
-type EventAsHost = {
-  secret: string | null,
-  limit: number | null,
-  details: EventDetails
-}
-
-type RecordInfo = {
-  secret: string
-  status: EventStatus
-  lastChanged: TZDate
-}
-
-type EventAsGuest = {
-  details: EventDetails
-} & RecordInfo
-
-type EventAsAllGuests = [Record<Patp, RecordInfo>, EventDetails]
-
-const emptyEventDetails: EventDetails = {
-  id: {
-    ship: "~",
-    name: "",
-  },
-  title: "",
-  location: "",
-  startDate: new TZDate(0),
-  endDate: new TZDate(0),
-  description: "",
-  timezone: "-00:00",
-  kind: "public",
-  group: null,
-  latch: "open",
-  venueMap: "",
-  sessions: {}
-}
-
-
-const emptyEventAsGuest: EventAsGuest = {
-  secret: "",
-  status: "unregistered",
-  lastChanged: new TZDate(),
-  details: emptyEventDetails
-}
-
-const emptyEventAsAllGuests: EventAsAllGuests = [{}, emptyEventDetails]
-
-const emptyEventAsHost: EventAsHost = {
-  secret: "",
-  limit: 0,
-  details: emptyEventDetails
-}
-
-type CreateEventParams = {
+export type CreateEventParams = {
   secret: EventAsHost["secret"];
   limit: EventAsHost["limit"];
   details: Omit<EventDetails, "id">;
-}
-
-type LiveRecordUpdateEvent = {
-  ship: Patp,
-  event: EventAsGuest,
-}
-
-type LiveEventUpdateEvent = {
-  event: EventAsHost,
-}
-
-type LiveFindEvent = {
-  events: [EventId, EventDetails][]
-}
-
-
-type MatcherProfileEvent = {
-  profile: Profile;
-}
-
-
-type MatcherMatchEvent = {
-  ship: Patp,
-  status: MatchStatus,
 }
 
 function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof BackendInfo1Schema>): EventDetails {
@@ -1603,17 +1395,6 @@ function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
   }
 }
 
-export { emptyEventAsGuest, emptyProfile, emptyEventAsHost, newBackend, eventIdsEqual, diffProfiles }
+export { newBackend }
 
-export { validUTCOffsets, stripUTCOffset, stringToUTCOffset }
-export type { UTCOffset }
-
-
-export type { Session, Sessions }
-
-export type { EventAsAllGuests, RecordInfo }
-export { emptyEventAsAllGuests }
-
-export type { LiveRecordUpdateEvent, LiveEventUpdateEvent, LiveFindEvent }
-
-export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, CreateEventParams, EventDetails, Attendee, Profile, Backend }
+export type { Backend }

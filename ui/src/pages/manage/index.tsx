@@ -1,8 +1,17 @@
-import { LoaderFunctionArgs, Params, useLoaderData, useNavigate, useSubmit } from "react-router-dom"
+import { LoaderFunctionArgs, Params, useLoaderData, useNavigate } from "react-router-dom"
 import { useContext, useEffect, useState } from "react"
+import { X } from "lucide-react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
 
-import { Attendee, Backend, emptyEventAsHost, EventAsAllGuests, EventAsHost, EventId, eventIdsEqual, EventStatus, Profile, RecordInfo } from "@/lib/backend"
+import { Attendee, emptyEventAsHost, EventAsAllGuests, EventAsHost, EventId, eventIdsEqual, EventStatus, Profile, RecordInfo } from "@/lib/types"
 import { GlobalContext, GlobalCtx } from "@/globalContext"
+
+import { formatEventDateShort, shiftTzDateInUTCToTimezone } from "@/lib/time"
+import { Patp } from "@/lib/types"
+import { PatpSchema } from "@/lib/schemas"
+import { Backend } from "@/lib/backend"
 
 import { NavbarWithSlots } from "@/components/frame/navbar"
 import { FooterWithSlots } from "@/components/frame/footer"
@@ -21,17 +30,10 @@ import { nickNameOrPatp } from "@/components/util"
 import { GenericComboBox } from "@/components/ui/combo-box"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { X } from "lucide-react"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { SpinningButton } from "@/components/spinning-button"
 import { AnimatedButtons } from "@/components/animated-buttons"
 import { Dialog, DialogHeader, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { formatEventDateShort, shiftTzDateInUTCToTimezone } from "@/lib/time"
-import { Patp } from "@/lib/types"
-import { PatpSchema } from "@/lib/schemas"
 
 async function ManageParamsLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> {

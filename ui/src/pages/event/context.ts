@@ -1,6 +1,6 @@
 import { createContext } from "react";
 
-import { Session, Profile, Attendee, EventAsGuest } from "@/lib/backend";
+import { Session, Profile, Attendee, EventAsGuest } from "@/lib/types";
 import { TZDate } from "@date-fns/tz";
 
 interface EventCtx {

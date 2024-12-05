@@ -1,39 +1,7 @@
-import { Backend, EventAsGuest, EventId, EventStatus } from "@/lib/backend"
+import { EventStatus } from "@/lib/types"
 import { SpinningButton } from "@/components/spinning-button"
-import { debounce, useDebounce } from "@/hooks/use-debounce"
-import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { log } from "console"
-import { useCallback, useEffect, useMemo, useState } from "react"
-
-const makeClassName = (status: EventStatus) => {
-  switch (status) {
-    case "invited":
-    case "unregistered":
-      return "bg-stone-700 hover:bg-stone-800"
-    case "registered":
-      return "bg-rose-800 hover:bg-rose-900"
-    case "attended":
-      return "bg-emerald-800 hover:bg-emerald-900"
-    case "requested":
-      return ""
-  }
-}
-
-function makeToastMessage(status: EventStatus): string {
-  switch (status) {
-    case "requested":
-      return "successfully sent entry request to event host"
-    case "registered":
-      return "successfully registered to event"
-    case "unregistered":
-    case "invited":
-      return "successfully unregistered from event"
-    // case "attended":
-    default:
-      return `event status changed, new status: ${status}`
-  }
-}
+import { useCallback, useMemo, useState } from "react"
 
 type EventStatusButtonProps = {
   fetched: boolean,

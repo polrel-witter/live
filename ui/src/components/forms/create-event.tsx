@@ -1,7 +1,8 @@
-import { CreateEventParams, emptyEventAsHost } from "@/lib/backend"
+import { emptyEventAsHost } from "@/lib/types"
 import { EventForm } from "./event"
 import { newTZDateInUTCFromDate } from "@/lib/time"
 import { useNavigate } from "react-router-dom"
+import { CreateEventParams } from "@/lib/backend"
 
 type Props = {
   createEvent: (newEvent: CreateEventParams) => Promise<boolean>
