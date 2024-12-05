@@ -117,7 +117,6 @@ export const GetProfilesSchema = z.object({
   )
 })
 
-
 export const GetProfileSchema = z.object({
   profile: z
     .record(
@@ -132,6 +131,21 @@ export const MatchStatusSchema = z.enum([
   "match",
   "reach"
 ]).nullable()
+
+export const GetAttendeesSchema = z.object({
+  peers: z
+    .record(PatpSchema, z
+      .object({
+        status: MatchStatusSchema
+      }))
+})
+
+export const PreviousSearchSchema = z.object({
+  result: z.record(
+    z.string(),
+    z.object({ info: BackendInfo1Schema })
+  )
+})
 
 // events
 

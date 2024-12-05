@@ -4,20 +4,14 @@ import { TZDate } from "@date-fns/tz";
 
 import { z, ZodError } from "zod" // this is an object validation library
 
-import {
-  newTZDateInUTCFromDate,
-  newTzDateInUTCFromUnixMilli,
-  stringToUTCOffset,
-  stripUTCOffset,
-  UTCOffset
-} from "@/lib/time";
+import { newTZDateInUTCFromDate, stripUTCOffset, } from "@/lib/time";
 
 import {
   AllEventsSchema,
   AllRecordsSchema,
   BackendEventSchema,
-  BackendInfo1Schema,
   BackendRecordSchema,
+  GetAttendeesSchema,
   GetProfileSchema,
   GetProfilesSchema,
   LiveEventUpdateEventSchema,
@@ -25,14 +19,17 @@ import {
   LiveRecordUpdateEventSchema,
   MatcherMatchEventSchema,
   MatcherProfileUpdateEventSchema,
-  MatchStatusSchema,
-  PatpSchema,
+  PreviousSearchSchema,
   ProfileEntryObjSchema,
 } from "@/lib/schemas";
 
 import {
   addSig,
   Attendee,
+  backendEventToEventAsHost,
+  backendInfo1ToEventDetails,
+  backendMatchStatusToMatchStatus,
+  backendRecordToEventAsGuest,
   emptyEventAsGuest,
   emptyEventAsHost,
   emptyEventDetails,
@@ -41,19 +38,15 @@ import {
   EventAsHost,
   EventDetails,
   EventId,
-  EventStatus,
   LiveEventUpdateEvent,
-  LiveFindEvent,
   LiveRecordUpdateEvent,
   MatcherMatchEvent,
   MatcherProfileEvent,
-  MatchStatus,
   Patp,
   PatpWithoutSig,
   Profile,
   RecordInfo,
   Session,
-  Sessions
 } from "@/lib/types";
 
 interface Backend {
@@ -232,77 +225,6 @@ interface Backend {
   unsubscribeFromEvent(id: number): Promise<void>
 }
 
-export type CreateEventParams = {
-  secret: EventAsHost["secret"];
-  limit: EventAsHost["limit"];
-  details: Omit<EventDetails, "id">;
-}
-
-function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof BackendInfo1Schema>): EventDetails {
-  const {
-    moment: { start, end },
-    about,
-    location: _location,
-    timezone,
-    group: group,
-    sessions: _sessions,
-    ["venue-map"]: venueMap,
-    ...infoRest
-  } = info1
-
-  // true is + false is -
-  const timezoneSign = timezone.p ? "+" : "-"
-  const parsedTimezone = stringToUTCOffset(`${timezoneSign}${timezone.q}`)
-
-  let timezoneString: UTCOffset = "+00:00"
-
-  if (parsedTimezone) {
-    timezoneString = parsedTimezone
-  } else {
-    console.error("couldn't parse timezone:", timezone)
-  }
-
-  const newTZDateOrNull = (tsOrNull: number | null): TZDate | null => {
-    if (!tsOrNull) { return null }
-
-    return newTzDateInUTCFromUnixMilli(tsOrNull * 1000)
-  }
-
-  const sessionEntries = Object.entries(_sessions).map(([sessionId, { session }]): [string, Session] => {
-    return [sessionId, {
-      title: session.title,
-      mainSpeaker: "",
-      location: session.location,
-      about: session.about,
-      panel: session.panel,
-      startTime: newTZDateOrNull(session.moment.start),
-      endTime: newTZDateOrNull(session.moment.end)
-    }]
-  })
-
-  return {
-    id: eventId,
-    description: (about ? about : "no event description"),
-    startDate: newTZDateOrNull(start),
-    endDate: newTZDateOrNull(end),
-    location: (_location ? _location : "no location"),
-    group: (group ? { ship: group.ship, name: group.term } : null),
-    timezone: timezoneString,
-    sessions: Object.fromEntries(sessionEntries),
-    venueMap: venueMap ?? "",
-    ...infoRest
-  }
-}
-
-function backendRecordToEventAsGuest(eventId: EventId, record: z.infer<typeof BackendRecordSchema>): EventAsGuest {
-  return {
-    secret: record.secret ? record.secret : "",
-    status: record.status.p,
-    lastChanged: newTZDateInUTCFromDate(new Date(record.status.q * 1000)),
-    details: backendInfo1ToEventDetails(eventId, record.info)
-  }
-}
-
 // ship here was needed to verify that there was a record for our ship
 // but i removed that validation
 // we're trusting the backend for now
@@ -382,20 +304,6 @@ function getRecord(api: Urbit, ship: string): (id: EventId) => Promise<EventAsGu
   }
 }
 
-function backendEventToEventAsHost(eventId: EventId, event: z.infer<typeof BackendEventSchema>): EventAsHost {
-  const {
-    info,
-    limit,
-    secret
-  } = event
-
-  return {
-    details: backendInfo1ToEventDetails(eventId, info),
-    secret,
-    limit
-  }
-}
-
 function getEvents(api: Urbit): () => Promise<EventAsHost[]> {
   return async () => {
     const response = await api.scry({
@@ -426,7 +334,6 @@ function getEvents(api: Urbit): () => Promise<EventAsHost[]> {
   }
 }
 
-
 function find(api: Urbit): (host: Patp, name: string | null) => Promise<boolean> {
   return async (host: Patp, name: string | null) => {
     let success = false;
@@ -448,13 +355,6 @@ function find(api: Urbit): (host: Patp, name: string | null) => Promise<boolean>
   }
 }
 
-const previousSearchSchema = z.object({
-  result: z.record(
-    z.string(),
-    z.object({ info: BackendInfo1Schema })
-  )
-})
-
 function previousSearch(api: Urbit): () => Promise<[EventId, EventDetails][] | string> {
   return async () => {
     const findEvent = await api.scry({
@@ -466,7 +366,7 @@ function previousSearch(api: Urbit): () => Promise<[EventId, EventDetails][] | s
       return Promise.resolve([])
     }
 
-    let parsed: z.infer<typeof previousSearchSchema>;
+    let parsed: z.infer<typeof PreviousSearchSchema>;
 
     try {
       const obj = z.object({
@@ -475,7 +375,7 @@ function previousSearch(api: Urbit): () => Promise<[EventId, EventDetails][] | s
       // if we get here it means it parse it correctly and we can return
       return obj.result
     } catch (e) {
-      parsed = previousSearchSchema.parse(findEvent)
+      parsed = PreviousSearchSchema.parse(findEvent)
     }
 
     return Object.entries(parsed.result)
@@ -550,8 +450,6 @@ function invite(_api: Urbit): (id: EventId, ships: Patp[]) => Promise<boolean> {
   }
 }
 
-// const tzDateToUnix = (d: TZDate | null) => d ? d.valueOf() : 0
-
 const tzDateToUnixMilliSeconds = (d: TZDate | null) => d ? d.valueOf() : 0
 
 const prepareSession = (session: Session) => {
@@ -565,6 +463,12 @@ const prepareSession = (session: Session) => {
       end: tzDateToUnixMilliSeconds(session.endTime)
     }
   }
+}
+
+export type CreateEventParams = {
+  secret: EventAsHost["secret"];
+  limit: EventAsHost["limit"];
+  details: Omit<EventDetails, "id">;
 }
 
 function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => Promise<boolean> {
@@ -761,7 +665,6 @@ function editEventDetailsLatch(api: Urbit): (id: EventId, value: EventDetails["l
   }
 }
 
-
 function addEventSession(api: Urbit): (id: EventId, value: Session) => Promise<void> {
   return async (id: EventId, value: Session) => {
     return editEventDetails(api)(id, "create-session", prepareSession(value))
@@ -787,7 +690,6 @@ function editEventSessionField(api: Urbit): (
     )
   }
 }
-
 
 function editEventSessionTitle(api: Urbit): (
   id: EventId,
@@ -849,7 +751,6 @@ function removeEventSession(api: Urbit): (id: EventId, sessionId: string) => Pro
     return editEventDetails(api)(id, "delete-session", sessionId)
   }
 }
-
 
 function editEventSecret(api: Urbit): (id: EventId, secret: EventAsHost["secret"]) => Promise<void> {
   return async (id: EventId, secret: EventAsHost["secret"]) => {
@@ -1090,22 +991,7 @@ function getProfiles(_api: Urbit): () => Promise<Profile[]> {
   }
 }
 
-// const getProfileSchema = z
-//   .object({
-//     profile: z
-//       .record(z.string(), z.object({ entry: z.string().nullable() }))
-//   })
-//   .transform((entry) => {
-//     // here we make the response's shape like the one in getProfiles
-//     // so i can reuse the same transform function
-//     return Object
-//       .entries(entry.profile)
-//       .map(([term, { entry }]) => [term, { term: term, entry: entry }] as const)
-//       .map(([_, obj]) => obj)
-//   })
-
 function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
-
   // here we make the response's shape like the one in getProfiles
   // so i can reuse the same transform function (entryArrayToProfile)
   const massagedSchema = GetProfileSchema.transform((entry) => {
@@ -1147,30 +1033,6 @@ function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
   }
 }
 
-
-// !!! the peers object's keys are patps with ~
-const getAttendeesSchema = z.object({
-  peers: z
-    .record(PatpSchema, z
-      .object({
-        status: MatchStatusSchema
-      }))
-})
-
-function backendMatchStatusToMatchStatus(s: z.infer<typeof MatchStatusSchema>): MatchStatus {
-  switch (s) {
-    case "match":
-      return "matched"
-    case "reach":
-      return "sent-request"
-    case null:
-      return "unmatched"
-    default:
-      console.error("unexpected match status: ", s)
-      return "unmatched"
-  }
-}
-
 function getAttendees(_api: Urbit): (eventId: EventId) => Promise<Attendee[]> {
   return async (eventId) => {
     const profileFields = await _api.scry({
@@ -1181,7 +1043,7 @@ function getAttendees(_api: Urbit): (eventId: EventId) => Promise<Attendee[]> {
       // path: `/record/${id.ship}/${id.name}/~zod`
     })
       // .then(console.log)
-      .then(getAttendeesSchema.parse)
+      .then(GetAttendeesSchema.parse)
       .catch((err) => { console.error("error during getPeers api call", err) })
 
     if (!profileFields) {
@@ -1199,12 +1061,9 @@ function getAttendees(_api: Urbit): (eventId: EventId) => Promise<Attendee[]> {
         })
       }
     }
-
-
     return attendees
   }
 }
-
 
 function editProfileField(_api: Urbit): (field: keyof Profile, value: string | null) => Promise<void> {
   // in the future we can use the fact that the field is null to represent
@@ -1262,7 +1121,6 @@ function match(_api: Urbit): (id: EventId, patp: Patp) => Promise<void> {
     })
   }
 }
-
 
 function unmatch(_api: Urbit): (id: EventId, patp: Patp) => Promise<void> {
   return async (id: EventId, patp: Patp) => {

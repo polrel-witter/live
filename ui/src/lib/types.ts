@@ -1,8 +1,9 @@
+import { TZDate } from "@date-fns/tz"
+import { newTZDateInUTCFromDate, newTzDateInUTCFromUnixMilli, stringToUTCOffset, UTCOffset } from "@/lib/time"
+import { BackendEventSchema, BackendInfo1Schema, BackendRecordSchema, MatchStatusSchema } from "@/lib/schemas"
+import { z } from "zod"
 
 // Patp types and utilities
-
-import { TZDate } from "@date-fns/tz"
-import { UTCOffset } from "./time"
 
 export type PatpWithoutSig = string
 
@@ -52,6 +53,20 @@ export type EventStatus = "invited" | "requested" | "registered" | "unregistered
 
 export type MatchStatus = "unmatched" | "sent-request" | "matched";
 
+export function backendMatchStatusToMatchStatus(s: z.infer<typeof MatchStatusSchema>): MatchStatus {
+  switch (s) {
+    case "match":
+      return "matched"
+    case "reach":
+      return "sent-request"
+    case null:
+      return "unmatched"
+    default:
+      console.error("unexpected match status: ", s)
+      return "unmatched"
+  }
+}
+
 export type Attendee = {
   patp: Patp,
   status: MatchStatus,
@@ -71,6 +86,63 @@ export type EventDetails = {
   venueMap: string;
   sessions: Sessions
 }
+
+export function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof BackendInfo1Schema>): EventDetails {
+  const {
+    moment: { start, end },
+    about,
+    location: _location,
+    timezone,
+    group: group,
+    sessions: _sessions,
+    ["venue-map"]: venueMap,
+    ...infoRest
+  } = info1
+
+  // true is + false is -
+  const timezoneSign = timezone.p ? "+" : "-"
+  const parsedTimezone = stringToUTCOffset(`${timezoneSign}${timezone.q}`)
+
+  let timezoneString: UTCOffset = "+00:00"
+
+  if (parsedTimezone) {
+    timezoneString = parsedTimezone
+  } else {
+    console.error("couldn't parse timezone:", timezone)
+  }
+
+  const newTZDateOrNull = (tsOrNull: number | null): TZDate | null => {
+    if (!tsOrNull) { return null }
+
+    return newTzDateInUTCFromUnixMilli(tsOrNull * 1000)
+  }
+
+  const sessionEntries = Object.entries(_sessions).map(([sessionId, { session }]): [string, Session] => {
+    return [sessionId, {
+      title: session.title,
+      mainSpeaker: "",
+      location: session.location,
+      about: session.about,
+      panel: session.panel,
+      startTime: newTZDateOrNull(session.moment.start),
+      endTime: newTZDateOrNull(session.moment.end)
+    }]
+  })
+
+  return {
+    id: eventId,
+    description: (about ? about : "no event description"),
+    startDate: newTZDateOrNull(start),
+    endDate: newTZDateOrNull(end),
+    location: (_location ? _location : "no location"),
+    group: (group ? { ship: group.ship, name: group.term } : null),
+    timezone: timezoneString,
+    sessions: Object.fromEntries(sessionEntries),
+    venueMap: venueMap ?? "",
+    ...infoRest
+  }
+}
+
 
 export type Session = {
   id?: string;
@@ -92,6 +164,20 @@ export type EventAsHost = {
   details: EventDetails
 }
 
+export function backendEventToEventAsHost(eventId: EventId, event: z.infer<typeof BackendEventSchema>): EventAsHost {
+  const {
+    info,
+    limit,
+    secret
+  } = event
+
+  return {
+    details: backendInfo1ToEventDetails(eventId, info),
+    secret,
+    limit
+  }
+}
+
 export type RecordInfo = {
   secret: string
   status: EventStatus
@@ -102,7 +188,17 @@ export type EventAsGuest = {
   details: EventDetails
 } & RecordInfo
 
+export function backendRecordToEventAsGuest(eventId: EventId, record: z.infer<typeof BackendRecordSchema>): EventAsGuest {
+  return {
+    secret: record.secret ? record.secret : "",
+    status: record.status.p,
+    lastChanged: newTZDateInUTCFromDate(new Date(record.status.q * 1000)),
+    details: backendInfo1ToEventDetails(eventId, record.info)
+  }
+}
+
 export type EventAsAllGuests = [Record<Patp, RecordInfo>, EventDetails]
+
 
 export const emptyEventDetails: EventDetails = {
   id: {
