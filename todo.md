@@ -145,6 +145,7 @@ key:
 - [~polrel-witter] the status, latch and kind buttons on the guest and management event page should show cursor on hover
 - [~polrel-witter] there should be a 'guest list' and 'schedule' button on the host management page. they should be able to interface with these two pages like guests.
 + [~widmes-hassen] the event address is currently hard to find. i think it should go below the end date, above the group link.
+- sometimes editing a session (e.g. adding a new session when one is already there) will highlight the header in red and won't let the user save the change.
 
 
 # Backend
