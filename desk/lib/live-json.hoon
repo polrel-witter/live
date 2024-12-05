@@ -2,8 +2,6 @@
 /+  *mip
 |%
 ::
-++  patp  ;~(pose ;~(pfix sig fed:ag) fed:ag)
-::
 ++  dejs-dial
   =,  dejs:format
   |=  jon=json
@@ -104,8 +102,9 @@
   ::
   ++  de-group
     |^  ^-  $-(json group)
-        (su:dejs-soft:format ;~((glue fas) patp sym))
+        (su:dejs-soft:format ;~((glue fas) ship sym))
     ::
+    ++  ship  ;~(pose ;~(pfix sig fed:ag) fed:ag)
     ++  sym
       %+  cook
         |=  a=tape
