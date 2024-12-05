@@ -367,17 +367,34 @@
   ::
   ++  en-panel
     |=  a=(unit cord)
-    ^-  json
-    ?~  a  [%a ~]
-    :-  %a
-    ^-  (list json)
-    :: TODO this doesn't work; +more is producing something other than a
-    :: tape. need to separate by delimeter, but then +cook into a list
-    :: of cords. review %work example
-    %+  turn
-      (fall (rust (trip u.a) (more ;~(plug com ace) ;~(pose patp (plus ;~(pose alp dot))))) ~)
-    |=  t=(list cord)
-    `json`[%s (crip t)]
+    |^  ^-  json
+        ?~  a  [%a ~]
+        =/  sliced=(list cord)
+          (comb (trip u.a))
+        :-  %a
+        ^-  (list json)
+        (turn sliced |=(=cord `json`[%s cord]))
+    ::
+    ++  comb
+      |=  in=(list cord)
+      ^+  in
+      =/  end=@ud
+        (lent in)
+      =|  out=(list cord)
+      =|  buffer=(list cord)
+      |-
+      ?~  in  out
+      ?:  (lte end 1)
+        (snoc out (crip (snoc buffer i.in)))
+      ?.  =(", " ~[i.in -.t.in])
+        $(buffer (snoc buffer i.in), end (dec end), in t.in)
+      %=  $
+        out     (snoc out (crip buffer))
+        buffer  *(list cord)
+        end     (sub end 2)
+        in      +.t.in
+      ==
+    --
   ::
   ++  en-all-sessions
     |=  a=(map term session)
@@ -395,7 +412,7 @@
     ^-  ^json
     %-  pairs
     :~  ['title' s+title.a]
-        ['panel' ~&((en-panel panel.a) (en-panel panel.a))]
+        ['panel' (en-panel panel.a)]
         ['location' (en-unit-cord location.a)]
         ['about' (en-unit-cord about.a)]
         ['moment' (en-moment-1 moment.a)]
