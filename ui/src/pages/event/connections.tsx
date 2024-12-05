@@ -6,7 +6,7 @@ import {
 import { useContext, useEffect, useState } from "react"
 import { EventContext } from "./context"
 import { ProfilePicture } from "@/components/profile-picture"
-import { Attendee, Backend, Patp } from "@/backend"
+import { Attendee, Backend, Patp } from "@/lib/backend"
 import { ProfileCard } from "@/components/cards/profile"
 import { SpinningButton } from "@/components/spinning-button"
 import { CarouselApi } from "@/components/ui/carousel"

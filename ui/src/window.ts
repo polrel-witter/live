@@ -1,5 +1,5 @@
 import Urbit from "@urbit/http-api";
-import { PatpWithoutSig } from "./backend";
+import { PatpWithoutSig } from "@/lib/backend";
 
 declare global {
   interface Window {

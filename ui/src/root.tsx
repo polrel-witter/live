@@ -1,5 +1,5 @@
 import { PropsWithChildren, useEffect, useState } from "react"
-import { addSig, Backend, EventAsAllGuests, EventAsHost, eventIdsEqual, LiveEventUpdateEvent, LiveFindEvent, LiveRecordUpdateEvent } from "@/backend";
+import { addSig, Backend, EventAsAllGuests, EventAsHost, eventIdsEqual, LiveEventUpdateEvent, LiveFindEvent, LiveRecordUpdateEvent } from "@/lib/backend";
 import { Toaster } from "./components/ui/toaster";
 import { buildIndexCtx, ConnectionStatus, GlobalContext, newEmptyIndexCtx } from "./globalContext";
 import { record } from "zod";

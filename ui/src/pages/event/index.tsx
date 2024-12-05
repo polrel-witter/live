@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import { Location, Outlet, useLoaderData, useLocation } from 'react-router-dom';
 import { LoaderFunctionArgs, Params } from "react-router-dom";
 
-import { Attendee, Backend, emptyEventAsGuest, EventAsGuest, EventId, eventIdsEqual, Patp, Profile } from '@/backend'
+import { Attendee, Backend, emptyEventAsGuest, EventAsGuest, EventId, eventIdsEqual, Patp, Profile } from "@/lib/backend"
 
 import { GlobalContext, GlobalCtx } from '@/globalContext';
 import { EventContext, EventCtx, newEmptyCtx } from './context';

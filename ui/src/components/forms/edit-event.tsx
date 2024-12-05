@@ -1,4 +1,4 @@
-import { Backend, EventAsHost, Session } from "@/backend"
+import { Backend, EventAsHost, Session } from "@/lib/backend"
 import { EventForm } from "./event"
 import { TZDate } from "@date-fns/tz"
 import { isEqual } from "date-fns"

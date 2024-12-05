@@ -1,6 +1,6 @@
 import React from "react"
 
-import { EventDetails, isComet, isMoon, Patp, Profile } from "@/backend";
+import { EventDetails, isComet, isMoon, Patp, Profile } from "@/lib/backend";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";

@@ -1,7 +1,7 @@
 import { LoaderFunctionArgs, Params, useLoaderData, useNavigate, useSubmit } from "react-router-dom"
 import { useContext, useEffect, useState } from "react"
 
-import { Attendee, Backend, emptyEventAsHost, EventAsAllGuests, EventAsHost, EventId, eventIdsEqual, EventStatus, Patp, Profile, PatpSchema, RecordInfo } from "@/backend"
+import { Attendee, Backend, emptyEventAsHost, EventAsAllGuests, EventAsHost, EventId, eventIdsEqual, EventStatus, Patp, Profile, PatpSchema, RecordInfo } from "@/lib/backend"
 import { GlobalContext, GlobalCtx } from "@/globalContext"
 
 import { NavbarWithSlots } from "@/components/frame/navbar"

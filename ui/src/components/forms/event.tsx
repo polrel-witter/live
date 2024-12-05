@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 import { cn, flipBoolean } from "@/lib/utils"
-import { EventAsHost, PatpSchema, validUTCOffsets } from "@/backend"
+import { EventAsHost, PatpSchema, validUTCOffsets } from "@/lib/backend"
 import { SpinningButton } from "@/components/spinning-button"
 import { CreateSessionForm } from "@/components/forms/create-session"
 import { SlideDownAndReveal } from "@/components/sliders"

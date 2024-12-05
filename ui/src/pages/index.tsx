@@ -1,4 +1,4 @@
-import { Backend } from "@/backend";
+import { Backend } from "@/lib/backend";
 import { useContext, useEffect, useState } from "react";
 import { Plus, User } from "lucide-react";
 import { Button } from "@/components/ui/button";

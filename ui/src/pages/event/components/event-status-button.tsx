@@ -1,4 +1,4 @@
-import { Backend, EventAsGuest, EventId, EventStatus } from "@/backend"
+import { Backend, EventAsGuest, EventId, EventStatus } from "@/lib/backend"
 import { SpinningButton } from "@/components/spinning-button"
 import { debounce, useDebounce } from "@/hooks/use-debounce"
 import { useToast } from "@/hooks/use-toast"

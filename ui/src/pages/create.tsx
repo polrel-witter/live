@@ -1,4 +1,4 @@
-import { Backend } from "@/backend";
+import { Backend } from "@/lib/backend";
 import { useContext, useState } from "react";
 import { GlobalContext } from "@/globalContext";
 import { AppFrame } from "@/components/frame"

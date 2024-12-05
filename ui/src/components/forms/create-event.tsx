@@ -1,4 +1,4 @@
-import { CreateEventParams, emptyEventAsHost } from "@/backend"
+import { CreateEventParams, emptyEventAsHost } from "@/lib/backend"
 import { EventForm } from "./event"
 import { newTZDateInUTCFromDate } from "@/lib/time"
 import { useNavigate } from "react-router-dom"

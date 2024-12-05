@@ -2,7 +2,7 @@ import { useState } from "react"
 
 import { Card, CardContent } from "@/components/ui/card"
 
-import { Profile, Attendee, Patp } from "@/backend"
+import { Profile, Attendee, Patp } from "@/lib/backend"
 import { flipBoolean } from "@/lib/utils"
 import { SlideDownAndReveal } from "@/components/sliders"
 import { ProfileCard } from "@/components/cards/profile"

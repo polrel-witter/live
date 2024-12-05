@@ -4,7 +4,7 @@ import { TZDate } from "@date-fns/tz";
 
 import { z, ZodError } from "zod" // this is an object validation library
 
-import { newTZDateInUTCFromDate, newTzDateInUTCFromUnixMilli } from "./lib/time";
+import { newTZDateInUTCFromDate, newTzDateInUTCFromUnixMilli } from "@/lib/time";
 
 // Patp types and utilities
 

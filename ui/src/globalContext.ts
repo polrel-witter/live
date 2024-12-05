@@ -1,4 +1,4 @@
-import { Backend, EventAsAllGuests, EventAsGuest, EventAsHost, EventDetails, EventId, Patp, Profile } from "@/backend";
+import { Backend, EventAsAllGuests, EventAsGuest, EventAsHost, EventDetails, EventId, Patp, Profile } from "@/lib/backend";
 import { createContext } from "react";
 
 

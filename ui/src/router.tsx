@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
 
-import { Backend } from "@/backend";
+import { Backend } from "@/lib/backend";
 
 // pages
 import { Index } from '@/pages/index';

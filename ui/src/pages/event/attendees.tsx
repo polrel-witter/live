@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { EventContext } from './context'
 import { AttendeeList } from "@/components/lists/attendee";
-import { Backend, Patp } from "@/backend";
+import { Backend, Patp } from "@/lib/backend";
 import { Card, CardContent } from "@/components/ui/card";
 
 const AttendeesPage: React.FC<{ backend: Backend }> = ({ backend }) => {

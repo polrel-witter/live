@@ -4,7 +4,7 @@ import { GlobalContext, GlobalCtx } from "@/globalContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronUp, Search, X } from "lucide-react";
-import { Backend, EventDetails, EventId, eventIdsEqual, PatpSchema } from "@/backend";
+import { Backend, EventDetails, EventId, eventIdsEqual, PatpSchema } from "@/lib/backend";
 import { cn, flipBoolean } from "@/lib/utils";
 import { ResponsiveContent } from "@/components/responsive-content";
 import { useForm } from "react-hook-form";
