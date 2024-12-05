@@ -8,7 +8,7 @@ import Urbit from '@urbit/http-api';
 
 
 // backend
-import { newBackend } from '@/backend'
+import { newBackend } from "@/lib/backend"
 
 // this component wraps its children with the global state
 import RootComponent from './root';

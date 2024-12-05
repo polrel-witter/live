@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import { Ellipsis, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import { MatchStatus } from "@/backend";
+import { MatchStatus } from "@/lib/types";
 import React from "react";
 
 

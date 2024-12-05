@@ -1,8 +1,17 @@
-import { LoaderFunctionArgs, Params, useLoaderData, useNavigate, useSubmit } from "react-router-dom"
-import { useContext, useEffect, useRef, useState } from "react"
+import { LoaderFunctionArgs, Params, useLoaderData, useNavigate } from "react-router-dom"
+import { useContext, useEffect, useState } from "react"
+import { X } from "lucide-react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
 
-import { Attendee, Backend, emptyEventAsHost, EventAsAllGuests, EventAsHost, EventId, eventIdsEqual, EventStatus, Patp, Profile, PatpSchema, RecordInfo } from "@/backend"
+import { Attendee, emptyEventAsHost, EventAsAllGuests, EventAsHost, EventId, eventIdsEqual, EventStatus, Profile, RecordInfo } from "@/lib/types"
 import { GlobalContext, GlobalCtx } from "@/globalContext"
+
+import { formatEventDateShort, shiftTzDateInUTCToTimezone } from "@/lib/time"
+import { Patp } from "@/lib/types"
+import { PatpSchema } from "@/lib/schemas"
+import { Backend } from "@/lib/backend"
 
 import { NavbarWithSlots } from "@/components/frame/navbar"
 import { FooterWithSlots } from "@/components/frame/footer"
@@ -21,15 +30,10 @@ import { nickNameOrPatp } from "@/components/util"
 import { GenericComboBox } from "@/components/ui/combo-box"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { X } from "lucide-react"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { SpinningButton } from "@/components/spinning-button"
 import { AnimatedButtons } from "@/components/animated-buttons"
 import { Dialog, DialogHeader, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { formatEventDateShort, shiftTzDateInUTCToTimezone } from "@/lib/time"
 
 async function ManageParamsLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> {
@@ -98,9 +102,14 @@ async function buildState(
   }
 }
 
+type EditProps = {
+  evt: EventAsHost,
+  backend: Backend
+  open: boolean,
+  setOpen: (fn: (b: boolean) => boolean) => void
+}
 
-const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => {
-  const [open, setOpen] = useState(false)
+const EditEvent = ({ evt, backend, open, setOpen }: EditProps) => {
   return (
     <div className="p-2 ">
       <Button
@@ -131,7 +140,10 @@ const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => 
             {/* extract into component and use in all 3 sections */}
             <ScrollArea
               type="auto"
-              className="h-[300px] rounded-md px-3">
+              className={cn([
+                "h-[300px] rounded-md px-3",
+                "md:h-[500px]"
+              ])}>
               <EditEventForm
                 backend={backend}
                 event={evt}
@@ -147,18 +159,20 @@ const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => 
 type GuestProps = {
   evt: EventAsAllGuests | null,
   profiles: Profile[],
+  open: boolean,
+  setOpen: (fn: (b: boolean) => boolean) => void
   invite(patp: Patp): Promise<void>
   register(patp: Patp): Promise<void>
   unregister(patp: Patp): Promise<void>
 }
 
-const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
-  const [open, setOpen] = useState(false)
+const Guests = ({ evt, profiles, open, setOpen, ...fns }: GuestProps) => {
   const [spinButton, setSpinButton] = useState(false)
   const [statusFilter, setStatusFilter] = useState<EventStatus | "all">("all")
 
   const StatusButton = ({ status, patp }: { patp: Patp, status: EventStatus }) => {
     const baseClass = "w-full flex items-center justify-around font-bold"
+    const baseButtonClass = "h-8 w-20"
     switch (status) {
       case "registered":
         return (
@@ -168,7 +182,10 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
               // hook up to backend
               spin={spinButton}
               onClick={async () => { setSpinButton(true); await fns.unregister(patp) }}
-              className="h-8 w-22 bg-orange-300 hover:bg-orange-400"
+              className={cn([
+                baseButtonClass,
+                "text-xs bg-orange-300 hover:bg-orange-400",
+              ])}
               variant="ghost"
             >
               unregister
@@ -183,7 +200,10 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
               // hook up to backend
               spin={spinButton}
               onClick={async () => { setSpinButton(true); await fns.register(patp) }}
-              className="h-8 w-22 bg-gray-400" >
+              className={cn([
+                baseButtonClass,
+                "bg-gray-400"
+              ])}>
               register
             </SpinningButton>
           </div>
@@ -196,7 +216,10 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
               // hook up to backend
               spin={spinButton}
               onClick={async () => { setSpinButton(true); await fns.invite(patp) }}
-              className="h-8 w-22 bg-stone-700" >
+              className={cn([
+                baseButtonClass,
+                "bg-stone-700"
+              ])}>
               invite
             </SpinningButton>
           </div>
@@ -344,13 +367,21 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
                 />
               </div>
               <ul className={cn([
-                "grid grid-cols-1 space-y-2 mt-2",
-                "sm:space-y-0 sm:grid-cols-2"
+                "grid grid-cols-1 space-y-2 mt-2 justify-items-center",
+                "sm:space-y-0 sm:grid-cols-2",
+                "2xl:grid-cols-3"
               ])}>
                 {records.map(([patp, info]) => {
                   return (
                     <li key={patp} className="p-2">
-                      <Card className="rounded-md p-2 space-y-1 text-xs sm:text-md">
+                      <Card className={cn([
+                        "rounded-md p-2 space-y-1 text-xs",
+                        "sm:text-md",
+                        // this w-min will make the cards overlap over a small
+                        // range of pxs but overall the effect is better imo
+                        // besides it only happens on super wide screens
+                        "w-min",
+                      ])}>
                         <CardHeader className="bg-gray-100 p-1 rounded-md">
                           {/* WARN: casting as Patp */}
                           {nickNameOrPatp(profiles
@@ -358,8 +389,8 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
                             patp as Patp)}
                         </CardHeader>
                         <AnimatedButtons
-                          minWidth={["w-[80px]", "sm:w-[125px]"]}
-                          maxWidth={["w-[190px]", "sm:w-[250px]"]}
+                          minWidth={["w-[80px]", "sm:w-[70px]"]}
+                          maxWidth={["w-[190px]", "sm:w-[170px]"]}
                           labels={[
                             "status",
                             "timestamp"
@@ -399,10 +430,11 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
 
 type InviteProps = {
   invite(patp: Patp): Promise<void>
+  open: boolean,
+  setOpen: (fn: (b: boolean) => boolean) => void
 }
 
-const InviteGuests = ({ invite }: InviteProps) => {
-  const [open, setOpen] = useState(false)
+const InviteGuests = ({ invite, open, setOpen }: InviteProps) => {
   const [ships, setShips] = useState<Patp[]>([])
 
   // TODO: add validation error in case we're trying to add to the list
@@ -529,6 +561,16 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
     return
   }
 
+  const [panelState, setPanelState] = useState<{
+    edit: boolean,
+    guests: boolean,
+    invite: boolean
+  }>({
+    edit: false,
+    guests: false,
+    invite: false,
+  })
+
   const { hostShip, name } = useLoaderData() as { hostShip: Patp, name: string }
 
   const [fetched, setFetched] = useState<boolean>(false)
@@ -579,8 +621,6 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
       manage event
     </NavbarWithSlots>
 
-
-
   const footer =
     <FooterWithSlots
       left={<div> </div>}
@@ -591,8 +631,6 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
       }
     >
     </FooterWithSlots >
-
-
 
   return (
     <div>
@@ -629,10 +667,31 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
                   className="w-full"
                 />
                 <Card>
-                  <EditEvent backend={backend} evt={event} />
+                  <EditEvent
+                    open={panelState.edit}
+                    setOpen={(fn) =>
+                      setPanelState(({ edit }) => {
+                        return {
+                          edit: fn(edit),
+                          guests: false,
+                          invite: false,
+                        }
+                      })}
+                    backend={backend}
+                    evt={event}
+                  />
                   <Guests
                     profiles={profiles}
                     evt={record}
+                    open={panelState.guests}
+                    setOpen={(fn) =>
+                      setPanelState(({ guests }) => {
+                        return {
+                          edit: false,
+                          guests: fn(guests),
+                          invite: false,
+                        }
+                      })}
                     register={(patp: Patp) => backend
                       .register(event.details.id, patp).then()}
                     unregister={(patp: Patp) => backend
@@ -643,6 +702,15 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
                   <InviteGuests
                     invite={(patp: Patp) => backend
                       .invite(event.details.id, [patp]).then()}
+                    open={panelState.invite}
+                    setOpen={(fn) =>
+                      setPanelState(({ invite }) => {
+                        return {
+                          edit: false,
+                          guests: false,
+                          invite: fn(invite),
+                        }
+                      })}
                   />
                 </Card>
               </ResponsiveContent>

@@ -1,4 +1,4 @@
-import { Profile } from "@/backend"
+import { Profile } from "@/lib/types"
 import { ProfileDialog } from "@/components/profile-dialog"
 import { SlideDownAndReveal } from "@/components/sliders"
 import { Button, buttonVariants } from "@/components/ui/button"

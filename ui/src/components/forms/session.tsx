@@ -22,7 +22,6 @@ import { TimePicker } from "@/components/ui/date-time-picker/time-picker"
 
 import { makeArrayOfEventDays } from "@/lib/utils"
 import { SessionDateSelect } from "@/components/session-date-select"
-import { newTZDateInUTCFromDate } from "@/lib/time"
 
 // need this otherwise the <Input> in there is not happy
 type adjustedFormType = Omit<z.infer<typeof sessionSchema>, "timeRange">

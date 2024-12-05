@@ -1,16 +1,19 @@
-import { Backend } from "@/backend";
+import { Link, Outlet, useNavigate, useSearchParams } from "react-router-dom";
 import { useContext, useEffect, useState } from "react";
 import { Plus, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ProfileDialog } from "@/components/profile-dialog";
-import { flipBoolean } from "@/lib/utils";
+
 import { GlobalContext } from "@/globalContext";
-import { Link, Outlet, useNavigate, useSearchParams } from "react-router-dom";
+
+import { useOnMobile } from "@/hooks/use-mobile";
+import { Backend } from "@/lib/backend";
+import { flipBoolean } from "@/lib/utils";
+
 import { AppFrame } from "@/components/frame";
 import { NavbarWithSlots } from "@/components/frame/navbar";
 import { FooterWithSlots } from "@/components/frame/footer";
 import { ConnectionStatusBar } from "@/components/connection-status";
-import { useOnMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
+import { ProfileDialog } from "@/components/profile-dialog";
 
 const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
   const globalContext = useContext(GlobalContext)

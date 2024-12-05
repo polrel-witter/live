@@ -4,52 +4,50 @@ import { TZDate } from "@date-fns/tz";
 
 import { z, ZodError } from "zod" // this is an object validation library
 
-import { newTZDateInUTCFromDate, newTzDateInUTCFromUnixMilli } from "./lib/time";
+import { newTZDateInUTCFromDate, stripUTCOffset, } from "@/lib/time";
 
-// Patp types and utilities
+import {
+  AllEventsSchema,
+  AllRecordsSchema,
+  BackendEventSchema,
+  BackendRecordSchema,
+  GetAttendeesSchema,
+  GetProfileSchema,
+  GetProfilesSchema,
+  LiveEventUpdateEventSchema,
+  LiveFindEventSchema,
+  LiveRecordUpdateEventSchema,
+  MatcherMatchEventSchema,
+  MatcherProfileUpdateEventSchema,
+  PreviousSearchSchema,
+  ProfileEntryObjSchema,
+} from "@/lib/schemas";
 
-type PatpWithoutSig = string
-type Patp = `~${PatpWithoutSig}`
-
-function isPatp(s: string): s is Patp {
-  return s.charAt(0) === '~' && s.length >= 4
-}
-
-function stripSig(patp: Patp): PatpWithoutSig {
-  return patp.slice(0, 1)
-}
-
-function addSig(patp: PatpWithoutSig): Patp {
-  return `~${patp}`
-}
-
-function isGalaxy(patp: Patp): boolean {
-  return patp.length === 4
-}
-
-function isStar(patp: Patp): boolean {
-  return patp.length === 7
-}
-
-function isPlanet(patp: Patp): boolean {
-  return patp.length === 14
-}
-
-function isMoon(patp: Patp): boolean {
-  return patp.length > 14 && patp.length < 29
-}
-
-function isComet(patp: Patp): boolean {
-  return patp.length > 29
-}
-
-interface EventId { ship: Patp, name: string };
-
-function eventIdsEqual(id1: EventId, id2: EventId): boolean {
-  return id1.ship === id2.ship && id1.name === id2.name
-}
-
-type EventStatus = "invited" | "requested" | "registered" | "unregistered" | "attended"
+import {
+  addSig,
+  Attendee,
+  backendEventToEventAsHost,
+  backendInfo1ToEventDetails,
+  backendMatchStatusToMatchStatus,
+  backendRecordToEventAsGuest,
+  emptyEventAsGuest,
+  emptyEventAsHost,
+  emptyEventDetails,
+  EventAsAllGuests,
+  EventAsGuest,
+  EventAsHost,
+  EventDetails,
+  EventId,
+  LiveEventUpdateEvent,
+  LiveRecordUpdateEvent,
+  MatcherMatchEvent,
+  MatcherProfileEvent,
+  Patp,
+  PatpWithoutSig,
+  Profile,
+  RecordInfo,
+  Session,
+} from "@/lib/types";
 
 interface Backend {
   // --- live agent --- //
@@ -227,413 +225,19 @@ interface Backend {
   unsubscribeFromEvent(id: number): Promise<void>
 }
 
-type MatchStatus = "unmatched" | "sent-request" | "matched";
-
-type Attendee = {
-  patp: Patp,
-  status: MatchStatus,
-}
-
-type Profile = {
-  patp: Patp;
-  // these are always fetched from tlon
-  avatar: string | null;
-  bio: string | null;
-  nickname: string | null;
-  // these are available only when we match
-  x: string | null;
-  ensDomain: string | null;
-  email: string | null;
-  github: string | null;
-  telegram: string | null;
-  signal: string | null;
-  phone: string | null;
-
-  // extra fields
-  addToPals: boolean;
-}
-
-function diffProfiles(oldProfile: Profile, newFields: Record<string, string>): [string, string | null][] {
-
-  const result: [string, string | null][] = []
-
-  const keysObj: any = oldProfile
-
-  for (const entry of Object.entries(newFields)) {
-    const [key, val] = entry
-    if (key in keysObj && val != keysObj[key]) {
-      result.push([key, val])
-    }
-  }
-
-  return result
-
-}
-
-const emptyProfile: Profile = {
-  patp: "~",
-  // these are always fetched from tlon
-  avatar: null,
-  bio: null,
-  nickname: null,
-  // these are available only when we match
-  x: null,
-  ensDomain: null,
-  email: null,
-  github: null,
-  telegram: null,
-  signal: null,
-  phone: null,
-
-  addToPals: false,
-}
-
-type Session = {
-  id?: string;
-  title: string;
-  // backend doesn't send this yet
-  mainSpeaker: string;
-  panel: string[] | null;
-  location: string | null;
-  about: string | null;
-  startTime: TZDate | null;
-  endTime: TZDate | null;
-}
-
-type Sessions = Record<string, Session>
-
-const validUTCOffsets = [
-  "-00:00",
-  "-01:00",
-  "-02:00",
-  "-03:00",
-  "-04:00",
-  "-05:00",
-  "-06:00",
-  "-07:00",
-  "-08:00",
-  "-09:00",
-  "-10:00",
-  "-11:00",
-  "-12:00",
-  "+00:00",
-  "+01:00",
-  "+02:00",
-  "+03:00",
-  "+04:00",
-  "+05:00",
-  "+06:00",
-  "+07:00",
-  "+08:00",
-  "+09:00",
-  "+10:00",
-  "+11:00",
-  "+12:00",
-  "+13:00",
-  "+14:00",
-] as const
-
-type UTCOffset = typeof validUTCOffsets[number]
-
-// turns +14:00 into +14, but +04:00 into +4
-function stripUTCOffset(offset: UTCOffset): string {
-  if (offset.charAt(1) === "0") {
-    return offset.charAt(0) + offset.charAt(2)
-  }
-  return offset.slice(0, 3)
-}
-
-function stringToUTCOffset(str: string): UTCOffset | null {
-
-  if (str.charAt(0) !== "+" && str.charAt(0) !== "-") {
-    return null
-  }
-
-  for (const offset of validUTCOffsets) {
-    if (stripUTCOffset(offset) === str) {
-      return offset
-    }
-  }
-
-  return null
-}
-
-
-type EventDetails = {
-  id: EventId;
-  title: string;
-  location: string;
-  startDate: TZDate | null;
-  endDate: TZDate | null;
-  timezone: UTCOffset;
-  description: string;
-  group: { ship: string, name: string } | null;
-  kind: "public" | "private" | "secret";
-  latch: "open" | "closed" | "over";
-  venueMap: string;
-  sessions: Sessions
-}
-
-type EventAsHost = {
-  secret: string | null,
-  limit: number | null,
-  details: EventDetails
-}
-
-type RecordInfo = {
-  secret: string
-  status: EventStatus
-  lastChanged: TZDate
-}
-
-type EventAsGuest = {
-  details: EventDetails
-} & RecordInfo
-
-type EventAsAllGuests = [Record<Patp, RecordInfo>, EventDetails]
-
-const emptyEventDetails: EventDetails = {
-  id: {
-    ship: "~",
-    name: "",
-  },
-  title: "",
-  location: "",
-  startDate: new TZDate(0),
-  endDate: new TZDate(0),
-  description: "",
-  timezone: "-00:00",
-  kind: "public",
-  group: null,
-  latch: "open",
-  venueMap: "",
-  sessions: {}
-}
-
-
-const emptyEventAsGuest: EventAsGuest = {
-  secret: "",
-  status: "unregistered",
-  lastChanged: new TZDate(),
-  details: emptyEventDetails
-}
-
-const emptyEventAsAllGuests: EventAsAllGuests = [{}, emptyEventDetails]
-
-const emptyEventAsHost: EventAsHost = {
-  secret: "",
-  limit: 0,
-  details: emptyEventDetails
-}
-
-type CreateEventParams = {
-  secret: EventAsHost["secret"];
-  limit: EventAsHost["limit"];
-  details: Omit<EventDetails, "id">;
-}
-
-type LiveRecordUpdateEvent = {
-  ship: Patp,
-  event: EventAsGuest,
-}
-
-type LiveEventUpdateEvent = {
-  event: EventAsHost,
-}
-
-type LiveFindEvent = {
-  events: [EventId, EventDetails][]
-}
-
-
-type MatcherProfileEvent = {
-  profile: Profile;
-}
-
-
-type MatcherMatchEvent = {
-  ship: Patp,
-  status: MatchStatus,
-}
-
-// function getSchedule(_api: Urbit): () => Promise<Session[]> {
-//   return async () => Promise.resolve()
-// }
-
-const eventStatusSchema = z.enum([
-  "invited",
-  "requested",
-  "registered",
-  "unregistered",
-  "attended",
-])
-
-const eventVisibilitySchema = z.enum([
-  "public",
-  "private",
-  "secret",
-])
-
-const eventLatchSchema = z.enum([
-  "open",
-  "closed",
-  "over",
-])
-
-const timeSchema = z.number()
-
-const moment1Schema = z.object({
-  start: z.number().nullable(),
-  end: z.number().nullable()
-})
-
-const sessionSchema = z.object({
-  title: z.string(),
-  location: z.string().nullable(),
-  moment: moment1Schema,
-  about: z.string().nullable(),
-  panel: z.array(z.string())
-})
-
-const backendInfo1Schema = z.object({
-  about: z.string().nullable(),
-  group: z.object({
-    ship: z.string(),
-    term: z.string(),
-  }).nullable(),
-  kind: eventVisibilitySchema,
-  latch: eventLatchSchema,
-  location: z.string().nullable(),
-  moment: z.object({ start: timeSchema.nullable(), end: timeSchema.nullable() }),
-  sessions: z.record(z.object({
-    session: sessionSchema
-  })),
-  timezone: z.object({ p: z.boolean(), q: z.number() }),
-  title: z.string(),
-  ["venue-map"]: z.string().nullable(),
-})
-
-// const PatpSchema = z.custom<Patp>((val) => {
-//   return isPatp(val)
-//     // TODO: maybe add regex
-//     ? true
-//     : false;
-// });
-
-
-// Patp regex:
-// /^~([a-z]{3,6})(?:-([a-z]{6})){0,7}$/
-const PatpSchema = z
-  .string()
-  .startsWith("~")
-  .refine((s: string): s is Patp => isPatp(s), {
-    message: "string is not patp"
-  });
-
-function backendInfo1ToEventDetails(eventId: EventId, info1: z.infer<typeof backendInfo1Schema>): EventDetails {
-  const {
-    moment: { start, end },
-    about,
-    location: _location,
-    timezone,
-    group: group,
-    sessions: _sessions,
-    ["venue-map"]: venueMap,
-    ...infoRest
-  } = info1
-
-  // true is + false is -
-  const timezoneSign = timezone.p ? "+" : "-"
-  const parsedTimezone = stringToUTCOffset(`${timezoneSign}${timezone.q}`)
-
-  let timezoneString: UTCOffset = "+00:00"
-
-  if (parsedTimezone) {
-    timezoneString = parsedTimezone
-  } else {
-    console.error("couldn't parse timezone:", timezone)
-  }
-
-  const newTZDateOrNull = (tsOrNull: number | null): TZDate | null => {
-    if (!tsOrNull) { return null }
-
-    return newTzDateInUTCFromUnixMilli(tsOrNull * 1000)
-  }
-
-  const sessionEntries = Object.entries(_sessions).map(([sessionId, { session }]): [string, Session] => {
-    return [sessionId, {
-      title: session.title,
-      mainSpeaker: "",
-      location: session.location,
-      about: session.about,
-      panel: session.panel,
-      startTime: newTZDateOrNull(session.moment.start),
-      endTime: newTZDateOrNull(session.moment.end)
-    }]
-  })
-
-  return {
-    id: eventId,
-    description: (about ? about : "no event description"),
-    startDate: newTZDateOrNull(start),
-    endDate: newTZDateOrNull(end),
-    location: (_location ? _location : "no location"),
-    group: (group ? { ship: group.ship, name: group.term } : null),
-    timezone: timezoneString,
-    sessions: Object.fromEntries(sessionEntries),
-    venueMap: venueMap ?? "",
-    ...infoRest
-  }
-}
-
-const backendRecordSchema = z.object({
-  info: backendInfo1Schema,
-  secret: z.string().nullable(),
-  status: z.object({
-    p: eventStatusSchema,
-    q: timeSchema
-  })
-})
-
-function backendRecordToEventAsGuest(eventId: EventId, record: z.infer<typeof backendRecordSchema>): EventAsGuest {
-  return {
-    secret: record.secret ? record.secret : "",
-    status: record.status.p,
-    lastChanged: newTZDateInUTCFromDate(new Date(record.status.q * 1000)),
-    details: backendInfo1ToEventDetails(eventId, record.info)
-  }
-}
-
-// const allRecordsSchema = z.object({
-//   allRecords: z.object({})
-//     .catchall(z.object({})
-//       .catchall(z.object({
-//         record: recordSchema
-//       })))
-// })
-
-const allRecordsSchema = z.object({
-  allRecords: z.record(
-    z.string(), // this is going to be `${hostShip}/${eventName}`
-    z.record(
-      PatpSchema, // this is `${guestShip}`
-      z.object({ record: backendRecordSchema })
-    ))
-}).transform((response) => response.allRecords)
-
 // ship here was needed to verify that there was a record for our ship
 // but i removed that validation
 // we're trusting the backend for now
 function getRecords(api: Urbit, ship: Patp): () => Promise<EventAsAllGuests[]> {
   return async () => {
-    const allRecords = await api.scry({
+    const response = await api.scry({
       app: "live",
       path: "/records/all"
     })
-      .then(allRecordsSchema.parse)
+      .then(AllRecordsSchema.parse)
       .catch((err) => { console.error("error during getRecords api call", err) })
 
-    if (!allRecords) {
+    if (!response) {
       return Promise.resolve([])
     }
 
@@ -641,7 +245,7 @@ function getRecords(api: Urbit, ship: Patp): () => Promise<EventAsAllGuests[]> {
 
 
     const entries = Object
-      .entries(allRecords)
+      .entries(response.allRecords)
     // .filter(([,records]) => {
     //   if (records) {
 
@@ -688,7 +292,7 @@ function getRecord(api: Urbit, ship: string): (id: EventId) => Promise<EventAsGu
       app: "live",
       path: `/record/${id.ship}/${id.name}/~${ship}`
     })
-      .then(z.object({ record: backendRecordSchema }).parse)
+      .then(z.object({ record: BackendRecordSchema }).parse)
       .catch((err) => { console.error("error during getRecord api call", err) })
 
 
@@ -700,44 +304,16 @@ function getRecord(api: Urbit, ship: string): (id: EventId) => Promise<EventAsGu
   }
 }
 
-
-const backendEventSchema = z.object({
-  info: backendInfo1Schema,
-  secret: z.string().nullable(),
-  limit: z.number().nullable(),
-})
-
-function backendEventToEventAsHost(eventId: EventId, event: z.infer<typeof backendEventSchema>): EventAsHost {
-  const {
-    info,
-    limit,
-    secret
-  } = event
-
-  return {
-    details: backendInfo1ToEventDetails(eventId, info),
-    secret,
-    limit
-  }
-}
-
-const allEventsSchema = z.object({
-  allEvents: z.record(
-    z.string(), // this is going to be `${hostShip}/${eventName}`
-    z.object({ event: backendEventSchema }))
-}).transform(({ allEvents }) => allEvents)
-
-
 function getEvents(api: Urbit): () => Promise<EventAsHost[]> {
   return async () => {
-    const allEvents = await api.scry({
+    const response = await api.scry({
       app: "live",
       path: "/events/all"
     })
-      .then(allEventsSchema.parse)
+      .then(AllEventsSchema.parse)
       .catch((err) => { console.error("error during getEvents api call", err) })
 
-    if (!allEvents) {
+    if (!response) {
       return Promise.resolve([])
     }
 
@@ -745,7 +321,7 @@ function getEvents(api: Urbit): () => Promise<EventAsHost[]> {
     let events: EventAsHost[] = []
 
     // WARN: patp : casting to Patp here because schema validates it above; it's fine
-    for (const [idString, evtObj] of Object.entries(allEvents)) {
+    for (const [idString, evtObj] of Object.entries(response.allEvents)) {
       if (evtObj) {
         const [hostShip, eventName] = idString.split("/")
         const eventId = { ship: hostShip as Patp, name: eventName }
@@ -757,7 +333,6 @@ function getEvents(api: Urbit): () => Promise<EventAsHost[]> {
     return events
   }
 }
-
 
 function find(api: Urbit): (host: Patp, name: string | null) => Promise<boolean> {
   return async (host: Patp, name: string | null) => {
@@ -780,13 +355,6 @@ function find(api: Urbit): (host: Patp, name: string | null) => Promise<boolean>
   }
 }
 
-const previousSearchSchema = z.object({
-  result: z.record(
-    z.string(),
-    z.object({ info: backendInfo1Schema })
-  )
-})
-
 function previousSearch(api: Urbit): () => Promise<[EventId, EventDetails][] | string> {
   return async () => {
     const findEvent = await api.scry({
@@ -798,7 +366,7 @@ function previousSearch(api: Urbit): () => Promise<[EventId, EventDetails][] | s
       return Promise.resolve([])
     }
 
-    let parsed: z.infer<typeof previousSearchSchema>;
+    let parsed: z.infer<typeof PreviousSearchSchema>;
 
     try {
       const obj = z.object({
@@ -807,7 +375,7 @@ function previousSearch(api: Urbit): () => Promise<[EventId, EventDetails][] | s
       // if we get here it means it parse it correctly and we can return
       return obj.result
     } catch (e) {
-      parsed = previousSearchSchema.parse(findEvent)
+      parsed = PreviousSearchSchema.parse(findEvent)
     }
 
     return Object.entries(parsed.result)
@@ -827,7 +395,7 @@ function getEvent(api: Urbit): (id: EventId) => Promise<EventAsHost> {
       app: "live",
       path: `/event/${id.ship}/${id.name}`
     })
-      .then(z.object({ event: backendEventSchema }).parse)
+      .then(z.object({ event: BackendEventSchema }).parse)
       .catch((err) => { console.error("error during getEvent api call", err) })
 
     if (!event) {
@@ -882,8 +450,6 @@ function invite(_api: Urbit): (id: EventId, ships: Patp[]) => Promise<boolean> {
   }
 }
 
-// const tzDateToUnix = (d: TZDate | null) => d ? d.valueOf() : 0
-
 const tzDateToUnixMilliSeconds = (d: TZDate | null) => d ? d.valueOf() : 0
 
 const prepareSession = (session: Session) => {
@@ -897,6 +463,12 @@ const prepareSession = (session: Session) => {
       end: tzDateToUnixMilliSeconds(session.endTime)
     }
   }
+}
+
+export type CreateEventParams = {
+  secret: EventAsHost["secret"];
+  limit: EventAsHost["limit"];
+  details: Omit<EventDetails, "id">;
 }
 
 function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => Promise<boolean> {
@@ -1093,7 +665,6 @@ function editEventDetailsLatch(api: Urbit): (id: EventId, value: EventDetails["l
   }
 }
 
-
 function addEventSession(api: Urbit): (id: EventId, value: Session) => Promise<void> {
   return async (id: EventId, value: Session) => {
     return editEventDetails(api)(id, "create-session", prepareSession(value))
@@ -1119,7 +690,6 @@ function editEventSessionField(api: Urbit): (
     )
   }
 }
-
 
 function editEventSessionTitle(api: Urbit): (
   id: EventId,
@@ -1181,7 +751,6 @@ function removeEventSession(api: Urbit): (id: EventId, sessionId: string) => Pro
     return editEventDetails(api)(id, "delete-session", sessionId)
   }
 }
-
 
 function editEventSecret(api: Urbit): (id: EventId, secret: EventAsHost["secret"]) => Promise<void> {
   return async (id: EventId, secret: EventAsHost["secret"]) => {
@@ -1247,49 +816,6 @@ function unregister(_api: Urbit): (id: EventId, patp?: Patp) => Promise<boolean>
   }
 }
 
-const liveRecordUpdateEventSchema = z.object({
-  id: z.object({
-    name: z.string(),
-    ship: PatpSchema,
-  }),
-  ship: z.string(),
-  record: backendRecordSchema,
-}).transform((e) => {
-  return {
-    ...e,
-    id: {
-      ship: e.id.ship as Patp,
-      name: e.id.name
-    }
-  }
-})
-
-const liveEventUpdateEventSchema = z.object({
-  id: z.object({
-    name: z.string(),
-    ship: PatpSchema,
-  }),
-  event: backendEventSchema,
-}).transform((e) => {
-  return {
-    ...e,
-    id: {
-      // WARN: casting to Patp here because schema validates it above
-      ship: e.id.ship as Patp,
-      name: e.id.name
-    }
-  }
-})
-
-const liveFindEventSchema = z.object({
-  name: z.string().nullable(),
-  ship: PatpSchema,
-  result: z.record(
-    z.string(),
-    z.object({ info: backendInfo1Schema })
-  )
-})
-
 function subscribeToLiveSearchEvents(api: Urbit): (handlers: {
   onEvent: (e: [EventId, EventDetails][] | string) => void
   onError: (err: any, id: string) => void,
@@ -1305,7 +831,7 @@ function subscribeToLiveSearchEvents(api: Urbit): (handlers: {
           return onEvent(findEventStr.result)
         } catch (e) {
           try {
-            const findEvent = liveFindEventSchema.parse(data)
+            const findEvent = LiveFindEventSchema.parse(data)
             return onEvent(Object.entries(findEvent.result)
               .map(([idString, info]) => {
                 const [hostShip, eventName] = idString.split("/")
@@ -1336,7 +862,7 @@ function subscribeToLiveEvents(api: Urbit): (handlers: {
       path: "/updates",
       event: (evt) => {
         try {
-          const updateEvent = liveRecordUpdateEventSchema.parse(evt)
+          const updateEvent = LiveRecordUpdateEventSchema.parse(evt)
           onRecordUpdate({
             event: backendRecordToEventAsGuest(updateEvent.id, updateEvent.record),
             // WARN: casting as Patp
@@ -1346,7 +872,7 @@ function subscribeToLiveEvents(api: Urbit): (handlers: {
           // could cast error to ZodError and verify that indeed the issue is
           // that we're not receiving a record update
           try {
-            const updateEvent = liveEventUpdateEventSchema.parse(evt)
+            const updateEvent = LiveEventUpdateEventSchema.parse(evt)
             onEventUpdate({
               event: backendEventToEventAsHost(updateEvent.id, updateEvent.event),
             })
@@ -1361,22 +887,9 @@ function subscribeToLiveEvents(api: Urbit): (handlers: {
   }
 }
 
-const profileEntryObjSchema = z.object({
-  term: z.string(),
-  entry: z.string().nullable()
-})
-
-const getProfilesSchema = z.object({
-  allProfiles: z.record(
-    PatpSchema,
-    z.array(profileEntryObjSchema)
-  )
-})
-  .transform(result => result.allProfiles)
-
 function entryArrayToProfile(
   patp: Patp,
-  fields: z.infer<typeof profileEntryObjSchema>[],
+  fields: z.infer<typeof ProfileEntryObjSchema>[],
   addToPals: boolean,
 ): Profile {
   const p: Profile = {
@@ -1436,17 +949,17 @@ function entryArrayToProfile(
 
 function getProfiles(_api: Urbit): () => Promise<Profile[]> {
   return async () => {
-    const profileFields = await _api.scry({
+    const response = await _api.scry({
       app: "matcher",
       // in agent file it says host/name/ship ??
       // pass guest ship
       path: "/all/profiles"
       // path: `/record/${id.ship}/${id.name}/~zod`
     })
-      .then(getProfilesSchema.parse)
+      .then(GetProfilesSchema.parse)
       .catch((err) => { console.error("error during getProfiles api call", err.errors) })
 
-    if (!profileFields) {
+    if (!response) {
       return []
     }
 
@@ -1461,13 +974,13 @@ function getProfiles(_api: Urbit): () => Promise<Profile[]> {
       .then()
       .catch((err) => { console.error("error during getProfiles api call", err.errors) })
 
-    if (!profileFields) {
+    if (!response) {
       return []
     }
 
     let profiles = []
     // WARN: patp : casting to Patp here because schema validates it above; it's fine
-    for (const [patp, arrs] of Object.entries(profileFields)) {
+    for (const [patp, arrs] of Object.entries(response.allProfiles)) {
       if (arrs) {
         // WARN: addPals false here because this is other ppl's profiles
         profiles.push(entryArrayToProfile(patp as Patp, arrs, false))
@@ -1478,21 +991,16 @@ function getProfiles(_api: Urbit): () => Promise<Profile[]> {
   }
 }
 
-const getProfileSchema = z
-  .object({
-    profile: z
-      .record(z.string(), z.object({ entry: z.string().nullable() }))
-  })
-  .transform((entry) => {
-    // here we make the response's shape like the one in getProfiles
-    // so i can reuse the same transform function
+function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
+  // here we make the response's shape like the one in getProfiles
+  // so i can reuse the same transform function (entryArrayToProfile)
+  const massagedSchema = GetProfileSchema.transform((entry) => {
     return Object
       .entries(entry.profile)
       .map(([term, { entry }]) => [term, { term: term, entry: entry }] as const)
       .map(([_, obj]) => obj)
   })
 
-function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
   return async (patp: Patp) => {
     const profileFields = await _api.scry({
       app: "matcher",
@@ -1501,7 +1009,7 @@ function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
       path: `/profile/${patp}`
       // path: `/record/${id.ship}/${id.name}/~zod`
     })
-      .then(getProfileSchema.parse)
+      .then(massagedSchema.parse)
       .catch((err: ZodError) => { console.error("error during getProfile api call", err.errors) })
 
     if (!profileFields) {
@@ -1512,10 +1020,7 @@ function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
 
     const addToPals = await _api.scry({
       app: "matcher",
-      // in agent file it says host/name/ship ??
-      // pass guest ship
       path: "/pals/add"
-      // path: `/record/${id.ship}/${id.name}/~zod`
     })
       .then(z.object({ addPals: z.boolean() }).parse)
       .catch((err) => { console.error("error during getProfiles api call", err.errors) })
@@ -1525,31 +1030,6 @@ function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
     }
 
     return entryArrayToProfile(patp, profileFields, addPals)
-  }
-}
-
-const backendMatchStatusSchema = z.enum(["match", "reach"]).nullable()
-
-// !!! the peers object's keys are patps with ~
-const getAttendeesSchema = z.object({
-  peers: z
-    .record(PatpSchema, z
-      .object({
-        status: backendMatchStatusSchema
-      }))
-})
-
-function backendMatchStatusToMatchStatus(s: z.infer<typeof backendMatchStatusSchema>): MatchStatus {
-  switch (s) {
-    case "match":
-      return "matched"
-    case "reach":
-      return "sent-request"
-    case null:
-      return "unmatched"
-    default:
-      console.error("unexpected match status: ", s)
-      return "unmatched"
   }
 }
 
@@ -1563,7 +1043,7 @@ function getAttendees(_api: Urbit): (eventId: EventId) => Promise<Attendee[]> {
       // path: `/record/${id.ship}/${id.name}/~zod`
     })
       // .then(console.log)
-      .then(getAttendeesSchema.parse)
+      .then(GetAttendeesSchema.parse)
       .catch((err) => { console.error("error during getPeers api call", err) })
 
     if (!profileFields) {
@@ -1581,12 +1061,9 @@ function getAttendees(_api: Urbit): (eventId: EventId) => Promise<Attendee[]> {
         })
       }
     }
-
-
     return attendees
   }
 }
-
 
 function editProfileField(_api: Urbit): (field: keyof Profile, value: string | null) => Promise<void> {
   // in the future we can use the fact that the field is null to represent
@@ -1645,7 +1122,6 @@ function match(_api: Urbit): (id: EventId, patp: Patp) => Promise<void> {
   }
 }
 
-
 function unmatch(_api: Urbit): (id: EventId, patp: Patp) => Promise<void> {
   return async (id: EventId, patp: Patp) => {
     _api.poke({
@@ -1666,16 +1142,6 @@ function unmatch(_api: Urbit): (id: EventId, patp: Patp) => Promise<void> {
   }
 }
 
-const matcherMatchEventSchema = z.object({
-  ship: PatpSchema,
-  match: z.enum(["match", "reach"]).nullable()
-})
-
-const matcherProfileUpdateEventSchema = z.object({
-  ship: PatpSchema,
-  fields: z.array(profileEntryObjSchema)
-})
-
 function subscribeToMatcherEvents(_api: Urbit): (handlers: {
   onMatch: (e: MatcherMatchEvent) => void
   onProfileChange: (e: MatcherProfileEvent) => void
@@ -1688,13 +1154,13 @@ function subscribeToMatcherEvents(_api: Urbit): (handlers: {
       path: "/updates",
       event: (evt) => {
         try {
-          const { ship, fields } = matcherProfileUpdateEventSchema.parse(evt)
+          const { ship, fields } = MatcherProfileUpdateEventSchema.parse(evt)
           onProfileChange({
             profile: entryArrayToProfile(ship, fields, false)
           })
         } catch {
           try {
-            const matchEvt = matcherMatchEventSchema.parse(evt)
+            const matchEvt = MatcherMatchEventSchema.parse(evt)
             onMatch({
               ship: matchEvt.ship,
               status: backendMatchStatusToMatchStatus(matchEvt.match)
@@ -1787,20 +1253,6 @@ function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
   }
 }
 
-export { emptyEventAsGuest, emptyProfile, emptyEventAsHost, newBackend, eventIdsEqual, diffProfiles }
+export { newBackend }
 
-export { validUTCOffsets, stripUTCOffset, stringToUTCOffset }
-export type { UTCOffset }
-
-export { stripSig, addSig, isComet, isMoon, isPlanet, isStar, isGalaxy, isPatp }
-export { PatpSchema }
-export type { Patp, PatpWithoutSig }
-
-export type { Session, Sessions }
-
-export type { EventAsAllGuests, RecordInfo }
-export { emptyEventAsAllGuests }
-
-export type { LiveRecordUpdateEvent, LiveEventUpdateEvent, LiveFindEvent }
-
-export type { EventId, EventStatus, MatchStatus, EventAsGuest, EventAsHost, CreateEventParams, EventDetails, Attendee, Profile, Backend }
+export type { Backend }

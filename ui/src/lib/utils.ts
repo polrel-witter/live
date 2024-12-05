@@ -45,7 +45,3 @@ export function isMoon(patp: string): boolean {
 export function isComet(patp: string): boolean {
   return patp.length > 28
 }
-
-export function stripPatpSig(patp: string): string {
-  return patp.split("~")[1]
-}

@@ -32,7 +32,7 @@ import { TZDate } from "react-day-picker"
 //   Kiritimati = '+14:00'
 // }
 
-const validUTCOffsets = [
+export const validUTCOffsets = [
   "-00:00",
   "-01:00",
   "-02:00",
@@ -64,6 +64,28 @@ const validUTCOffsets = [
 ] as const
 
 export type UTCOffset = typeof validUTCOffsets[number]
+
+// turns +14:00 into +14, but +04:00 into +4
+export function stripUTCOffset(offset: UTCOffset): string {
+  if (offset.charAt(1) === "0") {
+    return offset.charAt(0) + offset.charAt(2)
+  }
+  return offset.slice(0, 3)
+}
+
+export function stringToUTCOffset(str: string): UTCOffset | null {
+  if (str.charAt(0) !== "+" && str.charAt(0) !== "-") {
+    return null
+  }
+
+  for (const offset of validUTCOffsets) {
+    if (stripUTCOffset(offset) === str) {
+      return offset
+    }
+  }
+
+  return null
+}
 
 // -- time conversion functions -- //
 // we need these functions because, for display purposes, there isn't a way

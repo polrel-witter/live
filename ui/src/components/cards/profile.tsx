@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { Profile } from '@/backend'
+import { Profile } from "@/lib/types"
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 

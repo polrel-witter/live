@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { EventContext } from './context'
-import { Session } from "@/backend";
+import { Session } from "@/lib/types";
 
 import {
   add,

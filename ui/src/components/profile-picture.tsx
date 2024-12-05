@@ -81,6 +81,7 @@ const Sigil: React.FC<SigilProps> = ({ point, sizeParams }) => {
   return sigil
 }
 
+// TODO: use Patp type
 type Props = React.CustomComponentPropsWithRef<typeof Avatar> & {
   point: string;
   avatarUrl?: string

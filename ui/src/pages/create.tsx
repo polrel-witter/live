@@ -1,12 +1,11 @@
-import { Backend } from "@/backend";
-import { useContext, useState } from "react";
-import { GlobalContext } from "@/globalContext";
-import { AppFrame } from "@/components/frame"
-import { CreateEventForm } from "@/components/forms/create-event";
-import { flipBoolean } from "@/lib/utils"
+import { useContext } from "react";
 
-import { X } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Backend } from "@/lib/backend";
+
+import { GlobalContext } from "@/globalContext";
+
+import { CreateEventForm } from "@/components/forms/create-event";
+import { AppFrame } from "@/components/frame"
 import { BackButton } from "@/components/back-button"
 import { NavbarWithSlots } from "@/components/frame/navbar"
 import { FooterWithSlots } from "@/components/frame/footer"
@@ -20,8 +19,6 @@ const CreatePage: React.FC<{ backend: Backend }> = ({ backend }) => {
     console.error("globalContext is not set")
     return
   }
-
-  const [openDialog, setOpenDialog] = useState(false)
 
   const basePath = import.meta.env.BASE_URL
 
