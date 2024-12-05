@@ -147,6 +147,8 @@ key:
 + [~widmes-hassen] the event address is currently hard to find. i think it should go below the end date, above the group link.
 - sometimes editing a session (e.g. adding a new session when one is already there) will highlight the header in red and won't let the user save the change.
 - search should allow the user to just pass the ship. the event name is not required.
+- when we edit an event, it won't let us submit the form wihtout filling in the secret, but this isn't required
+- there should be a border around the edit event scroll box. it's sometimes difficult to know if you're at the bottom or not.
 
 
 # Backend
@@ -157,7 +159,8 @@ key:
   commas between first and last names.
     + note: backend is parsing the panel properly, the frontend just needs to render the string instead of reparsing.
 + parse group names no matter the input type.
-- panel conversion back to json not working
++ panel conversion back to json not working
+- titles with capital letters aren't being converted to proper terms so new events aren't processed
 - update README
 
 
