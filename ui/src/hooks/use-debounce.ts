@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 // thanks
 // https://dev.to/bwca/create-a-debounce-function-from-scratch-in-typescript-560m
-function debounce<A = unknown, R = void>(
+export function debounce<A = unknown, R = void>(
     fn: (args: A) => R,
     ms: number
 ): [(args: A) => Promise<R>, () => void] {

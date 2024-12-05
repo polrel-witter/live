@@ -19,6 +19,8 @@ import { SlideRightAndReveal } from '@/components/sliders';
 import { Button } from '@/components/ui/button';
 import { ChevronUp } from 'lucide-react';
 import { formatEventDateShort } from '@/lib/time';
+import { useToast, toast as toastFn } from '@/hooks/use-toast';
+import { debounce } from '@/hooks/use-debounce';
 
 async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
   return Promise.all(a
@@ -104,6 +106,7 @@ function makeNavbarAndFooter(
   // hooks
   onMobile: boolean,
   location: Location,
+  toast: typeof toastFn,
   // contexts
   globalContext: GlobalCtx,
   eventContext: EventCtx,
@@ -112,7 +115,8 @@ function makeNavbarAndFooter(
 ) {
   // variables
   const basePath = import.meta.env.BASE_URL
-  const { ship: eventHost, name: eventName } = eventContext.event.details.id
+  const eventId = eventContext.event.details.id
+  const { ship: eventHost, name: eventName } = eventId
   const eventIndex = basePath + `event/${eventHost}/${eventName}`
 
   const connectionStatus = globalContext.connectionStatus
@@ -136,34 +140,49 @@ function makeNavbarAndFooter(
     return eventIndex
   }
 
+  // function makeToastMessage(status: EventStatus): string {
+  //   switch (status) {
+  //     case "requested":
+  //       return "successfully sent entry request to event host"
+  //     case "registered":
+  //       return "successfully registered to event"
+  //     case "unregistered":
+  //       return "successfully unregistered from event"
+  //     case "invited":
+  //       return
+  //     // case "attended":
+  //     default:
+  //       return `event status changed, new status: ${status}`
+  //   }
+  // }
+
   const StatusButton = () =>
     <EventStatusButton
       fetched={eventContext.fetched}
-      event={eventContext.event}
-      backend={backend}
+      status={eventContext.event.status}
+      register={() => {
+        backend.register(eventContext.event.details.id)
+          .then((_b: boolean) => {
+            const { dismiss } = toast({
+              title: `${eventId.ship}/${eventId.name}`,
+              description: "successfully registered to event"
+            })
+            const [debounced,] = debounce<void, void>(dismiss, 2000)
+            debounced().then(() => { })
+          })
+      }}
+      unregister={() => {
+        backend.unregister(eventId)
+          .then((_b: boolean) => {
+            const { dismiss } = toast({
+              title: `${eventId.ship}/${eventId.name}`,
+              description: "successfully unregistered from event"
+            })
+            const [debounced,] = debounce<void, void>(dismiss, 2000)
+            debounced().then(() => { })
+          })
+      }}
     />
-
-  const EventStatusChanged = () => {
-    const [show, setShow] = useState(false)
-    return (
-      <div className="flex flex-row">
-        <Button
-          variant={"ghost"}
-          className="bg-stone-200 rounded-full w-full h-7 p-2"
-          onClick={() => { setShow(flipBoolean) }}
-        >
-          <ChevronUp className={cn([
-            "h-3 w-3"
-          ])} />
-          <SlideRightAndReveal maxWidth="max-w-[500px]" show={show} >
-            <p className="text-[10px] text-wrap ml-2">
-              {formatEventDateShort(eventContext.event.lastChanged)}
-            </p>
-          </SlideRightAndReveal>
-        </Button >
-      </div>
-    )
-  }
 
   const DesktopMenu = () => <MenuItemWithLinks linkItems={eventRoutingLinks} />
 
@@ -267,6 +286,7 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
   const [navbar, footer] = makeNavbarAndFooter(
     useOnMobile(),
     useLocation(),
+    useToast().toast,
     globalContext,
     eventContext,
     backend,
