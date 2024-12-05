@@ -1,5 +1,5 @@
 import { LoaderFunctionArgs, Params, useLoaderData, useNavigate, useSubmit } from "react-router-dom"
-import { useContext, useEffect, useRef, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 
 import { Attendee, Backend, emptyEventAsHost, EventAsAllGuests, EventAsHost, EventId, eventIdsEqual, EventStatus, Patp, Profile, PatpSchema, RecordInfo } from "@/backend"
 import { GlobalContext, GlobalCtx } from "@/globalContext"
@@ -98,9 +98,14 @@ async function buildState(
   }
 }
 
+type EditProps = {
+  evt: EventAsHost,
+  backend: Backend
+  open: boolean,
+  setOpen: (fn: (b: boolean) => boolean) => void
+}
 
-const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => {
-  const [open, setOpen] = useState(false)
+const EditEvent = ({ evt, backend, open, setOpen }: EditProps) => {
   return (
     <div className="p-2 ">
       <Button
@@ -150,13 +155,14 @@ const EditEvent = ({ evt, backend }: { evt: EventAsHost, backend: Backend }) => 
 type GuestProps = {
   evt: EventAsAllGuests | null,
   profiles: Profile[],
+  open: boolean,
+  setOpen: (fn: (b: boolean) => boolean) => void
   invite(patp: Patp): Promise<void>
   register(patp: Patp): Promise<void>
   unregister(patp: Patp): Promise<void>
 }
 
-const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
-  const [open, setOpen] = useState(false)
+const Guests = ({ evt, profiles, open, setOpen, ...fns }: GuestProps) => {
   const [spinButton, setSpinButton] = useState(false)
   const [statusFilter, setStatusFilter] = useState<EventStatus | "all">("all")
 
@@ -420,10 +426,11 @@ const Guests = ({ evt, profiles, ...fns }: GuestProps) => {
 
 type InviteProps = {
   invite(patp: Patp): Promise<void>
+  open: boolean,
+  setOpen: (fn: (b: boolean) => boolean) => void
 }
 
-const InviteGuests = ({ invite }: InviteProps) => {
-  const [open, setOpen] = useState(false)
+const InviteGuests = ({ invite, open, setOpen }: InviteProps) => {
   const [ships, setShips] = useState<Patp[]>([])
 
   // TODO: add validation error in case we're trying to add to the list
@@ -550,6 +557,16 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
     return
   }
 
+  const [panelState, setPanelState] = useState<{
+    edit: boolean,
+    guests: boolean,
+    invite: boolean
+  }>({
+    edit: false,
+    guests: false,
+    invite: false,
+  })
+
   const { hostShip, name } = useLoaderData() as { hostShip: Patp, name: string }
 
   const [fetched, setFetched] = useState<boolean>(false)
@@ -600,8 +617,6 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
       manage event
     </NavbarWithSlots>
 
-
-
   const footer =
     <FooterWithSlots
       left={<div> </div>}
@@ -612,8 +627,6 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
       }
     >
     </FooterWithSlots >
-
-
 
   return (
     <div>
@@ -649,12 +662,32 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
                   }
                   className="w-full"
                 />
-                {/* TODO: when i open one close the others */}
                 <Card>
-                  <EditEvent backend={backend} evt={event} />
+                  <EditEvent
+                    open={panelState.edit}
+                    setOpen={(fn) =>
+                      setPanelState(({ edit }) => {
+                        return {
+                          edit: fn(edit),
+                          guests: false,
+                          invite: false,
+                        }
+                      })}
+                    backend={backend}
+                    evt={event}
+                  />
                   <Guests
                     profiles={profiles}
                     evt={record}
+                    open={panelState.guests}
+                    setOpen={(fn) =>
+                      setPanelState(({ guests }) => {
+                        return {
+                          edit: false,
+                          guests: fn(guests),
+                          invite: false,
+                        }
+                      })}
                     register={(patp: Patp) => backend
                       .register(event.details.id, patp).then()}
                     unregister={(patp: Patp) => backend
@@ -665,6 +698,15 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
                   <InviteGuests
                     invite={(patp: Patp) => backend
                       .invite(event.details.id, [patp]).then()}
+                    open={panelState.invite}
+                    setOpen={(fn) =>
+                      setPanelState(({ invite }) => {
+                        return {
+                          edit: false,
+                          guests: false,
+                          invite: fn(invite),
+                        }
+                      })}
                   />
                 </Card>
               </ResponsiveContent>
