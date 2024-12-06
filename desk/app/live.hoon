@@ -372,7 +372,7 @@
       =.  result
         %-  crip
         ?~  name  ~['No events found under' ' ' (scot %p ship)]
-        ~[(crip "'{<name>}'") ' not found under ' (scot %p ship)]
+        ~[(crip "'{<u.name>}'") ' not found under ' (scot %p ship)]
       (give-local-update [%result ship name result])
     ==
   ==

@@ -2,6 +2,16 @@
 /+  *mip
 |%
 ::
+++  to-term
+  %+  cook
+    |=  a=tape
+    ^-  term
+    =.  a  (cass a)
+    =.  a  (turn a |=(c=@t ?:(|(=('.' c) =(' ' c)) '-' c)))
+    ?.  ((sane %tas) (crip a))  ~|(%bad-term !!)
+    (slav %tas (crip a))
+  ;~(pose (plus ;~(pose alp dot ace)))
+::
 ++  dejs-dial
   =,  dejs:format
   |=  jon=json
@@ -12,7 +22,7 @@
       case-request+de-unit-term
       case-response+(ot ~[case+ni:dejs-soft:format name+de-unit-term])
   ==
-  ++  de-unit-term  (su:dejs-soft:format sym)
+  ++  de-unit-term  (su:dejs-soft:format to-term)
   --
 ::
 ++  dejs-operation
@@ -157,18 +167,8 @@
   ::
   ++  de-group
     |^  ^-  $-(json group)
-        (su:dejs-soft:format ;~((glue fas) ship sym))
-    ::
+        (su:dejs-soft:format ;~((glue fas) ship to-term))
     ++  ship  ;~(pose ;~(pfix sig fed:ag) fed:ag)
-    ++  sym
-      %+  cook
-        |=  a=tape
-        ^-  term
-        =.  a  (cass a)
-        =.  a  (turn a |=(c=@t ?:(|(=('.' c) =(' ' c)) '-' c)))
-        ?.  ((sane %tas) (crip a))  ~|(%bad-term !!)
-        (slav %tas (crip a))
-      ;~(pose (plus ;~(pose alp dot ace)))
     --
   ::
   ++  dl-session
