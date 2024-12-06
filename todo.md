@@ -162,6 +162,7 @@ key:
 + parse group names no matter the input type.
 + panel conversion back to json not working
 - titles with capital letters aren't being converted to proper terms so new events aren't processed
+- add an /errors path for create, etc.
 - update README
 
 
