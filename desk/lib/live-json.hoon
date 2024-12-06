@@ -19,11 +19,66 @@
   =,  dejs:format
   |=  jon=json
   |^  ^-  operation
-  %.  jon
-  %-  ot
-  :~  id+(ot ~[ship+(se %p) name+(se %tas)])
-      action+de-action
-  ==
+      :: if an event is being created, we extract the title, convert it to
+      :: $name:id format and overwrite the name passed in as json so parsing
+      :: doesn't fail
+      ::
+      =/  title=(unit @t)
+        (get-new-title jon)
+      =?  jon  ?~(title %| %&)
+        =/  new-name=@t
+          (format-name (need title))
+        (overwrite-name new-name jon)
+      %.  jon
+      %-  ot
+      :~  id+(ot ~[ship+(se %p) name+(se %tas)])
+          action+de-action
+      ==
+  ::
+  ++  overwrite-name
+    |=  [new-name=@t jon=json]
+    ^+  jon
+    ?>  ?=(%o -.jon)
+    :-  %o
+    %+  ~(jab by p.jon)  'id'
+    |=  j=^json
+    ?>  ?=(%o -.j)
+    :-  %o
+    (~(put by p.j) 'name' `json`s+new-name)
+  ::
+  ++  format-name
+    |=  title=cord
+    ^+  title
+    %-  crip
+    =;  =tape
+      ?.  (~(has in (silt "0123456789")) (snag 0 tape))
+        tape
+      (weld "n" tape)
+    %+  murn  (cass (trip title))
+    |=  a=@t
+    =/  special
+      (silt "~`!@#$%^&*()-=_+[]\{}'\\:;\",.<>?")
+    ?:  =(' ' a)  `'-'
+    ?:((~(has in special) a) ~ `a)
+  ::
+  ++  get-new-title
+    |=  j=json
+    ^-  (unit cord)
+    ?.  ?=(%o -.jon)  ~
+    =/  act=json
+      (~(got by p.jon) 'action')
+    ?>  ?=(%o -.act)
+    =/  event=(unit json)
+      (~(get by p.act) 'create')
+    ?~  event  ~
+    ?>  ?=(%o -.u.event)
+    =/  info=json
+      (~(got by p.u.event) 'info')
+    ?>  ?=(%o -.info)
+    =/  title=json
+      (~(got by p.info) 'title')
+    ?>  ?=(%s -.title)
+    `p.title
   ::
   ++  de-action
     ^-  $-(json action)
