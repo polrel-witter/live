@@ -150,6 +150,9 @@ key:
 - under the search tab, the user should be able to request access or register to an event that appears here.
 - when we edit an event, it won't let us submit the form wihtout filling in the secret, but this isn't required
 - there should be a border around the edit event scroll box. it's sometimes difficult to know if you're at the bottom or not.
+- make create page wait for success before redirecting
+- user can register to event from search page
+- enable patp regex
 
 
 # Backend
