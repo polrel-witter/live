@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ReactNode, useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { compareDesc } from "date-fns";
-import { ChevronUp, Search } from "lucide-react";
+import { Bug, ChevronUp, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -47,11 +47,14 @@ const EventThumbnail: React.FC<EventThumbnailProps> = (
             <CardDescription className="italics">hosted by {id.ship}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>starts at {startDate
-              ? formatEventDate(
-                shiftTzDateInUTCToTimezone(startDate, timezone)
-              )
-              : "TBD"}</p>
+            <p>
+              starts at
+              {
+                startDate
+                  ? formatEventDate(shiftTzDateInUTCToTimezone(startDate, timezone))
+                  : "TBD"
+              }
+            </p>
             <p>location: {location}</p>
           </CardContent>
           <CardFooter> </CardFooter>
@@ -78,7 +81,6 @@ const SearchThumbnail: React.FC<SearchThumbnailProps> = (
   const [showRegister, setShowRegister] = useState(false)
 
   useEffect(() => {
-
     if (!spin) { return }
 
     // WARN: for a lot of events this might introduce a perfomance bottleneck
@@ -96,19 +98,47 @@ const SearchThumbnail: React.FC<SearchThumbnailProps> = (
       if (eventIdsEqual(details.id, id)) {
         if (recordInfo[globalCtx.profile.patp].status === "unregistered") {
           setShowRegister(true)
+        } else {
+          setShowRegister(false)
         }
       }
     }
   }, [globalCtx])
 
+  const RegisterOrLinkToEventButton = () => {
+
+    if (showRegister) {
+      return (
+        <SpinningButton
+          variant="ghost"
+          onClick={() => { setSpin(true); register() }}
+          className="bg-accent sm:bg-transparent p-3"
+          spin={spin}
+        >
+          register
+        </SpinningButton>
+      )
+    }
+
+    return (
+      <Link to={`event/${id.ship}/${id.name}`}>
+        <Button
+          variant="ghost"
+          className="bg-accent sm:bg-transparent p-3"
+        >
+          go to event
+        </Button>
+      </Link>
+    )
+  }
 
   const footerContent =
-    <div className="flex flex-col w-full justify-around" >
-      <div className="flex-row">
+    <div className="flex shrink flex-col items-center w-fit" >
+      <div className="flex flex-row space-x-2 justify-around">
         <Button
           variant="ghost"
           onClick={() => { setExpand(flipBoolean) }}
-          className="bg-accent sm:bg-transparent"
+          className="bg-accent sm:bg-transparent p-2"
         >
           description
           <ChevronUp
@@ -118,27 +148,21 @@ const SearchThumbnail: React.FC<SearchThumbnailProps> = (
             ])}
           />
         </Button>
-        {showRegister &&
-          <SpinningButton
-            variant="ghost"
-            onClick={() => { setSpin(true); register() }}
-            className="bg-accent sm:bg-transparent"
-            spin={spin}
-          >
-            register
-          </SpinningButton>}
+        <RegisterOrLinkToEventButton />
       </div>
-      <SlideDownAndReveal show={expand}>
-        <p className="text-justify text-sm mt-2 p-2 rounded-md bg-accent">
-          {restDetails.description}
-        </p>
-      </SlideDownAndReveal>
+      <div className="w-">
+        <SlideDownAndReveal maxHeight="max-h-[1000px]" show={expand}>
+          <p className="text-justify text-sm mt-2 p-2 rounded-md bg-accent">
+            {restDetails.description}
+          </p>
+        </SlideDownAndReveal>
+      </div>
     </div>
 
 
   return (
     <li className="my-5">
-      <Card>
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>
             {restDetails.title}
@@ -151,7 +175,7 @@ const SearchThumbnail: React.FC<SearchThumbnailProps> = (
           <p>starts at {startDate ? formatEventDate(startDate) : "TBD"}</p>
           <p>location: {location}</p>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="w-full justify-center">
           {footerContent}
         </CardFooter>
       </Card>
@@ -209,7 +233,7 @@ const SearchForm = ({ spin, ...fns }: SearchFormProps) => {
     name: StringWithDashes.refine(
       s => s,
       () => ({ message: "event name sould be in this form: event-name" })
-    ).nullable(),
+    ).or(z.literal("")),
   })
 
   const form = useForm<z.infer<typeof schema>>({
@@ -374,7 +398,6 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
   }, [])
 
   const EventsOrPlaceholder = () => {
-
     if (eventDetails.length === 0) {
       return (
         <div className="flex w-full  justify-center mt-8">
@@ -421,11 +444,9 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
         )}
       </ul>
     )
-
   }
 
   const ArchivedOrPlaceholder = () => {
-
     if (archivedDetails.length === 0) {
       return (
         <div className="flex w-full  justify-center mt-8">
@@ -464,7 +485,6 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
         )}
       </ul>
     )
-
   }
 
   return (
@@ -486,34 +506,39 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
           </TabsContent>
           <TabsContent value="search">
             <p className="my-4">search for events</p>
-            <div className="grid grid-col-1 space-y-2 mx-4">
+            <div className="grid grid-col-1 mx-4">
               <SearchForm
                 findEvents={backend.find}
                 onSubmit={() => { setSpinSearch(true) }}
                 spin={spinSearch}
               />
-              <PreviousSearchButton
-                message={previousSearchMessage}
-                result={previousSearchResult}
-                setPreviousSearch={() => {
-                  setSearchResult(previousSearchResult)
-                }}
-              />
+              <div className="mt-4 sm:m-0">
+                <PreviousSearchButton
+                  message={previousSearchMessage}
+                  result={previousSearchResult}
+                  setPreviousSearch={() => {
+                    setSearchResult(previousSearchResult)
+                  }}
+                />
+              </div>
             </div>
-            {typeof searchResult === "string"
-              ? searchResult
-              :
-              <ul className="mx-4 md:m-0">
-                {searchResult.map(([evtID, details]) =>
-                  <SearchThumbnail
-                    key={`${details.id.ship}-${details.id.name}`}
-                    details={details}
-                    register={() => { backend.register(details.id).then() }}
-                    globalCtx={globalContext}
-                  />
-                )}
-              </ul>
-            }
+            <div className="mx-4 mt-8">
+              {
+                typeof searchResult === "string"
+                  ? <Card className="p-2 bg-accent">{searchResult}</Card>
+                  :
+                  <ul>
+                    {searchResult.map(([evtID, details]) =>
+                      <SearchThumbnail
+                        key={`${details.id.ship}-${details.id.name}`}
+                        details={details}
+                        register={() => { backend.register(details.id).then() }}
+                        globalCtx={globalContext}
+                      />
+                    )}
+                  </ul>
+              }
+            </div>
           </TabsContent>
         </Tabs>
       </div>
