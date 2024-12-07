@@ -142,8 +142,7 @@ key:
 - figure out color scheme
 + [~widmes-hassen] the register button isn't working right. it seems to send a register poke, but quickly follows with an unregister poke. sometimes the registration appears to go through, but the success pop-up says "you've successfully unregistered to this event".
 + [~widmes-hassen] when someone has a requested status, the 'status change button' shouldn't be clickable.
-- [~polrel-witter] the status, latch and kind buttons on the guest and management event page should show cursor on hover
-- [~polrel-witter] there should be a 'guest list' and 'schedule' button on the host management page. they should be able to interface with these two pages like guests.
++ [~polrel-witter] the status, latch and kind buttons on the guest and management event page should show cursor on hover
 + [~widmes-hassen] the event address is currently hard to find. i think it should go below the end date, above the group link.
 - sometimes editing a session (e.g. adding a new session when one is already there) will highlight the header in red and won't let the user save the change.
 - search should allow the user to just pass the ship. the event name is not required.
@@ -162,7 +161,7 @@ key:
 + parse group names no matter the input type.
 + panel conversion back to json not working
 + titles with capital letters aren't being converted to proper terms so new events aren't processed
-- add an /errors path for create, etc.
++ add an /errors path for create, etc.
 - update README
 
 
