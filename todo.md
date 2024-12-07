@@ -27,7 +27,7 @@ key:
 
 ## Refinements/bugs
 - profile page
-    ? the profile form is cut off at the top/bottom of the screen, for
+    + the profile form is cut off at the top/bottom of the screen, for
       instance on a 13" macbook. seems like it just needs some padding
       on the top and bottom?
 + [~widmes-hassen] timeline page
@@ -68,7 +68,7 @@ key:
           but not in the form itself. i also think it should give a bit
           more user feedback; e.g. closing the edit dropdown or changing
           the edit button when it completes the change.
-        ? similarly to the profile form, the session form is cut off on
+        + similarly to the profile form, the session form is cut off on
           the top and bottom of the page on certain screens. may need
           some padding.
         + it doesn't allow the user to edit the group host ship or name.
@@ -149,7 +149,7 @@ key:
 + under the search tab, the user should be able to request access or register to an event that appears here.
 + when we edit an event, it won't let us submit the form wihtout filling in the secret, but this isn't required
 + there should be a border around the edit event scroll box. it's sometimes difficult to know if you're at the bottom or not.
-- make dialogs scrollable (profile & session?)
++ make dialogs scrollable (profile & session?)
 + fixed session editing not working
 - event form should display errors
 
