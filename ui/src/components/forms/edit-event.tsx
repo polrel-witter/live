@@ -4,6 +4,7 @@ import { TZDate } from "@date-fns/tz"
 import { isEqual } from "date-fns"
 import { newTZDateInUTCFromDate } from "@/lib/time"
 import { Backend } from "@/lib/backend"
+import { start } from "repl"
 
 type Props = {
   event: EventAsHost
@@ -138,18 +139,60 @@ export const EditEventForm = ({ backend, event }: Props) => {
           const oldSession = oldSessionsMap.get(sessionID)
           if (!oldSession) {
             backend.addEventSession(eventId, newSession)
-          } else if (oldSession.title !== newSession.title) {
-            backend.editEventSessionTitle(eventId, sessionID, newSession.title)
-          } else if (!panelsEqual(oldSession.panel, newSession.panel)) {
-            backend.editEventSessionPanel(eventId, sessionID, newSession.panel)
-          } else if (oldSession.location !== newSession.location) {
-            backend.editEventSessionLocation(eventId, sessionID, newSession.location)
-          } else if (oldSession.about !== newSession.about) {
-            backend.editEventSessionAbout(eventId, sessionID, newSession.about)
-          } else if (!nullableTZDatesEqual(oldSession.startTime, newSession.startTime)) {
-            backend.editEventSessionMoment(eventId, sessionID, newSession.startTime, oldSession.endTime)
-          } else if (!nullableTZDatesEqual(oldSession.endTime, newSession.endTime)) {
-            backend.editEventSessionMoment(eventId, sessionID, oldSession.startTime, newSession.endTime)
+          } else {
+            if (oldSession.title !== newSession.title) {
+              backend.editEventSessionTitle(
+                eventId,
+                sessionID,
+                newSession.title
+              )
+            }
+            if (!panelsEqual(oldSession.panel, newSession.panel)) {
+              backend.editEventSessionPanel(
+                eventId,
+                sessionID,
+                newSession.panel
+              )
+            }
+            if (oldSession.location !== newSession.location) {
+              backend.editEventSessionLocation(
+                eventId,
+                sessionID,
+                newSession.location
+              )
+            }
+            if (oldSession.about !== newSession.about) {
+              backend.editEventSessionAbout(
+                eventId,
+                sessionID,
+                newSession.about
+              )
+            }
+            const startTimeChanged = !nullableTZDatesEqual(oldSession.startTime, newSession.startTime)
+            const endTimeChanged = !nullableTZDatesEqual(oldSession.endTime, newSession.endTime)
+
+            if (startTimeChanged && endTimeChanged) {
+              backend.editEventSessionMoment(
+                eventId,
+                sessionID,
+                newSession.startTime,
+                newSession.endTime
+              )
+            } else if (startTimeChanged) {
+              backend.editEventSessionMoment(
+                eventId,
+                sessionID,
+                newSession.startTime,
+                oldSession.endTime
+              )
+            } else if (endTimeChanged) {
+              backend.editEventSessionMoment(
+                eventId,
+                sessionID,
+                oldSession.startTime,
+                newSession.endTime
+              )
+            }
           }
         }
       }}

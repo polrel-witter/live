@@ -1,3 +1,8 @@
+import { TZDate } from "@date-fns/tz"
+import { format, isEqual } from "date-fns"
+
+import { newTZDateInUTCFromDate } from "@/lib/time"
+
 import {
   Card,
   CardContent,
@@ -6,9 +11,7 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card"
-import { formatSessionTime, shiftTzDateInUTCToTimezone, UTCOffset } from "@/lib/time"
 
-import { TZDate } from "@date-fns/tz"
 
 function formatSessionPanel(panel: string[]): string {
   switch (panel.length) {
@@ -21,6 +24,29 @@ function formatSessionPanel(panel: string[]): string {
     default:
       return `with ${panel.slice(0, -1).join(", ")} and ${panel[panel.length - 1]}`
   }
+}
+
+function formatSessionStartAndEndTimes(start: TZDate, end: TZDate): string {
+  // we only allow same-day sessions from the UI but you could technically
+  // set one through the dojo so i have a bit of logic here to handle
+  // that edge case
+  const sameDate = isEqual(
+    new TZDate(start.getFullYear(), start.getMonth(), start.getDate()),
+    new TZDate(end.getFullYear(), end.getMonth(), end.getDate())
+  )
+
+  const fmtdStartTime = format(start, `HH:mm`)
+  const fmtdEndTime = format(end, `HH:mm`)
+  const fmtdStartDate = format(start, "LL/dd/yy")
+
+  if (sameDate) {
+    return `from ${fmtdStartTime} to ${fmtdEndTime} on ${fmtdStartDate}`
+
+  }
+
+  const fmtdEndDate = format(end, "LL/dd/yy")
+
+  return `from ${fmtdStartTime} on ${fmtdStartDate} to ${fmtdEndTime} on ${fmtdEndDate}`
 }
 
 type Props = {
@@ -36,17 +62,6 @@ type Props = {
   },
 }
 const SessionCard: React.FC<Props> = ({ session }) => {
-
-  const SessionTime = ({ startTime, endTime }: {
-    startTime: TZDate,
-    endTime: TZDate
-  }) => {
-    return (
-      <span>
-        from {formatSessionTime(startTime)} to {formatSessionTime(endTime)}
-      </span>
-    )
-  }
 
   return (
     <Card>
@@ -67,10 +82,12 @@ const SessionCard: React.FC<Props> = ({ session }) => {
           }
           {
             (session.startTime && session.endTime) &&
-            <SessionTime
-              startTime={session.startTime}
-              endTime={session.endTime}
-            />
+            <span>
+              {formatSessionStartAndEndTimes(
+                session.startTime,
+                session.endTime
+              )}
+            </span>
           }
         </CardDescription>
       </CardHeader>
@@ -88,4 +105,4 @@ const SessionCard: React.FC<Props> = ({ session }) => {
   )
 }
 
-export { SessionCard }
+export { SessionCard, formatSessionStartAndEndTimes }

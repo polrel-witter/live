@@ -28,11 +28,12 @@ import { validUTCOffsets } from "@/lib/time"
 import { SpinningButton } from "@/components/spinning-button"
 import { CreateSessionForm } from "@/components/forms/create-session"
 import { SlideDownAndReveal } from "@/components/sliders"
-import { SessionCard } from "@/components/cards/session"
+import { formatSessionStartAndEndTimes, SessionCard } from "@/components/cards/session"
 import { EditSessionForm } from "./edit-session"
-import { formatSessionTime, newDateFromTZDateInUTC, newTZDateInUTCFromDate, shiftTzDateInUTCToTimezone } from "@/lib/time"
+import { newDateFromTZDateInUTC, newTZDateInUTCFromDate, shiftTzDateInUTCToTimezone } from "@/lib/time"
 import { PatpSchema, StringWithDashes } from "@/lib/schemas"
 import { EventAsHost } from "@/lib/types"
+import { title } from "process"
 
 /* ON TIME
  * throughout this page we're storing time in ordinary Dates in local time; the user doesn't know
@@ -179,13 +180,14 @@ const makeDefaultValues = (event?: EventAsHost) => {
 
     defaultValues.venueMap = event.details.venueMap
     defaultValues.eventDescription = event.details.description
-    defaultValues.eventSecret = event.secret
+    defaultValues.eventSecret = event.secret || ""
     defaultValues.sessions = Object.fromEntries(
       Object.entries(event.details.sessions)
         .map(([id, { startTime, endTime, mainSpeaker: _, panel, ...rest }]) => {
           return [
             [id],
             {
+              title: rest.title,
               start: startTime
                 ? newDateFromTZDateInUTC(startTime)
                 : new Date(),
@@ -193,7 +195,11 @@ const makeDefaultValues = (event?: EventAsHost) => {
                 ? newDateFromTZDateInUTC(endTime)
                 : new Date(),
               panel: panel || [],
-              ...rest
+              // these two fields caused the issue where "session" would go red
+              // and not submit the form; these fields were being sent as null
+              // to the form but the form only accepts a liter "" or a string
+              about: rest.about || "",
+              location: rest.location || "",
             }
           ]
         }))
@@ -559,12 +565,13 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                               <div className="flex justify-between items-center w-full m-1">
                                 <p className="justify-self-start">
                                   {session.title}
-                                  <span className="inline-block text-primary/50 text-xs pl-2">
-                                    - from {formatSessionTime(
-                                      newTZDateInUTCFromDate(session.start)
-                                    )} to {formatSessionTime(
-                                      newTZDateInUTCFromDate(session.end)
-                                    )}
+                                  <span className="inline text-primary/50 text-xs pl-2">
+                                    - {
+                                      formatSessionStartAndEndTimes(
+                                        newTZDateInUTCFromDate(session.start),
+                                        newTZDateInUTCFromDate(session.end),
+                                      )
+                                    }
                                   </span>
                                 </p>
                                 <div className="flex">
@@ -622,14 +629,8 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                               >
                                 <SessionCard
                                   session={{
-                                    startTime: shiftTzDateInUTCToTimezone(
-                                      newTZDateInUTCFromDate(session.start),
-                                      form.watch("utcOffset")
-                                    ),
-                                    endTime: shiftTzDateInUTCToTimezone(
-                                      newTZDateInUTCFromDate(session.end),
-                                      form.watch("utcOffset")
-                                    ),
+                                    startTime: newTZDateInUTCFromDate(session.start),
+                                    endTime: newTZDateInUTCFromDate(session.end),
                                     ...session
                                   }}
                                 />
@@ -708,8 +709,8 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
 
                           const session = {
                             title: sessionToEdit.title,
-                            about: sessionToEdit.about ?? "",
-                            location: sessionToEdit.location ?? "",
+                            about: sessionToEdit.about,
+                            location: sessionToEdit.location,
                             timeRange: {
                               start: sessionToEdit.start,
                               end: sessionToEdit.end,

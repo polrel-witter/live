@@ -38,6 +38,19 @@ const EventThumbnail: React.FC<EventThumbnailProps> = (
     className,
   }
 ) => {
+
+  const StartsAt = () => {
+
+    if (startDate) {
+      const formattedDate = formatEventDate(
+        shiftTzDateInUTCToTimezone(startDate, timezone)
+      )
+      return (<p>starts at {formattedDate}</p>)
+    }
+
+    return (<p>starts at 'TBD'</p>)
+  }
+
   return (
     <li className="my-5">
       <Link to={linkTo}>
@@ -47,14 +60,7 @@ const EventThumbnail: React.FC<EventThumbnailProps> = (
             <CardDescription className="italics">hosted by {id.ship}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>
-              starts at
-              {
-                startDate
-                  ? formatEventDate(shiftTzDateInUTCToTimezone(startDate, timezone))
-                  : "TBD"
-              }
-            </p>
+            <StartsAt />
             <p>location: {location}</p>
           </CardContent>
           <CardFooter> </CardFooter>
