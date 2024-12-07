@@ -152,6 +152,7 @@
 +$  update
   $%  [%record =id =ship record=record-1]      :: record change
       [%event =id event=event-1]               :: event change
+      [%error msg=(unit cord)]                 :: backend error message
       $:  %result                              :: latest search result
           =ship
           name=(unit term)
