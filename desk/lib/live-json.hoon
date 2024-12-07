@@ -216,6 +216,7 @@
   ^-  ^json
   %-  pairs
   ?-    -.upd
+      %error  ['error' `json`?~(msg.upd ~ s+u.msg.upd)]~
       %record
     :~  ['id' (en-id id.upd)]
         ['ship' s+(scot %p ship.upd)]
