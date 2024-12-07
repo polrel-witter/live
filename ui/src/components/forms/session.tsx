@@ -125,7 +125,9 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
 
   useEffect(() => {
     form.setValue("timeRange.start", newDateWithTime(
-      min,
+      session
+        ? session.timeRange.start
+        : min,
       session
         ? session.timeRange.start.getHours()
         : min.getHours(),
@@ -134,7 +136,9 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
         : min.getMinutes(),
     ))
     form.setValue("timeRange.end", newDateWithTime(
-      min,
+      session
+        ? session.timeRange.start
+        : min,
       session
         ? session.timeRange.end.getHours()
         : 23,

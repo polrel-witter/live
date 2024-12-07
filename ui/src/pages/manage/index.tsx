@@ -135,7 +135,7 @@ const EditEvent = ({ evt, backend, open, setOpen }: EditProps) => {
             changes are disabled util latch is set to 'over'!
           </Button>
         }
-        <div className="flex justify-center mt-4">
+        <Card className="flex justify-center mt-4">
           <div className="p-2">
             {/* extract into component and use in all 3 sections */}
             <ScrollArea
@@ -150,7 +150,7 @@ const EditEvent = ({ evt, backend, open, setOpen }: EditProps) => {
               />
             </ScrollArea>
           </div>
-        </div>
+        </Card>
       </SlideDownAndReveal>
     </div>
   )
