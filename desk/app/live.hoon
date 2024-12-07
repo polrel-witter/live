@@ -342,8 +342,25 @@
     =/  =ship  (slav %p i.t.t.wire)
     ~|(failed-to-request-case+ship !!)
   ::
+      [%status-change %timer @ @ @ ~]
+    =/  =ship      (slav %p i.t.t.wire)
+    =/  name=term  (slav %tas i.t.t.t.wire)
+    =/  act=?(%register %unregister)
+      ;;(?(%register %unregister) (slav %tas i.t.t.t.t.wire))
+    =/  rec=(unit record-1)
+      (~(get bi records) [ship name] our.bowl)
+    =;  notify=?
+      ?.  notify  cor
+      %+  fail  /error/status-change
+      `'could not process status change, host could be offline'
+    ?~  rec  %&
+    ?-  act
+      %unregister  ?!(?=(%unregistered p.status.u.rec))
+      %register    ?!(?=(?(%requested %registered) p.status.u.rec))
+    ==
+  ::
       [%remote %scry *]
-    ?+    t.t.wire    ~|(bad-arvo-wire+wire !!)
+    ?+    t.t.wire    ~|(bad-wire+wire !!)
         ?([%all ~] [%event @ ~])
       ?.  ?=([%ames %tune *] sign-arvo)
         ~|(unexpected-system-response+sign-arvo !!)
@@ -677,7 +694,7 @@
           ?~  name  /all
           /event/(scot %tas u.name)
           %arvo  %b
-          %wait  (add ~m1 now.bowl)
+          %wait  (add ~s30 now.bowl)
       ==
       :*  %pass
           %+  weld  /remote/scry/event
@@ -743,6 +760,18 @@
     =/  =wire  (weld /subscribe id-to-path)
     =/  =cage  (make-operation id [%subscribe ~])
     (emit (make-act wire ship dap.bowl cage))
+  ::  +set-timer: await status change confirmation from host
+  ::
+  ++  set-timer
+    |=  act=?(%register %unregister)
+    ^+  cor
+    %-  emit
+    :*  %pass
+        %+  weld  /status-change/timer/(scot %p ship.id)/(scot %tas name.id)
+        /(scot %tas act)
+        %arvo  %b
+        %wait  (add ~s30 now.bowl)
+    ==
   ::  +sane: check whether a moment's start comes before end
   ::
   :: TODO if dates are equal, but have different entropy this will
