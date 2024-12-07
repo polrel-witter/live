@@ -48,6 +48,7 @@ import {
   RecordInfo,
   Session,
 } from "@/lib/types";
+import { sub } from "date-fns";
 
 interface Backend {
   // --- live agent --- //
@@ -183,6 +184,15 @@ interface Backend {
     onError: (err: any, id: string) => void,
     onQuit: (data: any) => void,
   }): Promise<number>
+
+  subscribeToLiveErrorEvents(
+    error: "create" | "delete" | "edit" | "status-change",
+    handlers: {
+      onEvent: (evt: null | string) => void,
+      onError: (err: any, id: string) => void,
+      onQuit: (data: any) => void,
+    }
+  ): Promise<number>
 
   // --- matcher agent --- //
 
@@ -887,6 +897,34 @@ function subscribeToLiveEvents(api: Urbit): (handlers: {
   }
 }
 
+function subscribeToLiveErrorEvents(api: Urbit): (
+  error: "create" | "delete" | "edit" | "status-change",
+  handlers: {
+    onEvent: (evt: null | string) => void,
+    onError: (err: any, id: string) => void,
+    onQuit: (data: any) => void,
+  }
+) => Promise<number> {
+  return async (error, { onEvent, onError, onQuit }) => {
+    return api.subscribe({
+      app: "live",
+      path: `/error/${error}`,
+      event: (evt) => {
+        try {
+          const errorEvent = z.object({
+            error: z.string().nullable(),
+          }).parse(evt)
+          onEvent(errorEvent.error)
+        } catch (e) {
+          console.error("error parsing response for subscribeToLiveErrorEvents", e)
+        }
+      },
+      err: (err, id) => onError(err, id),
+      quit: (data) => onQuit(data)
+    })
+  }
+}
+
 function entryArrayToProfile(
   patp: Patp,
   fields: z.infer<typeof ProfileEntryObjSchema>[],
@@ -1236,6 +1274,7 @@ function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
     getEvent: getEvent(api),
     subscribeToLiveEvents: subscribeToLiveEvents(api),
     subscribeToLiveSearchEvents: subscribeToLiveSearchEvents(api),
+    subscribeToLiveErrorEvents: subscribeToLiveErrorEvents(api),
 
     getProfile: getProfile(api),
     getProfiles: getProfiles(api),

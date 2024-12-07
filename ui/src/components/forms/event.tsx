@@ -514,7 +514,6 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
             const [openSessions, setOpenSessions] = useState<Map<string, boolean>>(new Map<string, boolean>())
             const [openCreateSessionDialog, setOpenCreateSessionDialog] = useState(false)
             const [openEditSessionDialog, setOpenEditSessionDialog] = useState(false)
-            const shouldDisplayCreateSessionDialog = form.watch("dateRange.from") !== undefined && form.watch("dateRange.to") !== undefined
             const [idOfSessionToEdit, setIdOfSessionToEdit] = useState<string>("")
 
             useEffect(
@@ -640,7 +639,8 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                       </ul>
 
                       {
-                        shouldDisplayCreateSessionDialog
+                        form.watch("dateRange.from") !== undefined
+                          && form.watch("dateRange.to") !== undefined
                           ? <Button
                             type="button"
                             variant="ghost"
@@ -651,6 +651,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                           </Button>
                           : <Button
                             type="button"
+                            disabled
                             className="w-full mt-1 bg-stone-100 hover:bg-stone-100 text-primary/50 text-wrap"
                           >
                             define start and end date to add sessions

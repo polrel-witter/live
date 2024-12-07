@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 
 import { Backend } from "@/lib/backend";
 
@@ -19,6 +19,19 @@ const CreatePage: React.FC<{ backend: Backend }> = ({ backend }) => {
     console.error("globalContext is not set")
     return
   }
+
+  useEffect(() => {
+    backend.subscribeToLiveErrorEvents(
+      "create",
+      {
+        onEvent: (evt) => {
+          console.error("CREATE EVENT ERROR: ", evt)
+        },
+        onQuit: () => { },
+        onError: () => { },
+      }
+    )
+  }, [])
 
   const basePath = import.meta.env.BASE_URL
 
