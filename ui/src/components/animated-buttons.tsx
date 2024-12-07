@@ -48,6 +48,7 @@ const AnimatedButtons = ({
                 "rounded-md h-12 inline-flex items-center justify-center",
                 "overflow-hidden",
                 "transition-[width] ease-in-out duration-250",
+                "cursor-pointer",
                 classNames[index],
                 { [minWidth.join(" ")]: expanded !== index },
                 { [maxWidth.join(" ")]: expanded === index },
