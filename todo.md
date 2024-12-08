@@ -152,7 +152,6 @@ key:
 + make dialogs scrollable (profile & session?)
 + fixed session editing not working
 + all poke error events correctly handled and displayed to user
-- event form should display errors
 - create and edit form should not redirect if there's an error. need to avoid wiping the form, too.
 - the create form is submitting the group as `{ship: ~zod, term: some-name}` but it should just submit a string with a `/` inbetween: {group: "~mocbel/work-discovery"}. The edit form is submitting this correctly.
 - timeline should be in descending order (oldest at the top)
