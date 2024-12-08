@@ -22,6 +22,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { SlideDownAndReveal } from "@/components/sliders";
 import { SpinningButton } from "@/components/spinning-button";
 import { Backend } from "@/lib/backend";
+import { useToast } from "@/hooks/use-toast";
+import { debounce } from "@/hooks/use-debounce";
 
 type EventThumbnailProps = {
   details: EventDetails,
@@ -335,8 +337,9 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
 
   const [spinSearch, setSpinSearch] = useState(false)
 
-  useEffect(() => {
+  const { toast } = useToast()
 
+  useEffect(() => {
     const events: typeof eventDetails = []
     const archived: typeof eventDetails = []
 
@@ -379,7 +382,6 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
 
     setEventDetails(events)
     setArchivedDetails(archived)
-
   }, [globalContext])
 
   useEffect(() => {
@@ -538,7 +540,32 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
                       <SearchThumbnail
                         key={`${details.id.ship}-${details.id.name}`}
                         details={details}
-                        register={() => { backend.register(details.id).then() }}
+                        register={() => {
+                          backend.register(details.id)
+                            .then(() => {
+                              const { ship, name } = details.id
+                              const { dismiss } = toast({
+                                variant: "default",
+                                title: `${ship}/${name}`,
+                                description: "successfully registered to event"
+                              })
+
+                              const [fn,] = debounce<void>(dismiss, 2000)
+                              fn().then(() => { })
+                            })
+                            .catch((e: Error) => {
+                              const { ship, name } = details.id
+                              const { dismiss } = toast({
+                                variant: "destructive",
+                                title: `error when registering to ${ship}/${name}`,
+                                description: `${e.message}`
+                              })
+
+                              const [fn,] = debounce<void>(dismiss, 2000)
+                              fn().then(() => { })
+                            })
+
+                        }}
                         globalCtx={globalContext}
                       />
                     )}

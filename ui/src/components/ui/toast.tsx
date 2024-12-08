@@ -79,12 +79,14 @@ const ToastClose = React.forwardRef<
       "absolute right-1 top-3.5 rounded-md p-1 text-foreground/50  hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
       className,
       buttonVariants({ variant: "ghost", size: "default" }),
+      // variant ghost's hover:bg-accent makes the button all white
+      "hover:bg-transparent",
       "p-1 px-3 font-black",
     )}
     toast-close=""
     {...props}
   >
-   close
+    close
   </ToastPrimitives.Close>
 ))
 ToastClose.displayName = ToastPrimitives.Close.displayName

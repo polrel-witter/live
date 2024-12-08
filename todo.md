@@ -151,7 +151,7 @@ key:
 + there should be a border around the edit event scroll box. it's sometimes difficult to know if you're at the bottom or not.
 + make dialogs scrollable (profile & session?)
 + fixed session editing not working
-- event form should display errors
++ all poke error events correctly handled and displayed to user
 
 
 # Backend

@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Control, FieldValues, useForm } from "react-hook-form"
 import { z } from "zod"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { ChevronUp, Pencil, X } from "lucide-react"
 
 import {
@@ -30,10 +30,11 @@ import { CreateSessionForm } from "@/components/forms/create-session"
 import { SlideDownAndReveal } from "@/components/sliders"
 import { formatSessionStartAndEndTimes, SessionCard } from "@/components/cards/session"
 import { EditSessionForm } from "./edit-session"
-import { newDateFromTZDateInUTC, newTZDateInUTCFromDate, shiftTzDateInUTCToTimezone } from "@/lib/time"
+import { newDateFromTZDateInUTC, newTZDateInUTCFromDate } from "@/lib/time"
 import { PatpSchema, StringWithDashes } from "@/lib/schemas"
 import { EventAsHost } from "@/lib/types"
-import { title } from "process"
+import { DialogDescription } from "@radix-ui/react-dialog"
+import { se } from "date-fns/locale"
 
 /* ON TIME
  * throughout this page we're storing time in ordinary Dates in local time; the user doesn't know
@@ -127,13 +128,14 @@ const schemas = z.object({
       () => ({ message: "group name sould be in this form: group-name" })
     ).or(emptyStringSchema)
   }),
-  eventSecret: emptyStringSchema.or(z.string()),
+  eventSecret: z.string().nullable(),
   sessions: z.record(z.string(), sessionSchema)
 })
 
 type Props = {
   onSubmit: (values: z.infer<typeof schemas>) => Promise<void>
   submitButtonText: string
+  spin: boolean
   event?: EventAsHost
 }
 
@@ -208,9 +210,7 @@ const makeDefaultValues = (event?: EventAsHost) => {
   return defaultValues
 }
 
-const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
-  const [spin, setSpin] = useState(false)
-
+const EventForm: React.FC<Props> = ({ event, submitButtonText, spin, onSubmit }) => {
   const defaultValues = makeDefaultValues(event)
 
   const form = useForm<z.infer<typeof schemas>>({
@@ -227,15 +227,12 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
     // disabled: event?.details.latch === "over",
   })
 
-  useEffect(() => { setSpin(false) }, [event])
-
   // add static fields from tlon, saying we're importing from tlon
   return (
     <Form {...form} >
       <form
         aria-description="A form containing updatable profile entries"
         onSubmit={form.handleSubmit((values) => {
-          setSpin(true)
           onSubmit(values).then(() => { })
         })}
         className="space-y-6"
@@ -728,14 +725,10 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                               onOpenChange={() => { setOpenEditSessionDialog(flipBoolean) }}
                               aria-description="a dialog to edit a session"
                             >
-                              <DialogContent
-                                aria-description="contains event fields and a form to instantiate them"
-                              >
+                              <DialogContent>
                                 <DialogHeader>
                                   <DialogTitle>edit session</DialogTitle>
                                 </DialogHeader>
-                                {/*
-                              */}
                                 <EditSessionForm
                                   session={session}
                                   onSubmit={({
