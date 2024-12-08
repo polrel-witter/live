@@ -186,15 +186,6 @@ interface Backend {
     onQuit: (data: any) => void,
   }): Promise<number>
 
-  subscribeToLiveErrorEvents(
-    error: "create" | "delete" | "edit" | "status-change",
-    handlers: {
-      onEvent: (evt: null | string) => void,
-      onError: (err: any, id: string) => void,
-      onQuit: (data: any) => void,
-    }
-  ): Promise<string | null>
-
   // --- matcher agent --- //
 
   // matcher - scry %profile
@@ -1036,54 +1027,6 @@ function subscribeToLiveEvents(api: Urbit): (handlers: {
   }
 }
 
-function subscribeToLiveErrorEvents(api: Urbit): (
-  error: "create" | "delete" | "edit" | "status-change",
-  handlers: {
-    onEvent: (evt: null | string) => void,
-    onError: (err: any, id: string) => void,
-    onQuit: (data: any) => void,
-  }
-) => Promise<null | string> {
-  return async (error, { onEvent, onError, onQuit }) => {
-    // return api.subscribe({
-    //   app: "live",
-    //   path: `/error/${error}`,
-    //   event: (evt) => {
-    //     try {
-    //       const errorEvent = z.object({
-    //         error: z.string().nullable(),
-    //       }).parse(evt)
-    //       onEvent(errorEvent.error)
-    //     } catch (e) {
-    //       console.error("error parsing response for subscribeToLiveErrorEvents", e)
-    //     }
-    //   },
-    //   err: (err, id) => onError(err, id),
-    //   quit: (data) => onQuit(data)
-    // })
-
-    const promise = api
-      .subscribeOnce("live", `/error/${error}`, ERROR_TIMEOUT)
-
-    return promise.then((response) => {
-      try {
-        const parsed = z.object({
-          error: z.string().nullable(),
-        }).parse(response)
-        return parsed.error
-      } catch (e) {
-        console.error("error parsing response for subscribeToLiveErrorEvents", e)
-        return "undefined error"
-      }
-    })
-      .catch((e) => {
-        console.error("timeout?", e)
-        return "timeout?"
-      })
-
-  }
-}
-
 function entryArrayToProfile(
   patp: Patp,
   fields: z.infer<typeof ProfileEntryObjSchema>[],
@@ -1433,7 +1376,6 @@ function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
     getEvent: getEvent(api),
     subscribeToLiveEvents: subscribeToLiveEvents(api),
     subscribeToLiveSearchEvents: subscribeToLiveSearchEvents(api),
-    subscribeToLiveErrorEvents: subscribeToLiveErrorEvents(api),
 
     getProfile: getProfile(api),
     getProfiles: getProfiles(api),

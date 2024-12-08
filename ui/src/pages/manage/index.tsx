@@ -168,6 +168,7 @@ type EditProps = {
 }
 
 const EditEvent = ({ evt, backend, open, setOpen }: EditProps) => {
+  const { toast } = useToast()
   return (
     <div className="p-2 ">
       <Button
@@ -205,6 +206,15 @@ const EditEvent = ({ evt, backend, open, setOpen }: EditProps) => {
               <EditEventForm
                 backend={backend}
                 event={evt}
+                onError={(e: Error) => {
+                  const { dismiss } = toast({
+                    variant: "destructive",
+                    title: "error while editing event",
+                    description: e.message
+                  })
+                  const [fn,] = debounce<void>(dismiss, 2000)
+                  fn().then(() => { })
+                }}
               />
             </ScrollArea>
           </div>

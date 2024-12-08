@@ -25,20 +25,6 @@ const CreatePage: React.FC<{ backend: Backend }> = ({ backend }) => {
   }
   const basePath = import.meta.env.BASE_URL
 
-
-  useEffect(() => {
-    backend.subscribeToLiveErrorEvents(
-      "create",
-      {
-        onEvent: (evt) => {
-          console.error("CREATE EVENT ERROR: ", evt)
-        },
-        onQuit: () => { },
-        onError: () => { },
-      }
-    )
-  }, [])
-
   const { toast } = useToast()
 
   const navigate = useNavigate()

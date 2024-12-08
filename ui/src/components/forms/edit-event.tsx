@@ -245,8 +245,7 @@ export const EditEventForm = ({ backend, event, onError }: Props) => {
                   backend.editEventSessionMoment(
                     eventId,
                     sessionID,
-                    new TZDate(0),
-                    // newSession.startTime,
+                    newSession.startTime,
                     oldSession.endTime
                   )
                 )

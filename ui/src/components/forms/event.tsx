@@ -128,7 +128,7 @@ const schemas = z.object({
       () => ({ message: "group name sould be in this form: group-name" })
     ).or(emptyStringSchema)
   }),
-  eventSecret: z.string().nullable(),
+  eventSecret: z.string(),
   sessions: z.record(z.string(), sessionSchema)
 })
 
