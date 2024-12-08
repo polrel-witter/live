@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Control, FieldValues, useForm } from "react-hook-form"
 import { z } from "zod"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { ChevronUp, Pencil, X } from "lucide-react"
 
 import {
@@ -514,6 +514,10 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
             const [openSessions, setOpenSessions] = useState<Map<string, boolean>>(new Map<string, boolean>())
             const [openCreateSessionDialog, setOpenCreateSessionDialog] = useState(false)
             const [openEditSessionDialog, setOpenEditSessionDialog] = useState(false)
+            const shouldDisplayCreateSessionDialog = useMemo(() => {
+              const { from, to } = form.getValues("dateRange")
+              return from !== undefined && to != undefined
+            }, [form.watch("dateRange")])
             const [idOfSessionToEdit, setIdOfSessionToEdit] = useState<string>("")
 
             useEffect(
@@ -639,8 +643,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, onSubmit }) => {
                       </ul>
 
                       {
-                        form.watch("dateRange.from") !== undefined
-                          && form.watch("dateRange.to") !== undefined
+                        shouldDisplayCreateSessionDialog
                           ? <Button
                             type="button"
                             variant="ghost"
