@@ -100,8 +100,8 @@ function buildDefaultValues(min: Date, max: Date, session?: z.infer<typeof sessi
   if (session) {
     defaultValues.title = session.title
     defaultValues.panel = session.panel
-    defaultValues.location = session.location
-    defaultValues.about = session.about
+    defaultValues.location = session.location || ""
+    defaultValues.about = session.about || ""
     defaultValues.timeRange = session.timeRange
   }
 

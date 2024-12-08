@@ -1,11 +1,11 @@
-import { LoaderFunctionArgs, Params, useLoaderData, useNavigate } from "react-router-dom"
+import { LoaderFunctionArgs, Params, useLoaderData, useNavigate, useSubmit } from "react-router-dom"
 import { useContext, useEffect, useState } from "react"
 import { X } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
 
 import { Attendee, emptyEventAsHost, EventAsAllGuests, EventAsHost, EventId, eventIdsEqual, EventStatus, Profile, RecordInfo } from "@/lib/types"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { GlobalContext, GlobalCtx } from "@/globalContext"
 
 import { formatEventDateShort, shiftTzDateInUTCToTimezone } from "@/lib/time"
@@ -34,6 +34,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } 
 import { SpinningButton } from "@/components/spinning-button"
 import { AnimatedButtons } from "@/components/animated-buttons"
 import { Dialog, DialogHeader, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
+import { debounce } from "@/hooks/use-debounce"
 
 async function ManageParamsLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> {
@@ -102,6 +104,62 @@ async function buildState(
   }
 }
 
+type DeleteEventCardProps = {
+  event: EventAsHost,
+  closeDialog: () => void
+  deleteEvent: (id: EventId) => Promise<void>
+  navigateToTimeline: () => void
+}
+
+const DeleteEventCard = ({ event, closeDialog, deleteEvent, navigateToTimeline }: DeleteEventCardProps) => {
+  const { toast } = useToast()
+  return (
+    <Card className="p-4 text-balance">
+      are you sure you want to delete the event with id
+      <div className="inline-block relative bg-red-200 rounded-md p-[1px] px-1 ml-2">
+        {event.details.id.ship} / {event.details.id.name}
+      </div>?
+      <div className="flex w-full justify-around mt-2">
+        <Button
+          variant="ghost"
+          onClick={closeDialog}
+        >
+          no, go back
+        </Button>
+        <Button
+          variant="ghost"
+          className="p-1 text-red-500 hover:text-red-500 hover:bg-red-100"
+          onClick={() => {
+            deleteEvent(event.details.id)
+              .then(() => {
+                const { dismiss } = toast({
+                  variant: "default",
+                  description: `deleted event ${event.details.title} `
+                })
+
+                const [fn,] = debounce<void>(dismiss, 2000)
+                fn().then(() => { })
+                // navigate to event timeline and prompt to reload event state
+                navigateToTimeline()
+              })
+              .catch((e: Error) => {
+                const { dismiss } = toast({
+                  variant: "destructive",
+                  title: "error while deleting event",
+                  description: e.message
+                })
+                const [fn,] = debounce<void>(dismiss, 2000)
+                fn().then(() => { })
+              })
+          }}
+        >
+          yes, delete event
+        </Button>
+      </div>
+    </Card>
+  )
+}
+
 type EditProps = {
   evt: EventAsHost,
   backend: Backend
@@ -110,6 +168,7 @@ type EditProps = {
 }
 
 const EditEvent = ({ evt, backend, open, setOpen }: EditProps) => {
+  const { toast } = useToast()
   return (
     <div className="p-2 ">
       <Button
@@ -135,7 +194,7 @@ const EditEvent = ({ evt, backend, open, setOpen }: EditProps) => {
             changes are disabled util latch is set to 'over'!
           </Button>
         }
-        <Card className="flex justify-center mt-4">
+        <div className="flex justify-center mt-4">
           <div className="p-2">
             {/* extract into component and use in all 3 sections */}
             <ScrollArea
@@ -147,10 +206,19 @@ const EditEvent = ({ evt, backend, open, setOpen }: EditProps) => {
               <EditEventForm
                 backend={backend}
                 event={evt}
+                onError={(e: Error) => {
+                  const { dismiss } = toast({
+                    variant: "destructive",
+                    title: "error while editing event",
+                    description: e.message
+                  })
+                  const [fn,] = debounce<void>(dismiss, 2000)
+                  fn().then(() => { })
+                }}
               />
             </ScrollArea>
           </div>
-        </Card>
+        </div>
       </SlideDownAndReveal>
     </div>
   )
@@ -726,30 +794,12 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
           <DialogHeader>
             <DialogTitle> delete event </DialogTitle>
           </DialogHeader>
-          <Card className="p-4 text-balance">
-            are you sure you want to delete the event with id
-            <div className="inline-block relative bg-red-200 rounded-md p-[1px] px-1 ml-2">
-              {event.details.id.ship} / {event.details.id.name}
-            </div>?
-            <div className="flex w-full justify-around mt-2">
-              <Button
-                variant="ghost"
-                onClick={() => { setOpenDialog(flipBoolean) }}
-              >
-                no, go back
-              </Button>
-              <Button
-                variant="ghost"
-                className="p-1 text-red-500 hover:text-red-500 hover:bg-red-100"
-                onClick={() => {
-                  backend.deleteEvent(event.details.id).then(() => { })
-                  navigate(basePath + "?reloadEvents")
-                }}
-              >
-                yes, delete event
-              </Button>
-            </div>
-          </Card>
+          <DeleteEventCard
+            event={event}
+            closeDialog={() => { setOpenDialog(false) }}
+            deleteEvent={backend.deleteEvent}
+            navigateToTimeline={() => navigate(basePath + "?reloadEvents")}
+          />
         </DialogContent>
       </Dialog>
     </div>

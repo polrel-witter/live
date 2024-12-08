@@ -1,20 +1,19 @@
 import { emptyEventAsHost } from "@/lib/types"
 import { EventForm } from "./event"
 import { newTZDateInUTCFromDate } from "@/lib/time"
-import { useNavigate } from "react-router-dom"
 import { CreateEventParams } from "@/lib/backend"
+import { TZDate } from "@date-fns/tz"
 
 type Props = {
-  createEvent: (newEvent: CreateEventParams) => Promise<boolean>
+  spin: boolean
+  createEvent: (newEvent: CreateEventParams) => Promise<void>
 }
 
-export const CreateEventForm = ({ createEvent }: Props) => {
-  const basePath = import.meta.env.BASE_URL
-  const navigate = useNavigate()
-
+export const CreateEventForm = ({ createEvent, spin }: Props) => {
   return (
     <EventForm
       submitButtonText="create"
+      spin={spin}
       onSubmit={async (values) => {
         // Do something with the form values.
         // ✅ This will be type-safe and validated.
@@ -52,8 +51,6 @@ export const CreateEventForm = ({ createEvent }: Props) => {
 
         await createEvent(newEvent)
 
-        // navigate to event timeline and prompt to reload event state
-        navigate(basePath + "?reloadEvents")
       }}
     />
   )

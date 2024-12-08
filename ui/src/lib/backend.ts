@@ -11,6 +11,7 @@ import {
   AllRecordsSchema,
   BackendEventSchema,
   BackendRecordSchema,
+  ErrorSchema,
   GetAttendeesSchema,
   GetProfileSchema,
   GetProfilesSchema,
@@ -49,6 +50,10 @@ import {
   Session,
 } from "@/lib/types";
 
+// timeout (in milliseconds) for subscribeOnce calls that wait for errors
+// after certain pokes
+const ERROR_TIMEOUT = 5000
+
 interface Backend {
   // --- live agent --- //
 
@@ -71,19 +76,16 @@ interface Backend {
   getEvent(id: EventId): Promise<EventAsHost>
 
   // live - poke - action - %register
-  register(id: EventId, patp?: Patp): Promise<boolean>
+  register(id: EventId, patp?: Patp): Promise<void>
 
   // live - poke - action - %unregister
-  unregister(id: EventId, patp?: Patp): Promise<boolean>
+  unregister(id: EventId, patp?: Patp): Promise<void>
 
   // live - poke - action - %invite
   invite(id: EventId, ships: Patp[]): Promise<boolean>
 
   // live - poke - action - %create
-  createEvent(evt: CreateEventParams): Promise<boolean>
-
-  // live - poke - action - %create
-  createEvent(evt: CreateEventParams): Promise<boolean>
+  createEvent(evt: CreateEventParams): Promise<void>
 
   // live - poke - action - %delete
   deleteEvent(evt: EventId): Promise<void>
@@ -346,7 +348,7 @@ function find(api: Urbit): (host: Patp, name: string | null) => Promise<boolean>
       },
       onSuccess: () => { success = true },
       onError: (err) => {
-        console.error("error during register poke: ", err)
+        console.error("error during find poke: ", err)
       }
     })
 
@@ -406,10 +408,17 @@ function getEvent(api: Urbit): (id: EventId) => Promise<EventAsHost> {
   }
 }
 
-function register(_api: Urbit): (id: EventId, patp?: Patp) => Promise<boolean> {
+function register(api: Urbit): (id: EventId, patp?: Patp) => Promise<void> {
   return async (_id: EventId, patp?: Patp) => {
-    let success = false;
-    const _poke = await _api.poke({
+    const errorPromise = api
+      .subscribeOnce("live", `/error/status-change`, ERROR_TIMEOUT)
+      .catch((e) => {
+        console.error("timed out waiting for error in register", e)
+        return Promise.reject(new Error("timed out waiting for error"))
+      })
+
+    // live-operation [[~sampel-palnet %some-event-id] [%delete ~]]
+    await api.poke({
       app: "live",
       mark: "live-operation",
       json: {
@@ -419,12 +428,68 @@ function register(_api: Urbit): (id: EventId, patp?: Patp) => Promise<boolean> {
         // guests from his events
         "action": { "register": patp ?? null }
       },
-      onSuccess: () => { success = true },
+      onSuccess: () => { },
       onError: (err) => {
         console.error("error during register poke: ", err)
       }
     })
-    return Promise.resolve(success)
+
+    return errorPromise
+      .then((response) => {
+        try {
+          const parsed = ErrorSchema.parse(response)
+          if (parsed.error === null) {
+            return Promise.resolve()
+          } else {
+            return Promise.reject(new Error(parsed.error))
+          }
+        } catch (e) {
+          console.error("error parsing error for register", e)
+          return Promise.reject(new Error("unknown error"))
+        }
+      })
+  }
+}
+
+function unregister(api: Urbit): (id: EventId, patp?: Patp) => Promise<void> {
+  return async (id: EventId, patp?: Patp) => {
+    const errorPromise = api
+      .subscribeOnce("live", `/error/status-change`, ERROR_TIMEOUT)
+      .catch((e) => {
+        console.error("timed out waiting for error in register", e)
+        return Promise.reject(new Error("timed out waiting for error"))
+      })
+
+    await api.poke({
+      app: "live",
+      mark: "live-operation",
+      json: {
+        "id": { "ship": id.ship, "name": id.name },
+        // the value for "unregister" should be null when used as a guest;
+        // a host might specify a ship name there to register/unregister
+        // guests from his events
+        "action": { "unregister": patp ?? null }
+      },
+      onSuccess: () => { },
+      onError: (err) => {
+        console.error("error during unregister poke: ", err)
+      }
+    })
+
+    return errorPromise
+      .then((response) => {
+        try {
+          const parsed = ErrorSchema.parse(response)
+          if (parsed.error === null) {
+            return Promise.resolve()
+          } else {
+            return Promise.reject(new Error(parsed.error))
+          }
+        } catch (e) {
+          console.error("error parsing error for register", e)
+          return Promise.reject(new Error("unknown error"))
+        }
+      })
   }
 }
 
@@ -436,14 +501,11 @@ function invite(_api: Urbit): (id: EventId, ships: Patp[]) => Promise<boolean> {
       mark: "live-operation",
       json: {
         "id": { "ship": _id.ship, "name": _id.name },
-        // the value for "register" should be null when used as a guest;
-        // a host might specify a ship name there to register/unregister
-        // guests from his events
         "action": { "invite": ships.map(ship => new String(ship)) }
       },
       onSuccess: () => { success = true },
       onError: (err) => {
-        console.error("error during register poke: ", err)
+        console.error("error during invite poke: ", err)
       }
     })
     return Promise.resolve(success)
@@ -471,7 +533,7 @@ export type CreateEventParams = {
   details: Omit<EventDetails, "id">;
 }
 
-function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => Promise<boolean> {
+function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => Promise<void> {
   return async ({ secret, limit, details }: CreateEventParams) => {
     const id: EventId = { ship, name: details.title }
     let success = false;
@@ -486,9 +548,6 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
 
     const payload = {
       "id": { "ship": id.ship, "name": id.name.replaceAll(" ", "-") },
-      // the value for "register" should be null when used as a guest;
-      // a host might specify a ship name there to register/unregister
-      // guests from his events
       "action": {
         "create": {
           secret: secret,
@@ -514,7 +573,14 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
       }
     }
 
-    const _poke = await api.poke({
+    const errorPromise = api
+      .subscribeOnce("live", `/error/create`, ERROR_TIMEOUT)
+      .catch((e) => {
+        console.error("timed out waiting for error in createEvent", e)
+        return Promise.reject(new Error("timed out waiting for error"))
+      })
+
+    await api.poke({
       app: "live",
       mark: "live-operation",
       json: payload,
@@ -523,14 +589,35 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
         console.error("error during create poke: ", err)
       }
     })
-    return Promise.resolve(success)
+
+    return errorPromise
+      .then((response) => {
+        try {
+          const parsed = ErrorSchema.parse(response)
+          if (parsed.error === null) {
+            return Promise.resolve()
+          } else {
+            return Promise.reject(new Error(parsed.error))
+          }
+        } catch (e) {
+          console.error("error parsing error for createEvent", e)
+          return Promise.reject(new Error("unknown error"))
+        }
+      })
   }
 }
 
 function deleteEvent(api: Urbit): (id: EventId) => Promise<void> {
   return async (id: EventId) => {
+    const errorPromise = api
+      .subscribeOnce("live", `/error/edit`, ERROR_TIMEOUT)
+      .catch((e) => {
+        console.error("timed out waiting for error in createEvent", e)
+        return Promise.reject(new Error("timed out waiting for error"))
+      })
+
     // live-operation [[~sampel-palnet %some-event-id] [%delete ~]]
-    const _poke = await api.poke({
+    await api.poke({
       app: "live",
       mark: "live-operation",
       json: {
@@ -542,6 +629,21 @@ function deleteEvent(api: Urbit): (id: EventId) => Promise<void> {
         console.error("error during create poke: ", err)
       }
     })
+
+    return errorPromise
+      .then((response) => {
+        try {
+          const parsed = ErrorSchema.parse(response)
+          if (parsed.error === null) {
+            return Promise.resolve()
+          } else {
+            return Promise.reject(new Error(parsed.error))
+          }
+        } catch (e) {
+          console.error("error parsing error for deleteEvent", e)
+          return Promise.reject(new Error("unknown error"))
+        }
+      })
   }
 }
 
@@ -570,7 +672,14 @@ function editEventDetails(api: Urbit): (
     value: any,
   ) => {
 
-    const _poke = await api.poke({
+    const errorPromise = api
+      .subscribeOnce("live", `/error/edit`, ERROR_TIMEOUT)
+      .catch((e) => {
+        console.error("timed out waiting for error in createEvent", e)
+        return Promise.reject(new Error("timed out waiting for error"))
+      })
+
+    await api.poke({
       app: "live",
       mark: "live-operation",
       json: {
@@ -587,7 +696,20 @@ function editEventDetails(api: Urbit): (
       }
     })
 
-    return Promise.resolve()
+    return errorPromise
+      .then((response) => {
+        try {
+          const parsed = ErrorSchema.parse(response)
+          if (parsed.error === null) {
+            return Promise.resolve()
+          } else {
+            return Promise.reject(new Error(parsed.error))
+          }
+        } catch (e) {
+          console.error("error parsing error for editEventDetails", e)
+          return Promise.reject(new Error("unknown error"))
+        }
+      })
   }
 }
 
@@ -754,7 +876,14 @@ function removeEventSession(api: Urbit): (id: EventId, sessionId: string) => Pro
 
 function editEventSecret(api: Urbit): (id: EventId, secret: EventAsHost["secret"]) => Promise<void> {
   return async (id: EventId, secret: EventAsHost["secret"]) => {
-    const _poke = await api.poke({
+    const errorPromise = api
+      .subscribeOnce("live", `/error/edit`, ERROR_TIMEOUT)
+      .catch((e) => {
+        console.error("timed out waiting for error in createEvent", e)
+        return Promise.reject(new Error("timed out waiting for error"))
+      })
+
+    await api.poke({
       app: "live",
       mark: "live-operation",
       json: {
@@ -769,13 +898,33 @@ function editEventSecret(api: Urbit): (id: EventId, secret: EventAsHost["secret"
       }
     })
 
-    return Promise.resolve()
+    return errorPromise
+      .then((response) => {
+        try {
+          const parsed = ErrorSchema.parse(response)
+          if (parsed.error === null) {
+            return Promise.resolve()
+          } else {
+            return Promise.reject(new Error(parsed.error))
+          }
+        } catch (e) {
+          console.error("error parsing error for editEventSecret", e)
+          return Promise.reject(new Error("unknown error"))
+        }
+      })
   }
 }
 
 function editEventLimit(api: Urbit): (id: EventId, limit: EventAsHost["limit"]) => Promise<void> {
   return async (id: EventId, limit: EventAsHost["limit"]) => {
-    const _poke = await api.poke({
+    const errorPromise = api
+      .subscribeOnce("live", `/error/edit`, ERROR_TIMEOUT)
+      .catch((e) => {
+        console.error("timed out waiting for error in createEvent", e)
+        return Promise.reject(new Error("timed out waiting for error"))
+      })
+
+    await api.poke({
       app: "live",
       mark: "live-operation",
       json: {
@@ -790,29 +939,20 @@ function editEventLimit(api: Urbit): (id: EventId, limit: EventAsHost["limit"]) 
       }
     })
 
-    return Promise.resolve()
-  }
-}
-
-function unregister(_api: Urbit): (id: EventId, patp?: Patp) => Promise<boolean> {
-  return async (_id: EventId, patp?: Patp) => {
-    let success = false;
-    const _poke = await _api.poke({
-      app: "live",
-      mark: "live-operation",
-      json: {
-        "id": { "ship": _id.ship, "name": _id.name },
-        // the value for "unregister" should be null when used as a guest;
-        // a host might specify a ship name there to register/unregister
-        // guests from his events
-        "action": { "unregister": patp ?? null }
-      },
-      onSuccess: () => { success = true },
-      onError: (err) => {
-        console.error("error during unregister poke: ", err)
-      }
-    })
-    return Promise.resolve(success)
+    return errorPromise
+      .then((response) => {
+        try {
+          const parsed = ErrorSchema.parse(response)
+          if (parsed.error === null) {
+            return Promise.resolve()
+          } else {
+            return Promise.reject(new Error(parsed.error))
+          }
+        } catch (e) {
+          console.error("error parsing error for editEventLimit", e)
+          return Promise.reject(new Error("unknown error"))
+        }
+      })
   }
 }
 
@@ -1095,7 +1235,7 @@ function setAddPals(api: Urbit): (b: boolean) => Promise<void> {
       json: { "add-pals": b },
       onSuccess: () => { success = true },
       onError: (err) => {
-        console.error("error during register poke: ", err)
+        console.error("error during setAddPals poke: ", err)
       }
     })
     return Promise.resolve()
