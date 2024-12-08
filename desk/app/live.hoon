@@ -864,17 +864,17 @@
         ==
       $(guests t.guests)
     $(count +(count), guests t.guests)
-  ::  +get-ships-by-status: ditto
+  ::  +get-ships-by-status: pull a list of ships by stage association
   ::
   ++  get-ships-by-status
-    |=  bag=(set stage)
+    |=  stages=(set stage)
     ^-  (list ship)
     =/  event-records=(map ship record-1)
       ?~(r=(~(get by records) id) ~ u.r)
     %+  murn  ~(tap by event-records)
     |=  [s=ship r=record-1]
     ^-  (unit ship)
-    ?.((~(has in bag) p.status.r) ~ `s)
+    ?.((~(has in stages) p.status.r) ~ `s)
   ::  +update-guests: update a subset of ships with records
   ::
   ++  update-guests
@@ -1028,14 +1028,13 @@
         (latch-fail /error/edit)
       =/  new-cor=(unit _cor)
         (ingest-diff sub-info)
-      =?  cor  ?~(new-cor %& %|)
+      ?~  new-cor
         (fail /error/edit `'failed to process edit')
-      =?  cor  ?~(new-cor %| %&)
-        =.  cor  (need new-cor)
-        =.  cor  (succ /error/edit)
-        ?~  (get-our-case `name.id)  cor
-        %+  delete-remote-path  (need (get-our-case `name.id))
-        /event/(scot %tas name.id)
+      =.  cor  u.new-cor
+      =/  case=(unit @ud)  (get-our-case `name.id)
+      =?  cor  ?~(case %| %&)
+        (delete-remote-path (need case) /event/(scot %tas name.id))
+      =.  cor  (succ /error/edit)
       =+  event=get-event
       =.  cor  (give-local-update /updates [%event id event])
       :: if event is %secret only update %invited, %registered, and
@@ -1092,7 +1091,7 @@
           ?:  ?&  ?=(%open p.sub-info)
                   ?~(limit.event | =(u.limit.event permitted-count))
               ==
-            ~|(event-limit-is-reached+id !!)
+            ~&(>>> (bran "cannot open: event limit is reached") ~)
           `(update-event event(latch.info p.sub-info))
         ::
             %create-session
@@ -1147,18 +1146,19 @@
           =/  ses=(unit session)
             (~(get by sessions.info.event) sid)
           ?~  ses  ~&(>>> (bran "no session found for sid {<sid>}") ~)
-          =;  rev=session
+          =;  rev=(unit session)
+            ?~  rev  ~
             %-  some
             %-  update-event
-            event(sessions.info (~(put by sessions.info.event) sid rev))
+            event(sessions.info (~(put by sessions.info.event) sid u.rev))
           ?-    -.q.sub-info
-              %title      u.ses(title p.q.sub-info)
-              %panel      u.ses(panel p.q.sub-info)
-              %location   u.ses(location p.q.sub-info)
-              %about      u.ses(about p.q.sub-info)
+              %title      `u.ses(title p.q.sub-info)
+              %panel      `u.ses(panel p.q.sub-info)
+              %location   `u.ses(location p.q.sub-info)
+              %about      `u.ses(about p.q.sub-info)
               %moment
-            ?.  (session-moment-nests p.q.sub-info)  u.ses
-            u.ses(moment p.q.sub-info)
+            ?.  (session-moment-nests p.q.sub-info)  ~
+            `u.ses(moment p.q.sub-info)
           ==
         ==
       --
