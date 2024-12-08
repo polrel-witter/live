@@ -147,6 +147,8 @@ export const PreviousSearchSchema = z.object({
   )
 })
 
+export const ErrorSchema = z.object({ error: z.string().nullable() })
+
 // events
 
 export const LiveRecordUpdateEventSchema = z.object({

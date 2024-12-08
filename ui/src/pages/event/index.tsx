@@ -161,24 +161,52 @@ function makeNavbarAndFooter(
       status={eventContext.event.status}
       register={() => {
         backend.register(eventContext.event.details.id)
-          .then((_b: boolean) => {
+          .then(() => {
+            const { ship, name } = eventContext.event.details.id
             const { dismiss } = toast({
-              title: `${eventId.ship}/${eventId.name}`,
+              variant: "default",
+              title: `${ship}/${name}`,
               description: "successfully registered to event"
             })
-            const [debounced,] = debounce<void, void>(dismiss, 2000)
-            debounced().then(() => { })
+
+            const [fn,] = debounce<void>(dismiss, 2000)
+            fn().then(() => { })
+          })
+          .catch((e: Error) => {
+            const { ship, name } = eventContext.event.details.id
+            const { dismiss } = toast({
+              variant: "destructive",
+              title: `error when registering to ${ship}/${name}`,
+              description: `${e.message}`
+            })
+
+            const [fn,] = debounce<void>(dismiss, 2000)
+            fn().then(() => { })
           })
       }}
       unregister={() => {
         backend.unregister(eventId)
-          .then((_b: boolean) => {
+          .then(() => {
+            const { ship, name } = eventContext.event.details.id
             const { dismiss } = toast({
-              title: `${eventId.ship}/${eventId.name}`,
-              description: "successfully unregistered from event"
+              variant: "default",
+              title: `${ship}/${name}`,
+              description: "unregistered from event"
             })
-            const [debounced,] = debounce<void, void>(dismiss, 2000)
-            debounced().then(() => { })
+
+            const [fn,] = debounce<void>(dismiss, 2000)
+            fn().then(() => { })
+          })
+          .catch((e: Error) => {
+            const { ship, name } = eventContext.event.details.id
+            const { dismiss } = toast({
+              variant: "destructive",
+              title: `error when unregistering to ${ship}/${name}`,
+              description: `${e.message}`
+            })
+
+            const [fn,] = debounce<void>(dismiss, 2000)
+            fn().then(() => { })
           })
       }}
     />
