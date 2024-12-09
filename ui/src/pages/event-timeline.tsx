@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { ReactNode, useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { compareDesc } from "date-fns";
-import { Bug, ChevronUp, Search } from "lucide-react";
+import { compareAsc } from "date-fns";
+import { ChevronUp, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -366,7 +366,7 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
 
     events.sort(([, detailsA], [, detailsB]) => {
       if (detailsA.startDate && detailsB.startDate) {
-        return compareDesc(detailsA.startDate, detailsB.startDate)
+        return compareAsc(detailsA.startDate, detailsB.startDate)
       } else {
         return -1
       }
@@ -374,7 +374,7 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
 
     archived.sort(([, detailsA], [, detailsB]) => {
       if (detailsA.startDate && detailsB.startDate) {
-        return compareDesc(detailsA.startDate, detailsB.startDate)
+        return compareAsc(detailsA.startDate, detailsB.startDate)
       } else {
         return -1
       }
