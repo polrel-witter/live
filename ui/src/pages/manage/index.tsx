@@ -113,6 +113,29 @@ type DeleteEventCardProps = {
 
 const DeleteEventCard = ({ event, closeDialog, deleteEvent, navigateToTimeline }: DeleteEventCardProps) => {
   const { toast } = useToast()
+
+  const successHandler = () => {
+    const { dismiss } = toast({
+      variant: "default",
+      description: `deleted event ${event.details.title} `
+    })
+
+    const [fn,] = debounce<void>(dismiss, 2000)
+    fn().then(() => { })
+    // navigate to event timeline and prompt to reload event state
+    navigateToTimeline()
+  }
+
+  const errorHandler = (e: Error) => {
+    const { dismiss } = toast({
+      variant: "destructive",
+      title: "error while deleting event",
+      description: e.message
+    })
+    const [fn,] = debounce<void>(dismiss, 2000)
+    fn().then(() => { })
+  }
+
   return (
     <Card className="p-4 text-balance">
       are you sure you want to delete the event with id
@@ -131,26 +154,8 @@ const DeleteEventCard = ({ event, closeDialog, deleteEvent, navigateToTimeline }
           className="p-1 text-red-500 hover:text-red-500 hover:bg-red-100"
           onClick={() => {
             deleteEvent(event.details.id)
-              .then(() => {
-                const { dismiss } = toast({
-                  variant: "default",
-                  description: `deleted event ${event.details.title} `
-                })
-
-                const [fn,] = debounce<void>(dismiss, 2000)
-                fn().then(() => { })
-                // navigate to event timeline and prompt to reload event state
-                navigateToTimeline()
-              })
-              .catch((e: Error) => {
-                const { dismiss } = toast({
-                  variant: "destructive",
-                  title: "error while deleting event",
-                  description: e.message
-                })
-                const [fn,] = debounce<void>(dismiss, 2000)
-                fn().then(() => { })
-              })
+              .then(successHandler)
+              .catch(errorHandler)
           }}
         >
           yes, delete event
