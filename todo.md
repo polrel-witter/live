@@ -184,6 +184,8 @@ key:
 + titles with capital letters aren't being converted to proper terms so new events aren't processed
 + add an /errors path for create, etc.
 + the result is changing after several seconds, shortly after performing a search. e.g. we'll get a list of all events, but after about 30 seconds it'll say 'no events found under <ship>'
++ getting  'no events found' if we search the same ship twice
+- under search, if ship has a capial letter, the search will spin forever- assuming the it's not coercing them to lowercase in the conversion function
 - searching for an event with a name which is a number with no dashes crashes on the backend
 - continue to add tags in pals for each event the user matches with a guest. want to see a running history
 - make the edit errors more granular

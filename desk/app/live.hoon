@@ -364,7 +364,7 @@
         ?([%all ~] [%event @ ~])
       ?.  ?=([%ames %tune *] sign-arvo)
         ~|(unexpected-system-response+sign-arvo !!)
-      =/  msg  'No events found'
+      =/  msg  (crip "No events found under {<ship.sign-arvo>}")
       =;  rev=_result
         =?  rev  ?~(rev & |)  msg
         =.  result  rev
@@ -383,7 +383,7 @@
         ?+    t.t.t.t.t.t.wire  ~|(bad-wire+wire !!)
             [%all ~]      [//all ~]
             [%event @ ~]
-          =/  =term  i.t.t.t.t.t.t.wire
+          =/  =term  i.t.t.t.t.t.t.t.wire
           [//event/(scot %tas term) `term]
         ==
       ?+    t.t.t.t.wire  ~|(bad-wire+wire !!)
@@ -394,13 +394,24 @@
         (emit [%pass /remote/scry/cancel %arvo %a %yawn ship spur])
       ::
           [%response *]
+        |^
         =/  =ship     (slav %p i.t.t.t.wire)
-        :: hash the current result and compare with the hash in the path
-        :: if it's different, we assume a response so we do nothing,
-        :: else we modify the result and notify the user
+        :: if the hash of the old result differs from current, we
+        :: assume we received a response so we do nothing, else we
+        :: modify the result and notify the user
         ::
         =/  old-hash=@ux  (slav %ux i.t.t.t.t.t.wire)
         ?.  =(old-hash `@ux`(mug result))  cor
+        =/  notify=?
+          :: also check whether the previous ship we searched is the
+          :: same as current; if it is do not notify as the result
+          :: hasn't changed
+          ::
+          =/  previous-ship=(unit _ship)
+            ship-from-result
+          ?~  previous-ship  %&
+          ?:(=(ship u.previous-ship) %| %&)
+        ?.  notify  cor
         =.  result
           %-  crip
           %+  weld
@@ -408,6 +419,20 @@
             ~[(crip "'{<u.name>}'") ' not found under ' (scot %p ship)]
           ". The host could be offline."
         (give-local-update /search [%result ship name result])
+        ::  +ship-from-result: extract host ship from $result
+        ::
+        ++  ship-from-result
+          ^-  (unit ship)
+          ?~  result  ~
+          ?@  result
+            :: pull from cord
+            %+  rush  `cord`result
+            ;~(pfix (plus ;~(pose alp cen ace)) ;~(pfix sig fed:ag))
+          :: pull from map
+          =/  res=(list [=id info-1])
+            ~(tap by `(map id info-1)`result)
+          ?~(res ~ `ship.id.i.res)
+        --
       ==
     ==
   ==
@@ -656,9 +681,6 @@
 ++  search
   |=  [=ship name=(unit term)]
   ^+  cor
-  :: reset result state before sending the poke
-  ::
-  =.  result  *@t
   ?:  =(our.bowl ship)
     =.  result  'See home page for our events'
     (give-local-update /search [%result ship name result])
