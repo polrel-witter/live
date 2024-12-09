@@ -24,6 +24,7 @@ import { SpinningButton } from "@/components/spinning-button";
 import { Backend } from "@/lib/backend";
 import { useToast } from "@/hooks/use-toast";
 import { debounce } from "@/hooks/use-debounce";
+import { se } from "date-fns/locale";
 
 type EventThumbnailProps = {
   details: EventDetails,
@@ -227,6 +228,7 @@ const PreviousSearchButton = ({
   return (<div></div>)
 }
 
+
 // if we need clearable inputs...
 // https://github.com/shadcn-ui/ui/discussions/3274#discussioncomment-10054930
 export type SearchFormProps = {
@@ -324,7 +326,7 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
     return
   }
 
-  const [searchResult, setSearchResult] = useState<[EventId, EventDetails][] | string>([])
+  const [searchResult, setSearchResult] = useState<[EventId, EventDetails][] | string | undefined>(undefined)
 
   const [previousSearchMessage, setPreviousSearchMessage] = useState<string>("")
   const [previousSearchResult, setPreviousSearchResult] = useState<[EventId, EventDetails][]>([])
@@ -518,13 +520,16 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
                 spin={spinSearch}
               />
               <div className="mt-4 sm:m-0">
-                <PreviousSearchButton
-                  message={previousSearchMessage}
-                  result={previousSearchResult}
-                  setPreviousSearch={() => {
-                    setSearchResult(previousSearchResult)
-                  }}
-                />
+                {!searchResult &&
+                  <PreviousSearchButton
+                    message={previousSearchMessage}
+                    result={previousSearchResult}
+                    setPreviousSearch={() => {
+                      setSearchResult(previousSearchResult)
+                    }}
+                  />
+                }
+
               </div>
             </div>
             <div className="mx-4 mt-8">
@@ -533,7 +538,7 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
                   ? <Card className="p-2 bg-accent">{searchResult}</Card>
                   :
                   <ul>
-                    {searchResult.map(([evtID, details]) =>
+                    {searchResult && searchResult.map(([evtID, details]) =>
                       <SearchThumbnail
                         key={`${details.id.ship}-${details.id.name}`}
                         details={details}

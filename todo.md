@@ -158,7 +158,7 @@ key:
   + archive?
 + the name search box should be able to accept an arbitrary number
   of dashes in succession (e.g. 'my-new--test---event')
-- there's a previous search (in grey text) in addition to the immediate results. soon as we get new results, no need to keep the previous search text there. it should only ever display whatever is in the result.
++ there's a previous search (in grey text) in addition to the immediate results. soon as we get new results, no need to keep the previous search text there. it should only ever display whatever is in the result.
 - the 'invite guest to access guest panel' still shows after
   inviting the first guest
 - there's a crash when you click 'go to event' on the search page: _Minified exception occurred; use the non-minified dev environment for the full error message and additional helpful warnings._
