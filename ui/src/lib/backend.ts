@@ -541,9 +541,8 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
     const timezoneStripped = stripUTCOffset(details.timezone)
     const sign = timezoneStripped.charAt(0) === "+" ? true : false
     const number = Number.parseInt(timezoneStripped.slice(1))
-    // FIXME: this might need to be a / separated string i don't remember
-    const groupObj = details.group
-      ? { ship: details.group.ship, term: details.group.name }
+    const group = details.group
+      ? `${details.group.ship}/${details.group.name}`
       : null
 
     const payload = {
@@ -562,7 +561,7 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
             timezone: { p: sign, q: number },
             location: details.location,
             'venue-map': details.venueMap,
-            group: groupObj,
+            group: group,
             kind: details.kind,
             latch: details.latch,
             sessions: Object
