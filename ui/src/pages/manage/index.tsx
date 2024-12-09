@@ -111,8 +111,14 @@ type DeleteEventCardProps = {
   navigateToTimeline: () => void
 }
 
-const DeleteEventCard = ({ event, closeDialog, deleteEvent, navigateToTimeline }: DeleteEventCardProps) => {
+const DeleteEventCard = ({ event, closeDialog, deleteEvent, navigateToTimeline: nvtt }: DeleteEventCardProps) => {
+  const [spin, setSpin] = useState(false)
   const { toast } = useToast()
+
+  const navigateToTimeline= () => {
+    setSpin(false)
+    nvtt()
+  }
 
   const successHandler = () => {
     const { dismiss } = toast({
@@ -134,12 +140,13 @@ const DeleteEventCard = ({ event, closeDialog, deleteEvent, navigateToTimeline }
     })
     const [fn,] = debounce<void>(dismiss, 2000)
     fn().then(() => { })
+    navigateToTimeline()
   }
 
   return (
-    <Card className="p-4 text-balance">
+    <Card className="p-4 ">
       are you sure you want to delete the event with id
-      <div className="inline-block relative bg-red-200 rounded-md p-[1px] px-1 ml-2">
+      <div className="inline relative bg-red-200 rounded-md p-[1px] px-1 ml-2">
         {event.details.id.ship} / {event.details.id.name}
       </div>?
       <div className="flex w-full justify-around mt-2">
@@ -149,17 +156,19 @@ const DeleteEventCard = ({ event, closeDialog, deleteEvent, navigateToTimeline }
         >
           no, go back
         </Button>
-        <Button
+        <SpinningButton
           variant="ghost"
-          className="p-1 text-red-500 hover:text-red-500 hover:bg-red-100"
+          className="w-full p-1 text-red-500 hover:text-red-500 hover:bg-red-100"
+          spin={spin}
           onClick={() => {
+            setSpin(true)
             deleteEvent(event.details.id)
               .then(successHandler)
               .catch(errorHandler)
           }}
         >
           yes, delete event
-        </Button>
+        </SpinningButton>
       </div>
     </Card>
   )

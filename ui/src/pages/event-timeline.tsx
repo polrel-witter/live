@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { number, z } from "zod";
 import { ReactNode, useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { compareAsc } from "date-fns";
@@ -11,7 +11,7 @@ import { GlobalContext, GlobalCtx } from "@/globalContext";
 import { cn, flipBoolean } from "@/lib/utils";
 import { EventDetails, EventId, eventIdsEqual } from "@/lib/types";
 import { formatEventDate, shiftTzDateInUTCToTimezone } from "@/lib/time";
-import { PatpSchema, StringWithDashes } from "@/lib/schemas";
+import { EventNameSchema, PatpSchema } from "@/lib/schemas";
 
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -238,10 +238,7 @@ export type SearchFormProps = {
 const SearchForm = ({ spin, ...fns }: SearchFormProps) => {
   const schema = z.object({
     hostShip: PatpSchema.or(z.literal("")),
-    name: StringWithDashes.refine(
-      s => s,
-      () => ({ message: "event name sould be in this form: event-name" })
-    ).or(z.literal("")),
+    name: EventNameSchema.or(z.literal("")),
   })
 
   const form = useForm<z.infer<typeof schema>>({

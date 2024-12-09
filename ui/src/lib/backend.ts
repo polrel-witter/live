@@ -52,7 +52,7 @@ import {
 
 // timeout (in milliseconds) for subscribeOnce calls that wait for errors
 // after certain pokes
-const ERROR_TIMEOUT = 5000
+const DEFAULT_ERROR_TIMEOUT = 2000
 
 interface Backend {
   // --- live agent --- //
@@ -411,7 +411,7 @@ function getEvent(api: Urbit): (id: EventId) => Promise<EventAsHost> {
 function register(api: Urbit): (id: EventId, patp?: Patp) => Promise<void> {
   return async (_id: EventId, patp?: Patp) => {
     const errorPromise = api
-      .subscribeOnce("live", `/error/status-change`, ERROR_TIMEOUT)
+      .subscribeOnce("live", `/error/status-change`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
         console.error("timed out waiting for error in register", e)
         return Promise.reject(new Error("timed out waiting for error"))
@@ -454,7 +454,7 @@ function register(api: Urbit): (id: EventId, patp?: Patp) => Promise<void> {
 function unregister(api: Urbit): (id: EventId, patp?: Patp) => Promise<void> {
   return async (id: EventId, patp?: Patp) => {
     const errorPromise = api
-      .subscribeOnce("live", `/error/status-change`, ERROR_TIMEOUT)
+      .subscribeOnce("live", `/error/status-change`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
         console.error("timed out waiting for error in register", e)
         return Promise.reject(new Error("timed out waiting for error"))
@@ -546,7 +546,7 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
       : null
 
     const payload = {
-      "id": { "ship": id.ship, "name": id.name.replaceAll(" ", "-") },
+      "id": { "ship": id.ship, "name": id.name },
       "action": {
         "create": {
           secret: secret,
@@ -573,7 +573,7 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
     }
 
     const errorPromise = api
-      .subscribeOnce("live", `/error/create`, ERROR_TIMEOUT)
+      .subscribeOnce("live", `/error/create`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
         console.error("timed out waiting for error in createEvent", e)
         return Promise.reject(new Error("timed out waiting for error"))
@@ -609,7 +609,7 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
 function deleteEvent(api: Urbit): (id: EventId) => Promise<void> {
   return async (id: EventId) => {
     const errorPromise = api
-      .subscribeOnce("live", `/error/edit`, ERROR_TIMEOUT)
+      .subscribeOnce("live", `/error/edit`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
         console.error("timed out waiting for error in createEvent", e)
         return Promise.reject(new Error("timed out waiting for error"))
@@ -672,7 +672,7 @@ function editEventDetails(api: Urbit): (
   ) => {
 
     const errorPromise = api
-      .subscribeOnce("live", `/error/edit`, ERROR_TIMEOUT)
+      .subscribeOnce("live", `/error/edit`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
         console.error("timed out waiting for error in createEvent", e)
         return Promise.reject(new Error("timed out waiting for error"))
@@ -876,7 +876,7 @@ function removeEventSession(api: Urbit): (id: EventId, sessionId: string) => Pro
 function editEventSecret(api: Urbit): (id: EventId, secret: EventAsHost["secret"]) => Promise<void> {
   return async (id: EventId, secret: EventAsHost["secret"]) => {
     const errorPromise = api
-      .subscribeOnce("live", `/error/edit`, ERROR_TIMEOUT)
+      .subscribeOnce("live", `/error/edit`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
         console.error("timed out waiting for error in createEvent", e)
         return Promise.reject(new Error("timed out waiting for error"))
@@ -917,7 +917,7 @@ function editEventSecret(api: Urbit): (id: EventId, secret: EventAsHost["secret"
 function editEventLimit(api: Urbit): (id: EventId, limit: EventAsHost["limit"]) => Promise<void> {
   return async (id: EventId, limit: EventAsHost["limit"]) => {
     const errorPromise = api
-      .subscribeOnce("live", `/error/edit`, ERROR_TIMEOUT)
+      .subscribeOnce("live", `/error/edit`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
         console.error("timed out waiting for error in createEvent", e)
         return Promise.reject(new Error("timed out waiting for error"))

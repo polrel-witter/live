@@ -156,7 +156,7 @@ key:
 + the create form is submitting the group as `{ship: ~zod, term: some-name}` but it should just submit a string with a `/` inbetween: {group: "~mocbel/work-discovery"}. The edit form is submitting this correctly.
 + timeline should be in descending order (oldest at the top)
   + archive?
-- the name search box should be able to accept an arbitrary number
++ the name search box should be able to accept an arbitrary number
   of dashes in succession (e.g. 'my-new--test---event')
 - there's a previous search (in grey text) in addition to the immediate results. soon as we get new results, no need to keep the previous search text there. it should only ever display whatever is in the result.
 - the 'invite guest to access guest panel' still shows after
