@@ -378,25 +378,37 @@
       ?~  q.dat.roar      msg
       ;;((map id info-1) +.u.q.dat.roar)
     ::
-        [%timer @ @ *]
+        [%timer @ @ @ *]
       =/  [end=path name=(unit term)]
-        ?+    t.t.t.t.t.wire  ~|(bad-wire+wire !!)
+        ?+    t.t.t.t.t.t.wire  ~|(bad-wire+wire !!)
             [%all ~]      [//all ~]
             [%event @ ~]
-          =/  =term  i.t.t.t.t.t.wire
+          =/  =term  i.t.t.t.t.t.t.wire
           [//event/(scot %tas term) `term]
         ==
-      =/  =ship     (slav %p i.t.t.t.wire)
-      =/  case=@ud  (slav %ud i.t.t.t.t.wire)
-      =/  =spur     (weld /g/x/(scot %ud case)/live end)
-      =.  cor  (emit [%pass /remote/scry/cancel %arvo %a %yawn ship spur])
-      =.  result
-        %-  crip
-        %+  weld
-          ?~  name  ~['No events found under' ' ' (scot %p ship)]
-          ~[(crip "'{<u.name>}'") ' not found under ' (scot %p ship)]
-        ". The host could be offline."
-      (give-local-update /search [%result ship name result])
+      ?+    t.t.t.t.wire  ~|(bad-wire+wire !!)
+          [%case *]
+        =/  =ship     (slav %p i.t.t.t.wire)
+        =/  case=@ud  (slav %ud i.t.t.t.t.t.wire)
+        =/  =spur     (weld /g/x/(scot %ud case)/live end)
+        (emit [%pass /remote/scry/cancel %arvo %a %yawn ship spur])
+      ::
+          [%response *]
+        =/  =ship     (slav %p i.t.t.t.wire)
+        :: hash the current result and compare with the hash in the path
+        :: if it's different, we assume a response so we do nothing,
+        :: else we modify the result and notify the user
+        ::
+        =/  old-hash=@ux  (slav %ux i.t.t.t.t.t.wire)
+        ?.  =(old-hash `@ux`(mug result))  cor
+        =.  result
+          %-  crip
+          %+  weld
+            ?~  name  ~['No events found under' ' ' (scot %p ship)]
+            ~[(crip "'{<u.name>}'") ' not found under ' (scot %p ship)]
+          ". The host could be offline."
+        (give-local-update /search [%result ship name result])
+      ==
     ==
   ==
 ::
@@ -654,8 +666,20 @@
     %+  weld  /case/request/(scot %p ship)
     ?~  name  /all
     /(scot %tas u.name)
-  %-  emit
-  (make-act wire ship dap.bowl live-dial+!>(`dial`[%case-request name]))
+  ::  poke ship and set a timer to notify user if we get no response
+  ::
+  %-  emil
+  :~  (make-act wire ship dap.bowl live-dial+!>(`dial`[%case-request name]))
+      :*  %pass
+          ;:  weld  /remote/scry/timer/(scot %p ship)/response
+            /(scot %ux `@ux`(mug result))
+            ?~  name  /all
+            /event/(scot %tas u.name)
+          ==
+          %arvo  %b
+          %wait  (add ~s30 now.bowl)
+      ==
+  ==
 ::  +case-request: someone is requesting a remote scry revision number
 ::  for one of our published paths
 ::
@@ -677,7 +701,7 @@
   ^+  cor
   ?<  =(our src):bowl
   ?~  case
-    :: no case provided which means there are no discoverable events at
+    :: no case provided means there are no discoverable events at
     :: the path in question
     ::
     =;  msg=tape
@@ -686,11 +710,11 @@
     ?~  name
       ~['No events found under' ' ' (scot %p src.bowl)]
     ~[(crip "{<(scow %tas u.name)>}") ' not found under ' (scot %p src.bowl)]
-  :: perform the scry
+  :: perform the scry and set a timer to cancel it
   ::
   %-  emil
   :~  :*  %pass
-          %+  weld  /remote/scry/timer/(scot %p src.bowl)/(scot %ud u.case)
+          %+  weld  /remote/scry/timer/(scot %p src.bowl)/case/(scot %ud u.case)
           ?~  name  /all
           /event/(scot %tas u.name)
           %arvo  %b
