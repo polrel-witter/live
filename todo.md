@@ -166,7 +166,7 @@ key:
 - [~polrel-witter] should be obvious that the user can leave the event-name field blank to search for all events under a ship.
 - [~polrel-witter] on the search page, the ship field should complain if it's left blank and user clicks search
 + when a guest's status changes the timestamp is wrong. you have to reload the page to get the correct time to show.
-- the schedule display is off. e.g. if your event is 12/24 - 12/26, it'll display 12/23, 12/24 and 12/26. so it shows one prior and skips a date.
+? the schedule display is off. e.g. if your event is 12/24 - 12/26, it'll display 12/23, 12/24 and 12/26. so it shows one prior and skips a date.
 - the `addToPals` setting field is showing in the profile.
 - is the frontend getting an update after submitting a `shake` poke? the button just spins, but if i reload the page shortly after clicking the state changes. same deal on the guest list page, if we 'unmatch'.
 - on the create page, the 'define start and end date to add sessions' disclaimer occasionally doesn't change after having set the event date. for instance, if you select a date range then click out of the window. also, when it does change, it's sometimes a too slow - if the user is moving through the form quickly. could it be sped up?

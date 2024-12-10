@@ -15,9 +15,9 @@ function dateToKey(d: TZDate): string {
 }
 
 const SessionDateSelect: React.FC<{
-  sessionDates: Array<Date>,
+  sessionDates: Array<TZDate>,
   onDateChange: (s: TZDate) => void,
-  currentDate: Date
+  currentDate: TZDate
 }
 > = ({ sessionDates, onDateChange, currentDate }) => {
 
@@ -28,8 +28,8 @@ const SessionDateSelect: React.FC<{
       setDates(new Map(
         sessionDates
           .map((date) => [
-            dateToKey(newTZDateInUTCFromDate(date)),
-            newTZDateInUTCFromDate(date)
+            dateToKey(date),
+            date
           ])
       ))
     },
