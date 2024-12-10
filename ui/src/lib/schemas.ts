@@ -16,10 +16,7 @@ export const GroupNameSchema = EventNameSchema
 /////////////////////////////////////////
 
 
-// Patp regex:
-// /^~([a-z]{3,6})(?:-([a-z]{6})){0,7}$/
-
-export const PatpSchema = z.custom<string>((val) => {
+export const PatpSchema = z.custom<Patp>((val) => {
   return typeof val === "string" && isPatp(val);
 }, {
   message: "provided string is not a patp"
