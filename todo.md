@@ -172,6 +172,10 @@ key:
 + on the create page, the 'define start and end date to add sessions' disclaimer occasionally doesn't change after having set the event date. for instance, if you select a date range then click out of the window. also, when it does change, it's sometimes a too slow - if the user is moving through the form quickly. could it be sped up?
 + on the create and edit forms does the frontend recognize that a date is set after selecting the dates and not clicking "done" (e.g. clicking out of the window)? it should, if possible or should not appear to have set the date if clicking "done" is required.
 ? the 'go to event' button is appearing on events we don't have access to which leads to a crash if the user clicks on them
+- i think the 'edit event' button used to make changes should read 'submit'. feels a little closer to the action.
+- the error message should stay put until the user closes it. otherwise they may not read it fast enough to know what to do
+- the error messages work on the edit page, but if we get one, the 'edit event' button infinitely spins. it seems to still work - in that you can resubimt the form with updates - but for clarity it should go back to normal.
+
 
 
 
@@ -191,7 +195,7 @@ key:
 + getting  'no events found' if we search the same ship twice
 + under search, if ship has a capial letter, the search will spin forever- assuming the it's not coercing them to lowercase in the conversion function
 + searching for an event with a name which is a number with no dashes crashes on the backend
-- make the edit errors more granular
++ make the edit errors more granular
 - /error/delete doesn't push anything, not even null
 - cannot set a session start to the same time as edit start
 - continue to add tags in pals for each event the user matches with a guest. want to see a running history
