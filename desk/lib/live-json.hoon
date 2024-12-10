@@ -20,6 +20,12 @@
   %+  cook
     |=  a=tape
     ^-  term
+    :: if the first letter's a number, prepend 'n' because event
+    :: names with numbers at the beginning require 'n' for
+    :: term validation
+    ::
+    =?  a  ?~((rush -.a dem) %| %&)
+      ['n' a]
     =.  a  (cass a)
     =.  a  (turn a |=(c=@t ?:(|(=('.' c) =(' ' c)) '-' c)))
     ?.  ((sane %tas) (crip a))  ~|(%bad-term !!)
