@@ -10,7 +10,7 @@ export type PatpWithoutSig = string
 export type Patp = `~${PatpWithoutSig}`
 
 export function isPatp(s: string): s is Patp {
-  return s.charAt(0) === '~' && s.length >= 4
+  return /^~([a-zA-Z]{3,6})(?:-([a-zA-Z]{6})){0,7}$/.test(s)
 }
 
 export function stripSig(patp: Patp): PatpWithoutSig {

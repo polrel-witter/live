@@ -271,33 +271,31 @@ const SearchForm = ({ spin, ...fns }: SearchFormProps) => {
         ])}
         onSubmit={form.handleSubmit(onSubmit)}
       >
-        <div className="flex items-end">
-          <FormField
-            control={form.control}
-            name={"hostShip"}
-            render={({ field }) => (
-              <FormItem className="space-y-0 w-full">
-                <FormLabel className="text-xs text-accent-foreground/50">
-                  host ship
-                </FormLabel>
-                <FormControl >
-                  <Input
-                    placeholder="~sampel-palnet"
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                </FormControl>
-                <FormDescription />
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name={"hostShip"}
+          render={({ field }) => (
+            <FormItem className="w-full sm:w-fit">
+              <FormLabel className="text-xs text-accent-foreground/50">
+                host ship
+              </FormLabel>
+              <FormControl >
+                <Input
+                  placeholder="~sampel-palnet"
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+              <FormDescription />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name={"name"}
           render={({ field }) => (
-              <FormItem className="space-y-0 w-full">
+            <FormItem className="w-full sm:w-fit">
               <FormLabel className="text-xs text-accent-foreground/50">
                 event name (optional)
               </FormLabel>
@@ -314,12 +312,12 @@ const SearchForm = ({ spin, ...fns }: SearchFormProps) => {
             </FormItem>
           )}
         />
-        <FormItem className="w-full self-end space-y-0">
+        <FormItem className="w-full sm:w-20 self-start sm:pt-8">
           <SpinningButton
             type="submit"
             variant="ghost"
             spin={spin}
-            className={cn(["w-full bg-stone-300", "md:w-20"])}
+            className={cn(["w-full bg-stone-300", "sm:w-20"])}
           >
             search
           </SpinningButton>
