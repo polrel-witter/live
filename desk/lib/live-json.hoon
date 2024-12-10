@@ -2,7 +2,21 @@
 /+  *mip
 |%
 ::
-++  to-term
+++  de-ship
+  ;~  pose
+    ;~  pfix  sig
+      ;~  pose
+        fed:ag
+        %+  cook
+          |=  t=tape
+          (scan (cass t) fed:ag)
+        (star alp)
+      ==
+    ==
+    fed:ag
+  ==
+::
+++  de-term
   %+  cook
     |=  a=tape
     ^-  term
@@ -18,11 +32,11 @@
   |^  ^-  dial
   %.  jon
   %-  of
-  :~  find+(ot ~[ship+(se %p) name+de-unit-term])
+  :~  find+(ot ~[ship+(su de-ship) name+de-unit-term])
       case-request+de-unit-term
       case-response+(ot ~[case+ni:dejs-soft:format name+de-unit-term])
   ==
-  ++  de-unit-term  (su:dejs-soft:format to-term)
+  ++  de-unit-term  (su:dejs-soft:format de-term)
   --
 ::
 ++  dejs-operation
@@ -41,7 +55,7 @@
         (overwrite-name new-name jon)
       %.  jon
       %-  ot
-      :~  id+(ot ~[ship+(se %p) name+(se %tas)])
+      :~  id+(ot ~[ship+(su de-ship) name+(se %tas)])
           action+de-action
       ==
   ::
@@ -99,7 +113,7 @@
         secret+de-unit-cord
         limit+ni:dejs-soft:format
         subscribe+ul
-        invite+(ar (se %p))
+        invite+(ar (su de-ship))
         register+de-unit-ship
         unregister+de-unit-ship
         punch+de-punch
@@ -112,7 +126,7 @@
   ++  de-punch
     %-  ot
     :~  act+(su (perk %verify %revoke ~))
-        ship+(se %p)
+        ship+(su de-ship)
     ==
   ::
   ++  de-kind  (su (perk ~[%public %private %secret]))
@@ -166,10 +180,8 @@
     ==
   ::
   ++  de-group
-    |^  ^-  $-(json group)
-        (su:dejs-soft:format ;~((glue fas) ship to-term))
-    ++  ship  ;~(pose ;~(pfix sig fed:ag) fed:ag)
-    --
+    ^-  $-(json group)
+    (su:dejs-soft:format ;~((glue fas) de-ship de-term))
   ::
   ++  dl-session
     :~  title+so
