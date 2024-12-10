@@ -1305,6 +1305,7 @@ function subscribeToMatcherEvents(_api: Urbit): (handlers: {
               status: backendMatchStatusToMatchStatus(matchEvt.match)
             })
           } catch (e) {
+            console.error("error parsing matcher event", e)
             throw e
           }
         }

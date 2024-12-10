@@ -282,7 +282,6 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
 
     let matcherSubId: number
 
-
     backend.subscribeToMatcherEvents({
       onProfileChange: () => { },
       onMatch: (evt) => {
@@ -290,7 +289,7 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
           return {
             attendees: oldAttendees
               .map((attendee): Attendee => {
-                if (attendee.patp === stripSig(evt.ship)) {
+                if (attendee.patp === evt.ship) {
                   return { patp: evt.ship, status: evt.status }
                 }
                 return attendee
@@ -306,7 +305,6 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
     return () => {
       backend.unsubscribeFromEvent(matcherSubId).then(() => { })
     }
-
   }, [globalContext])
 
 

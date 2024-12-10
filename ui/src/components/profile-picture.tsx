@@ -110,7 +110,7 @@ const ProfilePicture: React.FC<Props> = ({
         ? <AvatarImage src={avatarUrl} />
         : ((moon || comet)
           ? <AvatarFallback className={cn([
-            "bg-gray-300",
+            "bg-gray-300 select-none",
             { "text-2xl": size === "xs" },
             { "text-3xl": size === "sm" },
             { "text-4xl": size === "md" },

@@ -17,7 +17,7 @@ import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ResponsiveContent } from "@/components/responsive-content";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { SlideDownAndReveal } from "@/components/sliders";
 import { SpinningButton } from "@/components/spinning-button";
@@ -244,7 +244,7 @@ export type SearchFormProps = {
 
 const SearchForm = ({ spin, ...fns }: SearchFormProps) => {
   const schema = z.object({
-    hostShip: PatpSchema.or(z.literal("")),
+    hostShip: PatpSchema,
     name: EventNameSchema.or(z.literal("")),
   })
 
@@ -253,50 +253,57 @@ const SearchForm = ({ spin, ...fns }: SearchFormProps) => {
     mode: "onChange",
     defaultValues: {
       name: "",
-      hostShip: "",
+      hostShip: undefined,
     }
   })
 
   const onSubmit = ({ hostShip, name }: z.infer<typeof schema>) => {
-    if (hostShip !== "") {
-      fns.findEvents(hostShip, name === "" ? null : name)
-      fns.onSubmit()
-    }
+    fns.findEvents(hostShip, name === "" ? null : name)
+    fns.onSubmit()
   }
 
   return (
     <Form {...form}>
       <form
         className={cn([
-          "flex flex-col justify-center align-center space-y-2",
+          "flex flex-col justify-center align-center space-y-4",
           "md:flex-row md:space-x-2 md:space-y-0"
         ])}
         onSubmit={form.handleSubmit(onSubmit)}
       >
-        <FormField
-          control={form.control}
-          name={"hostShip"}
-          render={({ field }) => (
-            <FormItem >
-              <FormControl >
-                <Input
-                  placeholder="~sampel-palnet"
-                  value={field.value}
-                  onChange={field.onChange}
-                />
-              </FormControl>
-              <FormDescription />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="flex items-end">
+          <FormField
+            control={form.control}
+            name={"hostShip"}
+            render={({ field }) => (
+              <FormItem className="space-y-0 w-full">
+                <FormLabel className="text-xs text-accent-foreground/50">
+                  host ship
+                </FormLabel>
+                <FormControl >
+                  <Input
+                    placeholder="~sampel-palnet"
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                </FormControl>
+                <FormDescription />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <FormField
           control={form.control}
           name={"name"}
           render={({ field }) => (
-            <FormItem >
+              <FormItem className="space-y-0 w-full">
+              <FormLabel className="text-xs text-accent-foreground/50">
+                event name (optional)
+              </FormLabel>
               <FormControl >
                 <Input
+                  className="mt-0"
                   placeholder="event-name"
                   value={field.value ? field.value : ""}
                   onChange={field.onChange}
@@ -307,17 +314,16 @@ const SearchForm = ({ spin, ...fns }: SearchFormProps) => {
             </FormItem>
           )}
         />
-        <SpinningButton
-          type="submit"
-          variant="ghost"
-          spin={spin}
-          className={cn([
-            "w-full md:w-20",
-            "bg-stone-300"
-          ])}
-        >
-          <span>search</span>
-        </SpinningButton>
+        <FormItem className="w-full self-end space-y-0">
+          <SpinningButton
+            type="submit"
+            variant="ghost"
+            spin={spin}
+            className={cn(["w-full bg-stone-300", "md:w-20"])}
+          >
+            search
+          </SpinningButton>
+        </FormItem>
       </form>
     </Form>
   )
@@ -524,7 +530,7 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
                 onSubmit={() => { setSpinSearch(true) }}
                 spin={spinSearch}
               />
-              <div className="mt-4 sm:m-0">
+              <div className="mt-4">
                 {!searchResult &&
                   <PreviousSearchButton
                     message={previousSearchMessage}
