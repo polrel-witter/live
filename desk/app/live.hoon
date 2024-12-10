@@ -23,12 +23,8 @@
       sub-records=_(mk-subs records-1:lr ,[%record @ @ ~])  :: record subs
       pub-records=_(mk-pubs records-1:lr ,[%record @ @ ~])  :: record pubs
   ==
-::
-::
 +$  card  card:agent:gall
-::
 --
-::
 %+  verb  |
 %-  agent:dbug
 =|  state-1
@@ -980,7 +976,6 @@
       %info        (change-info +.act)
       %secret      (change-secret +.act)
       %limit       (change-limit +.act)
-    ::
       %subscribe   subscribe
       %invite      (invite +.act)
       %register    (register +.act)
