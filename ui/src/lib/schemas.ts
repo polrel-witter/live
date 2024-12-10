@@ -18,12 +18,12 @@ export const GroupNameSchema = EventNameSchema
 
 // Patp regex:
 // /^~([a-z]{3,6})(?:-([a-z]{6})){0,7}$/
-export const PatpSchema = z
-  .string()
-  .startsWith("~")
-  .refine((s: string): s is Patp => isPatp(s), {
-    message: "string is not patp"
-  });
+
+export const PatpSchema = z.custom<string>((val) => {
+  return typeof val === "string" && isPatp(val);
+}, {
+  message: "provided string is not a patp"
+})
 
 export const EventStatusSchema = z.enum([
   "invited",
