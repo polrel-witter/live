@@ -168,6 +168,9 @@ key:
 - the schedule display is off. e.g. if your event is 12/24 - 12/26, it'll display 12/23, 12/24 and 12/26. so it shows one prior and skips a date.
 - the `addToPals` setting field is showing in the profile.
 - is the frontend getting an update after submitting a `shake` poke? the button just spins, but if i reload the page shortly after clicking the state changes. same deal on the guest list page, if we 'unmatch'.
+- on the create page, the 'define start and end date to add sessions' disclaimer occasionally doesn't change after having set the event date. for instance, if you select a date range then click out of the window. also, when it does change, it's sometimes a too slow - if the user is moving through the form quickly. could it be sped up?
+- on the create and edit forms does the frontend recognize that a date is set after selecting the dates and not clicking "done" (e.g. clicking out of the window)? it should, if possible or should not appear to have set the date if clicking "done" is required.
+- the 'go to event' button is appearing on events we don't have access to which leads to a crash if the user clicks on them
 
 
 
@@ -185,10 +188,12 @@ key:
 + add an /errors path for create, etc.
 + the result is changing after several seconds, shortly after performing a search. e.g. we'll get a list of all events, but after about 30 seconds it'll say 'no events found under <ship>'
 + getting  'no events found' if we search the same ship twice
-- under search, if ship has a capial letter, the search will spin forever- assuming the it's not coercing them to lowercase in the conversion function
-- searching for an event with a name which is a number with no dashes crashes on the backend
-- continue to add tags in pals for each event the user matches with a guest. want to see a running history
++ under search, if ship has a capial letter, the search will spin forever- assuming the it's not coercing them to lowercase in the conversion function
++ searching for an event with a name which is a number with no dashes crashes on the backend
 - make the edit errors more granular
+- /error/delete doesn't push anything, not even null
+- cannot set a session start to the same time as edit start
+- continue to add tags in pals for each event the user matches with a guest. want to see a running history
 - update README
 
 
