@@ -192,7 +192,7 @@ export function backendRecordToEventAsGuest(eventId: EventId, record: z.infer<ty
   return {
     secret: record.secret ? record.secret : "",
     status: record.status.p,
-    lastChanged: newTZDateInUTCFromDate(new Date(record.status.q * 1000)),
+    lastChanged: newTZDateInUTCFromDate(new Date(record.status.q)),
     details: backendInfo1ToEventDetails(eventId, record.info)
   }
 }

@@ -10,7 +10,7 @@ import { GlobalContext, GlobalCtx } from "@/globalContext";
 
 import { cn, flipBoolean } from "@/lib/utils";
 import { EventDetails, EventId, eventIdsEqual } from "@/lib/types";
-import { formatEventDate, shiftTzDateInUTCToTimezone } from "@/lib/time";
+import { formatEventDate, shiftTzDateInUTCToTimezone, UTCOffset } from "@/lib/time";
 import { EventNameSchema, PatpSchema } from "@/lib/schemas";
 
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
@@ -24,7 +24,24 @@ import { SpinningButton } from "@/components/spinning-button";
 import { Backend } from "@/lib/backend";
 import { useToast } from "@/hooks/use-toast";
 import { debounce } from "@/hooks/use-debounce";
-import { se } from "date-fns/locale";
+import { TZDate } from "@date-fns/tz";
+
+type StartsAtProps = {
+  date: TZDate | null,
+  timezone: UTCOffset
+}
+
+const StartsAt = ({ date, timezone }: StartsAtProps) => {
+
+  if (date && timezone) {
+    const formattedDate = formatEventDate(
+      shiftTzDateInUTCToTimezone(date, timezone)
+    )
+    return (<p>starts at {formattedDate}</p>)
+  }
+
+  return (<p>starts at 'TBD'</p>)
+}
 
 type EventThumbnailProps = {
   details: EventDetails,
@@ -42,18 +59,6 @@ const EventThumbnail: React.FC<EventThumbnailProps> = (
   }
 ) => {
 
-  const StartsAt = () => {
-
-    if (startDate) {
-      const formattedDate = formatEventDate(
-        shiftTzDateInUTCToTimezone(startDate, timezone)
-      )
-      return (<p>starts at {formattedDate}</p>)
-    }
-
-    return (<p>starts at 'TBD'</p>)
-  }
-
   return (
     <li className="my-5">
       <Link to={linkTo}>
@@ -63,7 +68,7 @@ const EventThumbnail: React.FC<EventThumbnailProps> = (
             <CardDescription className="italics">hosted by {id.ship}</CardDescription>
           </CardHeader>
           <CardContent>
-            <StartsAt />
+            <StartsAt date={startDate} timezone={timezone} />
             <p>location: {location}</p>
           </CardContent>
           <CardFooter> </CardFooter>
@@ -181,7 +186,7 @@ const SearchThumbnail: React.FC<SearchThumbnailProps> = (
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p>starts at {startDate ? formatEventDate(startDate) : "TBD"}</p>
+          <StartsAt date={startDate} timezone={timezone} />
           <p>location: {location}</p>
         </CardContent>
         <CardFooter className="w-full justify-center">

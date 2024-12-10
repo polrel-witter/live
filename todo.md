@@ -159,13 +159,13 @@ key:
 + the name search box should be able to accept an arbitrary number
   of dashes in succession (e.g. 'my-new--test---event')
 + there's a previous search (in grey text) in addition to the immediate results. soon as we get new results, no need to keep the previous search text there. it should only ever display whatever is in the result.
-- the 'invite guest to access guest panel' still shows after
++ the 'invite guest to access guest panel' still shows after
   inviting the first guest
-- there's a crash when you click 'go to event' on the search page: _Minified exception occurred; use the non-minified dev environment for the full error message and additional helpful warnings._
-- all events show GMT+0 on the search page. doesn't seem to be pulling the actual data for this field.
++ there's a crash when you click 'go to event' on the search page: _Minified exception occurred; use the non-minified dev environment for the full error message and additional helpful warnings._
++ all events show GMT+0 on the search page. doesn't seem to be pulling the actual data for this field.
 - [~polrel-witter] should be obvious that the user can leave the event-name field blank to search for all events under a ship.
 - [~polrel-witter] on the search page, the ship field should complain if it's left blank and user clicks search
-- when a guest's status changes the timestamp is wrong. you have to reload the page to get the correct time to show.
++ when a guest's status changes the timestamp is wrong. you have to reload the page to get the correct time to show.
 - the schedule display is off. e.g. if your event is 12/24 - 12/26, it'll display 12/23, 12/24 and 12/26. so it shows one prior and skips a date.
 - the `addToPals` setting field is showing in the profile.
 - is the frontend getting an update after submitting a `shake` poke? the button just spins, but if i reload the page shortly after clicking the state changes. same deal on the guest list page, if we 'unmatch'.
