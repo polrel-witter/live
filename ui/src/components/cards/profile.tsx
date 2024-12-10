@@ -12,11 +12,19 @@ export interface ProfileCardProps
 
 const ProfileCard = React.forwardRef<React.ElementRef<typeof Card>, ProfileCardProps>(
   ({ profile, showHeader, className, ...rest }, ref) => {
-    const excludedFields = ["avatar", "patp", "nickname"]
+    const fields = [
+      "bio",
+      "x",
+      "ensDomain",
+      "email",
+      "github",
+      "telegram",
+      "signal",
+      "phone",
+    ]
     const fieldsToRender = Object.entries(profile)
-      .filter((array): array is [string, string] => array[1] !== null)
-      .filter(([field, _]) => !excludedFields.includes(field))
-      .filter(([, val]) => val != "")
+      .filter(([, value])  => value !== null && value !== "")
+      .filter(([field, _]) => fields.includes(field))
 
     return (
       <Card className={cn([

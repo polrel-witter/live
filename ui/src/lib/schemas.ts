@@ -2,25 +2,25 @@ import { z } from "zod";
 
 import { isPatp, Patp } from "@/lib/types";
 
-export const StringWithDashes = z.custom<string>((val) => {
-  // regex enforces either "string" or strings delimited by dashes "str-ing"
-  return typeof val === "string" ? /^\w+(?:-\w+)*$/.test(val) : false;
+export const EventNameSchema = z.custom<string>((val) => {
+  // prev regex was more complicated: [a-zA-Z0-9.]+(?:([-]+)([a-zA-Z0-9.])+)*
+  return typeof val === "string" ? /^[a-zA-Z0-9-]+$/.test(val) : false;
+}, {
+  message: "string can contain only lower or uppercase letters, numbers or dashes."
 })
 
+export const GroupNameSchema = EventNameSchema
 
 /////////////////////////////////////////
 // --------- backend schemas --------- //
 /////////////////////////////////////////
 
 
-// Patp regex:
-// /^~([a-z]{3,6})(?:-([a-z]{6})){0,7}$/
-export const PatpSchema = z
-  .string()
-  .startsWith("~")
-  .refine((s: string): s is Patp => isPatp(s), {
-    message: "string is not patp"
-  });
+export const PatpSchema = z.custom<Patp>((val) => {
+  return typeof val === "string" && isPatp(val);
+}, {
+  message: "provided string is not a patp"
+})
 
 export const EventStatusSchema = z.enum([
   "invited",

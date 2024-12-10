@@ -3,9 +3,7 @@ import { EventContext } from './context'
 import { Session } from "@/lib/types";
 
 import {
-  add,
   compareAsc,
-  isBefore,
   isEqual,
   format,
   Interval,
@@ -17,7 +15,7 @@ import { SessionDateSelect } from "@/components/session-date-select";
 import { makeArrayOfEventDays } from "@/lib/utils";
 import { SessionCard } from "@/components/cards/session";
 import { newTZDateInUTCFromDate, shiftTzDateInUTCToTimezone } from "@/lib/time";
-import { start } from "repl";
+import { Card } from "@/components/ui/card";
 
 // these are now independent from session-date-select dateFromKey/dateToKey
 function dateToKey(d: TZDate): string {
@@ -141,62 +139,80 @@ export function SchedulePage() {
   }, [dates])
 
 
+  const SessionsOrPlaceholder = () => {
+
+    if (Object.values(ctx.event.details.sessions).length === 0) {
+      return (
+        <Card className="p-4 px-8 bg-accent text-balance text-center">
+          no sessions for this event yet
+        </Card>
+      )
+    }
+
+
+    return (
+      <>
+        <SessionDateSelect
+          sessionDates={getSortedDates(dates)}
+          onDateChange={(newDateKey: TZDate) => {
+
+            const key = dateToKey(newDateKey)
+
+            const newDate = dates.get(key)
+
+            if (!newDate) {
+              console.error(`couldn't find date with key ${key}`)
+              return
+            }
+
+            return setActiveDate(newDate)
+          }}
+          currentDate={getCurrentDate(dates)}
+        />
+        <ul className="grid gap-6">
+          {
+            Object.values(ctx.event.details.sessions)
+              .filter(({ startTime }) => {
+                let start = startTime ? startTime : new Date(0)
+                return start.getDay() === activeDate.getDay()
+              })
+              .sort((a, b) => {
+                if (a.startTime && b.startTime) {
+                  return compareAsc(a.startTime, b.startTime)
+                } else {
+                  return -1
+                }
+              })
+              .map(({ startTime, endTime, ...session }) => {
+                const startInTz = startTime && shiftTzDateInUTCToTimezone(
+                  newTZDateInUTCFromDate(startTime),
+                  ctx.event.details.timezone
+                )
+
+                const endInTz = endTime && shiftTzDateInUTCToTimezone(
+                  newTZDateInUTCFromDate(endTime),
+                  ctx.event.details.timezone
+                )
+                return (
+                  <li key={session.title}>
+                    <SessionCard session={{
+                      startTime: startInTz,
+                      endTime: endInTz,
+                      ...session
+                    }} />
+                  </li>
+                )
+              })
+          }
+        </ul>
+      </>
+    )
+  }
+
   return (
     <div className="grid m-6 md:mx-96 space-y-12 justify-items-center">
       <div className="text-2xl font-medium">schedule</div>
-      <SessionDateSelect
-        sessionDates={getSortedDates(dates)}
-        onDateChange={(newDateKey: TZDate) => {
-
-          const key = dateToKey(newDateKey)
-
-          const newDate = dates.get(key)
-
-          if (!newDate) {
-            console.error(`couldn't find date with key ${key}`)
-            return
-          }
-
-          return setActiveDate(newDate)
-        }}
-        currentDate={getCurrentDate(dates)}
-      />
-      <ul className="grid gap-6">
-        {
-          Object.values(ctx.event.details.sessions)
-            .filter(({ startTime }) => {
-              let start = startTime ? startTime : new Date(0)
-              return start.getDay() === activeDate.getDay()
-            })
-            .sort((a, b) => {
-              if (a.startTime && b.startTime) {
-                return compareAsc(a.startTime, b.startTime)
-              } else {
-                return -1
-              }
-            })
-            .map(({ startTime, endTime, ...session }) => {
-              const startInTz = startTime && shiftTzDateInUTCToTimezone(
-                newTZDateInUTCFromDate(startTime),
-                ctx.event.details.timezone
-              )
-
-              const endInTz = endTime && shiftTzDateInUTCToTimezone(
-                newTZDateInUTCFromDate(endTime),
-                ctx.event.details.timezone
-              )
-              return (
-                <li key={session.title}>
-                  <SessionCard session={{
-                    startTime: startInTz,
-                    endTime: endInTz,
-                    ...session
-                  }} />
-                </li>
-              )
-            })
-        }
-      </ul>
+      <SessionsOrPlaceholder />
     </div>
   )
 }

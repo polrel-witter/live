@@ -1,8 +1,8 @@
-import { z } from "zod";
+import { number, z } from "zod";
 import { ReactNode, useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { compareDesc } from "date-fns";
-import { Bug, ChevronUp, Search } from "lucide-react";
+import { compareAsc } from "date-fns";
+import { ChevronUp, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -10,20 +10,38 @@ import { GlobalContext, GlobalCtx } from "@/globalContext";
 
 import { cn, flipBoolean } from "@/lib/utils";
 import { EventDetails, EventId, eventIdsEqual } from "@/lib/types";
-import { formatEventDate, shiftTzDateInUTCToTimezone } from "@/lib/time";
-import { PatpSchema, StringWithDashes } from "@/lib/schemas";
+import { formatEventDate, shiftTzDateInUTCToTimezone, UTCOffset } from "@/lib/time";
+import { EventNameSchema, PatpSchema } from "@/lib/schemas";
 
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ResponsiveContent } from "@/components/responsive-content";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { SlideDownAndReveal } from "@/components/sliders";
 import { SpinningButton } from "@/components/spinning-button";
 import { Backend } from "@/lib/backend";
 import { useToast } from "@/hooks/use-toast";
 import { debounce } from "@/hooks/use-debounce";
+import { TZDate } from "@date-fns/tz";
+
+type StartsAtProps = {
+  date: TZDate | null,
+  timezone: UTCOffset
+}
+
+const StartsAt = ({ date, timezone }: StartsAtProps) => {
+
+  if (date && timezone) {
+    const formattedDate = formatEventDate(
+      shiftTzDateInUTCToTimezone(date, timezone)
+    )
+    return (<p>starts at {formattedDate}</p>)
+  }
+
+  return (<p>starts at 'TBD'</p>)
+}
 
 type EventThumbnailProps = {
   details: EventDetails,
@@ -41,18 +59,6 @@ const EventThumbnail: React.FC<EventThumbnailProps> = (
   }
 ) => {
 
-  const StartsAt = () => {
-
-    if (startDate) {
-      const formattedDate = formatEventDate(
-        shiftTzDateInUTCToTimezone(startDate, timezone)
-      )
-      return (<p>starts at {formattedDate}</p>)
-    }
-
-    return (<p>starts at 'TBD'</p>)
-  }
-
   return (
     <li className="my-5">
       <Link to={linkTo}>
@@ -62,7 +68,7 @@ const EventThumbnail: React.FC<EventThumbnailProps> = (
             <CardDescription className="italics">hosted by {id.ship}</CardDescription>
           </CardHeader>
           <CardContent>
-            <StartsAt />
+            <StartsAt date={startDate} timezone={timezone} />
             <p>location: {location}</p>
           </CardContent>
           <CardFooter> </CardFooter>
@@ -180,7 +186,7 @@ const SearchThumbnail: React.FC<SearchThumbnailProps> = (
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p>starts at {startDate ? formatEventDate(startDate) : "TBD"}</p>
+          <StartsAt date={startDate} timezone={timezone} />
           <p>location: {location}</p>
         </CardContent>
         <CardFooter className="w-full justify-center">
@@ -227,6 +233,7 @@ const PreviousSearchButton = ({
   return (<div></div>)
 }
 
+
 // if we need clearable inputs...
 // https://github.com/shadcn-ui/ui/discussions/3274#discussioncomment-10054930
 export type SearchFormProps = {
@@ -237,11 +244,8 @@ export type SearchFormProps = {
 
 const SearchForm = ({ spin, ...fns }: SearchFormProps) => {
   const schema = z.object({
-    hostShip: PatpSchema.or(z.literal("")),
-    name: StringWithDashes.refine(
-      s => s,
-      () => ({ message: "event name sould be in this form: event-name" })
-    ).or(z.literal("")),
+    hostShip: PatpSchema,
+    name: EventNameSchema.or(z.literal("")),
   })
 
   const form = useForm<z.infer<typeof schema>>({
@@ -249,22 +253,20 @@ const SearchForm = ({ spin, ...fns }: SearchFormProps) => {
     mode: "onChange",
     defaultValues: {
       name: "",
-      hostShip: "",
+      hostShip: undefined,
     }
   })
 
   const onSubmit = ({ hostShip, name }: z.infer<typeof schema>) => {
-    if (hostShip !== "") {
-      fns.findEvents(hostShip, name === "" ? null : name)
-      fns.onSubmit()
-    }
+    fns.findEvents(hostShip, name === "" ? null : name)
+    fns.onSubmit()
   }
 
   return (
     <Form {...form}>
       <form
         className={cn([
-          "flex flex-col justify-center align-center space-y-2",
+          "flex flex-col justify-center align-center space-y-4",
           "md:flex-row md:space-x-2 md:space-y-0"
         ])}
         onSubmit={form.handleSubmit(onSubmit)}
@@ -273,11 +275,14 @@ const SearchForm = ({ spin, ...fns }: SearchFormProps) => {
           control={form.control}
           name={"hostShip"}
           render={({ field }) => (
-            <FormItem >
+            <FormItem className="w-full sm:w-fit">
+              <FormLabel className="text-xs text-accent-foreground/50">
+                host ship
+              </FormLabel>
               <FormControl >
                 <Input
                   placeholder="~sampel-palnet"
-                  value={field.value}
+                  value={field.value ?? ''}
                   onChange={field.onChange}
                 />
               </FormControl>
@@ -290,9 +295,13 @@ const SearchForm = ({ spin, ...fns }: SearchFormProps) => {
           control={form.control}
           name={"name"}
           render={({ field }) => (
-            <FormItem >
+            <FormItem className="w-full sm:w-fit">
+              <FormLabel className="text-xs text-accent-foreground/50">
+                event name (optional)
+              </FormLabel>
               <FormControl >
                 <Input
+                  className="mt-0"
                   placeholder="event-name"
                   value={field.value ? field.value : ""}
                   onChange={field.onChange}
@@ -303,17 +312,16 @@ const SearchForm = ({ spin, ...fns }: SearchFormProps) => {
             </FormItem>
           )}
         />
-        <SpinningButton
-          type="submit"
-          variant="ghost"
-          spin={spin}
-          className={cn([
-            "w-full md:w-20",
-            "bg-stone-300"
-          ])}
-        >
-          <span>search</span>
-        </SpinningButton>
+        <FormItem className="w-full sm:w-20 self-start sm:pt-8">
+          <SpinningButton
+            type="submit"
+            variant="ghost"
+            spin={spin}
+            className={cn(["w-full bg-stone-300", "sm:w-20"])}
+          >
+            search
+          </SpinningButton>
+        </FormItem>
       </form>
     </Form>
   )
@@ -327,7 +335,7 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
     return
   }
 
-  const [searchResult, setSearchResult] = useState<[EventId, EventDetails][] | string>([])
+  const [searchResult, setSearchResult] = useState<[EventId, EventDetails][] | string | undefined>(undefined)
 
   const [previousSearchMessage, setPreviousSearchMessage] = useState<string>("")
   const [previousSearchResult, setPreviousSearchResult] = useState<[EventId, EventDetails][]>([])
@@ -366,7 +374,7 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
 
     events.sort(([, detailsA], [, detailsB]) => {
       if (detailsA.startDate && detailsB.startDate) {
-        return compareDesc(detailsA.startDate, detailsB.startDate)
+        return compareAsc(detailsA.startDate, detailsB.startDate)
       } else {
         return -1
       }
@@ -374,7 +382,7 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
 
     archived.sort(([, detailsA], [, detailsB]) => {
       if (detailsA.startDate && detailsB.startDate) {
-        return compareDesc(detailsA.startDate, detailsB.startDate)
+        return compareAsc(detailsA.startDate, detailsB.startDate)
       } else {
         return -1
       }
@@ -520,14 +528,17 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
                 onSubmit={() => { setSpinSearch(true) }}
                 spin={spinSearch}
               />
-              <div className="mt-4 sm:m-0">
-                <PreviousSearchButton
-                  message={previousSearchMessage}
-                  result={previousSearchResult}
-                  setPreviousSearch={() => {
-                    setSearchResult(previousSearchResult)
-                  }}
-                />
+              <div className="mt-4">
+                {!searchResult &&
+                  <PreviousSearchButton
+                    message={previousSearchMessage}
+                    result={previousSearchResult}
+                    setPreviousSearch={() => {
+                      setSearchResult(previousSearchResult)
+                    }}
+                  />
+                }
+
               </div>
             </div>
             <div className="mx-4 mt-8">
@@ -536,7 +547,7 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
                   ? <Card className="p-2 bg-accent">{searchResult}</Card>
                   :
                   <ul>
-                    {searchResult.map(([evtID, details]) =>
+                    {searchResult && searchResult.map(([evtID, details]) =>
                       <SearchThumbnail
                         key={`${details.id.ship}-${details.id.name}`}
                         details={details}

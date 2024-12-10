@@ -31,7 +31,7 @@ import { SlideDownAndReveal } from "@/components/sliders"
 import { formatSessionStartAndEndTimes, SessionCard } from "@/components/cards/session"
 import { EditSessionForm } from "./edit-session"
 import { newDateFromTZDateInUTC, newTZDateInUTCFromDate } from "@/lib/time"
-import { PatpSchema, StringWithDashes } from "@/lib/schemas"
+import { EventNameSchema, GroupNameSchema, PatpSchema } from "@/lib/schemas"
 import { EventAsHost } from "@/lib/types"
 import { DialogDescription } from "@radix-ui/react-dialog"
 import { se } from "date-fns/locale"
@@ -107,8 +107,19 @@ const sessionSchema = z.object({
   end: z.date(),
 })
 
+
+const eventTitleSchema = z.custom<string>((val) => {
+  // valid characters for regex
+  // [$&+,:;=?@#"'<>.-^*()%!a-zA-Z0-9]
+  // doesn't like the "|"
+  return typeof val === "string" ? /^[$&+,|:;=?@#"'<>.^*()%!a-zA-Z0-9-]*$/.test(val) : false;
+},
+  { message: `event title can contain only lower or uppercase letters, numbers, or one of these symbols: $&+,|:;=?@#"'<>.-^*()%!` }
+)
+
 const schemas = z.object({
-  title: z.string().min(1, { message: "title can't be empty!" }),
+  title: eventTitleSchema,
+  // title: z.string().min(1, { message: "title can't be empty!" }),
   location: z.string().min(1, { message: "location can't be empty!" }),
   dateRange: z.object({
     from: dateTimeSchema,
@@ -123,10 +134,7 @@ const schemas = z.object({
   venueMap: emptyStringSchema.or(z.string()),
   eventGroup: z.object({
     host: PatpSchema.or(emptyStringSchema),
-    name: StringWithDashes.refine(
-      s => s,
-      () => ({ message: "group name sould be in this form: group-name" })
-    ).or(emptyStringSchema)
+    name: GroupNameSchema.or(emptyStringSchema)
   }),
   eventSecret: z.string(),
   sessions: z.record(z.string(), sessionSchema)

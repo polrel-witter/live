@@ -22,6 +22,8 @@ import { TimePicker } from "@/components/ui/date-time-picker/time-picker"
 
 import { makeArrayOfEventDays } from "@/lib/utils"
 import { SessionDateSelect } from "@/components/session-date-select"
+import { isEqual } from "date-fns"
+import { formatEventDate, formatEventDateShort, newTZDateInUTCFromDate } from "@/lib/time"
 
 // need this otherwise the <Input> in there is not happy
 type adjustedFormType = Omit<z.infer<typeof sessionSchema>, "timeRange">
@@ -268,20 +270,11 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
 
             useEffect(
               () => {
-                const eventDays = makeArrayOfEventDays(new TZDate(min), new TZDate(max))
+                const eventDays = makeArrayOfEventDays(
+                  newTZDateInUTCFromDate(min),
+                  newTZDateInUTCFromDate(max)
+                )
                 setEventDays(eventDays)
-                // form.setValue("timeRange.start", new Date(
-                //   eventDays[0].getFullYear(),
-                //   eventDays[0].getMonth(),
-                //   eventDays[0].getDate(),
-                // ))
-                // form.setValue("timeRange.end", new Date(
-                //   eventDays[0].getFullYear(),
-                //   eventDays[0].getMonth(),
-                //   eventDays[0].getDate(),
-                //   23,
-                //   55
-                // ))
               },
               [])
 
@@ -292,21 +285,53 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
                     <div className="flex justify-center">
                       <SessionDateSelect
                         sessionDates={eventDays}
+                        // three cases
+                        // - if the day is the first day of the event
+                        //   set starting time to [min, 23:55]
+                        // - if the day is the last day of the event
+                        //   set starting time to [00:00, max]
+                        // - else set starting time to whatever it was before
+                        //   the day change
                         onDateChange={(newDay: TZDate) => {
-                          form.setValue("timeRange.start", new Date(
-                            newDay.getFullYear(),
-                            newDay.getMonth(),
-                            newDay.getDate(),
-                          ))
-                          form.setValue("timeRange.end", new Date(
-                            newDay.getFullYear(),
-                            newDay.getMonth(),
-                            newDay.getDate(),
-                            23,
-                            55
-                          ))
+                          if (isEqual(newDay, eventDays[0])) {
+                            form.setValue("timeRange.start", newDateWithTime(
+                              newDay,
+                              min.getHours(),
+                              min.getMinutes(),
+                            ))
+                            form.setValue("timeRange.end", newDateWithTime(
+                              newDay,
+                              23,
+                              55
+                            ))
+                          } else {
+                            form.setValue("timeRange.start", newDateWithTime(
+                              newDay,
+                              field.value.start.getHours(),
+                              field.value.start.getMinutes()
+                            ))
+                          }
+
+                          if (isEqual(newDay, eventDays[eventDays.length - 1])) {
+                            form.setValue("timeRange.start", newDateWithTime(
+                              newDay,
+                              0,
+                              0
+                            ))
+                            form.setValue("timeRange.end", newDateWithTime(
+                              newDay,
+                              max.getHours(),
+                              max.getMinutes(),
+                            ))
+                          } else {
+                            form.setValue("timeRange.end", newDateWithTime(
+                              newDay,
+                              field.value.end.getHours(),
+                              field.value.end.getMinutes()
+                            ))
+                          }
                         }}
-                        currentDate={form.watch("timeRange.start")}
+                        currentDate={newTZDateInUTCFromDate(form.watch("timeRange.start"))}
                       />
                     </div>
                     <div className="flex justify-around">
@@ -338,7 +363,7 @@ const SessionForm: React.FC<Props> = ({ session, min, max, ...props }) => {
                             second: false,
                           }}
                           containerRef={formRef}
-                          value={form.watch("timeRange.end")}
+                          value={field.value.end}
                           onChange={(newTime) => {
                             form.setValue("timeRange.end", newTime)
                           }}

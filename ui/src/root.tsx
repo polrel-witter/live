@@ -117,10 +117,10 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
               updateEvent.event.details.id
             ))
 
-          // idk about this
           if (maybeIdx === -1) {
-            console.error("couldn't find record in context, dropping update")
-            return { eventsAsGuest: oldEventsAsGuest, ...restCtx }
+            const { ship, event: { details, ...rest } } = updateEvent
+            const newEvt: EventAsAllGuests = [{ [ship]: rest }, details]
+            return { eventsAsGuest: [newEvt, ...oldEventsAsGuest], ...restCtx }
           }
 
           const [recordInfos,] = oldEventsAsGuest[maybeIdx]
@@ -167,10 +167,11 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
               updateEvent.event.details.id
             ))
 
-          // idk about this
           if (maybeIdx === -1) {
-            console.error("couldn't find event in context, dropping update")
-            return { eventsAsHost: oldEventsAsHost, ...restCtx }
+            return {
+              eventsAsHost: [updateEvent.event, ...oldEventsAsHost],
+              ...restCtx
+            }
           }
 
           return {
