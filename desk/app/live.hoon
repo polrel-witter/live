@@ -682,7 +682,10 @@
   |=  [=ship name=(unit term)]
   ^+  cor
   ?:  =(our.bowl ship)
-    =.  result  'See home page for our events'
+    =.  result
+      %-  crip
+      %+  weld  "{<ship>} is you. Events you host will be highlighted black"
+      " under the 'events' and 'archive' tabs"
     (give-local-update /search [%result ship name result])
   =/  =wire
     %+  weld  /case/request/(scot %p ship)
