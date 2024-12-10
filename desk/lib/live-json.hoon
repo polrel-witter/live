@@ -116,7 +116,7 @@
     :~  create+de-event-1
         delete+ul
         info+de-sub-info-1
-        secret+de-unit-cord
+        secret+so:dejs-soft:format
         limit+ni:dejs-soft:format
         subscribe+ul
         invite+(ar (su de-ship))
@@ -143,11 +143,11 @@
     ^-  $-(json sub-info-1)
     %-  of
     :~  title+so
-        about+de-unit-cord
+        about+so:dejs-soft:format
         moment+de-moment-1
         timezone+(ot ~[p+bo q+ni])
-        location+de-unit-cord
-        venue-map+de-unit-cord
+        location+so:dejs-soft:format
+        venue-map+so:dejs-soft:format
         group+de-group
         kind+de-kind
         latch+de-latch
@@ -160,23 +160,16 @@
     ^-  $-(json info-1)
     %-  ot
     :~  title+so
-        about+de-unit-cord
+        about+so:dejs-soft:format
         moment+de-moment-1
         timezone+(ot ~[p+bo q+ni])
-        location+de-unit-cord
-        venue-map+de-unit-cord
+        location+so:dejs-soft:format
+        venue-map+so:dejs-soft:format
         group+de-group
         kind+de-kind
         latch+de-latch
         sessions+de-sessions
     ==
-  ::
-  ++  de-unit-cord
-    |=  jon=json
-    ^-  (unit cord)
-    ?>  =(%s -.jon)
-    ?~  +.jon  ~
-    (so:dejs-soft:format jon)
   ::
   ++  de-moment-1
     ^-  $-(json moment-1)
@@ -192,8 +185,8 @@
   ++  dl-session
     :~  title+so
         panel+de-panel
-        location+de-unit-cord
-        about+de-unit-cord
+        location+so:dejs-soft:format
+        about+so:dejs-soft:format
         moment+de-moment-1
     ==
   ::
@@ -223,7 +216,7 @@
     ^-  $-(json event-1)
     %-  ot
     :~  info+de-info-1
-        secret+de-unit-cord
+        secret+so:dejs-soft:format
         limit+ni:dejs-soft:format
     ==
   --
