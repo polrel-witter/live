@@ -30,8 +30,10 @@ const ConnectionsButton: React.FC<{
   const baseClass = "bg-white hover:bg-primary/40 rounded-full w-12 h-12"
   // const baseClass = "w-7 h-7 p-0 border rounded-full bg-transparent"
 
+
   useEffect(() => {
     setSpin(false)
+    if (reveal) {setReveal(false)}
   }, [status])
 
   switch (status) {
@@ -41,8 +43,8 @@ const ConnectionsButton: React.FC<{
           onClick={() => { setSpin(true); fns.match().then() }}
           className={cn([
             baseClass,
-            `hover:bg-sky-200 transition-all`,
-            `md:bg-transparent md:hover:bg-sky-200`,
+            "hover:bg-sky-200 transition-all",
+            "md:bg-transparent md:text-sky-200 md:hover:bg-sky-200 md:hover:text-white",
             { "bg-sky-200": spin }
           ])}
           spin={spin}
@@ -67,12 +69,12 @@ const ConnectionsButton: React.FC<{
           </Button>
           <SlideRightAndReveal show={reveal}>
             <SpinningButton
-              onClick={() => { setSpin(true); fns.unmatch().then(() => { setReveal(false) }) }}
+              onClick={() => { setSpin(true); fns.unmatch().then(() => {}) }}
               className={cn([
                 baseClass,
                 "ml-2",
-                `hover:bg-red-200`,
-                `md:bg-transparent md:hover:bg-red-200`
+                "hover:bg-red-200",
+                "md:bg-transparent md:text-red-200 md:hover:bg-red-200 md:hover:text-white"
               ])}
               spin={spin}
             >

@@ -52,7 +52,7 @@ import {
 
 // timeout (in milliseconds) for subscribeOnce calls that wait for errors
 // after certain pokes
-const ERROR_TIMEOUT = 5000
+const DEFAULT_ERROR_TIMEOUT = 2000
 
 interface Backend {
   // --- live agent --- //
@@ -411,7 +411,7 @@ function getEvent(api: Urbit): (id: EventId) => Promise<EventAsHost> {
 function register(api: Urbit): (id: EventId, patp?: Patp) => Promise<void> {
   return async (_id: EventId, patp?: Patp) => {
     const errorPromise = api
-      .subscribeOnce("live", `/error/status-change`, ERROR_TIMEOUT)
+      .subscribeOnce("live", `/error/status-change`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
         console.error("timed out waiting for error in register", e)
         return Promise.reject(new Error("timed out waiting for error"))
@@ -454,7 +454,7 @@ function register(api: Urbit): (id: EventId, patp?: Patp) => Promise<void> {
 function unregister(api: Urbit): (id: EventId, patp?: Patp) => Promise<void> {
   return async (id: EventId, patp?: Patp) => {
     const errorPromise = api
-      .subscribeOnce("live", `/error/status-change`, ERROR_TIMEOUT)
+      .subscribeOnce("live", `/error/status-change`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
         console.error("timed out waiting for error in register", e)
         return Promise.reject(new Error("timed out waiting for error"))
@@ -541,13 +541,12 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
     const timezoneStripped = stripUTCOffset(details.timezone)
     const sign = timezoneStripped.charAt(0) === "+" ? true : false
     const number = Number.parseInt(timezoneStripped.slice(1))
-    // FIXME: this might need to be a / separated string i don't remember
-    const groupObj = details.group
-      ? { ship: details.group.ship, term: details.group.name }
+    const group = details.group
+      ? `${details.group.ship}/${details.group.name}`
       : null
 
     const payload = {
-      "id": { "ship": id.ship, "name": id.name.replaceAll(" ", "-") },
+      "id": { "ship": id.ship, "name": id.name },
       "action": {
         "create": {
           secret: secret,
@@ -562,7 +561,7 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
             timezone: { p: sign, q: number },
             location: details.location,
             'venue-map': details.venueMap,
-            group: groupObj,
+            group: group,
             kind: details.kind,
             latch: details.latch,
             sessions: Object
@@ -574,7 +573,7 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
     }
 
     const errorPromise = api
-      .subscribeOnce("live", `/error/create`, ERROR_TIMEOUT)
+      .subscribeOnce("live", `/error/create`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
         console.error("timed out waiting for error in createEvent", e)
         return Promise.reject(new Error("timed out waiting for error"))
@@ -610,7 +609,7 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
 function deleteEvent(api: Urbit): (id: EventId) => Promise<void> {
   return async (id: EventId) => {
     const errorPromise = api
-      .subscribeOnce("live", `/error/edit`, ERROR_TIMEOUT)
+      .subscribeOnce("live", `/error/edit`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
         console.error("timed out waiting for error in createEvent", e)
         return Promise.reject(new Error("timed out waiting for error"))
@@ -673,7 +672,7 @@ function editEventDetails(api: Urbit): (
   ) => {
 
     const errorPromise = api
-      .subscribeOnce("live", `/error/edit`, ERROR_TIMEOUT)
+      .subscribeOnce("live", `/error/edit`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
         console.error("timed out waiting for error in createEvent", e)
         return Promise.reject(new Error("timed out waiting for error"))
@@ -877,7 +876,7 @@ function removeEventSession(api: Urbit): (id: EventId, sessionId: string) => Pro
 function editEventSecret(api: Urbit): (id: EventId, secret: EventAsHost["secret"]) => Promise<void> {
   return async (id: EventId, secret: EventAsHost["secret"]) => {
     const errorPromise = api
-      .subscribeOnce("live", `/error/edit`, ERROR_TIMEOUT)
+      .subscribeOnce("live", `/error/edit`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
         console.error("timed out waiting for error in createEvent", e)
         return Promise.reject(new Error("timed out waiting for error"))
@@ -918,7 +917,7 @@ function editEventSecret(api: Urbit): (id: EventId, secret: EventAsHost["secret"
 function editEventLimit(api: Urbit): (id: EventId, limit: EventAsHost["limit"]) => Promise<void> {
   return async (id: EventId, limit: EventAsHost["limit"]) => {
     const errorPromise = api
-      .subscribeOnce("live", `/error/edit`, ERROR_TIMEOUT)
+      .subscribeOnce("live", `/error/edit`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
         console.error("timed out waiting for error in createEvent", e)
         return Promise.reject(new Error("timed out waiting for error"))
@@ -1306,6 +1305,7 @@ function subscribeToMatcherEvents(_api: Urbit): (handlers: {
               status: backendMatchStatusToMatchStatus(matchEvt.match)
             })
           } catch (e) {
+            console.error("error parsing matcher event", e)
             throw e
           }
         }
