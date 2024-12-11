@@ -1086,10 +1086,10 @@
       =/  [error=? new-cor=_cor]
         (ingest-diff sub-info)
       ?:  error  new-cor
-      =.  cor  new-cor
       =/  case=(unit @ud)  (get-our-case `name.id)
       =?  cor  ?~(case %| %&)
         (delete-remote-path (need case) /event/(scot %tas name.id))
+      =.  cor  new-cor
       =.  cor  (succ [/error/edit]~ ~)
       =+  event=get-event
       =.  cor  (give-local-update /updates [%event id event])
