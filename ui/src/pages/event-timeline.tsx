@@ -92,7 +92,7 @@ const SearchThumbnail: React.FC<SearchThumbnailProps> = (
 ) => {
   const [expand, setExpand] = useState(false)
   const [spin, setSpin] = useState(false)
-  const [showRegister, setShowRegister] = useState(false)
+  const [showGoToEvent, setShowGoToEvent] = useState(false)
 
   useEffect(() => {
     if (!spin) { return }
@@ -110,10 +110,10 @@ const SearchThumbnail: React.FC<SearchThumbnailProps> = (
     // WARN: for a lot of events this might introduce a perfomance bottleneck
     for (const [recordInfo, details] of globalCtx.eventsAsGuest) {
       if (eventIdsEqual(details.id, id)) {
-        if (recordInfo[globalCtx.profile.patp].status === "unregistered") {
-          setShowRegister(true)
+        if (recordInfo[globalCtx.profile.patp].status !== "unregistered") {
+          setShowGoToEvent(true)
         } else {
-          setShowRegister(false)
+          setShowGoToEvent(false)
         }
       }
     }
@@ -121,29 +121,30 @@ const SearchThumbnail: React.FC<SearchThumbnailProps> = (
 
   const RegisterOrLinkToEventButton = () => {
 
-    if (showRegister) {
+    if (showGoToEvent) {
       return (
-        <SpinningButton
-          variant="ghost"
-          onClick={() => { setSpin(true); register() }}
-          className="bg-accent sm:bg-transparent p-3"
-          spin={spin}
-        >
-          register
-        </SpinningButton>
+        <Link to={`event/${id.ship}/${id.name}`}>
+          <Button
+            variant="ghost"
+            className="bg-accent sm:bg-transparent p-3"
+          >
+            go to event
+          </Button>
+        </Link>
       )
     }
 
     return (
-      <Link to={`event/${id.ship}/${id.name}`}>
-        <Button
-          variant="ghost"
-          className="bg-accent sm:bg-transparent p-3"
-        >
-          go to event
-        </Button>
-      </Link>
+      <SpinningButton
+        variant="ghost"
+        onClick={() => { setSpin(true); register() }}
+        className="bg-accent sm:bg-transparent p-3"
+        spin={spin}
+      >
+        register
+      </SpinningButton>
     )
+
   }
 
   const footerContent =
