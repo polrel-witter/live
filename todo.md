@@ -175,6 +175,7 @@ key:
 - i think the 'edit event' button used to make changes should read 'submit'. feels a little closer to the action.
 - the error message should stay put until the user closes it. otherwise they may not read it fast enough to know what to do
 - the error messages work on the edit page, but if we get one, the 'edit event' button infinitely spins. it seems to still work - in that you can resubimt the form with updates - but for clarity it should go back to normal.
+- if you click into an event, but then click back before the content loads it results in an error page. the url path is /apps/live/event/~/ instead of /apps/live
 
 
 
@@ -196,8 +197,8 @@ key:
 + under search, if ship has a capial letter, the search will spin forever- assuming the it's not coercing them to lowercase in the conversion function
 + searching for an event with a name which is a number with no dashes crashes on the backend
 + make the edit errors more granular
-- /error/delete doesn't push anything, not even null
-- cannot set a session start to the same time as edit start
++ /error/delete doesn't push anything, not even null
++ cannot set a session start to the same time as edit start
 - continue to add tags in pals for each event the user matches with a guest. want to see a running history
 - update README
 
