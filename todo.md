@@ -173,7 +173,8 @@ key:
 + on the create and edit forms does the frontend recognize that a date is set after selecting the dates and not clicking "done" (e.g. clicking out of the window)? it should, if possible or should not appear to have set the date if clicking "done" is required.
 + the 'go to event' button is appearing on events we don't have access to which leads to a crash if the user clicks on them
 + i think the 'edit event' button used to make changes should read 'submit'. feels a little closer to the action.
-- the error message should stay put until the user closes it. otherwise they may not read it fast enough to know what to do
++ the error message should stay put until the user closes it. otherwise they may not read it fast enough to know what to do
+- the timeout errors should display in a warning toast
 - the error messages work on the edit page, but if we get one, the 'edit event' button infinitely spins. it seems to still work - in that you can resubimt the form with updates - but for clarity it should go back to normal.
 - if you click into an event, but then click back before the content loads it results in an error page. the url path is /apps/live/event/~/ instead of /apps/live
 - if the host has one session with a start date that begins at the exact same time the event starts, none of the sesions appear. i checked the backend logic, it allows for a session to start at the same time as the event.

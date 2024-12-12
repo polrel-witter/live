@@ -133,13 +133,11 @@ const DeleteEventCard = ({ event, closeDialog, deleteEvent, navigateToTimeline: 
   }
 
   const errorHandler = (e: Error) => {
-    const { dismiss } = toast({
+    toast({
       variant: "destructive",
       title: "error while deleting event",
       description: e.message
     })
-    const [fn,] = debounce<void>(dismiss, 2000)
-    fn().then(() => { })
     navigateToTimeline()
   }
 

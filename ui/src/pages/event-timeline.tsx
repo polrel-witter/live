@@ -567,16 +567,12 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
                             })
                             .catch((e: Error) => {
                               const { ship, name } = details.id
-                              const { dismiss } = toast({
+                              toast({
                                 variant: "destructive",
                                 title: `error when registering to ${ship}/${name}`,
                                 description: `${e.message}`
                               })
-
-                              const [fn,] = debounce<void>(dismiss, 2000)
-                              fn().then(() => { })
                             })
-
                         }}
                         globalCtx={globalContext}
                       />

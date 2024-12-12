@@ -199,14 +199,11 @@ function makeNavbarAndFooter(
           })
           .catch((e: Error) => {
             const { ship, name } = eventContext.event.details.id
-            const { dismiss } = toast({
+            toast({
               variant: "destructive",
               title: `error when unregistering to ${ship}/${name}`,
               description: `${e.message}`
             })
-
-            const [fn,] = debounce<void>(dismiss, 2000)
-            fn().then(() => { })
           })
       }}
     />

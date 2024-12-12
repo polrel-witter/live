@@ -67,15 +67,13 @@ const CreatePage: React.FC<{ backend: Backend }> = ({ backend }) => {
   }
 
   const createErrorHandler = (e: Error) => {
-    const { dismiss } = toast({
+    toast({
       variant: "destructive",
       title: "error during event creation",
       description: e.message
     })
 
     setSpin(false)
-    const [fn,] = debounce<void>(dismiss, 2000)
-    fn().then(() => { })
   }
 
   return (
