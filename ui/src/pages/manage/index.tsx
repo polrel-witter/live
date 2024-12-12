@@ -191,7 +191,7 @@ const EditEvent = ({ evt, backend, open, setOpen }: EditProps) => {
         className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100 h-full flex-col"
         onClick={() => { setOpen(flipBoolean) }}
       >
-        edit event
+        submit
       </Button>
       <SlideDownAndReveal
         show={open}
