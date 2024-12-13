@@ -29,6 +29,7 @@ const EventDetails: React.FC = () => {
         ? <EventDetailsCard
           hostProfile={globalCtx.profile}
           details={ctx.event.details}
+          secret={ctx.event.secret}
           className="w-full"
           buttons={
             <div className="flex flex-col space-y-4">

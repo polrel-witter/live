@@ -52,11 +52,12 @@ const HostedByText: React.FC<{ profile: Profile | undefined, patp: Patp }> = ({ 
 
 type Props = {
   details: EventDetails
+  secret: string | null
   hostProfile: Profile
   buttons: React.ReactNode
 } & React.ComponentPropsWithoutRef<typeof Card>
 
-const EventDetailsCard: React.FC<Props> = ({ details, hostProfile, buttons, className, ...rest }) => {
+const EventDetailsCard: React.FC<Props> = ({ details, secret, hostProfile, buttons, className, ...rest }) => {
 
   const {
     id: { ship },
@@ -118,6 +119,17 @@ const EventDetailsCard: React.FC<Props> = ({ details, hostProfile, buttons, clas
             <div className="font-bold">location:</div>
             {location}
           </div>
+
+          { secret &&
+              <div className={cn([
+                "flex flex-col text-[11px] items-center",
+                "sm:flex-row sm:items-center sm:justify-between",
+                "md:text-sm"
+              ])}>
+                <div className="font-bold">secret:</div>
+                {secret}
+              </div>
+          }
 
           {group ? <TlonGroupLink ship={group.ship} name={group.name} /> : ''}
 

@@ -181,7 +181,7 @@ key:
 + still getting some weird behavior in the sessions dropdown of the guest schedule page. it skips a date. for instance, if the event dates are from, 12/10, 12/11 and 12/12, it'll show 12/9, 12/10, 12/12 and 12/11 won't appear. Here's a screenshot: https://bowl.polrel-witter.xyz/bucket/random/2024.12.11..10.34.31-Screenshot%20from%202024-12-11%2005-32-26.png
     + it seems to be related to the time conversions which shouldn't be happening. is it converting the times to UTC or accounting for the timezone? it should just display what's arriving from the backend. the user will interpret what zone it's in from the event home page.
 + the new title validation on the create and edit form doesn't allow for spaces.
-- sometimes, on the search page when i click 'go to event' it takes me to a different one than i clicked on. the URL is right, but the content isn't.
++ sometimes, on the search page when i click 'go to event' it takes me to a different one than i clicked on. the URL is right, but the content isn't.
 - the timeout error is sometimes appearing without needing to. e.g. deleting an event even though it's clear the process executed fairly quickly. it seems to be triggered upon completion.
 - i just realized we also need a delete button on the guest page. should send the same delete poke that the host can send.
 - if an event is set to over, this message on the edit event page, 'changes are disabled util latch is set to 'over'!' should read: 'this event is archived. changes cannot be made until the latch is changed to 'open' or 'closed'.'

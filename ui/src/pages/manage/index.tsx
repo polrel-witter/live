@@ -737,6 +737,7 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
                 <EventDetailsCard
                   hostProfile={globalContext.profile}
                   details={event.details}
+                  secret={event.secret}
                   buttons={
                     <AnimatedButtons
                       minWidth={["w-[55px]", "sm:w-[125px]"]}
