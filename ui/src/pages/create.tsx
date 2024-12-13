@@ -1,6 +1,6 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 
-import { Backend } from "@/lib/backend";
+import { Backend, TimeoutError } from "@/lib/backend";
 
 import { GlobalContext } from "@/globalContext";
 
@@ -11,9 +11,8 @@ import { NavbarWithSlots } from "@/components/frame/navbar"
 import { FooterWithSlots } from "@/components/frame/footer"
 import { ConnectionStatusBar } from "@/components/connection-status"
 import { useToast } from "@/hooks/use-toast";
-import { error } from "console";
 import { useNavigate } from "react-router-dom";
-import { debounce } from "@/hooks/use-debounce";
+import { debounceToast } from "@/lib/utils";
 
 
 const CreatePage: React.FC<{ backend: Backend }> = ({ backend }) => {
@@ -54,28 +53,32 @@ const CreatePage: React.FC<{ backend: Backend }> = ({ backend }) => {
   const [spin, setSpin] = useState(false)
 
   const createSuccessHandler = (title: string) => () => {
-    const { dismiss } = toast({
-      variant: "default",
+    debounceToast(toast({
+      variant: "success",
       title: "created event",
       description: `successfully created event ${title} `
-    })
-
-    const [fn,] = debounce<void>(dismiss, 2000)
-    fn().then(() => { })
+    }))
     // navigate to event timeline and prompt to reload event state
     navigate(basePath + "?reloadEvents")
   }
 
   const createErrorHandler = (e: Error) => {
-    const { dismiss } = toast({
-      variant: "destructive",
-      title: "error during event creation",
-      description: e.message
-    })
+    if (e instanceof TimeoutError) {
+      debounceToast(toast({
+        variant: "warning",
+        description: e.message
+      }))
+      navigate(basePath + "?reloadEvents")
+    } else {
+      toast({
+        variant: "destructive",
+        title: "error during event creation",
+        description: e.message
+      })
+    }
+
 
     setSpin(false)
-    const [fn,] = debounce<void>(dismiss, 2000)
-    fn().then(() => { })
   }
 
   return (

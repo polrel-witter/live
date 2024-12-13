@@ -52,7 +52,7 @@ const SessionDateSelect: React.FC<{
         <SelectValue
           defaultValue={
             currentDate
-              ? dateToKey(newTZDateInUTCFromDate(currentDate))
+              ? dateToKey( currentDate )
               : "Select Date"
           }
           placeholder={

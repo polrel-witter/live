@@ -37,6 +37,11 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
       globalContext.refreshEventsAsHost()
       navigate(basePath)
     }
+
+    if (searchParams.has("reloadRecords")) {
+      globalContext.refreshEventsAsGuest()
+      navigate(basePath)
+    }
   }, [searchParams])
 
   const navBar =

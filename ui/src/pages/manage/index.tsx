@@ -11,7 +11,7 @@ import { GlobalContext, GlobalCtx } from "@/globalContext"
 import { formatEventDateShort, shiftTzDateInUTCToTimezone } from "@/lib/time"
 import { Patp } from "@/lib/types"
 import { PatpSchema } from "@/lib/schemas"
-import { Backend } from "@/lib/backend"
+import { Backend, TimeoutError } from "@/lib/backend"
 
 import { NavbarWithSlots } from "@/components/frame/navbar"
 import { FooterWithSlots } from "@/components/frame/footer"
@@ -21,7 +21,7 @@ import { BackButton } from "@/components/back-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { SlideDownAndReveal } from "@/components/sliders"
-import { cn, flipBoolean } from "@/lib/utils"
+import { cn, debounceToast, flipBoolean } from "@/lib/utils"
 import { ResponsiveContent } from "@/components/responsive-content"
 import { EventDetailsCard } from "@/components/cards/event-details"
 import { EditEventForm } from "@/components/forms/edit-event"
@@ -35,7 +35,7 @@ import { SpinningButton } from "@/components/spinning-button"
 import { AnimatedButtons } from "@/components/animated-buttons"
 import { Dialog, DialogHeader, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { debounce } from "@/hooks/use-debounce"
+import { DeleteEventCard } from "@/components/cards/delete-event"
 
 async function ManageParamsLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> {
@@ -104,76 +104,6 @@ async function buildState(
   }
 }
 
-type DeleteEventCardProps = {
-  event: EventAsHost,
-  closeDialog: () => void
-  deleteEvent: (id: EventId) => Promise<void>
-  navigateToTimeline: () => void
-}
-
-const DeleteEventCard = ({ event, closeDialog, deleteEvent, navigateToTimeline: nvtt }: DeleteEventCardProps) => {
-  const [spin, setSpin] = useState(false)
-  const { toast } = useToast()
-
-  const navigateToTimeline= () => {
-    setSpin(false)
-    nvtt()
-  }
-
-  const successHandler = () => {
-    const { dismiss } = toast({
-      variant: "default",
-      description: `deleted event ${event.details.title} `
-    })
-
-    const [fn,] = debounce<void>(dismiss, 2000)
-    fn().then(() => { })
-    // navigate to event timeline and prompt to reload event state
-    navigateToTimeline()
-  }
-
-  const errorHandler = (e: Error) => {
-    const { dismiss } = toast({
-      variant: "destructive",
-      title: "error while deleting event",
-      description: e.message
-    })
-    const [fn,] = debounce<void>(dismiss, 2000)
-    fn().then(() => { })
-    navigateToTimeline()
-  }
-
-  return (
-    <Card className="p-4 ">
-      are you sure you want to delete the event with id
-      <div className="inline relative bg-red-200 rounded-md p-[1px] px-1 ml-2">
-        {event.details.id.ship} / {event.details.id.name}
-      </div>?
-      <div className="flex w-full justify-around mt-2">
-        <Button
-          variant="ghost"
-          onClick={closeDialog}
-        >
-          no, go back
-        </Button>
-        <SpinningButton
-          variant="ghost"
-          className="w-full p-1 text-red-500 hover:text-red-500 hover:bg-red-100"
-          spin={spin}
-          onClick={() => {
-            setSpin(true)
-            deleteEvent(event.details.id)
-              .then(successHandler)
-              .catch(errorHandler)
-          }}
-        >
-          yes, delete event
-        </SpinningButton>
-      </div>
-    </Card>
-  )
-}
-
 type EditProps = {
   evt: EventAsHost,
   backend: Backend
@@ -191,7 +121,7 @@ const EditEvent = ({ evt, backend, open, setOpen }: EditProps) => {
         className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100 h-full flex-col"
         onClick={() => { setOpen(flipBoolean) }}
       >
-        edit event
+       edit event
       </Button>
       <SlideDownAndReveal
         show={open}
@@ -202,10 +132,10 @@ const EditEvent = ({ evt, backend, open, setOpen }: EditProps) => {
             disabled
             variant="ghost"
             className={cn([
-              "inline-flex justify-center bg-stone-200 mt-4",
-              "text-sm text-balance"
+              "inline-flex justify-center bg-stone-200 mt-4 w-full",
+              "text-sm text-balance text-center"
             ])}>
-            changes are disabled util latch is set to 'over'!
+            this event is archived. changes cannot be made until the latch is changed to 'open' or 'closed'.
           </Button>
         }
         <div className="flex justify-center mt-4">
@@ -220,14 +150,25 @@ const EditEvent = ({ evt, backend, open, setOpen }: EditProps) => {
               <EditEventForm
                 backend={backend}
                 event={evt}
+                onSuccess={() => {
+                  debounceToast(toast({
+                    variant: "success",
+                    description: "successfully edited event"
+                  }))
+                }} 
                 onError={(e: Error) => {
-                  const { dismiss } = toast({
-                    variant: "destructive",
-                    title: "error while editing event",
-                    description: e.message
-                  })
-                  const [fn,] = debounce<void>(dismiss, 2000)
-                  fn().then(() => { })
+                  if (e instanceof TimeoutError) {
+                    debounceToast(toast({
+                      variant: "warning",
+                      description: e.message
+                    }))
+                  } else {
+                    toast({
+                      variant: "destructive",
+                      title: "error while deleting event",
+                      description: e.message
+                    })
+                  }
                 }}
               />
             </ScrollArea>
@@ -724,6 +665,7 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
                 <EventDetailsCard
                   hostProfile={globalContext.profile}
                   details={event.details}
+                  secret={event.secret}
                   buttons={
                     <AnimatedButtons
                       minWidth={["w-[55px]", "sm:w-[125px]"]}
@@ -809,7 +751,8 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
             <DialogTitle> delete event </DialogTitle>
           </DialogHeader>
           <DeleteEventCard
-            event={event}
+            title={event.details.title}
+            eventId={event.details.id}
             closeDialog={() => { setOpenDialog(false) }}
             deleteEvent={backend.deleteEvent}
             navigateToTimeline={() => navigate(basePath + "?reloadEvents")}

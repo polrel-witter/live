@@ -109,10 +109,8 @@ const sessionSchema = z.object({
 
 
 const eventTitleSchema = z.custom<string>((val) => {
-  // valid characters for regex
-  // [$&+,:;=?@#"'<>.-^*()%!a-zA-Z0-9]
-  // doesn't like the "|"
-  return typeof val === "string" ? /^[$&+,|:;=?@#"'<>.^*()%!a-zA-Z0-9-]*$/.test(val) : false;
+  // two character groups so we can have the first char not be a space
+  return typeof val === "string" ? /^[$&+,|:;=?@#"'<>.^*()%!a-zA-Z0-9-]+[ $&+,|:;=?@#"'<>.^*()%!a-zA-Z0-9-]*$/.test(val) : false;
 },
   { message: `event title can contain only lower or uppercase letters, numbers, or one of these symbols: $&+,|:;=?@#"'<>.-^*()%!` }
 )
@@ -142,7 +140,6 @@ const schemas = z.object({
 
 type Props = {
   onSubmit: (values: z.infer<typeof schemas>) => Promise<void>
-  submitButtonText: string
   spin: boolean
   event?: EventAsHost
 }
@@ -218,7 +215,7 @@ const makeDefaultValues = (event?: EventAsHost) => {
   return defaultValues
 }
 
-const EventForm: React.FC<Props> = ({ event, submitButtonText, spin, onSubmit }) => {
+const EventForm: React.FC<Props> = ({ event, spin, onSubmit }) => {
   const defaultValues = makeDefaultValues(event)
 
   const form = useForm<z.infer<typeof schemas>>({
@@ -779,7 +776,7 @@ const EventForm: React.FC<Props> = ({ event, submitButtonText, spin, onSubmit })
             onClick={() => { }}
             type="submit"
             className="p-2 w-24 h-auto">
-            {submitButtonText}
+            submit
           </SpinningButton>
         </div>
       </form>

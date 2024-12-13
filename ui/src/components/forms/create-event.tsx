@@ -12,7 +12,6 @@ type Props = {
 export const CreateEventForm = ({ createEvent, spin }: Props) => {
   return (
     <EventForm
-      submitButtonText="create"
       spin={spin}
       onSubmit={async (values) => {
         // Do something with the form values.
