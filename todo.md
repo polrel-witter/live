@@ -219,7 +219,7 @@ key:
 + cannot set a session start to the same time as edit start
 + continue to add tags in pals for each event the user matches with a guest. want to see a running history
 + if the event is created with an %over latch, we're not able to switch it later because the +get-our-case call requires that it was published at one point
-- update README
++ update README
 
 
 

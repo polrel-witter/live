@@ -872,7 +872,7 @@
     ::
     ?:  ?=([~ ~] bound)  ~
     ?.  (sane bound)
-      "event moment is insane: {<bound>}"
+      "event dates are insane: {<bound>}"
     =|  not-sane=tape
     =|  not-bound=tape
     =/  ls=(list [sid=@tas s=session])
@@ -880,10 +880,10 @@
     |-
     ?~  ls
       ?.  =(~ not-sane)
-        "these session moments are insane:"
+        "these session dates are insane:"
       ?~  not-bound  ~
       %-  snip
-      %+  weld  "these sessions are outside the bound of their event moment:"
+      %+  weld  "these sessions are outside the bound of their event dates:"
       not-bound
     ?.  (sane moment.s.i.ls)
       %=  $
@@ -1110,13 +1110,13 @@
         |=  session-moment=moment-1
         ^-  (unit _cor)
         ?.  (sane session-moment)
-          =+  msg="session moment is insane: {<session-moment>}"
+          =+  msg="session dates are insane: {<session-moment>}"
           ~&(>>> (bran msg) `(succ [/error/edit]~ `(crip msg)))
         =/  bound=moment-1  moment.info:get-event
         ?:  (moment-nests bound session-moment)  ~
         =/  msg
           %+  weld
-            "session moment is not within the bound of the event moment, "
+            "session dates are not within the bound of the event dates, "
           "which starts {<start.bound>} and ends {<end.bound>}"
         ~&(>>> (bran msg) `(succ [/error/edit]~ `(crip msg)))
       ::  +ingest-diff: write the diff to state
