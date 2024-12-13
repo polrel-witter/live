@@ -145,7 +145,7 @@ export function SchedulePage() {
       const sessionsOnDay = Object.values(ctx.event.details.sessions)
         .filter(({ startTime }) => {
           let start = startTime ? startTime : new Date(0);
-          return start.getDay() === activeDate.getDay();
+          return start.getDate() === activeDate.getDate();
         })
         .sort((a, b) => {
           if (a.startTime && b.startTime) {
@@ -165,15 +165,11 @@ export function SchedulePage() {
 
       return (
         sessionsOnDay
-          .map(({ startTime, endTime, ...session }) => {
+          .map((session) => {
             return (
               <li key={session.title}>
                 <SessionCard
-                  session={{
-                    startTime: startTime,
-                    endTime: endTime,
-                    ...session,
-                  }}
+                  session={session}
                 />
               </li>
             );
