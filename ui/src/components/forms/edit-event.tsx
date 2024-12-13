@@ -269,8 +269,8 @@ export const EditEventForm = ({ backend, event, onSuccess, onError }: Props) => 
           return Promise.resolve()
         }
         return editEvent()
-          .then(() => {onSuccess()})
-          .catch((e: Error) => { onError(e) })
+          .then(() => { setSpin(false); onSuccess() })
+          .catch((e: Error) => { setSpin(false); onError(e) })
       }}
     />
   )
