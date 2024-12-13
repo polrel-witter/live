@@ -1040,6 +1040,7 @@
         ?>  &(=(our src):bowl ?!(=(our.bowl ship.id)))
         =.  sub-records
           (quit:da-records ship.id dap.bowl [%record name.id our.bowl ~])
+        =.  cor  (succ [/error/delete]~ ~)
         cor(records (~(del bi records) id our.bowl))
       =/  event=event-1  get-event
       =?  cor  ?~((get-our-case `name.id) %| %&)
