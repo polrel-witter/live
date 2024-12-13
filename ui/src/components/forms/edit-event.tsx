@@ -9,6 +9,7 @@ import { useState } from "react"
 type Props = {
   event: EventAsHost
   backend: Backend
+  onSuccess: () => void
   onError: (e: Error) => void
 }
 
@@ -19,13 +20,12 @@ export function nullableTZDatesEqual(d1: TZDate | null, d2: TZDate | null) {
   return true
 }
 
-export const EditEventForm = ({ backend, event, onError }: Props) => {
+export const EditEventForm = ({ backend, event, onSuccess, onError }: Props) => {
   const [spin, setSpin] = useState(false)
   return (
     <EventForm
       spin={spin}
       event={event}
-      submitButtonText="edit event"
       onSubmit={async (values) => {
         // Do something with the form values.
         // ✅ This will be type-safe and validated.
@@ -269,6 +269,7 @@ export const EditEventForm = ({ backend, event, onError }: Props) => {
           return Promise.resolve()
         }
         return editEvent()
+          .then(() => {onSuccess()})
           .catch((e: Error) => { onError(e) })
       }}
     />

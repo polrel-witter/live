@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { TZDate } from "@date-fns/tz"
 import { add, isBefore } from "date-fns"
+import { debounce } from "@/hooks/use-debounce"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -44,4 +45,11 @@ export function isMoon(patp: string): boolean {
 
 export function isComet(patp: string): boolean {
   return patp.length > 28
+}
+
+// debouncing helpers
+
+export const debounceToast = ({dismiss}: {dismiss: () => void}) => {
+  const [fn,] = debounce<void>(dismiss, 2000)
+  fn().then(() => { })
 }

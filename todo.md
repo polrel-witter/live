@@ -174,7 +174,7 @@ key:
 + the 'go to event' button is appearing on events we don't have access to which leads to a crash if the user clicks on them
 + i think the 'edit event' button used to make changes should read 'submit'. feels a little closer to the action.
 + the error message should stay put until the user closes it. otherwise they may not read it fast enough to know what to do
-- the timeout errors should display in a warning toast
++ the timeout errors should display in a warning toast
 - the error messages work on the edit page, but if we get one, the 'edit event' button infinitely spins. it seems to still work - in that you can resubimt the form with updates - but for clarity it should go back to normal.
 - if you click into an event, but then click back before the content loads it results in an error page. the url path is /apps/live/event/~/ instead of /apps/live
 - if the host has one session with a start date that begins at the exact same time the event starts, none of the sesions appear. i checked the backend logic, it allows for a session to start at the same time as the event.
@@ -186,6 +186,16 @@ key:
 - i just realized we also need a delete button on the guest page. should send the same delete poke that the host can send.
 - if an event is set to over, this message on the edit event page, 'changes are disabled util latch is set to 'over'!' should read: 'this event is archived. changes cannot be made until the latch is changed to 'open' or 'closed'.'
 - when marking an event as `%over` or attempting to switch the latch to %open or %closed, the form also sends a poke to change the group which is producing the 'latch is over' error message. it's happening because the group poke arrives before the latch is changed.
+
+
+
+
+
+
+
+
+
+
 
 
 

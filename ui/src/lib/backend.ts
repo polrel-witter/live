@@ -2,9 +2,9 @@ import Urbit from "@urbit/http-api";
 
 import { TZDate } from "@date-fns/tz";
 
-import { z, ZodError } from "zod" // this is an object validation library
+import { z, ZodError } from "zod"; // this is an object validation library
 
-import { newTZDateInUTCFromDate, stripUTCOffset, } from "@/lib/time";
+import { newTZDateInUTCFromDate, stripUTCOffset } from "@/lib/time";
 
 import {
   AllEventsSchema,
@@ -52,153 +52,184 @@ import {
 
 // timeout (in milliseconds) for subscribeOnce calls that wait for errors
 // after certain pokes
-const DEFAULT_ERROR_TIMEOUT = 2000
+const DEFAULT_ERROR_TIMEOUT = 30000;
+
+class TimeoutError extends Error {
+  constructor() {
+    super("timed out waiting for error");
+
+    // see:
+    // https://github.com/microsoft/TypeScript-wiki/blob/81fe7b91664de43c02ea209492ec1cea7f3661d0/Breaking-Changes.md#extending-built-ins-like-error-array-and-map-may-no-longer-work
+    Object.setPrototypeOf(this, TimeoutError.prototype);
+  }
+}
 
 interface Backend {
   // --- live agent --- //
 
   // live - scry %all-records
-  getRecords(): Promise<EventAsAllGuests[]>
+  getRecords(): Promise<EventAsAllGuests[]>;
 
   // live - scry %record
-  getRecord(id: EventId): Promise<EventAsGuest>
+  getRecord(id: EventId): Promise<EventAsGuest>;
 
   // live - scry %all-events
-  getEvents(): Promise<EventAsHost[]>
+  getEvents(): Promise<EventAsHost[]>;
 
   // live - poke - dial - %find
-  find(host: Patp, name: string | null): Promise<boolean>
+  find(host: Patp, name: string | null): Promise<boolean>;
 
   // live - scry %remote-events
-  previousSearch(): Promise<[EventId, EventDetails][] | string>
+  previousSearch(): Promise<[EventId, EventDetails][] | string>;
 
   // live - scry %event
-  getEvent(id: EventId): Promise<EventAsHost>
+  getEvent(id: EventId): Promise<EventAsHost>;
 
   // live - poke - action - %register
-  register(id: EventId, patp?: Patp): Promise<void>
+  register(id: EventId, patp?: Patp): Promise<void>;
 
   // live - poke - action - %unregister
-  unregister(id: EventId, patp?: Patp): Promise<void>
+  unregister(id: EventId, patp?: Patp): Promise<void>;
 
   // live - poke - action - %invite
-  invite(id: EventId, ships: Patp[]): Promise<boolean>
+  invite(id: EventId, ships: Patp[]): Promise<boolean>;
 
   // live - poke - action - %create
-  createEvent(evt: CreateEventParams): Promise<void>
+  createEvent(evt: CreateEventParams): Promise<void>;
 
   // live - poke - action - %delete
-  deleteEvent(evt: EventId): Promise<void>
+  deleteEvent(evt: EventId): Promise<void>;
 
   // live - poke - action - %info %title
-  editEventDetailsTitle(id: EventId, value: EventDetails["title"]): Promise<void>
+  editEventDetailsTitle(
+    id: EventId,
+    value: EventDetails["title"],
+  ): Promise<void>;
 
   // live - poke - action - %info %about
-  editEventDetailsDescription(id: EventId, value: EventDetails["description"]): Promise<void>
+  editEventDetailsDescription(
+    id: EventId,
+    value: EventDetails["description"],
+  ): Promise<void>;
 
   // live - poke - action - %info %moment
   editEventDetailsMoment(
     id: EventId,
     start: EventDetails["startDate"],
-    end: EventDetails["endDate"]
-  ): Promise<void>
+    end: EventDetails["endDate"],
+  ): Promise<void>;
 
   // live - poke - action - %info %timezone
-  editEventDetailsTimezone(id: EventId, value: EventDetails["timezone"]): Promise<void>
+  editEventDetailsTimezone(
+    id: EventId,
+    value: EventDetails["timezone"],
+  ): Promise<void>;
 
   // live - poke - action - %info %location
-  editEventDetailsLocation(id: EventId, value: EventDetails["location"]): Promise<void>
+  editEventDetailsLocation(
+    id: EventId,
+    value: EventDetails["location"],
+  ): Promise<void>;
 
   // live - poke - action - %info %venue-map
-  editEventDetailsVenueMap(id: EventId, value: EventDetails["venueMap"]): Promise<void>
+  editEventDetailsVenueMap(
+    id: EventId,
+    value: EventDetails["venueMap"],
+  ): Promise<void>;
 
   // live - poke - action - %info %group
-  editEventDetailsGroup(id: EventId, value: EventDetails["group"]): Promise<void>
+  editEventDetailsGroup(
+    id: EventId,
+    value: EventDetails["group"],
+  ): Promise<void>;
 
   // live - poke - action - %info %kind
-  editEventDetailsKind(id: EventId, value: EventDetails["kind"]): Promise<void>
+  editEventDetailsKind(id: EventId, value: EventDetails["kind"]): Promise<void>;
 
   // live - poke - action - %info %latch
-  editEventDetailsLatch(id: EventId, value: EventDetails["latch"]): Promise<void>
+  editEventDetailsLatch(
+    id: EventId,
+    value: EventDetails["latch"],
+  ): Promise<void>;
 
   // live - poke - action - %info %create-session
-  addEventSession(id: EventId, value: Session): Promise<void>
+  addEventSession(id: EventId, value: Session): Promise<void>;
 
   // live - poke - action - %info %delete-session
-  removeEventSession(id: EventId, sessionId: string): Promise<void>
+  removeEventSession(id: EventId, sessionId: string): Promise<void>;
 
   // live - poke - action - %info %edit-session %title
   editEventSessionTitle(
     id: EventId,
     sessionId: string,
-    value: Session["title"]
-  ): Promise<void>
+    value: Session["title"],
+  ): Promise<void>;
 
   // live - poke - action - %info %edit-session %panel
   editEventSessionPanel(
     id: EventId,
     sessionId: string,
-    value: Session["panel"]
-  ): Promise<void>
+    value: Session["panel"],
+  ): Promise<void>;
 
   // live - poke - action - %info %edit-session %location
   editEventSessionLocation(
     id: EventId,
     sessionId: string,
-    value: Session["location"]
-  ): Promise<void>
+    value: Session["location"],
+  ): Promise<void>;
 
   // live - poke - action - %info %edit-session %about
   editEventSessionAbout(
     id: EventId,
     sessionId: string,
-    value: Session["about"]
-  ): Promise<void>
+    value: Session["about"],
+  ): Promise<void>;
 
   // live - poke - action - %info %edit-session %moment
   editEventSessionMoment(
     id: EventId,
     sessionId: string,
     start: Session["startTime"],
-    end: Session["endTime"]
-  ): Promise<void>
+    end: Session["endTime"],
+  ): Promise<void>;
 
   // live - poke - action - %secret
-  editEventSecret(id: EventId, secret: EventAsHost["secret"]): Promise<void>
+  editEventSecret(id: EventId, secret: EventAsHost["secret"]): Promise<void>;
 
   // live - poke - action - %limit
-  editEventLimit(id: EventId, limit: EventAsHost["limit"]): Promise<void>
+  editEventLimit(id: EventId, limit: EventAsHost["limit"]): Promise<void>;
 
   // remove, this is included in an event record
   // getSchedule(id: EventId): Promise<Session[]>
 
   // live - TBD
   subscribeToLiveEvents(handlers: {
-    onRecordUpdate: (e: LiveRecordUpdateEvent) => void
-    onEventUpdate: (e: LiveEventUpdateEvent) => void
-    onError: (err: any, id: string) => void,
-    onQuit: (data: any) => void,
-  }): Promise<number>
+    onRecordUpdate: (e: LiveRecordUpdateEvent) => void;
+    onEventUpdate: (e: LiveEventUpdateEvent) => void;
+    onError: (err: any, id: string) => void;
+    onQuit: (data: any) => void;
+  }): Promise<number>;
 
   subscribeToLiveSearchEvents(handlers: {
-    onEvent: (evt: [EventId, EventDetails][] | string) => void,
-    onError: (err: any, id: string) => void,
-    onQuit: (data: any) => void,
-  }): Promise<number>
+    onEvent: (evt: [EventId, EventDetails][] | string) => void;
+    onError: (err: any, id: string) => void;
+    onQuit: (data: any) => void;
+  }): Promise<number>;
 
   // --- matcher agent --- //
 
   // matcher - scry %profile
-  getProfile(patp: Patp): Promise<Profile | null>
+  getProfile(patp: Patp): Promise<Profile | null>;
 
   // matcher - scry %profiles
-  getProfiles(id: EventId): Promise<Profile[]>
+  getProfiles(id: EventId): Promise<Profile[]>;
 
   // matcher - scry %peers
-  getAttendees(id: EventId): Promise<Attendee[]>
+  getAttendees(id: EventId): Promise<Attendee[]>;
 
   // matcher - poke - deed - %edit-profile
-  editProfileField(field: string, value: string | null): Promise<void>
+  editProfileField(field: string, value: string | null): Promise<void>;
 
   // matcher - poke - deed - %add-pals y|n
   setAddPals(b: boolean): Promise<void>;
@@ -211,20 +242,20 @@ interface Backend {
 
   // matcher - TBD
   subscribeToMatcherEvents(handlers: {
-    onMatch: (e: MatcherMatchEvent) => void
-    onProfileChange: (e: MatcherProfileEvent) => void
-    onError: (err: any, id: string) => void,
-    onQuit: (data: any) => void,
-  }): Promise<number>
+    onMatch: (e: MatcherMatchEvent) => void;
+    onProfileChange: (e: MatcherProfileEvent) => void;
+    onError: (err: any, id: string) => void;
+    onQuit: (data: any) => void;
+  }): Promise<number>;
 
   subscribeToMatcherAddPalsEvent(handlers: {
-    onEvent: (e: boolean) => void
-    onError: (err: any, id: string) => void,
-    onQuit: (data: any) => void,
-  }): Promise<number>
+    onEvent: (e: boolean) => void;
+    onError: (err: any, id: string) => void;
+    onQuit: (data: any) => void;
+  }): Promise<number>;
 
   // unsubscribe
-  unsubscribeFromEvent(id: number): Promise<void>
+  unsubscribeFromEvent(id: number): Promise<void>;
 }
 
 // ship here was needed to verify that there was a record for our ship
@@ -234,20 +265,21 @@ function getRecords(api: Urbit, ship: Patp): () => Promise<EventAsAllGuests[]> {
   return async () => {
     const response = await api.scry({
       app: "live",
-      path: "/records/all"
+      path: "/records/all",
     })
       .then(AllRecordsSchema.parse)
-      .catch((err) => { console.error("error during getRecords api call", err) })
+      .catch((err) => {
+        console.error("error during getRecords api call", err);
+      });
 
     if (!response) {
-      return Promise.resolve([])
+      return Promise.resolve([]);
     }
 
-    const result: EventAsAllGuests[] = []
-
+    const result: EventAsAllGuests[] = [];
 
     const entries = Object
-      .entries(response.allRecords)
+      .entries(response.allRecords);
     // .filter(([,records]) => {
     //   if (records) {
 
@@ -258,85 +290,96 @@ function getRecords(api: Urbit, ship: Patp): () => Promise<EventAsAllGuests[]> {
 
     // WARN: casting to Patp here because schema validates it above; it's fine
     for (const [idString, recordsForEvent] of entries) {
-      const [hostShip, eventName] = idString.split("/")
+      const [hostShip, eventName] = idString.split("/");
       // WARN: casting to Patp here
-      const eventId = { ship: hostShip as Patp, name: eventName }
+      const eventId = { ship: hostShip as Patp, name: eventName };
 
-
-      const recordInfos: Record<Patp, RecordInfo> = {}
-      let details: EventDetails = emptyEventDetails
+      const recordInfos: Record<Patp, RecordInfo> = {};
+      let details: EventDetails = emptyEventDetails;
 
       for (const [guestPatp, recordObj] of Object.entries(recordsForEvent)) {
         // WARN: casting to Patp here
         if (recordObj) {
           if (details === emptyEventDetails) {
-            details = backendInfo1ToEventDetails(eventId, recordObj.record.info)
+            details = backendInfo1ToEventDetails(
+              eventId,
+              recordObj.record.info,
+            );
           }
           recordInfos[guestPatp as Patp] = {
             secret: recordObj.record.secret ? recordObj.record.secret : "",
             status: recordObj.record.status.p,
-            lastChanged: newTZDateInUTCFromDate(new Date(recordObj.record.status.q))
-          }
+            lastChanged: newTZDateInUTCFromDate(
+              new Date(recordObj.record.status.q),
+            ),
+          };
         } else {
-          console.error("getRecords: recordObj is undefined")
+          console.error("getRecords: recordObj is undefined");
         }
       }
 
-      result.push([recordInfos, details])
+      result.push([recordInfos, details]);
     }
-    return result
-  }
+    return result;
+  };
 }
 
-function getRecord(api: Urbit, ship: string): (id: EventId) => Promise<EventAsGuest> {
+function getRecord(
+  api: Urbit,
+  ship: string,
+): (id: EventId) => Promise<EventAsGuest> {
   return async (id: EventId) => {
     const record = await api.scry({
       app: "live",
-      path: `/record/${id.ship}/${id.name}/~${ship}`
+      path: `/record/${id.ship}/${id.name}/~${ship}`,
     })
       .then(z.object({ record: BackendRecordSchema }).parse)
-      .catch((err) => { console.error("error during getRecord api call", err) })
-
+      .catch((err) => {
+        console.error("error during getRecord api call", err);
+      });
 
     if (!record) {
-      return Promise.resolve(emptyEventAsGuest)
+      return Promise.resolve(emptyEventAsGuest);
     }
 
-    return backendRecordToEventAsGuest(id, record.record)
-  }
+    return backendRecordToEventAsGuest(id, record.record);
+  };
 }
 
 function getEvents(api: Urbit): () => Promise<EventAsHost[]> {
   return async () => {
     const response = await api.scry({
       app: "live",
-      path: "/events/all"
+      path: "/events/all",
     })
       .then(AllEventsSchema.parse)
-      .catch((err) => { console.error("error during getEvents api call", err) })
+      .catch((err) => {
+        console.error("error during getEvents api call", err);
+      });
 
     if (!response) {
-      return Promise.resolve([])
+      return Promise.resolve([]);
     }
 
-
-    let events: EventAsHost[] = []
+    let events: EventAsHost[] = [];
 
     // WARN: patp : casting to Patp here because schema validates it above; it's fine
     for (const [idString, evtObj] of Object.entries(response.allEvents)) {
       if (evtObj) {
-        const [hostShip, eventName] = idString.split("/")
-        const eventId = { ship: hostShip as Patp, name: eventName }
+        const [hostShip, eventName] = idString.split("/");
+        const eventId = { ship: hostShip as Patp, name: eventName };
 
-        events.push(backendEventToEventAsHost(eventId, evtObj.event))
+        events.push(backendEventToEventAsHost(eventId, evtObj.event));
       }
     }
 
-    return events
-  }
+    return events;
+  };
 }
 
-function find(api: Urbit): (host: Patp, name: string | null) => Promise<boolean> {
+function find(
+  api: Urbit,
+): (host: Patp, name: string | null) => Promise<boolean> {
   return async (host: Patp, name: string | null) => {
     let success = false;
     const _poke = await api.poke({
@@ -344,68 +387,75 @@ function find(api: Urbit): (host: Patp, name: string | null) => Promise<boolean>
       mark: "live-dial",
       json: {
         // could need a %
-        "find": { ship: host, name: name }
+        "find": { ship: host, name: name },
       },
-      onSuccess: () => { success = true },
+      onSuccess: () => {
+        success = true;
+      },
       onError: (err) => {
-        console.error("error during find poke: ", err)
-      }
-    })
+        console.error("error during find poke: ", err);
+      },
+    });
 
-    console.log("number poke: ", _poke)
-    return Promise.resolve(success)
-  }
+    console.log("number poke: ", _poke);
+    return Promise.resolve(success);
+  };
 }
 
-function previousSearch(api: Urbit): () => Promise<[EventId, EventDetails][] | string> {
+function previousSearch(
+  api: Urbit,
+): () => Promise<[EventId, EventDetails][] | string> {
   return async () => {
     const findEvent = await api.scry({
       app: "live",
-      path: `/result`
-    }).catch((err) => { console.error("error during getEvent api call", err) })
+      path: `/result`,
+    }).catch((err) => {
+      console.error("error during getEvent api call", err);
+    });
 
     if (!findEvent) {
-      return Promise.resolve([])
+      return Promise.resolve([]);
     }
 
     let parsed: z.infer<typeof PreviousSearchSchema>;
 
     try {
       const obj = z.object({
-        result: z.string()
-      }).parse(findEvent)
+        result: z.string(),
+      }).parse(findEvent);
       // if we get here it means it parse it correctly and we can return
-      return obj.result
+      return obj.result;
     } catch (e) {
-      parsed = PreviousSearchSchema.parse(findEvent)
+      parsed = PreviousSearchSchema.parse(findEvent);
     }
 
     return Object.entries(parsed.result)
       .map(([idString, info]) => {
-        const [hostShip, eventName] = idString.split("/")
+        const [hostShip, eventName] = idString.split("/");
         // WARN: casting to Patp here
-        const eventId = { ship: hostShip as Patp, name: eventName }
-        return [eventId, backendInfo1ToEventDetails(eventId, info.info)]
-      })
-
-  }
+        const eventId = { ship: hostShip as Patp, name: eventName };
+        return [eventId, backendInfo1ToEventDetails(eventId, info.info)];
+      });
+  };
 }
 
 function getEvent(api: Urbit): (id: EventId) => Promise<EventAsHost> {
   return async (id: EventId) => {
     const event = await api.scry({
       app: "live",
-      path: `/event/${id.ship}/${id.name}`
+      path: `/event/${id.ship}/${id.name}`,
     })
       .then(z.object({ event: BackendEventSchema }).parse)
-      .catch((err) => { console.error("error during getEvent api call", err) })
+      .catch((err) => {
+        console.error("error during getEvent api call", err);
+      });
 
     if (!event) {
-      return Promise.resolve(emptyEventAsHost)
+      return Promise.resolve(emptyEventAsHost);
     }
 
-    return backendEventToEventAsHost(id, event.event)
-  }
+    return backendEventToEventAsHost(id, event.event);
+  };
 }
 
 function register(api: Urbit): (id: EventId, patp?: Patp) => Promise<void> {
@@ -413,9 +463,9 @@ function register(api: Urbit): (id: EventId, patp?: Patp) => Promise<void> {
     const errorPromise = api
       .subscribeOnce("live", `/error/status-change`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
-        console.error("timed out waiting for error in register", e)
-        return Promise.reject(new Error("timed out waiting for error"))
-      })
+        console.error("timed out waiting for error in register", e);
+        return Promise.reject(new TimeoutError());
+      });
 
     // live-operation [[~sampel-palnet %some-event-id] [%delete ~]]
     await api.poke({
@@ -426,29 +476,29 @@ function register(api: Urbit): (id: EventId, patp?: Patp) => Promise<void> {
         // the value for "register" should be null when used as a guest;
         // a host might specify a ship name there to register/unregister
         // guests from his events
-        "action": { "register": patp ?? null }
+        "action": { "register": patp ?? null },
       },
-      onSuccess: () => { },
+      onSuccess: () => {},
       onError: (err) => {
-        console.error("error during register poke: ", err)
-      }
-    })
+        console.error("error during register poke: ", err);
+      },
+    });
 
     return errorPromise
       .then((response) => {
         try {
-          const parsed = ErrorSchema.parse(response)
+          const parsed = ErrorSchema.parse(response);
           if (parsed.error === null) {
-            return Promise.resolve()
+            return Promise.resolve();
           } else {
-            return Promise.reject(new Error(parsed.error))
+            return Promise.reject(new Error(parsed.error));
           }
         } catch (e) {
-          console.error("error parsing error for register", e)
-          return Promise.reject(new Error("unknown error"))
+          console.error("error parsing error for register", e);
+          return Promise.reject(new Error("unknown error"));
         }
-      })
-  }
+      });
+  };
 }
 
 function unregister(api: Urbit): (id: EventId, patp?: Patp) => Promise<void> {
@@ -456,9 +506,9 @@ function unregister(api: Urbit): (id: EventId, patp?: Patp) => Promise<void> {
     const errorPromise = api
       .subscribeOnce("live", `/error/status-change`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
-        console.error("timed out waiting for error in register", e)
-        return Promise.reject(new Error("timed out waiting for error"))
-      })
+        console.error("timed out waiting for error in register", e);
+        return Promise.reject(new TimeoutError());
+      });
 
     await api.poke({
       app: "live",
@@ -468,29 +518,29 @@ function unregister(api: Urbit): (id: EventId, patp?: Patp) => Promise<void> {
         // the value for "unregister" should be null when used as a guest;
         // a host might specify a ship name there to register/unregister
         // guests from his events
-        "action": { "unregister": patp ?? null }
+        "action": { "unregister": patp ?? null },
       },
-      onSuccess: () => { },
+      onSuccess: () => {},
       onError: (err) => {
-        console.error("error during unregister poke: ", err)
-      }
-    })
+        console.error("error during unregister poke: ", err);
+      },
+    });
 
     return errorPromise
       .then((response) => {
         try {
-          const parsed = ErrorSchema.parse(response)
+          const parsed = ErrorSchema.parse(response);
           if (parsed.error === null) {
-            return Promise.resolve()
+            return Promise.resolve();
           } else {
-            return Promise.reject(new Error(parsed.error))
+            return Promise.reject(new Error(parsed.error));
           }
         } catch (e) {
-          console.error("error parsing error for register", e)
-          return Promise.reject(new Error("unknown error"))
+          console.error("error parsing error for register", e);
+          return Promise.reject(new Error("unknown error"));
         }
-      })
-  }
+      });
+  };
 }
 
 function invite(_api: Urbit): (id: EventId, ships: Patp[]) => Promise<boolean> {
@@ -501,18 +551,20 @@ function invite(_api: Urbit): (id: EventId, ships: Patp[]) => Promise<boolean> {
       mark: "live-operation",
       json: {
         "id": { "ship": _id.ship, "name": _id.name },
-        "action": { "invite": ships.map(ship => new String(ship)) }
+        "action": { "invite": ships.map((ship) => new String(ship)) },
       },
-      onSuccess: () => { success = true },
+      onSuccess: () => {
+        success = true;
+      },
       onError: (err) => {
-        console.error("error during invite poke: ", err)
-      }
-    })
-    return Promise.resolve(success)
-  }
+        console.error("error during invite poke: ", err);
+      },
+    });
+    return Promise.resolve(success);
+  };
 }
 
-const tzDateToUnixMilliSeconds = (d: TZDate | null) => d ? d.valueOf() : 0
+const tzDateToUnixMilliSeconds = (d: TZDate | null) => d ? d.valueOf() : 0;
 
 const prepareSession = (session: Session) => {
   return {
@@ -522,28 +574,31 @@ const prepareSession = (session: Session) => {
     about: session.about,
     moment: {
       start: tzDateToUnixMilliSeconds(session.startTime),
-      end: tzDateToUnixMilliSeconds(session.endTime)
-    }
-  }
-}
+      end: tzDateToUnixMilliSeconds(session.endTime),
+    },
+  };
+};
 
 export type CreateEventParams = {
   secret: EventAsHost["secret"];
   limit: EventAsHost["limit"];
   details: Omit<EventDetails, "id">;
-}
+};
 
-function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => Promise<void> {
+function createEvent(
+  api: Urbit,
+  ship: Patp,
+): (newEvent: CreateEventParams) => Promise<void> {
   return async ({ secret, limit, details }: CreateEventParams) => {
-    const id: EventId = { ship, name: details.title }
+    const id: EventId = { ship, name: details.title };
     let success = false;
 
-    const timezoneStripped = stripUTCOffset(details.timezone)
-    const sign = timezoneStripped.charAt(0) === "+" ? true : false
-    const number = Number.parseInt(timezoneStripped.slice(1))
+    const timezoneStripped = stripUTCOffset(details.timezone);
+    const sign = timezoneStripped.charAt(0) === "+" ? true : false;
+    const number = Number.parseInt(timezoneStripped.slice(1));
     const group = details.group
       ? `${details.group.ship}/${details.group.name}`
-      : null
+      : null;
 
     const payload = {
       "id": { "ship": id.ship, "name": id.name },
@@ -556,64 +611,66 @@ function createEvent(api: Urbit, ship: Patp): (newEvent: CreateEventParams) => P
             about: details.description,
             moment: {
               start: tzDateToUnixMilliSeconds(details.startDate),
-              end: tzDateToUnixMilliSeconds(details.endDate)
+              end: tzDateToUnixMilliSeconds(details.endDate),
             },
             timezone: { p: sign, q: number },
             location: details.location,
-            'venue-map': details.venueMap,
+            "venue-map": details.venueMap,
             group: group,
             kind: details.kind,
             latch: details.latch,
             sessions: Object
               .values(details.sessions)
-              .map(prepareSession)
-          }
-        }
-      }
-    }
+              .map(prepareSession),
+          },
+        },
+      },
+    };
 
     const errorPromise = api
       .subscribeOnce("live", `/error/create`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
-        console.error("timed out waiting for error in createEvent", e)
-        return Promise.reject(new Error("timed out waiting for error"))
-      })
+        console.error("timed out waiting for error in createEvent", e);
+        return Promise.reject(new TimeoutError());
+      });
 
     await api.poke({
       app: "live",
       mark: "live-operation",
       json: payload,
-      onSuccess: () => { success = true },
+      onSuccess: () => {
+        success = true;
+      },
       onError: (err) => {
-        console.error("error during create poke: ", err)
-      }
-    })
+        console.error("error during create poke: ", err);
+      },
+    });
 
     return errorPromise
       .then((response) => {
         try {
-          const parsed = ErrorSchema.parse(response)
+          const parsed = ErrorSchema.parse(response);
           if (parsed.error === null) {
-            return Promise.resolve()
+            return Promise.resolve();
           } else {
-            return Promise.reject(new Error(parsed.error))
+            return Promise.reject(new Error(parsed.error));
           }
         } catch (e) {
-          console.error("error parsing error for createEvent", e)
-          return Promise.reject(new Error("unknown error"))
+          console.error("error parsing error for createEvent", e);
+          return Promise.reject(new Error("unknown error"));
         }
-      })
-  }
+      });
+  };
 }
 
 function deleteEvent(api: Urbit): (id: EventId) => Promise<void> {
   return async (id: EventId) => {
     const errorPromise = api
-      .subscribeOnce("live", `/error/edit`, DEFAULT_ERROR_TIMEOUT)
+      .subscribeOnce("live", `/error/delete`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
-        console.error("timed out waiting for error in createEvent", e)
-        return Promise.reject(new Error("timed out waiting for error"))
-      })
+        console.error("timed out waiting for error in createEvent", e);
+        return Promise.reject(new TimeoutError());
+      });
 
     // live-operation [[~sampel-palnet %some-event-id] [%delete ~]]
     await api.poke({
@@ -621,44 +678,44 @@ function deleteEvent(api: Urbit): (id: EventId) => Promise<void> {
       mark: "live-operation",
       json: {
         "id": { "ship": id.ship, "name": id.name },
-        "action": { "delete": null }
+        "action": { "delete": null },
       },
-      onSuccess: () => { },
+      onSuccess: () => {},
       onError: (err) => {
-        console.error("error during create poke: ", err)
-      }
-    })
+        console.error("error during create poke: ", err);
+      },
+    });
 
     return errorPromise
       .then((response) => {
         try {
-          const parsed = ErrorSchema.parse(response)
+          const parsed = ErrorSchema.parse(response);
           if (parsed.error === null) {
-            return Promise.resolve()
+            return Promise.resolve();
           } else {
-            return Promise.reject(new Error(parsed.error))
+            return Promise.reject(new Error(parsed.error));
           }
         } catch (e) {
-          console.error("error parsing error for deleteEvent", e)
-          return Promise.reject(new Error("unknown error"))
+          console.error("error parsing error for deleteEvent", e);
+          return Promise.reject(new Error("unknown error"));
         }
-      })
-  }
+      });
+  };
 }
 
 type editableEventDetailsFields =
-  "title" |
-  "about" |
-  "moment" |
-  "timezone" |
-  "location" |
-  "venue-map" |
-  "group" |
-  "kind" |
-  "latch" |
-  "create-session" |
-  "edit-session" |
-  "delete-session"
+  | "title"
+  | "about"
+  | "moment"
+  | "timezone"
+  | "location"
+  | "venue-map"
+  | "group"
+  | "kind"
+  | "latch"
+  | "create-session"
+  | "edit-session"
+  | "delete-session";
 
 function editEventDetails(api: Urbit): (
   id: EventId,
@@ -670,13 +727,12 @@ function editEventDetails(api: Urbit): (
     field: editableEventDetailsFields,
     value: any,
   ) => {
-
     const errorPromise = api
       .subscribeOnce("live", `/error/edit`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
-        console.error("timed out waiting for error in createEvent", e)
-        return Promise.reject(new Error("timed out waiting for error"))
-      })
+        console.error("timed out waiting for error in createEvent", e);
+        return Promise.reject(new TimeoutError());
+      });
 
     await api.poke({
       app: "live",
@@ -685,202 +741,227 @@ function editEventDetails(api: Urbit): (
         "id": { "ship": id.ship, "name": id.name },
         "action": {
           "info": {
-            [field]: value
-          }
-        }
+            [field]: value,
+          },
+        },
       },
-      onSuccess: () => { },
+      onSuccess: () => {},
       onError: (err) => {
-        console.error(`error during edit event poke (field: ${field}): `, err)
-      }
-    })
+        console.error(`error during edit event poke (field: ${field}): `, err);
+      },
+    });
 
     return errorPromise
       .then((response) => {
         try {
-          const parsed = ErrorSchema.parse(response)
+          const parsed = ErrorSchema.parse(response);
           if (parsed.error === null) {
-            return Promise.resolve()
+            return Promise.resolve();
           } else {
-            return Promise.reject(new Error(parsed.error))
+            return Promise.reject(new Error(parsed.error));
           }
         } catch (e) {
-          console.error("error parsing error for editEventDetails", e)
-          return Promise.reject(new Error("unknown error"))
+          console.error("error parsing error for editEventDetails", e);
+          return Promise.reject(new Error("unknown error"));
         }
-      })
-  }
+      });
+  };
 }
 
-function editEventDetailsTitle(api: Urbit): (id: EventId, value: EventDetails["title"]) => Promise<void> {
+function editEventDetailsTitle(
+  api: Urbit,
+): (id: EventId, value: EventDetails["title"]) => Promise<void> {
   return async (id: EventId, value: EventDetails["description"]) => {
-    return editEventDetails(api)(id, "title", value)
-  }
+    return editEventDetails(api)(id, "title", value);
+  };
 }
 
-function editEventDetailsDescription(api: Urbit): (id: EventId, value: EventDetails["description"]) => Promise<void> {
+function editEventDetailsDescription(
+  api: Urbit,
+): (id: EventId, value: EventDetails["description"]) => Promise<void> {
   return async (id: EventId, value: EventDetails["description"]) => {
-    return editEventDetails(api)(id, "about", value)
-  }
+    return editEventDetails(api)(id, "about", value);
+  };
 }
 
 function editEventDetailsMoment(api: Urbit): (
   id: EventId,
   start: EventDetails["startDate"],
-  end: EventDetails["startDate"]
+  end: EventDetails["startDate"],
 ) => Promise<void> {
   return async (
     id: EventId,
     start: EventDetails["startDate"],
-    end: EventDetails["startDate"]
+    end: EventDetails["startDate"],
   ) => {
     const payload = {
       start: tzDateToUnixMilliSeconds(start),
-      end: tzDateToUnixMilliSeconds(end)
-    }
-    return editEventDetails(api)(id, "moment", payload)
-  }
+      end: tzDateToUnixMilliSeconds(end),
+    };
+    return editEventDetails(api)(id, "moment", payload);
+  };
 }
 
-function editEventDetailsTimezone(api: Urbit): (id: EventId, value: EventDetails["timezone"]) => Promise<void> {
+function editEventDetailsTimezone(
+  api: Urbit,
+): (id: EventId, value: EventDetails["timezone"]) => Promise<void> {
   return async (id: EventId, value: EventDetails["timezone"]) => {
-    const stripped = stripUTCOffset(value)
+    const stripped = stripUTCOffset(value);
     const payload = {
       p: stripped.charAt(0) === "+" ? true : false,
-      q: Number.parseInt(stripped.slice(1))
-    }
-    return editEventDetails(api)(id, "timezone", payload)
-  }
+      q: Number.parseInt(stripped.slice(1)),
+    };
+    return editEventDetails(api)(id, "timezone", payload);
+  };
 }
 
-function editEventDetailsLocation(api: Urbit): (id: EventId, value: EventDetails["location"]) => Promise<void> {
+function editEventDetailsLocation(
+  api: Urbit,
+): (id: EventId, value: EventDetails["location"]) => Promise<void> {
   return async (id: EventId, value: EventDetails["location"]) => {
-    return editEventDetails(api)(id, "location", value)
-  }
+    return editEventDetails(api)(id, "location", value);
+  };
 }
 
-function editEventDetailsVenueMap(api: Urbit): (id: EventId, value: EventDetails["venueMap"]) => Promise<void> {
+function editEventDetailsVenueMap(
+  api: Urbit,
+): (id: EventId, value: EventDetails["venueMap"]) => Promise<void> {
   return async (id: EventId, value: EventDetails["venueMap"]) => {
-    return editEventDetails(api)(id, "venue-map", value)
-  }
+    return editEventDetails(api)(id, "venue-map", value);
+  };
 }
 
-function editEventDetailsGroup(api: Urbit): (id: EventId, value: EventDetails["group"]) => Promise<void> {
+function editEventDetailsGroup(
+  api: Urbit,
+): (id: EventId, value: EventDetails["group"]) => Promise<void> {
   return async (id: EventId, value: EventDetails["group"]) => {
-    const payload = value
-      ? `${value.ship}/${value.name}`
-      : null
-    return editEventDetails(api)(id, "group", payload)
-  }
+    const payload = value ? `${value.ship}/${value.name}` : null;
+    return editEventDetails(api)(id, "group", payload);
+  };
 }
 
-function editEventDetailsKind(api: Urbit): (id: EventId, value: EventDetails["kind"]) => Promise<void> {
+function editEventDetailsKind(
+  api: Urbit,
+): (id: EventId, value: EventDetails["kind"]) => Promise<void> {
   return async (id: EventId, value: EventDetails["kind"]) => {
-    return editEventDetails(api)(id, "kind", value)
-  }
+    return editEventDetails(api)(id, "kind", value);
+  };
 }
 
-function editEventDetailsLatch(api: Urbit): (id: EventId, value: EventDetails["latch"]) => Promise<void> {
+function editEventDetailsLatch(
+  api: Urbit,
+): (id: EventId, value: EventDetails["latch"]) => Promise<void> {
   return async (id: EventId, value: EventDetails["latch"]) => {
-    return editEventDetails(api)(id, "latch", value)
-  }
+    return editEventDetails(api)(id, "latch", value);
+  };
 }
 
-function addEventSession(api: Urbit): (id: EventId, value: Session) => Promise<void> {
+function addEventSession(
+  api: Urbit,
+): (id: EventId, value: Session) => Promise<void> {
   return async (id: EventId, value: Session) => {
-    return editEventDetails(api)(id, "create-session", prepareSession(value))
-  }
+    return editEventDetails(api)(id, "create-session", prepareSession(value));
+  };
 }
 
 function editEventSessionField(api: Urbit): (
   id: EventId,
   sessionId: string,
   field: string,
-  value: any
+  value: any,
 ) => Promise<void> {
   return async (
     id: EventId,
     sessionId: string,
     field: string,
-    value: any
+    value: any,
   ) => {
     return editEventDetails(api)(
       id,
       "edit-session",
-      { p: sessionId, q: { [field]: value } }
-    )
-  }
+      { p: sessionId, q: { [field]: value } },
+    );
+  };
 }
 
 function editEventSessionTitle(api: Urbit): (
   id: EventId,
   sessionId: string,
-  value: Session["title"]
+  value: Session["title"],
 ) => Promise<void> {
   return async (id: EventId, sessionId: string, value: Session["title"]) => {
-    return editEventSessionField(api)(id, sessionId, "title", value)
-  }
+    return editEventSessionField(api)(id, sessionId, "title", value);
+  };
 }
 
 function editEventSessionPanel(api: Urbit): (
   id: EventId,
   sessionId: string,
-  value: Session["panel"]
+  value: Session["panel"],
 ) => Promise<void> {
   return async (id: EventId, sessionId: string, value: Session["panel"]) => {
-    return editEventSessionField(api)(id, sessionId, "panel", value)
-  }
+    return editEventSessionField(api)(id, sessionId, "panel", value);
+  };
 }
 
 function editEventSessionLocation(api: Urbit): (
   id: EventId,
   sessionId: string,
-  value: Session["location"]
+  value: Session["location"],
 ) => Promise<void> {
   return async (id: EventId, sessionId: string, value: Session["location"]) => {
-    return editEventSessionField(api)(id, sessionId, "location", value)
-  }
+    return editEventSessionField(api)(id, sessionId, "location", value);
+  };
 }
 
 function editEventSessionAbout(api: Urbit): (
   id: EventId,
   sessionId: string,
-  value: Session["about"]
+  value: Session["about"],
 ) => Promise<void> {
   return async (id: EventId, sessionId: string, value: Session["about"]) => {
-    return editEventSessionField(api)(id, sessionId, "about", value)
-  }
+    return editEventSessionField(api)(id, sessionId, "about", value);
+  };
 }
 
 function editEventSessionMoment(api: Urbit): (
   id: EventId,
   sessionId: string,
   start: Session["startTime"],
-  end: Session["endTime"]
+  end: Session["endTime"],
 ) => Promise<void> {
-  return async (id: EventId, sessionId: string, start: Session["startTime"], end: Session["endTime"]) => {
+  return async (
+    id: EventId,
+    sessionId: string,
+    start: Session["startTime"],
+    end: Session["endTime"],
+  ) => {
     const payload = {
       start: tzDateToUnixMilliSeconds(start),
-      end: tzDateToUnixMilliSeconds(end)
-    }
-    return editEventSessionField(api)(id, sessionId, "moment", payload)
-  }
+      end: tzDateToUnixMilliSeconds(end),
+    };
+    return editEventSessionField(api)(id, sessionId, "moment", payload);
+  };
 }
 
-function removeEventSession(api: Urbit): (id: EventId, sessionId: string) => Promise<void> {
+function removeEventSession(
+  api: Urbit,
+): (id: EventId, sessionId: string) => Promise<void> {
   return async (id: EventId, sessionId: string) => {
-    return editEventDetails(api)(id, "delete-session", sessionId)
-  }
+    return editEventDetails(api)(id, "delete-session", sessionId);
+  };
 }
 
-function editEventSecret(api: Urbit): (id: EventId, secret: EventAsHost["secret"]) => Promise<void> {
+function editEventSecret(
+  api: Urbit,
+): (id: EventId, secret: EventAsHost["secret"]) => Promise<void> {
   return async (id: EventId, secret: EventAsHost["secret"]) => {
     const errorPromise = api
       .subscribeOnce("live", `/error/edit`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
-        console.error("timed out waiting for error in createEvent", e)
-        return Promise.reject(new Error("timed out waiting for error"))
-      })
+        console.error("timed out waiting for error in createEvent", e);
+        return Promise.reject(new TimeoutError());
+      });
 
     await api.poke({
       app: "live",
@@ -888,40 +969,42 @@ function editEventSecret(api: Urbit): (id: EventId, secret: EventAsHost["secret"
       json: {
         "id": { "ship": id.ship, "name": id.name },
         "action": {
-          "secret": secret
-        }
+          "secret": secret,
+        },
       },
-      onSuccess: () => { },
+      onSuccess: () => {},
       onError: (err) => {
-        console.error("error during create poke: ", err)
-      }
-    })
+        console.error("error during create poke: ", err);
+      },
+    });
 
     return errorPromise
       .then((response) => {
         try {
-          const parsed = ErrorSchema.parse(response)
+          const parsed = ErrorSchema.parse(response);
           if (parsed.error === null) {
-            return Promise.resolve()
+            return Promise.resolve();
           } else {
-            return Promise.reject(new Error(parsed.error))
+            return Promise.reject(new Error(parsed.error));
           }
         } catch (e) {
-          console.error("error parsing error for editEventSecret", e)
-          return Promise.reject(new Error("unknown error"))
+          console.error("error parsing error for editEventSecret", e);
+          return Promise.reject(new Error("unknown error"));
         }
-      })
-  }
+      });
+  };
 }
 
-function editEventLimit(api: Urbit): (id: EventId, limit: EventAsHost["limit"]) => Promise<void> {
+function editEventLimit(
+  api: Urbit,
+): (id: EventId, limit: EventAsHost["limit"]) => Promise<void> {
   return async (id: EventId, limit: EventAsHost["limit"]) => {
     const errorPromise = api
       .subscribeOnce("live", `/error/edit`, DEFAULT_ERROR_TIMEOUT)
       .catch((e) => {
-        console.error("timed out waiting for error in createEvent", e)
-        return Promise.reject(new Error("timed out waiting for error"))
-      })
+        console.error("timed out waiting for error in createEvent", e);
+        return Promise.reject(new TimeoutError());
+      });
 
     await api.poke({
       app: "live",
@@ -929,36 +1012,36 @@ function editEventLimit(api: Urbit): (id: EventId, limit: EventAsHost["limit"]) 
       json: {
         "id": { "ship": id.ship, "name": id.name },
         "action": {
-          "limit": limit
-        }
+          "limit": limit,
+        },
       },
-      onSuccess: () => { },
+      onSuccess: () => {},
       onError: (err) => {
-        console.error("error during create poke: ", err)
-      }
-    })
+        console.error("error during create poke: ", err);
+      },
+    });
 
     return errorPromise
       .then((response) => {
         try {
-          const parsed = ErrorSchema.parse(response)
+          const parsed = ErrorSchema.parse(response);
           if (parsed.error === null) {
-            return Promise.resolve()
+            return Promise.resolve();
           } else {
-            return Promise.reject(new Error(parsed.error))
+            return Promise.reject(new Error(parsed.error));
           }
         } catch (e) {
-          console.error("error parsing error for editEventLimit", e)
-          return Promise.reject(new Error("unknown error"))
+          console.error("error parsing error for editEventLimit", e);
+          return Promise.reject(new Error("unknown error"));
         }
-      })
-  }
+      });
+  };
 }
 
 function subscribeToLiveSearchEvents(api: Urbit): (handlers: {
-  onEvent: (e: [EventId, EventDetails][] | string) => void
-  onError: (err: any, id: string) => void,
-  onQuit: (data: any) => void,
+  onEvent: (e: [EventId, EventDetails][] | string) => void;
+  onError: (err: any, id: string) => void;
+  onQuit: (data: any) => void;
 }) => Promise<number> {
   return async ({ onEvent, onError, onQuit }) => {
     return api.subscribe({
@@ -966,34 +1049,42 @@ function subscribeToLiveSearchEvents(api: Urbit): (handlers: {
       path: "/search",
       event: (data: any) => {
         try {
-          const findEventStr = z.object({ result: z.string() }).parse(data)
-          return onEvent(findEventStr.result)
+          const findEventStr = z.object({ result: z.string() }).parse(data);
+          return onEvent(findEventStr.result);
         } catch (e) {
           try {
-            const findEvent = LiveFindEventSchema.parse(data)
-            return onEvent(Object.entries(findEvent.result)
-              .map(([idString, info]) => {
-                const [hostShip, eventName] = idString.split("/")
-                // WARN: casting to Patp here
-                const eventId = { ship: hostShip as Patp, name: eventName }
-                return [eventId, backendInfo1ToEventDetails(eventId, info.info)]
-              }))
+            const findEvent = LiveFindEventSchema.parse(data);
+            return onEvent(
+              Object.entries(findEvent.result)
+                .map(([idString, info]) => {
+                  const [hostShip, eventName] = idString.split("/");
+                  // WARN: casting to Patp here
+                  const eventId = { ship: hostShip as Patp, name: eventName };
+                  return [
+                    eventId,
+                    backendInfo1ToEventDetails(eventId, info.info),
+                  ];
+                }),
+            );
           } catch (e) {
-            console.error("error parsing response for event on /search path", e)
+            console.error(
+              "error parsing response for event on /search path",
+              e,
+            );
           }
         }
       },
       err: onError,
-      quit: onQuit
-    })
-  }
+      quit: onQuit,
+    });
+  };
 }
 
 function subscribeToLiveEvents(api: Urbit): (handlers: {
-  onRecordUpdate: (e: LiveRecordUpdateEvent) => void
-  onEventUpdate: (e: LiveEventUpdateEvent) => void
-  onError: (err: any, id: string) => void,
-  onQuit: (data: any) => void,
+  onRecordUpdate: (e: LiveRecordUpdateEvent) => void;
+  onEventUpdate: (e: LiveEventUpdateEvent) => void;
+  onError: (err: any, id: string) => void;
+  onQuit: (data: any) => void;
 }) => Promise<number> {
   return async ({ onRecordUpdate, onEventUpdate, onError, onQuit }) => {
     return api.subscribe({
@@ -1001,29 +1092,38 @@ function subscribeToLiveEvents(api: Urbit): (handlers: {
       path: "/updates",
       event: (evt) => {
         try {
-          const updateEvent = LiveRecordUpdateEventSchema.parse(evt)
+          const updateEvent = LiveRecordUpdateEventSchema.parse(evt);
           onRecordUpdate({
-            event: backendRecordToEventAsGuest(updateEvent.id, updateEvent.record),
+            event: backendRecordToEventAsGuest(
+              updateEvent.id,
+              updateEvent.record,
+            ),
             // WARN: casting as Patp
-            ship: updateEvent.ship as Patp
-          })
+            ship: updateEvent.ship as Patp,
+          });
         } catch (e) {
           // could cast error to ZodError and verify that indeed the issue is
           // that we're not receiving a record update
           try {
-            const updateEvent = LiveEventUpdateEventSchema.parse(evt)
+            const updateEvent = LiveEventUpdateEventSchema.parse(evt);
             onEventUpdate({
-              event: backendEventToEventAsHost(updateEvent.id, updateEvent.event),
-            })
+              event: backendEventToEventAsHost(
+                updateEvent.id,
+                updateEvent.event,
+              ),
+            });
           } catch (e) {
-            console.error("error parsing response for subscribeToLiveEvents", e)
+            console.error(
+              "error parsing response for subscribeToLiveEvents",
+              e,
+            );
           }
         }
       },
       err: (err, id) => onError(err, id),
-      quit: (data) => onQuit(data)
-    })
-  }
+      quit: (data) => onQuit(data),
+    });
+  };
 }
 
 function entryArrayToProfile(
@@ -1043,47 +1143,47 @@ function entryArrayToProfile(
     telegram: null,
     signal: null,
     phone: null,
-    addToPals: addToPals
-  }
+    addToPals: addToPals,
+  };
 
   fields.forEach((field) => {
     switch (field.term) {
       case "avatar":
-        p.avatar = field.entry!
-        break
+        p.avatar = field.entry!;
+        break;
       case "bio":
-        p.bio = field.entry!
-        break
+        p.bio = field.entry!;
+        break;
       case "nickname":
-        p.nickname = field.entry!
-        break
+        p.nickname = field.entry!;
+        break;
       case "x":
-        p.x = field.entry!
-        break
+        p.x = field.entry!;
+        break;
       case "ens-domain":
-        p.ensDomain = field.entry!
-        break
+        p.ensDomain = field.entry!;
+        break;
       case "email":
-        p.email = field.entry!
-        break
+        p.email = field.entry!;
+        break;
       case "github":
-        p.github = field.entry!
-        break
+        p.github = field.entry!;
+        break;
       case "telegram":
-        p.telegram = field.entry!
-        break
+        p.telegram = field.entry!;
+        break;
       case "signal":
-        p.signal = field.entry!
-        break
+        p.signal = field.entry!;
+        break;
       case "phone":
-        p.phone = field.entry!
-        break
+        p.phone = field.entry!;
+        break;
       default:
-        console.warn(`unexpected profile term: '${field.term}'`)
+        console.warn(`unexpected profile term: '${field.term}'`);
     }
-  })
+  });
 
-  return p
+  return p;
 }
 
 function getProfiles(_api: Urbit): () => Promise<Profile[]> {
@@ -1092,42 +1192,45 @@ function getProfiles(_api: Urbit): () => Promise<Profile[]> {
       app: "matcher",
       // in agent file it says host/name/ship ??
       // pass guest ship
-      path: "/all/profiles"
+      path: "/all/profiles",
       // path: `/record/${id.ship}/${id.name}/~zod`
     })
       .then(GetProfilesSchema.parse)
-      .catch((err) => { console.error("error during getProfiles api call", err.errors) })
+      .catch((err) => {
+        console.error("error during getProfiles api call", err.errors);
+      });
 
     if (!response) {
-      return []
+      return [];
     }
-
 
     const addToPals = await _api.scry({
       app: "matcher",
       // in agent file it says host/name/ship ??
       // pass guest ship
-      path: "/addPals"
+      path: "/addPals",
       // path: `/record/${id.ship}/${id.name}/~zod`
     })
       .then()
-      .catch((err) => { console.error("error during getProfiles api call", err.errors) })
+      .catch((err) => {
+        console.error("error during getProfiles api call", err.errors);
+      });
 
     if (!response) {
-      return []
+      return [];
     }
 
-    let profiles = []
+    let profiles = [];
     // WARN: patp : casting to Patp here because schema validates it above; it's fine
     for (const [patp, arrs] of Object.entries(response.allProfiles)) {
       if (arrs) {
         // WARN: addPals false here because this is other ppl's profiles
-        profiles.push(entryArrayToProfile(patp as Patp, arrs, false))
+        profiles.push(entryArrayToProfile(patp as Patp, arrs, false));
       }
     }
 
-    return profiles
-  }
+    return profiles;
+  };
 }
 
 function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
@@ -1137,39 +1240,43 @@ function getProfile(_api: Urbit): (patp: Patp) => Promise<Profile | null> {
     return Object
       .entries(entry.profile)
       .map(([term, { entry }]) => [term, { term: term, entry: entry }] as const)
-      .map(([_, obj]) => obj)
-  })
+      .map(([_, obj]) => obj);
+  });
 
   return async (patp: Patp) => {
     const profileFields = await _api.scry({
       app: "matcher",
       // in agent file it says host/name/ship ??
       // pass guest ship
-      path: `/profile/${patp}`
+      path: `/profile/${patp}`,
       // path: `/record/${id.ship}/${id.name}/~zod`
     })
       .then(massagedSchema.parse)
-      .catch((err: ZodError) => { console.error("error during getProfile api call", err.errors) })
+      .catch((err: ZodError) => {
+        console.error("error during getProfile api call", err.errors);
+      });
 
     if (!profileFields) {
-      return null
+      return null;
     }
 
-    let addPals = false
+    let addPals = false;
 
     const addToPals = await _api.scry({
       app: "matcher",
-      path: "/pals/add"
+      path: "/pals/add",
     })
       .then(z.object({ addPals: z.boolean() }).parse)
-      .catch((err) => { console.error("error during getProfiles api call", err.errors) })
+      .catch((err) => {
+        console.error("error during getProfiles api call", err.errors);
+      });
 
     if (addToPals) {
-      addPals = addToPals.addPals
+      addPals = addToPals.addPals;
     }
 
-    return entryArrayToProfile(patp, profileFields, addPals)
-  }
+    return entryArrayToProfile(patp, profileFields, addPals);
+  };
 }
 
 function getAttendees(_api: Urbit): (eventId: EventId) => Promise<Attendee[]> {
@@ -1178,33 +1285,37 @@ function getAttendees(_api: Urbit): (eventId: EventId) => Promise<Attendee[]> {
       app: "matcher",
       // in agent file it says host/name/ship ??
       // pass guest ship
-      path: `/peers/${eventId.ship}/${eventId.name}`
+      path: `/peers/${eventId.ship}/${eventId.name}`,
       // path: `/record/${id.ship}/${id.name}/~zod`
     })
       // .then(console.log)
       .then(GetAttendeesSchema.parse)
-      .catch((err) => { console.error("error during getPeers api call", err) })
+      .catch((err) => {
+        console.error("error during getPeers api call", err);
+      });
 
     if (!profileFields) {
-      return []
+      return [];
     }
 
-    const attendees: Attendee[] = []
+    const attendees: Attendee[] = [];
 
     for (const [patp, status] of Object.entries(profileFields.peers)) {
       if (status) {
         attendees.push({
           // WARN: patp : casting to Patp here because schema validates it above; it's fine
           patp: patp as Patp,
-          status: backendMatchStatusToMatchStatus(status.status)
-        })
+          status: backendMatchStatusToMatchStatus(status.status),
+        });
       }
     }
-    return attendees
-  }
+    return attendees;
+  };
 }
 
-function editProfileField(_api: Urbit): (field: keyof Profile, value: string | null) => Promise<void> {
+function editProfileField(
+  _api: Urbit,
+): (field: keyof Profile, value: string | null) => Promise<void> {
   // in the future we can use the fact that the field is null to represent
   // a field being unset as opposed to it being set to an empty string
   return async (field: keyof Profile, value: string | null) => {
@@ -1213,16 +1324,16 @@ function editProfileField(_api: Urbit): (field: keyof Profile, value: string | n
     // the backend expects "ens-domain" but the Profile type is keyed in
     // camelCase because otherwise i need to quote the key and it's annoying
     if (field === "ensDomain") {
-      actualField = "ens-domain"
+      actualField = "ens-domain";
     }
 
     const num = await _api.poke({
       app: "matcher",
       mark: "matcher-deed",
       json: { "edit-profile": { term: actualField, entry: value } },
-    })
-    console.log(num)
-  }
+    });
+    console.log(num);
+  };
 }
 
 function setAddPals(api: Urbit): (b: boolean) => Promise<void> {
@@ -1232,13 +1343,15 @@ function setAddPals(api: Urbit): (b: boolean) => Promise<void> {
       app: "matcher",
       mark: "matcher-deed",
       json: { "add-pals": b },
-      onSuccess: () => { success = true },
+      onSuccess: () => {
+        success = true;
+      },
       onError: (err) => {
-        console.error("error during setAddPals poke: ", err)
-      }
-    })
-    return Promise.resolve()
-  }
+        console.error("error during setAddPals poke: ", err);
+      },
+    });
+    return Promise.resolve();
+  };
 }
 
 function match(_api: Urbit): (id: EventId, patp: Patp) => Promise<void> {
@@ -1254,11 +1367,11 @@ function match(_api: Urbit): (id: EventId, patp: Patp) => Promise<void> {
         "shake": {
           "id": { "ship": id.ship, "name": id.name },
           "ship": patp,
-          "act": true
-        }
-      }
-    })
-  }
+          "act": true,
+        },
+      },
+    });
+  };
 }
 
 function unmatch(_api: Urbit): (id: EventId, patp: Patp) => Promise<void> {
@@ -1274,18 +1387,18 @@ function unmatch(_api: Urbit): (id: EventId, patp: Patp) => Promise<void> {
         "shake": {
           "id": { "ship": id.ship, "name": id.name },
           "ship": patp,
-          "act": false
-        }
-      }
-    })
-  }
+          "act": false,
+        },
+      },
+    });
+  };
 }
 
 function subscribeToMatcherEvents(_api: Urbit): (handlers: {
-  onMatch: (e: MatcherMatchEvent) => void
-  onProfileChange: (e: MatcherProfileEvent) => void
-  onError: (err: any, id: string) => void,
-  onQuit: (data: any) => void,
+  onMatch: (e: MatcherMatchEvent) => void;
+  onProfileChange: (e: MatcherProfileEvent) => void;
+  onError: (err: any, id: string) => void;
+  onQuit: (data: any) => void;
 }) => Promise<number> {
   return async ({ onMatch, onProfileChange, onError, onQuit }) => {
     return window.urbit.subscribe({
@@ -1293,33 +1406,33 @@ function subscribeToMatcherEvents(_api: Urbit): (handlers: {
       path: "/updates",
       event: (evt) => {
         try {
-          const { ship, fields } = MatcherProfileUpdateEventSchema.parse(evt)
+          const { ship, fields } = MatcherProfileUpdateEventSchema.parse(evt);
           onProfileChange({
-            profile: entryArrayToProfile(ship, fields, false)
-          })
+            profile: entryArrayToProfile(ship, fields, false),
+          });
         } catch {
           try {
-            const matchEvt = MatcherMatchEventSchema.parse(evt)
+            const matchEvt = MatcherMatchEventSchema.parse(evt);
             onMatch({
               ship: matchEvt.ship,
-              status: backendMatchStatusToMatchStatus(matchEvt.match)
-            })
+              status: backendMatchStatusToMatchStatus(matchEvt.match),
+            });
           } catch (e) {
-            console.error("error parsing matcher event", e)
-            throw e
+            console.error("error parsing matcher event", e);
+            throw e;
           }
         }
       },
       err: (err, id) => onError(err, id),
-      quit: (data) => onQuit(data)
-    })
-  }
+      quit: (data) => onQuit(data),
+    });
+  };
 }
 
 function subscribeToMatcherAddPalsEvent(_api: Urbit): (handlers: {
-  onEvent: (e: boolean) => void
-  onError: (err: any, id: string) => void,
-  onQuit: (data: any) => void,
+  onEvent: (e: boolean) => void;
+  onError: (err: any, id: string) => void;
+  onQuit: (data: any) => void;
 }) => Promise<number> {
   return async ({ onEvent, onError, onQuit }) => {
     return window.urbit.subscribe({
@@ -1327,16 +1440,16 @@ function subscribeToMatcherAddPalsEvent(_api: Urbit): (handlers: {
       path: "/add-pals",
       event: (evt) => {
         try {
-          const matchEvt = z.object({ addPals: z.boolean() }).parse(evt)
-          onEvent(matchEvt.addPals)
+          const matchEvt = z.object({ addPals: z.boolean() }).parse(evt);
+          onEvent(matchEvt.addPals);
         } catch (e) {
-          throw e
+          throw e;
         }
       },
       err: (err, id) => onError(err, id),
-      quit: (data) => onQuit(data)
-    })
-  }
+      quit: (data) => onQuit(data),
+    });
+  };
 }
 
 function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
@@ -1388,11 +1501,12 @@ function newBackend(api: Urbit, ship: PatpWithoutSig): Backend {
     subscribeToMatcherAddPalsEvent: subscribeToMatcherAddPalsEvent(api),
 
     unsubscribeFromEvent: (id) => {
-      return api.unsubscribe(id)
-    }
-  }
+      return api.unsubscribe(id);
+    },
+  };
 }
 
-export { newBackend }
+export { newBackend, TimeoutError };
 
-export type { Backend }
+export type { Backend };
+

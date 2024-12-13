@@ -1,104 +1,119 @@
-import { useContext, useEffect, useState } from 'react';
-import { Location, Outlet, useLoaderData, useLocation } from 'react-router-dom';
+import { useContext, useEffect, useState } from "react";
+import { Location, Outlet, useLoaderData, useLocation } from "react-router-dom";
 import { LoaderFunctionArgs, Params } from "react-router-dom";
 
-import { Attendee, emptyEventAsGuest, EventAsGuest, EventId, eventIdsEqual, Profile } from "@/lib/types"
+import {
+  Attendee,
+  emptyEventAsGuest,
+  EventAsGuest,
+  EventId,
+  eventIdsEqual,
+  Profile,
+} from "@/lib/types";
 
-import { GlobalContext, GlobalCtx } from '@/globalContext';
-import { EventContext, EventCtx, newEmptyCtx } from './context';
+import { GlobalContext, GlobalCtx } from "@/globalContext";
+import { EventContext, EventCtx, newEmptyCtx } from "./context";
 
-import { debounce } from '@/hooks/use-debounce';
-import { useOnMobile } from '@/hooks/use-mobile';
-import { useToast, toast as toastFn } from '@/hooks/use-toast';
-import { Patp, stripSig } from '@/lib/types';
-import { Backend } from '@/lib/backend';
+import { debounce } from "@/hooks/use-debounce";
+import { useOnMobile } from "@/hooks/use-mobile";
+import { toast as toastFn, useToast } from "@/hooks/use-toast";
+import { Patp, stripSig } from "@/lib/types";
+import { Backend, TimeoutError } from "@/lib/backend";
 
-import { AppFrame } from '@/components/frame';
-import { FooterWithSlots } from '@/components/frame/footer';
-import { ConnectionStatusBar } from '@/components/connection-status';
-import { LinkItem, MenuItemWithLinks, NavbarWithSlots } from '@/components/frame/navbar'
-import { EventStatusButton } from './components/event-status-button';
-import { MobileMenu, ProfileButton } from './components/navbar-components';
-import { BackButton } from '@/components/back-button';
+import { AppFrame } from "@/components/frame";
+import { FooterWithSlots } from "@/components/frame/footer";
+import { ConnectionStatusBar } from "@/components/connection-status";
+import {
+  LinkItem,
+  MenuItemWithLinks,
+  NavbarWithSlots,
+} from "@/components/frame/navbar";
+import { EventStatusButton } from "./components/event-status-button";
+import { MobileMenu, ProfileButton } from "./components/navbar-components";
+import { BackButton } from "@/components/back-button";
+import { debounceToast } from "@/lib/utils";
 
 async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
   return Promise.all(a
-    .map(attendee => b.getProfile(attendee.patp))
-  ).then((profiles) => {
-    return profiles
-      .filter((profile): profile is Profile => profile !== null)
-  })
+    .map((attendee) => b.getProfile(attendee.patp))).then((profiles) => {
+      return profiles
+        .filter((profile): profile is Profile => profile !== null);
+    });
 }
 
 async function buildContextData(
   hostShip: Patp,
   eventName: string,
   globalContext: GlobalCtx,
-  backend: Backend
+  backend: Backend,
 ): Promise<EventCtx> {
-  const evtId: EventId = { ship: hostShip, name: eventName }
-  const ourShip = globalContext.profile.patp
+  const evtId: EventId = { ship: hostShip, name: eventName };
+  const ourShip = globalContext.profile.patp;
 
-  let evtRecord: EventAsGuest = emptyEventAsGuest
+  let evtRecord: EventAsGuest = emptyEventAsGuest;
   let evtAsAllGuests = globalContext.eventsAsGuest
-    .find(([_recordInfo, details]) => eventIdsEqual(details.id, evtId))
+    .find(([_recordInfo, details]) => eventIdsEqual(details.id, evtId));
 
   if (evtAsAllGuests) {
-    const info = evtAsAllGuests[0]
+    const info = evtAsAllGuests[0];
     if (ourShip in info) {
-      evtRecord.secret = info[ourShip].secret
-      evtRecord.status = info[ourShip].status
-      evtRecord.lastChanged = info[ourShip].lastChanged
-      evtRecord.details = evtAsAllGuests[1]
+      evtRecord.secret = info[ourShip].secret;
+      evtRecord.status = info[ourShip].status;
+      evtRecord.lastChanged = info[ourShip].lastChanged;
+      evtRecord.details = evtAsAllGuests[1];
     } else {
       // console.error("hostShip is not in eventAsAllGuests")
-      console.error("couldn't find event with id ", evtId)
+      console.error("couldn't find event with id ", evtId);
     }
   }
 
   // remove ourselves from the list of guests / profles
   const attendees = (await backend.getAttendees(evtId))
-    .filter((attendee) => attendee.patp !== globalContext.profile.patp)
+    .filter((attendee) => attendee.patp !== globalContext.profile.patp);
 
-  const profiles = await fetchProfiles(backend, attendees)
+  const profiles = await fetchProfiles(backend, attendees);
 
   return {
     fetched: true,
     event: evtRecord,
     attendees: attendees,
     profiles: profiles,
-  }
+  };
 }
 
-function makeEventRoutingLinks(indexPath: string, online: boolean, showGuestList: boolean): LinkItem[] {
+function makeEventRoutingLinks(
+  indexPath: string,
+  online: boolean,
+  showGuestList: boolean,
+): LinkItem[] {
   const eventRoutingLinks = [
     {
       to: indexPath,
-      text: "event home"
+      text: "event home",
     },
     {
       to: "schedule",
-      text: "schedule"
+      text: "schedule",
     },
     {
       to: "map",
-      text: "map"
+      text: "map",
     },
     {
       to: "connections",
       text: "connections",
-      disabled: !online
+      disabled: !online,
     },
-  ]
+  ];
 
   if (showGuestList) {
     eventRoutingLinks.push({
       to: "attendees",
-      text: "guest list"
-    })
+      text: "guest list",
+    });
   }
 
-  return eventRoutingLinks
+  return eventRoutingLinks;
 }
 
 function makeNavbarAndFooter(
@@ -113,31 +128,31 @@ function makeNavbarAndFooter(
   backend: Backend,
 ) {
   // variables
-  const basePath = import.meta.env.BASE_URL
-  const eventId = eventContext.event.details.id
-  const { ship: eventHost, name: eventName } = eventId
-  const eventIndex = basePath + `event/${eventHost}/${eventName}`
+  const basePath = import.meta.env.BASE_URL;
+  const eventId = eventContext.event.details.id;
+  const { ship: eventHost, name: eventName } = eventId;
+  const eventIndex = basePath + `event/${eventHost}/${eventName}`;
 
-  const connectionStatus = globalContext.connectionStatus
-  const online = connectionStatus === "online"
-  const eventStatus = eventContext.event.status
-  const hostProfile = globalContext.profile
+  const connectionStatus = globalContext.connectionStatus;
+  const online = connectionStatus === "online";
+  const eventStatus = eventContext.event.status;
+  const hostProfile = globalContext.profile;
 
-  const showGuestList = eventStatus === "registered"
-    || eventStatus === "attended"
-    || eventHost === hostProfile.patp
+  const showGuestList = eventStatus === "registered" ||
+    eventStatus === "attended" ||
+    eventHost === hostProfile.patp;
 
   const eventRoutingLinks = makeEventRoutingLinks(
     eventIndex,
     online,
-    showGuestList
-  )
+    showGuestList,
+  );
 
   // helpers
   const getPathForBackButton = (): string => {
-    if (location.pathname === eventIndex) { return basePath }
-    return eventIndex
-  }
+    if (location.pathname === eventIndex) return basePath;
+    return eventIndex;
+  };
 
   // function makeToastMessage(status: EventStatus): string {
   //   switch (status) {
@@ -155,62 +170,63 @@ function makeNavbarAndFooter(
   //   }
   // }
 
-  const StatusButton = () =>
+  const StatusButton = () => (
     <EventStatusButton
       fetched={eventContext.fetched}
       status={eventContext.event.status}
       register={() => {
         backend.register(eventContext.event.details.id)
           .then(() => {
-            const { ship, name } = eventContext.event.details.id
-            const { dismiss } = toast({
+            const { ship, name } = eventContext.event.details.id;
+            debounceToast(toast({
               variant: "default",
               title: `${ship}/${name}`,
-              description: "successfully registered to event"
-            })
-
-            const [fn,] = debounce<void>(dismiss, 2000)
-            fn().then(() => { })
+              description: "successfully registered to event",
+            }));
           })
           .catch((e: Error) => {
-            const { ship, name } = eventContext.event.details.id
-            const { dismiss } = toast({
-              variant: "destructive",
-              title: `error when registering to ${ship}/${name}`,
-              description: `${e.message}`
-            })
-
-            const [fn,] = debounce<void>(dismiss, 2000)
-            fn().then(() => { })
-          })
+              if (e instanceof TimeoutError) {
+                debounceToast(toast({
+                  variant: "warning",
+                  description: e.message
+                }))
+              } else {
+                toast({
+                  variant: "destructive",
+                  title: "error while deleting event",
+                  description: e.message
+                })
+              }
+          });
       }}
       unregister={() => {
         backend.unregister(eventId)
           .then(() => {
-            const { ship, name } = eventContext.event.details.id
+            const { ship, name } = eventContext.event.details.id;
             const { dismiss } = toast({
               variant: "default",
               title: `${ship}/${name}`,
-              description: "unregistered from event"
-            })
+              description: "unregistered from event",
+            });
 
-            const [fn,] = debounce<void>(dismiss, 2000)
-            fn().then(() => { })
+            const [fn] = debounce<void>(dismiss, 2000);
+            fn().then(() => {});
           })
           .catch((e: Error) => {
-            const { ship, name } = eventContext.event.details.id
+            const { ship, name } = eventContext.event.details.id;
             toast({
               variant: "destructive",
               title: `error when unregistering to ${ship}/${name}`,
-              description: `${e.message}`
-            })
-          })
+              description: `${e.message}`,
+            });
+          });
       }}
     />
+  );
 
-  const DesktopMenu = () => <MenuItemWithLinks linkItems={eventRoutingLinks} />
+  const DesktopMenu = () => <MenuItemWithLinks linkItems={eventRoutingLinks} />;
 
-  const navbar =
+  const navbar = (
     <NavbarWithSlots
       left={
         <div className="flex items-center">
@@ -231,79 +247,91 @@ function makeNavbarAndFooter(
     >
       {eventContext.event.details.title}
     </NavbarWithSlots>
+  );
 
-  const footer = <FooterWithSlots
-    left={<div className="h-full mt-3 ml-16 flex justify-center">
-      {onMobile && <StatusButton />
+  const footer = (
+    <FooterWithSlots
+      left={
+        <div className="h-full mt-3 ml-16 flex justify-center">
+          {onMobile && <StatusButton />}
+        </div>
       }
-    </div>}
-    right={
-      <div>
-        {onMobile && <MobileMenu links={eventRoutingLinks} />}
-        <ConnectionStatusBar status={connectionStatus} />
-      </div>
-    }
-  />
+      right={
+        <div>
+          {onMobile && <MobileMenu links={eventRoutingLinks} />}
+          <ConnectionStatusBar status={connectionStatus} />
+        </div>
+      }
+    />
+  );
 
-  return [navbar, footer]
+  return [navbar, footer];
 }
 
-
-async function EventParamsLoader(params: LoaderFunctionArgs<any>):
-  Promise<Params<string>> {
+async function EventParamsLoader(
+  params: LoaderFunctionArgs<any>,
+): Promise<Params<string>> {
   return {
     hostShip: params.params.hostShip!,
-    name: params.params.name!
-  }
+    name: params.params.name!,
+  };
 }
 
 const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
-  const globalContext = useContext(GlobalContext)
+  const globalContext = useContext(GlobalContext);
 
   if (!globalContext) {
-    console.error("globalContext is not set")
-    return
+    console.error("globalContext is not set");
+    return;
   }
 
-  const { hostShip, name } = useLoaderData() as { hostShip: Patp, name: string };
+  const { hostShip, name } = useLoaderData() as {
+    hostShip: Patp;
+    name: string;
+  };
 
   // might refactor into reducer if it becomes annoying
-  const [eventContext, setEventCtx] = useState<EventCtx>(newEmptyCtx())
+  const [eventContext, setEventCtx] = useState<EventCtx>(newEmptyCtx());
 
   useEffect(() => {
     // TODO: add skeleton component
     if (globalContext.fetched) {
       buildContextData(hostShip, name, globalContext, backend)
-        .then(setEventCtx)
+        .then(setEventCtx);
     }
 
-    let matcherSubId: number
+    let matcherSubId: number;
 
     backend.subscribeToMatcherEvents({
-      onProfileChange: () => { },
+      onProfileChange: () => {},
       onMatch: (evt) => {
         setEventCtx(({ attendees: oldAttendees, ...rest }) => {
           return {
             attendees: oldAttendees
               .map((attendee): Attendee => {
                 if (attendee.patp === evt.ship) {
-                  return { patp: evt.ship, status: evt.status }
+                  return { patp: evt.ship, status: evt.status };
                 }
-                return attendee
+                return attendee;
               }),
             ...rest,
-          }
-        })
+          };
+        });
       },
-      onError: (err, _id) => { console.log("%live err: ", err) },
-      onQuit: (data) => { console.log("%live closed subscription: ", data) }
-    }).then((id) => { matcherSubId = id })
+      onError: (err, _id) => {
+        console.log("%live err: ", err);
+      },
+      onQuit: (data) => {
+        console.log("%live closed subscription: ", data);
+      },
+    }).then((id) => {
+      matcherSubId = id;
+    });
 
     return () => {
-      backend.unsubscribeFromEvent(matcherSubId).then(() => { })
-    }
-  }, [globalContext])
-
+      backend.unsubscribeFromEvent(matcherSubId).then(() => {});
+    };
+  }, [globalContext]);
 
   const [navbar, footer] = makeNavbarAndFooter(
     useOnMobile(),
@@ -312,8 +340,7 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
     globalContext,
     eventContext,
     backend,
-  )
-
+  );
 
   // add skeleton component while this loads
   return (
@@ -322,7 +349,7 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
         top={navbar}
         bottom={footer}
       >
-        <div className="grid size-full" >
+        <div className="grid size-full">
           <div className="pt-12">
             <Outlet />
           </div>
@@ -330,6 +357,7 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
       </AppFrame>
     </EventContext.Provider>
   );
-}
+};
 
-export { EventParamsLoader, EventIndex }
+export { EventIndex, EventParamsLoader };
+

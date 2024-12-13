@@ -11,7 +11,7 @@ import { GlobalContext, GlobalCtx } from "@/globalContext"
 import { formatEventDateShort, shiftTzDateInUTCToTimezone } from "@/lib/time"
 import { Patp } from "@/lib/types"
 import { PatpSchema } from "@/lib/schemas"
-import { Backend } from "@/lib/backend"
+import { Backend, TimeoutError } from "@/lib/backend"
 
 import { NavbarWithSlots } from "@/components/frame/navbar"
 import { FooterWithSlots } from "@/components/frame/footer"
@@ -21,7 +21,7 @@ import { BackButton } from "@/components/back-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { SlideDownAndReveal } from "@/components/sliders"
-import { cn, flipBoolean } from "@/lib/utils"
+import { cn, debounceToast, flipBoolean } from "@/lib/utils"
 import { ResponsiveContent } from "@/components/responsive-content"
 import { EventDetailsCard } from "@/components/cards/event-details"
 import { EditEventForm } from "@/components/forms/edit-event"
@@ -121,24 +121,29 @@ const DeleteEventCard = ({ event, closeDialog, deleteEvent, navigateToTimeline: 
   }
 
   const successHandler = () => {
-    const { dismiss } = toast({
+    debounceToast(toast({
       variant: "default",
-      description: `deleted event ${event.details.title} `
-    })
-
-    const [fn,] = debounce<void>(dismiss, 2000)
-    fn().then(() => { })
+      title: "deleted event",
+      description: `successfully deleted event '${event.details.title}' `
+    }))
     // navigate to event timeline and prompt to reload event state
     navigateToTimeline()
   }
 
   const errorHandler = (e: Error) => {
-    toast({
-      variant: "destructive",
-      title: "error while deleting event",
-      description: e.message
-    })
-    navigateToTimeline()
+    if (e instanceof TimeoutError) {
+      toast({
+        variant: "warning",
+        description: e.message
+      })
+      navigateToTimeline()
+    } else {
+      toast({
+        variant: "destructive",
+        title: "error while deleting event",
+        description: e.message
+      })
+    }
   }
 
   return (
@@ -189,7 +194,7 @@ const EditEvent = ({ evt, backend, open, setOpen }: EditProps) => {
         className="w-full mt-1 bg-stone-100 md:bg-white hover:bg-stone-100 h-full flex-col"
         onClick={() => { setOpen(flipBoolean) }}
       >
-        submit
+       edit event
       </Button>
       <SlideDownAndReveal
         show={open}
@@ -218,14 +223,25 @@ const EditEvent = ({ evt, backend, open, setOpen }: EditProps) => {
               <EditEventForm
                 backend={backend}
                 event={evt}
+                onSuccess={() => {
+                  debounceToast(toast({
+                    variant: "success",
+                    description: "successfully edited event"
+                  }))
+                }} 
                 onError={(e: Error) => {
-                  const { dismiss } = toast({
-                    variant: "destructive",
-                    title: "error while editing event",
-                    description: e.message
-                  })
-                  const [fn,] = debounce<void>(dismiss, 2000)
-                  fn().then(() => { })
+                  if (e instanceof TimeoutError) {
+                    debounceToast(toast({
+                      variant: "warning",
+                      description: e.message
+                    }))
+                  } else {
+                    toast({
+                      variant: "destructive",
+                      title: "error while deleting event",
+                      description: e.message
+                    })
+                  }
                 }}
               />
             </ScrollArea>
