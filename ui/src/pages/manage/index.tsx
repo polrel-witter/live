@@ -35,6 +35,7 @@ import { SpinningButton } from "@/components/spinning-button"
 import { AnimatedButtons } from "@/components/animated-buttons"
 import { Dialog, DialogHeader, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
+import { DeleteEventCard } from "@/components/cards/delete-event"
 
 async function ManageParamsLoader(params: LoaderFunctionArgs<any>):
   Promise<Params<string>> {
@@ -103,79 +104,6 @@ async function buildState(
   }
 }
 
-type DeleteEventCardProps = {
-  event: EventAsHost,
-  closeDialog: () => void
-  deleteEvent: (id: EventId) => Promise<void>
-  navigateToTimeline: () => void
-}
-
-const DeleteEventCard = ({ event, closeDialog, deleteEvent, navigateToTimeline: nvtt }: DeleteEventCardProps) => {
-  const [spin, setSpin] = useState(false)
-  const { toast } = useToast()
-
-  const navigateToTimeline= () => {
-    setSpin(false)
-    nvtt()
-  }
-
-  const successHandler = () => {
-    debounceToast(toast({
-      variant: "default",
-      title: "deleted event",
-      description: `successfully deleted event '${event.details.title}' `
-    }))
-    // navigate to event timeline and prompt to reload event state
-    navigateToTimeline()
-  }
-
-  const errorHandler = (e: Error) => {
-    if (e instanceof TimeoutError) {
-      toast({
-        variant: "warning",
-        description: e.message
-      })
-      navigateToTimeline()
-    } else {
-      toast({
-        variant: "destructive",
-        title: "error while deleting event",
-        description: e.message
-      })
-    }
-  }
-
-  return (
-    <Card className="p-4 ">
-      are you sure you want to delete the event with id
-      <div className="inline relative bg-red-200 rounded-md p-[1px] px-1 ml-2">
-        {event.details.id.ship} / {event.details.id.name}
-      </div>?
-      <div className="flex w-full justify-around mt-2">
-        <Button
-          variant="ghost"
-          onClick={closeDialog}
-        >
-          no, go back
-        </Button>
-        <SpinningButton
-          variant="ghost"
-          className="w-full p-1 text-red-500 hover:text-red-500 hover:bg-red-100"
-          spin={spin}
-          onClick={() => {
-            setSpin(true)
-            deleteEvent(event.details.id)
-              .then(successHandler)
-              .catch(errorHandler)
-          }}
-        >
-          yes, delete event
-        </SpinningButton>
-      </div>
-    </Card>
-  )
-}
-
 type EditProps = {
   evt: EventAsHost,
   backend: Backend
@@ -204,10 +132,10 @@ const EditEvent = ({ evt, backend, open, setOpen }: EditProps) => {
             disabled
             variant="ghost"
             className={cn([
-              "inline-flex justify-center bg-stone-200 mt-4",
-              "text-sm text-balance"
+              "inline-flex justify-center bg-stone-200 mt-4 w-full",
+              "text-sm text-balance text-center"
             ])}>
-            changes are disabled util latch is set to 'over'!
+            this event is archived. changes cannot be made until the latch is changed to 'open' or 'closed'.
           </Button>
         }
         <div className="flex justify-center mt-4">
@@ -823,7 +751,8 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
             <DialogTitle> delete event </DialogTitle>
           </DialogHeader>
           <DeleteEventCard
-            event={event}
+            title={event.details.title}
+            eventId={event.details.id}
             closeDialog={() => { setOpenDialog(false) }}
             deleteEvent={backend.deleteEvent}
             navigateToTimeline={() => navigate(basePath + "?reloadEvents")}

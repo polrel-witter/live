@@ -13,6 +13,7 @@ interface GlobalCtx {
   eventsAsGuest: EventAsAllGuests[]
   eventsAsHost: EventAsHost[]
   refreshEventsAsHost: () => void
+  refreshEventsAsGuest: () => void
 }
 
 function newEmptyIndexCtx(): GlobalCtx {
@@ -35,7 +36,8 @@ function newEmptyIndexCtx(): GlobalCtx {
     },
     eventsAsGuest: [],
     eventsAsHost: [],
-    refreshEventsAsHost: () => { }
+    refreshEventsAsHost: () => { },
+    refreshEventsAsGuest: () => {}
   }
 }
 

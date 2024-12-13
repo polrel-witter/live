@@ -182,10 +182,10 @@ key:
     + it seems to be related to the time conversions which shouldn't be happening. is it converting the times to UTC or accounting for the timezone? it should just display what's arriving from the backend. the user will interpret what zone it's in from the event home page.
 + the new title validation on the create and edit form doesn't allow for spaces.
 + sometimes, on the search page when i click 'go to event' it takes me to a different one than i clicked on. the URL is right, but the content isn't.
-- the timeout error is sometimes appearing without needing to. e.g. deleting an event even though it's clear the process executed fairly quickly. it seems to be triggered upon completion.
-- i just realized we also need a delete button on the guest page. should send the same delete poke that the host can send.
-- if an event is set to over, this message on the edit event page, 'changes are disabled util latch is set to 'over'!' should read: 'this event is archived. changes cannot be made until the latch is changed to 'open' or 'closed'.'
-- when marking an event as `%over` or attempting to switch the latch to %open or %closed, the form also sends a poke to change the group which is producing the 'latch is over' error message. it's happening because the group poke arrives before the latch is changed.
++ the timeout error is sometimes appearing without needing to. e.g. deleting an event even though it's clear the process executed fairly quickly. it seems to be triggered upon completion.
++ i just realized we also need a delete button on the guest page. should send the same delete poke that the host can send.
++ if an event is set to over, this message on the edit event page, 'changes are disabled util latch is set to 'over'!' should read: 'this event is archived. changes cannot be made until the latch is changed to 'open' or 'closed'.'
++ when marking an event as `%over` or attempting to switch the latch to %open or %closed, the form also sends a poke to change the group which is producing the 'latch is over' error message. it's happening because the group poke arrives before the latch is changed.
 
 
 

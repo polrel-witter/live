@@ -44,11 +44,10 @@ export const EditEventForm = ({ backend, event, onSuccess, onError }: Props) => 
             )
           }
 
-          // quickfix: sometimes event.secret is null and values.eventSecret is
-          // "" and it send an edit poke through even though it would't be
-          // necessary
-          const eventSecret = values.eventSecret === "" ? null : values.eventSecret
-          if (event.secret !== eventSecret) {
+          const oldEventSecret = event.secret === "" ? null : event.secret
+          const newEventSecret = values.eventSecret === "" ? null : values.eventSecret
+
+          if (oldEventSecret !== newEventSecret) {
             promises.push(
               backend.editEventSecret(eventId, values.eventSecret)
             )
@@ -108,10 +107,27 @@ export const EditEventForm = ({ backend, event, onSuccess, onError }: Props) => 
             )
           }
 
-          const groupHostDifferent = event.details.group?.ship !== values.eventGroup?.host
-          const groupNameDifferent = event.details.group?.name !== values.eventGroup?.name
+
+          const newGroupHost = values.eventGroup.host !== ""
+          ? values.eventGroup.host 
+          : null
+
+          const newGroupName = values.eventGroup.name !== ""
+          ? values.eventGroup.name 
+          : null
+
+          const oldGroupHost = event.details.group
+          ? event.details.group.ship 
+          : null
+
+          const oldGroupName = event.details.group
+          ? event.details.group.name 
+          : null
+
+          const groupHostDifferent = oldGroupHost !== newGroupHost
+          const groupNameDifferent = oldGroupName !== newGroupName
           if (groupHostDifferent || groupNameDifferent) {
-            if (!values.eventGroup.name || !values.eventGroup.host) {
+            if ( !values.eventGroup.name || !values.eventGroup.host ) {
               promises.push(
                 backend.editEventDetailsGroup(eventId, null)
               )

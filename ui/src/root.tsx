@@ -74,6 +74,13 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
       })
     })
   }
+  const refreshEventsAsGuest = () => {
+    backend.getRecords().then((eventsAsAllGuests) => {
+      setCtx(({ eventsAsGuest: oldEventsAsGuest, ...rest }) => {
+        return { eventsAsGuest: eventsAsAllGuests, ...rest }
+      })
+    })
+  }
 
   useEffect(() => {
     const connectionStatusHandler = handleConnection(setConnectionStatusInCtx)
@@ -102,7 +109,8 @@ const RootComponent: React.FC<PropsWithChildren<Props>> = ({ backend, children }
         profile,
         eventsAsHost,
         eventsAsGuest,
-        refreshEventsAsHost
+        refreshEventsAsHost,
+        refreshEventsAsGuest
       })
     })
 

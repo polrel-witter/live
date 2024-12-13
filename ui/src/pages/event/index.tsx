@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { Location, Outlet, useLoaderData, useLocation } from "react-router-dom";
+import { Location, Outlet, useLoaderData, useLocation, useNavigate } from "react-router-dom";
 import { LoaderFunctionArgs, Params } from "react-router-dom";
 
 import {
@@ -33,6 +33,10 @@ import { EventStatusButton } from "./components/event-status-button";
 import { MobileMenu, ProfileButton } from "./components/navbar-components";
 import { BackButton } from "@/components/back-button";
 import { debounceToast } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DeleteEventCard } from "@/components/cards/delete-event";
 
 async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
   return Promise.all(a
@@ -118,6 +122,8 @@ function makeEventRoutingLinks(
 }
 
 function makeNavbarAndFooter(
+  openDeleteDialog: () => void,
+  basePath: string,
   // hooks
   onMobile: boolean,
   location: Location,
@@ -129,7 +135,6 @@ function makeNavbarAndFooter(
   backend: Backend,
 ) {
   // variables
-  const basePath = import.meta.env.BASE_URL;
   const eventId = eventContext.event.details.id;
   const { ship: eventHost, name: eventName } = eventId;
   const eventIndex = basePath + `event/${eventHost}/${eventName}`;
@@ -158,22 +163,7 @@ function makeNavbarAndFooter(
     return basePath
   };
 
-  function makeToastMessage(status: EventStatus): string {
-    switch (status) {
-      case "requested":
-        return "successfully sent entry request to event host";
-      case "registered":
-        return "successfully registered to event";
-      case "unregistered":
-        return "successfully unregistered from event";
-      // case "invited":
-      // case "attended":
-      default:
-        return `event status changed, new status: ${status}`;
-    }
-  }
-
-  const StatusButton = () => (
+   const StatusButton = () => (
     <EventStatusButton
       fetched={eventContext.fetched}
       status={eventContext.event.status}
@@ -184,7 +174,7 @@ function makeNavbarAndFooter(
             debounceToast(toast({
               variant: "default",
               title: `${ship}/${name}`,
-              description: makeToastMessage(eventContext.event.status),
+              description: "sent registration request to host",
             }));
           })
           .catch((e: Error) => {
@@ -244,6 +234,13 @@ function makeNavbarAndFooter(
       }
       right={
         <div className="flex">
+          <Button
+            variant="destructive"
+            className="rounded-full p-3 m-1"
+            onClick={openDeleteDialog}
+          >
+            <X className="w-4 h-4" />
+          </Button>
           <ProfileButton
             profile={hostProfile}
             editProfileField={backend.editProfileField}
@@ -300,6 +297,7 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
 
   // might refactor into reducer if it becomes annoying
   const [eventContext, setEventCtx] = useState<EventCtx>(newEmptyCtx());
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
   useEffect(() => {
     // TODO: add skeleton component
@@ -341,7 +339,13 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
     };
   }, [globalContext]);
 
+
+  const basePath = import.meta.env.BASE_URL;
+  const navigate = useNavigate()
+
   const [navbar, footer] = makeNavbarAndFooter(
+    () => { setOpenDeleteDialog(true)},
+    basePath,
     useOnMobile(),
     useLocation(),
     useToast().toast,
@@ -360,6 +364,23 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
         <div className="grid size-full">
           <div className="pt-12">
             <Outlet />
+            <Dialog
+              onOpenChange={setOpenDeleteDialog}
+              open={openDeleteDialog}
+            >
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle> delete event </DialogTitle>
+                </DialogHeader>
+                <DeleteEventCard
+                  title={eventContext.event.details.title}
+                  eventId={eventContext.event.details.id}
+                  closeDialog={() => { setOpenDeleteDialog(false) }}
+                  deleteEvent={backend.deleteEvent}
+                  navigateToTimeline={() => navigate(basePath + "?reloadRecords")}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </AppFrame>
