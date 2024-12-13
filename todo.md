@@ -176,8 +176,8 @@ key:
 + the error message should stay put until the user closes it. otherwise they may not read it fast enough to know what to do
 + the timeout errors should display in a warning toast
 + the error messages work on the edit page, but if we get one, the 'edit event' button infinitely spins. it seems to still work - in that you can resubimt the form with updates - but for clarity it should go back to normal.
-- if you click into an event, but then click back before the content loads it results in an error page. the url path is /apps/live/event/~/ instead of /apps/live
-- if the host has one session with a start date that begins at the exact same time the event starts, none of the sesions appear. i checked the backend logic, it allows for a session to start at the same time as the event.
++ if you click into an event, but then click back before the content loads it results in an error page. the url path is /apps/live/event/~/ instead of /apps/live
++ if the host has one session with a start date that begins at the exact same time the event starts, none of the sesions appear. i checked the backend logic, it allows for a session to start at the same time as the event.
 - still getting some weird behavior in the sessions dropdown of the guest schedule page. it skips a date. for instance, if the event dates are from, 12/10, 12/11 and 12/12, it'll show 12/9, 12/10, 12/12 and 12/11 won't appear. Here's a screenshot: https://bowl.polrel-witter.xyz/bucket/random/2024.12.11..10.34.31-Screenshot%20from%202024-12-11%2005-32-26.png
     - it seems to be related to the time conversions which shouldn't be happening. is it converting the times to UTC or accounting for the timezone? it should just display what's arriving from the backend. the user will interpret what zone it's in from the event home page.
 - the new title validation on the create and edit form doesn't allow for spaces.
