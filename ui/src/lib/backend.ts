@@ -52,11 +52,11 @@ import {
 
 // timeout (in milliseconds) for subscribeOnce calls that wait for errors
 // after certain pokes
-const DEFAULT_ERROR_TIMEOUT = 30000;
+const DEFAULT_ERROR_TIMEOUT = 35000;
 
 class TimeoutError extends Error {
   constructor() {
-    super("timed out waiting for error");
+    super("timed out waiting for error from our ship");
 
     // see:
     // https://github.com/microsoft/TypeScript-wiki/blob/81fe7b91664de43c02ea209492ec1cea7f3661d0/Breaking-Changes.md#extending-built-ins-like-error-array-and-map-may-no-longer-work

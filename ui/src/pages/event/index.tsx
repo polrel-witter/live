@@ -8,6 +8,7 @@ import {
   EventAsGuest,
   EventId,
   eventIdsEqual,
+  EventStatus,
   Profile,
 } from "@/lib/types";
 
@@ -150,25 +151,27 @@ function makeNavbarAndFooter(
 
   // helpers
   const getPathForBackButton = (): string => {
-    if (location.pathname === eventIndex) return basePath;
-    return eventIndex;
+    const loc = location.pathname;
+    if (loc.startsWith(eventIndex) && loc.length > eventIndex.length){
+      return eventIndex;
+    }
+    return basePath
   };
 
-  // function makeToastMessage(status: EventStatus): string {
-  //   switch (status) {
-  //     case "requested":
-  //       return "successfully sent entry request to event host"
-  //     case "registered":
-  //       return "successfully registered to event"
-  //     case "unregistered":
-  //       return "successfully unregistered from event"
-  //     case "invited":
-  //       return
-  //     // case "attended":
-  //     default:
-  //       return `event status changed, new status: ${status}`
-  //   }
-  // }
+  function makeToastMessage(status: EventStatus): string {
+    switch (status) {
+      case "requested":
+        return "successfully sent entry request to event host";
+      case "registered":
+        return "successfully registered to event";
+      case "unregistered":
+        return "successfully unregistered from event";
+      // case "invited":
+      // case "attended":
+      default:
+        return `event status changed, new status: ${status}`;
+    }
+  }
 
   const StatusButton = () => (
     <EventStatusButton
@@ -181,22 +184,21 @@ function makeNavbarAndFooter(
             debounceToast(toast({
               variant: "default",
               title: `${ship}/${name}`,
-              description: "successfully registered to event",
+              description: makeToastMessage(eventContext.event.status),
             }));
           })
           .catch((e: Error) => {
-              if (e instanceof TimeoutError) {
-                debounceToast(toast({
-                  variant: "warning",
-                  description: e.message
-                }))
-              } else {
-                toast({
-                  variant: "destructive",
-                  title: "error while deleting event",
-                  description: e.message
-                })
-              }
+            if (e instanceof TimeoutError) {
+              debounceToast(toast({
+                variant: "warning",
+                description: e.message,
+              }));
+            } else {
+              toast({
+                variant: "destructive",
+                description: e.message,
+              });
+            }
           });
       }}
       unregister={() => {
@@ -214,11 +216,17 @@ function makeNavbarAndFooter(
           })
           .catch((e: Error) => {
             const { ship, name } = eventContext.event.details.id;
-            toast({
-              variant: "destructive",
-              title: `error when unregistering to ${ship}/${name}`,
-              description: `${e.message}`,
-            });
+            if (e instanceof TimeoutError) {
+              debounceToast(toast({
+                variant: "warning",
+                description: e.message,
+              }));
+            } else {
+              toast({
+                variant: "destructive",
+                description: e.message,
+              });
+            }
           });
       }}
     />
@@ -360,4 +368,3 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
 };
 
 export { EventIndex, EventParamsLoader };
-

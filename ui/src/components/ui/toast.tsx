@@ -113,7 +113,9 @@ const ToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Description
     ref={ref}
-    className={cn("text-sm opacity-90", className)}
+    // max-w-80 here so for toasts without a title the close button
+    // doesn't overlap with content
+    className={cn("text-sm opacity-90 max-w-80", className)}
     {...props}
   />
 ))
