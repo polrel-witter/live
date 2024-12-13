@@ -109,10 +109,8 @@ const sessionSchema = z.object({
 
 
 const eventTitleSchema = z.custom<string>((val) => {
-  // valid characters for regex
-  // [$&+,:;=?@#"'<>.-^*()%!a-zA-Z0-9]
-  // doesn't like the "|"
-  return typeof val === "string" ? /^[$&+,|:;=?@#"'<>.^*()%!a-zA-Z0-9-]+$/.test(val) : false;
+  // two character groups so we can have the first char not be a space
+  return typeof val === "string" ? /^[$&+,|:;=?@#"'<>.^*()%!a-zA-Z0-9-]+[ $&+,|:;=?@#"'<>.^*()%!a-zA-Z0-9-]*$/.test(val) : false;
 },
   { message: `event title can contain only lower or uppercase letters, numbers, or one of these symbols: $&+,|:;=?@#"'<>.-^*()%!` }
 )

@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 
 import { Backend, TimeoutError } from "@/lib/backend";
 
@@ -12,7 +12,6 @@ import { FooterWithSlots } from "@/components/frame/footer"
 import { ConnectionStatusBar } from "@/components/connection-status"
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { debounce } from "@/hooks/use-debounce";
 import { debounceToast } from "@/lib/utils";
 
 
