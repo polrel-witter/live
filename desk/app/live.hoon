@@ -358,7 +358,7 @@
       `'could not process status change, host could be offline'
     ?~  rec  %&
     ?-  act
-      %unregister  ?!(?=(%unregistered p.status.u.rec))
+      %unregister  ?!(?=(?(%requested %unregistered) p.status.u.rec))
       %register    ?!(?=(?(%requested %registered) p.status.u.rec))
     ==
   ::
@@ -548,6 +548,7 @@
       ~
     =/  current=(unit record-1)
       (~(get bi records) [src.msg name] our.bowl)
+    =.  cor  (succ [/error/status-change]~ ~)
     =.  cor
       (give-local-update /updates [%record [src.msg name] our.bowl rev])
     =?  cor  (notify current rev)
@@ -1532,7 +1533,8 @@
       =.  cor  (sss-pub-records (secret:du-records [path]~))
       :: permission the guest for access
       =.  cor  (sss-pub-records (allow:du-records [ship]~ [path]~))
-      :: pass local update
+      :: pass local updates
+      =.  cor  (succ [/error/status-change]~ ~)
       =.  cor  (give-local-update /updates [%record id ship record])
       :: give the guest the record
       (~(publish re ship) record)
