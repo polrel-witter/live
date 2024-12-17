@@ -133,16 +133,19 @@
   ::  profile data
   ::
   =.  profiles  set-default-fields
-  =.  cor  (emit (make-watch /profile/local our.bowl %contacts /contact))
+  =.  cor  (emit (make-watch /profile/local our.bowl %contacts /v1/contact))
   scry-tlon-fields
 ::
 ++  load
   |=  =vase
   ^+  cor
   =+  !<(ole=versioned-state vase)
+  =/  contacts-watch-card=card
+    (make-watch /profile/local our.bowl %contacts /v1/contact)
   ?-    -.ole
-      %1  cor(state ole)
+      %1  =.(cor (emit contacts-watch-card) cor(state ole))
       %0
+    =.  cor  (emit contacts-watch-card)
     %=  cor
       state  :*  %1
                  profiles.ole
@@ -277,8 +280,8 @@
         ~&(u.p.sign cor)
       ::
           %fact
-        =/  =update:contacts  !<(update:contacts q.cage.sign)
-        =.  cor  (update-tlon-fields ?~(con.update ~ `con.update))
+        =+  !<(upd=[%full p=profile:contacts] q.cage.sign)
+        =.  cor  (update-tlon-fields con.p.upd)
         =.  cor
           =/  fields=(list [term entry])
             ~(tap by (~(got by profiles) our.bowl))
@@ -509,32 +512,32 @@
 ::
 ++  scry-tlon-fields
   ^+  cor
-  =;  rol=rolodex:contacts
-    =/  f=(unit foreign:contacts)
-      (~(get by rol) our.bowl)
-    ?~  f  cor
-    ?~  for.u.f  cor
-    ?~  con.for.u.f  cor
-    (update-tlon-fields `con.for.u.f)
+  =;  self=contact:contacts
+    (update-tlon-fields self)
   =/  is-running=?
     .^(? %gu (weld (base-path %contacts) /$))
   ?.  is-running
     ~&(>> (bran "%contacts isn't running, cannot pull our Tlon profile data") ~)
-  .^(rolodex:contacts %gx (weld (base-path %contacts) /all/contact-rolodex))
+  .^(contact:contacts %gx (weld (base-path %contacts) /v1/self/noun))
 ::  +update-tlon-fields: populate supported Tlon fields into %live profile
 ::
 ++  update-tlon-fields
-  |=  con=(unit contact:contacts)
+  |=  self=contact:contacts
   ^+  cor
-  =/  ls=(list f=[term entry])
-    ?~  con
-      ~[[%nickname ~] [%bio ~] [%avatar ~]]
-    ~[[%nickname `nickname.u.con] [%bio `bio.u.con] [%avatar avatar.u.con]]
-  |-
-  ?~  ls  cor
-  =.  profiles
-    (~(put bi profiles) our.bowl f.i.ls)
-  $(ls t.ls)
+  =;  ls=(list f=[term entry])
+    |-  ?~  ls  cor
+    =.  profiles
+      (~(put bi profiles) our.bowl f.i.ls)
+    $(ls t.ls)
+  =/  default=(list [term entry])
+    ~[[%nickname ~] [%bio ~] [%avatar ~]]
+  %+  turn  default
+  |=  [=term =entry]
+  =/  f=(unit value:contacts)
+    (~(get by self) term)
+  ?~  f  [term ~]
+  ?.  ?=(?(%look %text) -.u.f)  [term ~]
+  [term `p.u.f]
 ::  +set-default-fields: create default profile fields
 ::
 ++  set-default-fields
