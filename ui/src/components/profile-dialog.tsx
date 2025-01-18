@@ -4,22 +4,25 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import ProfileForm from "./profile-form";
-import { Backend, diffProfiles, Profile } from "@/backend";
+import ProfileForm from "@/components/forms/profile";
+import { diffProfiles, Profile } from "@/lib/types";
 import { useEffect, useState } from "react";
+import { Backend } from "@/lib/backend";
 
 type Props = {
   open: boolean;
   profile: Profile;
   onOpenChange: (b: boolean) => void;
   editProfileField: Backend["editProfileField"]
+  setAddPals: Backend["setAddPals"]
 }
 
 const ProfileDialog: React.FC<Props> = ({
   open,
   onOpenChange,
   profile,
-  editProfileField
+  editProfileField,
+  setAddPals
 }) => {
 
   const [openDialog, setOpenDialog] = useState(false)
@@ -28,17 +31,18 @@ const ProfileDialog: React.FC<Props> = ({
     setOpenDialog(open)
   }, [open])
 
-
-  const editProfile = async (fields: Record<string, string>): Promise<void> => {
+  const editProfile = async (fields: Record<string, string>, addPals: boolean): Promise<void> => {
 
     let fieldsToChange: [string, string | null][] = []
 
     fieldsToChange = diffProfiles(profile, fields)
 
-    const _ = await Promise.all(fieldsToChange
+    await Promise.all(fieldsToChange
       .map(([field, val]) => {
         return editProfileField(field, val)
       }))
+
+    await setAddPals(addPals)
 
     setOpenDialog(false)
     onOpenChange(false)
@@ -57,11 +61,11 @@ const ProfileDialog: React.FC<Props> = ({
       >
         <DialogHeader>
           <DialogTitle>Your Profile</DialogTitle>
-          <ProfileForm
-            profileFields={profile}
-            editProfile={editProfile}
-          />
         </DialogHeader>
+        <ProfileForm
+          profileFields={profile}
+          editProfile={editProfile}
+        />
       </DialogContent>
     </Dialog>
   )

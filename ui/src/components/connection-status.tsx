@@ -46,7 +46,7 @@ type DotProps = {
 
 const ConnectionDot: React.FC<DotProps> = ({ status }) => {
   const color = getBackgroundColorFromStatus(status)
-  const sizeClass = "h-2 w-2 md:h-1 md:w-1"
+  const sizeClass = "h-2 w-2 md:h-[0.35rem] md:w-[0.35rem]"
 
   return (
     <span className={cn([sizeClass, "relative flex align-center"])}>
@@ -76,11 +76,22 @@ const ConnectionStatusBar: React.FC<{ status?: ConnectionStatus }> = ({ status }
         ?
         <Skeleton className="h-6 w-6 rounded-full" />
         :
-        <div className="flex items-center h-full justify-center m-16 mt-5 md:m-1 md:mr-4">
-          <div className="flex items-center justify-center mt-[1px] md:mt-[2px]">
+        <div className={cn([
+          "flex items-center h-full justify-center m-16 mt-5",
+          "md:m-3 md:mr-10"
+        ])}>
+          <div className={cn([
+            "flex items-center justify-center mt-[1px]",
+            "md:mt-[2px]"
+          ])}>
             <ConnectionDot status={status} />
           </div>
-          <p className="ml-2 text-sm md:text-xs">{getTextFromStatus(status)}</p>
+          <p className={cn([
+            "w-20 ml-2 text-sm",
+            "pt-[1px] sm:pt-0"
+          ])}>
+            {getTextFromStatus(status)}
+          </p>
         </div>
       }
     </div>

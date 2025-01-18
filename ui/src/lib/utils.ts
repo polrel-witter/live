@@ -1,7 +1,8 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { TZDate } from "@date-fns/tz"
-import { format } from "date-fns"
+import { add, isBefore } from "date-fns"
+import { debounce } from "@/hooks/use-debounce"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -9,17 +10,34 @@ export function cn(...inputs: ClassValue[]) {
 
 export function flipBoolean(b: boolean) { return !b }
 
-// HH:MM AM/PM (Zone) on Month DD YYYY
-export function formatEventDate(d: TZDate): string {
-  const fmt = format(d, `HH:mm aa (OO) 'on' LLLL do yyyy`)
-  // console.log("f", fmt)
-  return fmt
+//@ creates an array of all the days in the time range [startDate, endDate]
+export function makeArrayOfEventDays(startDate: TZDate, endDate: TZDate): Array<TZDate> {
+  const days: TZDate[] = []
+
+  const startDay = startDate
+
+  const justDay = (d: TZDate): TZDate => {
+    return new TZDate(
+      d.getFullYear(),
+      d.getMonth(),
+      d.getDate(),
+      0,
+      0,
+      0,
+      0,
+      d.timeZone)
+  }
+
+
+  for (let i = startDay; isBefore(i, endDate); i = add(justDay(i), { days: 1 })) {
+    days.push(i)
+  }
+
+  days.push(endDate)
+  return days
 }
 
-export function formatSessionTime(d: Date): string {
-  const fmt = format(d, `HH:mm`)
-  return fmt
-}
+// urbit utils
 
 export function isMoon(patp: string): boolean {
   return patp.length > 14
@@ -29,6 +47,9 @@ export function isComet(patp: string): boolean {
   return patp.length > 28
 }
 
-export function stripPatpSig(patp: string): string {
-  return patp.split("~")[1]
+// debouncing helpers
+
+export const debounceToast = ({dismiss}: {dismiss: () => void}) => {
+  const [fn,] = debounce<void>(dismiss, 2000)
+  fn().then(() => { })
 }

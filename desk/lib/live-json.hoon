@@ -2,15 +2,113 @@
 /+  *mip
 |%
 ::
+++  de-ship
+  ;~  pose
+    ;~  pfix  sig
+      ;~  pose
+        fed:ag
+        %+  cook
+          |=  t=tape
+          (scan (cass t) fed:ag)
+        (star alp)
+      ==
+    ==
+    fed:ag
+  ==
+::
+++  de-term
+  %+  cook
+    |=  a=tape
+    ^-  term
+    :: if the first letter's a number, prepend 'n' because event
+    :: names with numbers at the beginning require 'n' for
+    :: term validation
+    ::
+    =?  a  ?~((rush -.a dem) %| %&)
+      ['n' a]
+    =.  a  (cass a)
+    =.  a  (turn a |=(c=@t ?:(|(=('.' c) =(' ' c)) '-' c)))
+    ?.  ((sane %tas) (crip a))  ~|(%bad-term !!)
+    (slav %tas (crip a))
+  ;~(pose (plus ;~(pose alp dot ace)))
+::
+++  dejs-dial
+  =,  dejs:format
+  |=  jon=json
+  |^  ^-  dial
+  %.  jon
+  %-  of
+  :~  find+(ot ~[ship+(su de-ship) name+de-unit-term])
+      case-request+de-unit-term
+      case-response+(ot ~[case+ni:dejs-soft:format name+de-unit-term])
+  ==
+  ++  de-unit-term  (su:dejs-soft:format de-term)
+  --
+::
 ++  dejs-operation
   =,  dejs:format
   |=  jon=json
   |^  ^-  operation
-  %.  jon
-  %-  ot
-  :~  id+(ot ~[ship+(se %p) name+(se %tas)])
-      action+de-action
-  ==
+      :: if an event is being created, we extract the title, convert it to
+      :: $name:id format and overwrite the name passed in as json so parsing
+      :: doesn't fail
+      ::
+      =/  title=(unit @t)
+        (get-new-title jon)
+      =?  jon  ?~(title %| %&)
+        =/  new-name=@t
+          (format-name (need title))
+        (overwrite-name new-name jon)
+      %.  jon
+      %-  ot
+      :~  id+(ot ~[ship+(su de-ship) name+(se %tas)])
+          action+de-action
+      ==
+  ::
+  ++  overwrite-name
+    |=  [new-name=@t jon=json]
+    ^+  jon
+    ?>  ?=(%o -.jon)
+    :-  %o
+    %+  ~(jab by p.jon)  'id'
+    |=  j=^json
+    ?>  ?=(%o -.j)
+    :-  %o
+    (~(put by p.j) 'name' `json`s+new-name)
+  ::
+  ++  format-name
+    |=  title=cord
+    ^+  title
+    %-  crip
+    =;  =tape
+      ?.  (~(has in (silt "0123456789")) (snag 0 tape))
+        tape
+      (weld "n" tape)
+    %+  murn  (cass (trip title))
+    |=  a=@t
+    =/  special
+      (silt "~`!@#$%^&*|()-=_+[]\{}'\\:;\",.<>?")
+    ?:  =(' ' a)  `'-'
+    ?:((~(has in special) a) ~ `a)
+  ::
+  ++  get-new-title
+    |=  j=json
+    ^-  (unit cord)
+    ?.  ?=(%o -.jon)  ~
+    =/  act=json
+      (~(got by p.jon) 'action')
+    ?>  ?=(%o -.act)
+    =/  event=(unit json)
+      (~(get by p.act) 'create')
+    ?~  event  ~
+    ?>  ?=(%o -.u.event)
+    =/  info=json
+      (~(got by p.u.event) 'info')
+    ?>  ?=(%o -.info)
+    =/  title=json
+      (~(got by p.info) 'title')
+    ?>  ?=(%s -.title)
+    `p.title
   ::
   ++  de-action
     ^-  $-(json action)
@@ -18,10 +116,10 @@
     :~  create+de-event-1
         delete+ul
         info+de-sub-info-1
-        secret+de-unit-cord
+        secret+so:dejs-soft:format
         limit+ni:dejs-soft:format
         subscribe+ul
-        invite+(ar (se %p))
+        invite+(ar (su de-ship))
         register+de-unit-ship
         unregister+de-unit-ship
         punch+de-punch
@@ -34,22 +132,22 @@
   ++  de-punch
     %-  ot
     :~  act+(su (perk %verify %revoke ~))
-        ship+(se %p)
+        ship+(su de-ship)
     ==
   ::
-  ++  de-kind  (su (perk %public %private %secret ~))
+  ++  de-kind  (su (perk ~[%public %private %secret]))
   ::
-  ++  de-latch  (su (perk %open %closed %over ~))
+  ++  de-latch  (su (perk ~[%open %closed %over]))
   ::
   ++  de-sub-info-1
     ^-  $-(json sub-info-1)
     %-  of
     :~  title+so
-        about+de-unit-cord
+        about+so:dejs-soft:format
         moment+de-moment-1
-        timezone+(ot ~[p+bo q+(se %ud)])
-        location+de-unit-cord
-        venue-map+de-unit-cord
+        timezone+(ot ~[p+bo q+ni])
+        location+so:dejs-soft:format
+        venue-map+so:dejs-soft:format
         group+de-group
         kind+de-kind
         latch+de-latch
@@ -62,47 +160,63 @@
     ^-  $-(json info-1)
     %-  ot
     :~  title+so
-        about+de-unit-cord
+        about+so:dejs-soft:format
         moment+de-moment-1
-        timezone+(ot ~[p+bo q+(se %ud)])
-        location+de-unit-cord
-        venue-map+de-unit-cord
+        timezone+(ot ~[p+bo q+ni])
+        location+so:dejs-soft:format
+        venue-map+so:dejs-soft:format
         group+de-group
         kind+de-kind
         latch+de-latch
-        sessions+(op sym ^-($-(json session) (ot dl-session)))
+        sessions+de-sessions
     ==
-  ::
-  ++  de-unit-cord  so:dejs-soft:format
   ::
   ++  de-moment-1
     ^-  $-(json moment-1)
     %-  ot
-    :~  start+da:dejs-soft:format
-        end+da:dejs-soft:format
+    :~  start+di:dejs-soft:format
+        end+di:dejs-soft:format
     ==
   ::
   ++  de-group
-    |^  ^-  $-(json group)
-        (su:dejs-soft:format ;~((glue fas) ship ^sym))
-    ::
-    ++  sym   (se %tas)
-    ++  ship  ;~(pfix sig fed:ag)
-    --
+    ^-  $-(json group)
+    (su:dejs-soft:format ;~((glue fas) de-ship de-term))
   ::
   ++  dl-session
     :~  title+so
-        panel+de-unit-cord
-        location+de-unit-cord
-        about+de-unit-cord
+        panel+de-panel
+        location+so:dejs-soft:format
+        about+so:dejs-soft:format
         moment+de-moment-1
     ==
+  ::
+  ++  de-sessions
+    |=  jon=json
+    ^-  (map term session)
+    ?>  ?=([%a *] jon)
+    =/  a=(list session)
+      ((ar (ot dl-session)) jon)
+    =|  i=@ud
+    =|  b=(list [term session])
+    |-  ?~  a  (malt b)
+    $(b [[(slav %tas (crip "s{<i>}")) i.a] b], i +(i), a t.a)
+  ::
+  ++  de-panel
+    |=  jon=json
+    ^-  (unit cord)
+    ?>  ?=([%a *] jon)
+    =/  t=(list cord)
+      %+  turn  p.jon
+      |=  j=json
+      ?>  ?=([%s *] j)
+      p.j
+    ?~(t ~ `(crip (join ', ' t)))
   ::
   ++  de-event-1
     ^-  $-(json event-1)
     %-  ot
     :~  info+de-info-1
-        secret+de-unit-cord
+        secret+so:dejs-soft:format
         limit+ni:dejs-soft:format
     ==
   --
@@ -111,37 +225,61 @@
   =,  enjs:format
   |=  upd=update
   ^-  ^json
+  %-  pairs
   ?-    -.upd
+      %error  ['error' `json`?~(msg.upd ~ s+u.msg.upd)]~
       %record
-    %-  pairs
     :~  ['id' (en-id id.upd)]
         ['ship' s+(scot %p ship.upd)]
         ['record' (en-record record.upd)]
     ==
+  ::
+      %event
+    :~  ['id' (en-id id.upd)]
+        ['event' (en-event `event.upd)]
+    ==
+  ::
+      %result
+    :~  ['ship' s+(scot %p ship.upd)]
+        ['name' `json`?~(name.upd ~ s+u.name.upd)]
+        ['result' (en-result result.upd)]
+    ==
   ==
 ::
 ++  enjs-demand
-  =,  enjs:format
   |=  =demand
   ^-  ^json
   ~|  "{<-.demand>} conversion not supported"
+  %-  frond:enjs:format
   ?-    -.demand
-      %event-exists   !!
-      %record-exists  !!
-      %event          !!
-      %session-ids    !!
-      %counts         !!
-      %event-records  !!
-      %remote-events  !!
-      %all-events   (frond ['allEvents' (en-all-events p.demand)])
-      %all-records  (frond ['allRecords' (en-all-records p.demand)])
-      %record       (frond ['record' ?~(p.demand ~ (en-record u.p.demand))])
+      %event-exists   ['eventExists' b+p.demand]
+      %record-exists  ['recordExists' b+p.demand]
+      %event          ['event' (en-event p.demand)]
+      %session-ids    ['sessionIds' (en-session-ids p.demand)]
+      %record         ['record' ?~(p.demand ~ (en-record u.p.demand))]
+      %counts         ['counts' (en-counts p.demand)]
+      %all-events     ['allEvents' (en-all-events p.demand)]
+      %all-records    ['allRecords' (en-all-records p.demand)]
+      %event-records  ['records' (en-records p.demand)]
+      %remote-events  ['remoteEvents' (en-remote-events p.demand)]
+      %result         ['result' (en-result p.demand)]
   ==
+::
+++  en-result
+  |=  a=$@(@t (map id info-1))
+  ^-  ^json
+  ?@  a  [%s ;;(cord a)]
+  (en-remote-events a)
 ::
 ++  en-unit-cord
   |=  a=(unit cord)
   ^-  json
   ?~(a ~ s+u.a)
+::
+++  id-to-cord
+  |=  =id
+  ^-  cord
+  (crip :(weld (scow %p ship.id) "/" (scow %tas name.id)))
 ::
 ++  en-id
   |=  a=id
@@ -151,12 +289,69 @@
       ['name' s+(scot %tas name.a)]
   ==
 ::
+++  en-counts
+  =,  enjs:format
+  |=  a=(map stage @ud)
+  ^-  ^json
+  :-  %o
+  %-  malt
+  ^-  (list [cord ^json])
+  %+  turn  ~(tap by a)
+  |=  [s=stage c=@ud]
+  :-  (scot %tas s)
+  (frond ['count' (numb c)])
+::
+++  en-session-ids
+  |=  a=(list [term cord])
+  ^-  ^json
+  :-  %a
+  ^-  (list ^json)
+  %+  turn  a
+  |=  [t=term c=cord]
+  %-  pairs:enjs:format
+  :~  ['sessionId' s+(scot %tas t)]
+      ['sessionTitle' s+c]
+  ==
+::
+++  en-remote-events
+  |=  a=(map id info-1)
+  ^-  ^json
+  :-  %o
+  %-  malt
+  ^-  (list [cord ^json])
+  %+  turn  ~(tap by a)
+  |=  [=id i=info-1]
+  :-  (id-to-cord id)
+  (frond:enjs:format ['info' (en-info i)])
+::
+++  en-event
+  =,  enjs:format
+  |=  a=(unit event-1)
+  ^-  ^json
+  ?~  a  ~
+  %-  pairs
+  :~  ['info' (en-info info.u.a)]
+      ['secret' (en-unit-cord secret.u.a)]
+      ['limit' `json`?~(limit.u.a ~ (numb u.limit.u.a))]
+  ==
+::
+++  en-all-events
+  |=  a=(map id event-1)
+  ^-  json
+  :-  %o
+  %-  malt
+  ^-  (list [cord ^json])
+  %+  turn  ~(tap by a)
+  |=  [=id e=event-1]
+  :-  (id-to-cord id)
+  (frond:enjs:format ['event' (en-event `e)])
+::
 ++  en-record
   =,  enjs:format
   |=  a=record-1
   |^  ^-  ^json
   %-  pairs
-  :~  ['info' (en-info-1 info.a)]
+  :~  ['info' (en-info info.a)]
       ['secret' (en-unit-cord secret.a)]
       ['status' (en-status status.a)]
   ==
@@ -170,27 +365,16 @@
     ==
   --
 ::
-++  en-all-events
-  |=  a=(map id event-1)
-  |^  ^-  json
+++  en-records
+  |=  a=(map ship record-1)
+  ^-  ^json
   :-  %o
   %-  malt
   ^-  (list [cord ^json])
   %+  turn  ~(tap by a)
-  |=  [=id eve=event-1]
-  :-  (crip :(weld (scow %p ship.id) "/" (scow %tas name.id)))
-  (frond:enjs:format ['event' (en-event eve)])
-  ::
-  ++  en-event
-    =,  enjs:format
-    |=  a=event-1
-    ^-  ^json
-    %-  pairs
-    :~  ['info' (en-info-1 info.a)]
-        ['secret' (en-unit-cord secret.a)]
-        ['limit' `json`?~(limit.a ~ (numb u.limit.a))]
-    ==
-  --
+  |=  [s=ship r=record-1]
+  :-  (scot %p s)
+  (frond:enjs:format ['record' (en-record r)])
 ::
 ++  en-all-records
   |=  a=(mip id ship record-1)
@@ -202,19 +386,10 @@
   ^-  (list [cord ^json])
   %+  turn  ids
   |=  =id
-  ::  convert the id to a single cord for the object map, and nest
-  ::  the records map as an object within
-  ::
-  :-  (crip :(weld (scow %p ship.id) "/" (scow %tas name.id)))
-  :-  %o
-  %-  malt
-  ^-  (list [cord ^json])
-  %+  turn  ~(tap by (~(got by a) id))
-  |=  [=ship rec=record-1]
-  :-  (scot %p ship)
-  (frond:enjs:format ['record' (en-record rec)])
+  :-  (id-to-cord id)
+  (en-records (~(got by a) id))
 ::
-++  en-info-1
+++  en-info
   =,  enjs:format
   |=  a=info-1
   |^  ^-  ^json
@@ -256,6 +431,37 @@
         ['end' ?~(end.a ~ (sect u.end.a))]
     ==
   ::
+  ++  en-panel
+    |=  a=(unit cord)
+    |^  ^-  json
+        ?~  a  [%a ~]
+        =/  sliced=(list cord)
+          (comb (trip u.a))
+        :-  %a
+        ^-  (list json)
+        (turn sliced |=(=cord `json`[%s cord]))
+    ::
+    ++  comb
+      |=  in=(list cord)
+      ^+  in
+      =/  end=@ud
+        (lent in)
+      =|  out=(list cord)
+      =|  buffer=(list cord)
+      |-
+      ?~  in  out
+      ?:  (lte end 1)
+        (snoc out (crip (snoc buffer i.in)))
+      ?.  =(", " ~[i.in -.t.in])
+        $(buffer (snoc buffer i.in), end (dec end), in t.in)
+      %=  $
+        out     (snoc out (crip buffer))
+        buffer  *(list cord)
+        end     (sub end 2)
+        in      +.t.in
+      ==
+    --
+  ::
   ++  en-all-sessions
     |=  a=(map term session)
     ^-  json
@@ -263,16 +469,16 @@
     %-  malt
     ^-  (list [cord ^json])
     %+  turn  ~(tap by a)
-    |=  [=term =session]
-    :-  (scot %tas term)
-    (frond:enjs:format ['session' (en-session session)])
+    |=  [t=term s=session]
+    :-  (scot %tas t)
+    (frond:enjs:format ['session' (en-session s)])
   ::
   ++  en-session
     |=  a=session
     ^-  ^json
     %-  pairs
     :~  ['title' s+title.a]
-        ['panel' (en-unit-cord panel.a)]
+        ['panel' (en-panel panel.a)]
         ['location' (en-unit-cord location.a)]
         ['about' (en-unit-cord about.a)]
         ['moment' (en-moment-1 moment.a)]

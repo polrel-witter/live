@@ -1,6 +1,7 @@
-import { Backend, EventAsGuest, EventAsHost, eventIdsEqual, LiveUpdateEvent, Profile } from "@/backend";
-import { type } from "os";
 import { createContext } from "react";
+
+import { Patp, EventAsAllGuests, EventAsHost, Profile } from "@/lib/types";
+import { Backend } from "@/lib/backend";
 
 
 type ConnectionStatus = "online" | "connecting" | "offline"
@@ -9,8 +10,10 @@ interface GlobalCtx {
   connectionStatus: ConnectionStatus;
   fetched: boolean;
   profile: Profile;
-  eventsAsGuest: EventAsGuest[]
+  eventsAsGuest: EventAsAllGuests[]
   eventsAsHost: EventAsHost[]
+  refreshEventsAsHost: () => void
+  refreshEventsAsGuest: () => void
 }
 
 function newEmptyIndexCtx(): GlobalCtx {
@@ -18,7 +21,7 @@ function newEmptyIndexCtx(): GlobalCtx {
     connectionStatus: "connecting",
     fetched: false,
     profile: {
-      patp: "",
+      patp: "~",
       avatar: null,
       bio: null,
       nickname: null,
@@ -29,16 +32,19 @@ function newEmptyIndexCtx(): GlobalCtx {
       telegram: null,
       signal: null,
       phone: null,
+      addToPals: false,
     },
-    eventsAsGuest: [] as EventAsGuest[],
-    eventsAsHost: [] as EventAsHost[],
+    eventsAsGuest: [],
+    eventsAsHost: [],
+    refreshEventsAsHost: () => { },
+    refreshEventsAsGuest: () => {}
   }
 }
 
 const GlobalContext = createContext<GlobalCtx | null>(null)
 
 
-async function buildIndexCtx(backend: Backend, patp: string): Promise<GlobalCtx> {
+async function buildIndexCtx(backend: Backend, patp: Patp): Promise<GlobalCtx> {
 
   const ctx = newEmptyIndexCtx()
 

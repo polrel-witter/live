@@ -1,5 +1,6 @@
 import { createContext } from "react";
-import { Session, Profile, Attendee, EventAsGuest, emptyProfile } from "@/backend";
+
+import { Session, Profile, Attendee, EventAsGuest } from "@/lib/types";
 import { TZDate } from "@date-fns/tz";
 
 interface EventCtx {
@@ -15,7 +16,7 @@ function newEmptyCtx(): EventCtx {
     event: {
       details: {
         id: {
-          ship: "",
+          ship: "~",
           name: ""
         },
         title: "",
@@ -24,14 +25,15 @@ function newEmptyCtx(): EventCtx {
         startDate: new TZDate(0),
         endDate: new TZDate(0),
         description: "",
-        timezone: "",
+        timezone: "+00:00",
         kind: "public",
         group: null,
         latch: "open",
-        sessions: [] as Session[],
+        sessions: {},
       },
       status: "invited",
       secret: "",
+      lastChanged: new TZDate(),
     },
     profiles: [] as Profile[],
     attendees: [] as Attendee[],

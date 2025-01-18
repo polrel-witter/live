@@ -23,12 +23,8 @@
       sub-records=_(mk-subs records-1:lr ,[%record @ @ ~])  :: record subs
       pub-records=_(mk-pubs records-1:lr ,[%record @ @ ~])  :: record pubs
   ==
-::
-::
 +$  card  card:agent:gall
-::
 --
-::
 %+  verb  |
 %-  agent:dbug
 =|  state-1
@@ -36,57 +32,56 @@
 ::
 ^-  agent:gall
 ::
-=<
-  |_  =bowl:gall
-  +*  this  .
-      def  ~(. (default-agent this %|) bowl)
-      cor  ~(. +> bowl)
-  ::
-  ++  on-init
-    ^-  (quip card _this)
-    =^  cards  state  abet:init:cor
-    [cards this]
-  ::
-  ++  on-save  !>(state)
-  ::
-  ++  on-load
-    |=  old=vase
-    ^-  (quip card _this)
-    =^  cards  state  abet:(load:cor old)
-    [cards this]
-  ::
-  ++  on-poke
-    |=  [=mark =vase]
-    ^-  (quip card _this)
-    =^  cards  state  abet:(poke:cor mark vase)
-    [cards this]
-  ::
-  ++  on-peek
-    |=  =path
-    ^-  (unit (unit cage))
-    (peek:cor path)
-  ::
-  ++  on-agent
-    |=  [=wire =sign:agent:gall]
-    ^-  (quip card _this)
-    =^  cards  state  abet:(agent:cor wire sign)
-    [cards this]
-  ::
-  ++  on-arvo
-    |=  [=wire =sign-arvo]
-    ^-  (quip card _this)
-    =^  cards  state  abet:(arvo:cor wire sign-arvo)
-    [cards this]
-  ::
-  ++  on-watch
-    |=  =path
-    ^-  (quip card _this)
-    =^  cards  state  abet:(watch:cor path)
-    [cards this]
-  ::
-  ++  on-fail  on-fail:def
-  ++  on-leave  on-leave:def
-  --
+=<  |_  =bowl:gall
+    +*  this  .
+        def  ~(. (default-agent this %|) bowl)
+        cor  ~(. +> bowl)
+    ::
+    ++  on-init
+      ^-  (quip card _this)
+      =^  cards  state  abet:init:cor
+      [cards this]
+    ::
+    ++  on-save  !>(state)
+    ::
+    ++  on-load
+      |=  old=vase
+      ^-  (quip card _this)
+      =^  cards  state  abet:(load:cor old)
+      [cards this]
+    ::
+    ++  on-poke
+      |=  [=mark =vase]
+      ^-  (quip card _this)
+      =^  cards  state  abet:(poke:cor mark vase)
+      [cards this]
+    ::
+    ++  on-peek
+      |=  =path
+      ^-  (unit (unit cage))
+      (peek:cor path)
+    ::
+    ++  on-agent
+      |=  [=wire =sign:agent:gall]
+      ^-  (quip card _this)
+      =^  cards  state  abet:(agent:cor wire sign)
+      [cards this]
+    ::
+    ++  on-arvo
+      |=  [=wire =sign-arvo]
+      ^-  (quip card _this)
+      =^  cards  state  abet:(arvo:cor wire sign-arvo)
+      [cards this]
+    ::
+    ++  on-watch
+      |=  =path
+      ^-  (quip card _this)
+      =^  cards  state  abet:(watch:cor path)
+      [cards this]
+    ::
+    ++  on-fail  on-fail:def
+    ++  on-leave  on-leave:def
+    --
 =|  cards=(list card)
 |_  =bowl:gall
 +*  cor  .
@@ -99,6 +94,17 @@
 ++  emil  |=(caz=(list card) cor(cards (weld (flop caz) cards)))
 ++  abet  ^-((quip card _state) [(flop cards) state])
 ++  bran  |=(=tape (weld "%live: " tape))
+::  +succ: send local %error $update
+::
+::    success: msg=~
+::    failure: msg=[~ 'error message']
+::
+++  succ
+  |=  [paths=(list path) msg=(unit cord)]
+  ^+  cor
+  |-  ?~  paths  cor
+  =.  cor  (give-local-update i.paths [%error msg])
+  $(paths t.paths)
 ::  +sss-pub-records: update +cor cards and pub-records state
 ::
 ::   sss library produces a (quip card _pubs) so we need to split it
@@ -273,6 +279,8 @@
   ^+  cor
   ?>  (team:title our.bowl src.bowl)
   ?+  pol  ~|(bad-watch+pol cor)
+    [%error @ ~]  cor
+    [%search ~]   cor
     [%updates ~]  cor
   ==
 ::
@@ -305,12 +313,13 @@
     ==
   ::
       [%case %request @ @ ~]
-    =/  =ship  (slav %p i.t.t.wire)
-    =/  name=@t  i.t.t.t.wire
+    =/  =ship      (slav %p i.t.t.wire)
+    =/  name=term  (slav %tas i.t.t.t.wire)
     ?>  ?=(%poke-ack -.sign)
     ?~  p.sign  cor
     =;  msg=tape
-      cor(result (crip msg))
+      =.  result  (crip msg)
+      (give-local-update /search [%result ship `name result])
     ?:  =('all' name)
       ~['No events found under' ' ' (scot %p ship)]
     ~[(crip "'{<name>}'") ' not found under ' (scot %p ship)]
@@ -336,30 +345,98 @@
     =/  =ship  (slav %p i.t.t.wire)
     ~|(failed-to-request-case+ship !!)
   ::
+      [%status-change %timer @ @ @ ~]
+    =/  =ship      (slav %p i.t.t.wire)
+    =/  name=term  (slav %tas i.t.t.t.wire)
+    =/  act=?(%register %unregister)
+      ;;(?(%register %unregister) (slav %tas i.t.t.t.t.wire))
+    =/  rec=(unit record-1)
+      (~(get bi records) [ship name] our.bowl)
+    =;  notify=?
+      ?.  notify  cor
+      %+  succ  [/error/status-change]~
+      `'could not process status change, host could be offline'
+    ?~  rec  %&
+    ?-  act
+      %unregister  ?!(?=(?(%requested %unregistered) p.status.u.rec))
+      %register    ?!(?=(?(%requested %registered) p.status.u.rec))
+    ==
+  ::
       [%remote %scry *]
-    ?+    t.t.wire    ~|(bad-arvo-wire+wire !!)
+    ?+    t.t.wire    ~|(bad-wire+wire !!)
         ?([%all ~] [%event @ ~])
       ?.  ?=([%ames %tune *] sign-arvo)
         ~|(unexpected-system-response+sign-arvo !!)
-      =/  msg  'No events found'
+      =/  msg  (crip "No events found under {<ship.sign-arvo>}")
       =;  rev=_result
         =?  rev  ?~(rev & |)  msg
-        cor(result rev)
+        =.  result  rev
+        =/  =ship  ship.sign-arvo
+        =/  name=(unit term)
+          =/  =term  -:(flop path.sign-arvo)
+          ?:(?=(%all term) ~ `term)
+        (give-local-update /search [%result ship name result])
       ?~  roar.sign-arvo  msg
       =/  =roar:ames      u.roar.sign-arvo
       ?~  q.dat.roar      msg
       ;;((map id info-1) +.u.q.dat.roar)
     ::
-        [%timer @ @ *]
-      =/  end=path
-        ?+  t.t.t.t.t.wire  ~|(bad-wire+wire !!)
-          [%all ~]      //all
-          [%event @ ~]  //event/(scot %tas `term`i.t.t.t.t.t.wire)
+        [%timer @ @ @ *]
+      =/  [end=path name=(unit term)]
+        ?+    t.t.t.t.t.t.wire  ~|(bad-wire+wire !!)
+            [%all ~]      [//all ~]
+            [%event @ ~]
+          =/  =term  i.t.t.t.t.t.t.t.wire
+          [//event/(scot %tas term) `term]
         ==
-      =/  =ship     (slav %p i.t.t.t.wire)
-      =/  case=@ud  (slav %ud i.t.t.t.t.wire)
-      =/  =spur     (weld /g/x/(scot %ud case)/live end)
-      (emit [%pass /remote/scry/cancel %arvo %a %yawn ship spur])
+      ?+    t.t.t.t.wire  ~|(bad-wire+wire !!)
+          [%case *]
+        =/  =ship     (slav %p i.t.t.t.wire)
+        =/  case=@ud  (slav %ud i.t.t.t.t.t.wire)
+        =/  =spur     (weld /g/x/(scot %ud case)/live end)
+        (emit [%pass /remote/scry/cancel %arvo %a %yawn ship spur])
+      ::
+          [%response *]
+        |^
+        =/  =ship     (slav %p i.t.t.t.wire)
+        :: if the hash of the old result differs from current, we
+        :: assume we received a response so we do nothing, else we
+        :: modify the result and notify the user
+        ::
+        =/  old-hash=@ux  (slav %ux i.t.t.t.t.t.wire)
+        ?.  =(old-hash `@ux`(mug result))  cor
+        =/  notify=?
+          :: also check whether the previous ship we searched is the
+          :: same as current; if it is do not notify as the result
+          :: hasn't changed
+          ::
+          =/  previous-ship=(unit _ship)
+            ship-from-result
+          ?~  previous-ship  %&
+          ?:(=(ship u.previous-ship) %| %&)
+        ?.  notify  cor
+        =.  result
+          %-  crip
+          %+  weld
+            ?~  name  ~['No events found under' ' ' (scot %p ship)]
+            ~[(crip "'{<u.name>}'") ' not found under ' (scot %p ship)]
+          ". The host could be offline."
+        (give-local-update /search [%result ship name result])
+        ::  +ship-from-result: extract host ship from $result
+        ::
+        ++  ship-from-result
+          ^-  (unit ship)
+          ?~  result  ~
+          ?@  result
+            :: pull from cord
+            %+  rush  `cord`result
+            ;~(pfix (plus ;~(pose alp cen ace)) ;~(pfix sig fed:ag))
+          :: pull from map
+          =/  res=(list [=id info-1])
+            ~(tap by `(map id info-1)`result)
+          ?~(res ~ `ship.id.i.res)
+        --
+      ==
     ==
   ==
 ::
@@ -369,8 +446,10 @@
   =;  =demand
     ``[%live-demand !>(demand)]
   ?+    pol  ~|(invalid-scry-path+pol !!)
-      [%x %events %all ~]   [%all-events events]
-      [%x %records %all ~]  [%all-records records]
+      [%x %result ~]          [%result result]
+      [%x %events %all ~]     [%all-events events]
+      [%x %records %all ~]    [%all-records records]
+      [%x %events %remote ~]  [%remote-events get-remote-events]
   ::
       [%u %event %exists host=@ name=@ ~]
     :-  %event-exists
@@ -391,7 +470,7 @@
     :-  %event
     (~(get by events) (slav %p host:pol) (slav %tas name:pol))
   ::
-     [%x %session %ids host=@ name=@ ~]
+      [%x %session %ids host=@ name=@ ~]
     :-  %session-ids
     =/  e=event-1
       (~(got by events) (slav %p host:pol) (slav %tas name:pol))
@@ -409,7 +488,7 @@
       [%x %counts host=@ name=@ ~]
     ?~  rec=(~(get by records) (slav %p host:pol) (slav %tas name:pol))
       [%counts ~]
-    =/  cnt=(map _-.status @ud)
+    =/  cnt=(map stage @ud)
       %-  malt
       %-  limo
       :~  invited+0
@@ -469,11 +548,9 @@
       ~
     =/  current=(unit record-1)
       (~(get bi records) [src.msg name] our.bowl)
+    =.  cor  (succ [/error/status-change]~ ~)
     =.  cor
-      =/  =cage
-        :-  %live-update
-        !>(`update`[%record [src.msg name] our.bowl rev])
-      (emit [%give %fact ~[/updates] cage])
+      (give-local-update /updates [%record [src.msg name] our.bowl rev])
     =?  cor  (notify current rev)
       (emit (make-hark src.msg title.info.rev status.rev))
     cor(records (~(put bi records) [src.msg name] our.bowl rev))
@@ -532,6 +609,13 @@
   |=  [=wire who=ship app=term =cage]
   ^-  card
   [%pass wire %agent [who app] %poke cage]
+::  +give-local-update: produce a local $update
+::
+++  give-local-update
+  |=  [=path upd=update]
+  ^+  cor
+  %-  emit
+  [%give %fact ~[path] live-update+!>(`update`upd)]
 ::  +make-operation: produce an $operation cage
 ::
 ++  make-operation
@@ -550,11 +634,15 @@
 ::  +append-entropy: add random characters to a name for uniqueness
 ::
 ++  append-entropy
-  |=  name=term
+  |=  [salt=@ud name=term]
   ^-  term
   %+  slav  %tas
   %-  crip
-  :(weld (scow %tas name) "-" (swag [6 4] (scow %uv eny.bowl)))
+  ;:  weld
+    (scow %tas name)
+    "-"
+    (swag [6 4] (scow %uv ?~(salt eny.bowl (mul eny.bowl salt))))
+  ==
 ::  +get-our-case: get a remote scry revision number for one of our
 ::  published paths
 ::
@@ -597,17 +685,30 @@
 ++  search
   |=  [=ship name=(unit term)]
   ^+  cor
-  :: reset result state before sending the poke
-  ::
-  =.  result  *@t
   ?:  =(our.bowl ship)
-    cor(result 'See home page for our events')
+    =.  result
+      %-  crip
+      %+  weld  "{<ship>} is you. Events you host will be highlighted black"
+      " under the 'events' and 'archive' tabs"
+    (give-local-update /search [%result ship name result])
   =/  =wire
     %+  weld  /case/request/(scot %p ship)
     ?~  name  /all
     /(scot %tas u.name)
-  %-  emit
-  (make-act wire ship dap.bowl live-dial+!>(`dial`[%case-request name]))
+  ::  poke ship and set a timer to notify user if we get no response
+  ::
+  %-  emil
+  :~  (make-act wire ship dap.bowl live-dial+!>(`dial`[%case-request name]))
+      :*  %pass
+          ;:  weld  /remote/scry/timer/(scot %p ship)/response
+            /(scot %ux `@ux`(mug result))
+            ?~  name  /all
+            /event/(scot %tas u.name)
+          ==
+          %arvo  %b
+          %wait  (add ~s30 now.bowl)
+      ==
+  ==
 ::  +case-request: someone is requesting a remote scry revision number
 ::  for one of our published paths
 ::
@@ -629,23 +730,24 @@
   ^+  cor
   ?<  =(our src):bowl
   ?~  case
-    :: no case provided which means there are no discoverable events at
+    :: no case provided means there are no discoverable events at
     :: the path in question
     ::
     =;  msg=tape
-      cor(result (crip msg))
+      =.  result  (crip msg)
+      (give-local-update /search [%result src.bowl name result])
     ?~  name
       ~['No events found under' ' ' (scot %p src.bowl)]
     ~[(crip "{<(scow %tas u.name)>}") ' not found under ' (scot %p src.bowl)]
-  :: perform the scry
+  :: perform the scry and set a timer to cancel it
   ::
   %-  emil
   :~  :*  %pass
-          %+  weld  /remote/scry/timer/(scot %p src.bowl)/(scot %ud u.case)
+          %+  weld  /remote/scry/timer/(scot %p src.bowl)/case/(scot %ud u.case)
           ?~  name  /all
           /event/(scot %tas u.name)
           %arvo  %b
-          %wait  (add ~m1 now.bowl)
+          %wait  (add ~s30 now.bowl)
       ==
       :*  %pass
           %+  weld  /remote/scry/event
@@ -682,6 +784,12 @@
     ^-  ?
     =/  event=event-1  get-event
     ?=(%over latch.info.event)
+  ::  +latch-fail: pass local fail update due to an %over latch
+  ::
+  ++  latch-fail
+    |=  l=(list path)
+    ^+  cor
+    (succ l `'cannot process: this event is marked as %over')
   ::  +host-call: verify that a host is performing the action
   ::
   ++  host-call
@@ -705,6 +813,86 @@
     =/  =wire  (weld /subscribe id-to-path)
     =/  =cage  (make-operation id [%subscribe ~])
     (emit (make-act wire ship dap.bowl cage))
+  ::  +set-timer: await status change confirmation from host
+  ::
+  ++  set-timer
+    |=  act=?(%register %unregister)
+    ^+  cor
+    %-  emit
+    :*  %pass
+        %+  weld  /status-change/timer/(scot %p ship.id)/(scot %tas name.id)
+        /(scot %tas act)
+        %arvo  %b
+        %wait  (add ~s30 now.bowl)
+    ==
+  ::  +sane: check whether a moment's start comes before end
+  ::
+  :: TODO if dates are equal, but have different entropy this will
+  :: result in a negative asertion
+  ++  sane
+    |=  m=moment-1
+    ^-  ?
+    ?:  ?=([~ ~] m)  &
+    ?.  ?=([^ ^] m)  &
+    (lte (need start.m) (need end.m))
+  ::  +moment-nests: check whether a moment exists within the bound of
+  ::  another moment
+  ::
+  ++  moment-nests
+    |=  [bound=moment-1 start=(unit time) end=(unit time)]
+    ^-  ?
+    ?&  ?~(start & (in-moment bound u.start))
+        ?~(end & (in-moment bound u.end))
+    ==
+  ::  +in-moment: check whether some time is within the bounds of a
+  ::  moment
+  ::
+  ++  in-moment
+    |=  [bound=moment-1 =time]
+    ^-  ?
+    ?:  ?=([~ ~] bound)  &
+    ?:  ?=([^ ^] bound)
+      ?&  (gte time (need start.bound))
+          (lte time (need end.bound))
+      ==
+    ?~  end.bound
+      (gte time (need start.bound))
+    (lte time (need end.bound))
+  ::  +validate-moments: check if all session dates are within the bound
+  ::  of a moment
+  ::
+  ++  validate-moments
+    |=  [bound=moment-1 sessions=(map @tas =session)]
+    ^-  (unit _cor)
+    =;  error=tape
+      ?~  error  ~
+      ~&(>>> (bran error) `(succ ~[/error/create /error/edit] `(crip error)))
+    :: if event moment is TBD ([~ ~]), session dates will pass now but the
+    :: moment will be checked against them later when it's set
+    ::
+    ?:  ?=([~ ~] bound)  ~
+    ?.  (sane bound)
+      "event dates are insane: {<bound>}"
+    =|  not-sane=tape
+    =|  not-bound=tape
+    =/  ls=(list [sid=@tas s=session])
+      ~(tap by sessions)
+    |-
+    ?~  ls
+      ?.  =(~ not-sane)
+        "these session dates are insane:"
+      ?~  not-bound  ~
+      %-  snip
+      %+  weld  "these sessions are outside the bound of their event dates:"
+      not-bound
+    ?.  (sane moment.s.i.ls)
+      %=  $
+        not-sane  (weld not-sane " {<title.s.i.ls>}: {<moment.s.i.ls>}")
+        ls   t.ls
+      ==
+    ?:  (moment-nests bound moment.s.i.ls)
+      $(ls t.ls)
+    $(not-bound (weld not-bound " {<title.s.i.ls>},"), ls t.ls)
   ::  +delete-remote-path: delete all instances of an event's remote scry
   ::  path
   ::
@@ -733,17 +921,17 @@
         ==
       $(guests t.guests)
     $(count +(count), guests t.guests)
-  ::  +get-ships-by-status: ditto
+  ::  +get-ships-by-status: pull a list of ships by stage association
   ::
   ++  get-ships-by-status
-    |=  bag=(set _-.status)
+    |=  stages=(set stage)
     ^-  (list ship)
     =/  event-records=(map ship record-1)
-      (~(got by records) id)
+      ?~(r=(~(get by records) id) ~ u.r)
     %+  murn  ~(tap by event-records)
     |=  [s=ship r=record-1]
     ^-  (unit ship)
-    ?.((~(has in bag) p.status.r) ~ `s)
+    ?.((~(has in stages) p.status.r) ~ `s)
   ::  +update-guests: update a subset of ships with records
   ::
   ++  update-guests
@@ -800,7 +988,6 @@
       %info        (change-info +.act)
       %secret      (change-secret +.act)
       %limit       (change-limit +.act)
-    ::
       %subscribe   subscribe
       %invite      (invite +.act)
       %register    (register +.act)
@@ -811,17 +998,38 @@
     ::
     ++  create
       |=  event=event-1
-      ^+  cor
+      |^  ^+  cor
       ?>  host-call
       =?  id  (~(has by events) id)
-        [ship.id (append-entropy name.id)]
+        [ship.id (append-entropy 0 name.id)]
+      =/  error=(unit _cor)
+        (validate-moments moment.info.event sessions.info.event)
+      ?.  =(~ error)
+        (need error)
+      =.  sessions.info.event
+        (malt (replace-ids ~(tap by sessions.info.event)))
       =.  events  (~(put by events) id event)
       =.  cor
         %+  poke-matcher
           /matcher/(scot %p our.bowl)/add
         [id [%add-peer our.bowl]]
       =.  cor  (update-remote-event event)
-      update-all-remote-events
+      =.  cor  update-all-remote-events
+      (succ [/error/create]~ ~)
+      ::  +replace-ids: session ids inheret name.id and some entropy
+      ::
+      ++  replace-ids
+        |=  in=(list [term =session])
+        ^+  in
+        =+  salt=1
+        =|  out=(list [term session])
+        |-  ?~  in  out
+        =;  sid=term
+          $(out [[sid session.i.in] out], salt +(salt), in t.in)
+        %+  slav  %tas
+        %-  crip
+        (weld (scow %tas (append-entropy salt name.id)) "-s")
+      --
     ::  +delete: as host, permanently delete an event; as a guest,
     ::  delete a record and unsubscribe from its updates
     ::
@@ -832,6 +1040,7 @@
         ?>  &(=(our src):bowl ?!(=(our.bowl ship.id)))
         =.  sub-records
           (quit:da-records ship.id dap.bowl [%record name.id our.bowl ~])
+        =.  cor  (succ [/error/delete]~ ~)
         cor(records (~(del bi records) id our.bowl))
       =/  event=event-1  get-event
       =?  cor  ?~((get-our-case `name.id) %| %&)
@@ -850,7 +1059,7 @@
       =?  cor  ?~((get-our-case ~) %| %&)
         (delete-remote-path (need (get-our-case ~)) /all)
       =.  cor  delete-records
-      cor
+      (succ [/error/delete]~ ~)
       ::  +delete-records: deletes all records associated with an event
       ::  and kills their associated pub paths
       ::
@@ -874,37 +1083,66 @@
       ?>  host-call
       :: if event is %over, only allow a %latch modification
       ::
-      ?:  &(?!(?=(%latch -.sub-info)) over)  cor
-      =.  cor  (ingest-diff sub-info)
-      =?  cor  ?~((get-our-case `name.id) %| %&)
-        %+  delete-remote-path  (need (get-our-case `name.id))
-        /event/(scot %tas name.id)
+      ?:  &(?!(?=(%latch -.sub-info)) over)
+        (latch-fail [/error/edit]~)
+      =/  [error=? new-cor=_cor]
+        (ingest-diff sub-info)
+      ?:  error  new-cor
+      =/  case=(unit @ud)  (get-our-case `name.id)
+      =?  cor  ?~(case %| %&)
+        (delete-remote-path (need case) /event/(scot %tas name.id))
+      =.  cor  new-cor
+      =.  cor  (succ [/error/edit]~ ~)
+      =+  event=get-event
+      =.  cor  (give-local-update /updates [%event id event])
       :: if event is %secret only update %invited, %registered, and
       :: %attended, otherwise send the update to all ships with a
       :: record
       ::
       %-  update-guests
-      =+  event=get-event
       ?.  ?=(%secret kind.info.event)  get-all-record-ships
       %-  get-ships-by-status
-      (silt `(list _-.status)`~[%invited %registered %attended])
+      (silt `(list stage)`~[%invited %registered %attended])
+      ::  +validate-session-moments: does a session moment nest within the
+      ::  bound of its event moment?
+      ::
+      ++  validate-session-moments
+        |=  session-moment=moment-1
+        ^-  (unit _cor)
+        ?.  (sane session-moment)
+          =+  msg="session dates are insane: {<session-moment>}"
+          ~&(>>> (bran msg) `(succ [/error/edit]~ `(crip msg)))
+        =/  bound=moment-1  moment.info:get-event
+        ?:  (moment-nests bound session-moment)  ~
+        =/  msg
+          %+  weld
+            "session dates are not within the bound of the event dates, "
+          "which starts {<start.bound>} and ends {<end.bound>}"
+        ~&(>>> (bran msg) `(succ [/error/edit]~ `(crip msg)))
       ::  +ingest-diff: write the diff to state
       ::
       ++  ingest-diff
         |=  sub-info=sub-info-1
-        ^+  cor
+        ^-  [? _cor]
         =/  event=event-1  get-event
         ?-    -.sub-info
-            %title      (update-event event(title.info p.sub-info))
-            %about      (update-event event(about.info p.sub-info))
-            %location   (update-event event(location.info p.sub-info))
-            %venue-map  (update-event event(venue-map.info p.sub-info))
-            %group      (update-event event(group.info p.sub-info))
-            %moment     (update-event event(moment.info p.sub-info))
-            %timezone   (update-event event(timezone.info p.sub-info))
+            %title      [%| (update-event event(title.info p.sub-info))]
+            %about      [%| (update-event event(about.info p.sub-info))]
+            %location   [%| (update-event event(location.info p.sub-info))]
+            %venue-map  [%| (update-event event(venue-map.info p.sub-info))]
+            %group      [%| (update-event event(group.info p.sub-info))]
+            %timezone   [%| (update-event event(timezone.info p.sub-info))]
+        ::
+            %moment
+          =/  error=(unit _cor)
+            (validate-moments p.sub-info sessions.info.event)
+          ?~  error
+            [%| (update-event event(moment.info p.sub-info))]
+          [%& u.error]
         ::
             %delete-session
           =/  sid=@tas  p.sub-info
+          :-  %|
           %-  update-event
           event(sessions.info (~(del by sessions.info.event) sid))
         ::
@@ -914,8 +1152,10 @@
           ?:  ?&  ?=(%open p.sub-info)
                   ?~(limit.event | =(u.limit.event permitted-count))
               ==
-            ~|(event-limit-is-reached+id !!)
-          (update-event event(latch.info p.sub-info))
+            =+  msg="cannot open: event limit is reached"
+            ~&  >>>  (bran msg)
+            [%& (succ [/error/edit]~ `(crip msg))]
+          [%| (update-event event(latch.info p.sub-info))]
         ::
             %create-session
           =/  sid=@tas
@@ -924,10 +1164,15 @@
             ::
             %+  slav  %tas
             %-  crip
-            (weld (scow %tas (append-entropy name.id)) "-s")
+            (weld (scow %tas (append-entropy 0 name.id)) "-s")
           =/  =session  p.sub-info
-          %-  update-event
-          event(sessions.info (~(put by sessions.info.event) sid session))
+          =/  error=(unit _cor)
+            (validate-session-moments moment.session)
+          ?~  error
+            :-  %|
+            %-  update-event
+            event(sessions.info (~(put by sessions.info.event) sid session))
+          [%& u.error]
         ::
             %kind
           =/  new-kind=kind  p.sub-info
@@ -935,7 +1180,7 @@
             =+  event=get-event
             =/  targets=(list ship)
               %-  get-ships-by-status
-              (silt `(list _-.status)`~[%requested %unregistered])
+              (silt `(list stage)`~[%requested %unregistered])
             ?.  ?=(?(%public %private) kind.info.event)
               ?.  ?=(?(%public %private) new-kind)  cor
               ::  ask all records with a %requested or %unregistered
@@ -960,22 +1205,34 @@
               %-  sss-pub-records
               (kill:du-records [%record name.id i.targets ~]~)
             $(targets t.targets)
-          (update-event event(kind.info new-kind))
+          [%| (update-event event(kind.info new-kind))]
         ::
             %edit-session
           =/  sid=@tas  p.sub-info
           =/  ses=(unit session)
             (~(get by sessions.info.event) sid)
-          ?~  ses  ~&(>>> (bran "no session found for sid {<sid>}") cor)
-          =;  rev=session
-            %-  update-event
-            event(sessions.info (~(put by sessions.info.event) sid rev))
+          ?~  ses
+            =+  msg="no session found for sid {<sid>}"
+            ~&(>>> (bran msg) [%| (succ [/error/edit]~ `(crip msg))])
+          =;  rev=(each _cor session)
+            ?-    -.rev
+                %&  [%& p.rev]
+                %|
+              :-  %|
+              %-  update-event
+              event(sessions.info (~(put by sessions.info.event) sid p.rev))
+            ==
           ?-    -.q.sub-info
-              %title      u.ses(title p.q.sub-info)
-              %panel      u.ses(panel p.q.sub-info)
-              %location   u.ses(location p.q.sub-info)
-              %about      u.ses(about p.q.sub-info)
-              %moment     u.ses(moment p.q.sub-info)
+              %title      [%| u.ses(title p.q.sub-info)]
+              %panel      [%| u.ses(panel p.q.sub-info)]
+              %location   [%| u.ses(location p.q.sub-info)]
+              %about      [%| u.ses(about p.q.sub-info)]
+              %moment
+            =/  error=(unit _cor)
+              (validate-session-moments p.q.sub-info)
+            ?~  error
+              [%| u.ses(moment p.q.sub-info)]
+            [%& u.error]
           ==
         ==
       --
@@ -985,13 +1242,16 @@
       |=  new-limit=limit
       ^+  cor
       ?>  host-call
-      ?:  over  cor
+      ?:  over  (latch-fail [/error/edit]~)
       =;  write=?
-        ?.  write  ~|(limit-lower-than-registered-count+id !!)
+        ?.  write
+          =+  msg="new limit is lower than the registered count"
+          ~&  >>>  (bran msg)
+          (succ [/error/edit]~ `(crip msg))
         =/  event=event-1  get-event
-        =.  limit.event
-          new-limit
-        (update-event event)
+        =.  limit.event  new-limit
+        =.  cor  (update-event event)
+        (succ [/error/edit]~ ~)
       ?~  new-limit  &
       (gte u.new-limit permitted-count)
     ::  +change-secret: update the event secret and publish to
@@ -1001,7 +1261,7 @@
       |=  new-secret=secret
       ^+  cor
       ?>  host-call
-      ?:  over  cor
+      ?:  over  (latch-fail [/error/edit]~)
       =/  event=event-1  get-event
       =.  secret.event  new-secret
       =.  cor  (update-event event)
@@ -1009,7 +1269,8 @@
       =|  permitted=(list ship)
       |-
       ?~  guests
-        (update-guests permitted)
+        =.  cor  (update-guests permitted)
+        (succ [/error/edit]~ ~)
       =+  status=(need ~(current-status re i.guests))
       ?.  ?|  ?=(%registered p.status)
               ?=(%attended p.status)
@@ -1036,9 +1297,8 @@
       |=  ships=(list ship)
       ^+  cor
       ?>  host-call
-      ?:  over  cor
-      |-
-      ?~  ships  cor
+      ?:  over  (latch-fail [/error/status-change]~)
+      |-  ?~  ships  cor
       =.  cor  (ask-to-subscribe i.ships)
       =.  cor
         ?.  (~(has bi records) id i.ships)
@@ -1068,9 +1328,11 @@
         :: send a register poke to a host
         =/  =wire  (weld /register id-to-path)
         =/  =cage  (make-operation id [%register ~])
+        =.  cor  (set-timer %register)
         (emit (make-act wire ship.id dap.bowl cage))
       :: poke from host or some foreign ship
-      ?:  over  cor
+      ?:  over
+        ?.(=(src our):bowl cor (latch-fail [/error/status-change]~))
       =/  event=event-1  get-event
       =/  =ship  ?~(who src.bowl u.who)
       =.  cor  (ask-to-subscribe ship)
@@ -1165,10 +1427,12 @@
         =/  =wire  (weld /unregister id-to-path)
         =/  =cage
           (make-operation id [%unregister ~])
+        =.  cor  (set-timer %unregister)
         (emit (make-act wire ship.id %live cage))
       :: unregister poke from some guest or us as the host
       ::
-      ?:  over  cor
+      ?:  over
+        ?.(=(src our):bowl cor (latch-fail [/error/status-change]~))
       =?  who  ?~(who & ?>(host-call |))
         ?>(guest-call `src.bowl)
       ?.  (is-registered (need who))  cor
@@ -1202,10 +1466,12 @@
       |=  [job=?(%verify %revoke) =ship]
       ^+  cor
       ?>  host-call
-      ?:  over  cor
+      ?:  over  (latch-fail [/error/status-change]~)
       ?~  sts=~(current-status re ship)  cor
       =;  rev=(unit status)
-        ?~  rev  cor
+        ?~  rev
+          %+  succ  [/error/status-change]~
+          `'guest status is not %registered or %attended'
         (~(update-status re ship) u.rev)
       ?-  job
         %revoke  ?:(?=(%attended p.u.sts) `[%registered now.bowl] ~)
@@ -1228,6 +1494,9 @@
       |=  new-status=status
       ^+  cor
       =;  record=record-1
+        :: pass local update
+        =.  cor  (give-local-update /updates [%record id ship record])
+        =.  cor  (succ [/error/status-change]~ ~)
         (~(publish re ship) record)
       =/  record=record-1
         ~|  no-record+[id ship]
@@ -1262,11 +1531,12 @@
           [info.event ~ status]
         [info.event secret.event status]
       :: make path secret
-      =.  cor
-        (sss-pub-records (secret:du-records [path]~))
+      =.  cor  (sss-pub-records (secret:du-records [path]~))
       :: permission the guest for access
-      =.  cor
-        (sss-pub-records (allow:du-records [ship]~ [path]~))
+      =.  cor  (sss-pub-records (allow:du-records [ship]~ [path]~))
+      :: pass local updates
+      =.  cor  (succ [/error/status-change]~ ~)
+      =.  cor  (give-local-update /updates [%record id ship record])
       :: give the guest the record
       (~(publish re ship) record)
     --

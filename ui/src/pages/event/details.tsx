@@ -1,105 +1,89 @@
 import { useContext } from "react";
 import { EventContext } from "./context";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { EventDetailsCard } from "@/components/cards/event-details";
+import { GlobalContext } from "@/globalContext";
+import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import ProfilePicture from "@/components/profile-picture";
-import { cn, formatEventDate, isComet, isMoon, stripPatpSig } from "@/lib/utils";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { MessagesSquare } from "lucide-react";
-import { Profile } from "@/backend";
-
-
-const baseTextClass = "text-sm md:text-xl"
-
-const HostedByText: React.FC<{ profile: Profile | undefined, patp: string }> = ({ profile, patp }) => {
-
-  const className = cn(baseTextClass, {
-    "text-xs": isMoon(patp) || isComet(patp)
-  })
-
-  // i think profile?.nickname can become something truthy or falsy
-  if (profile?.nickname && profile.nickname !== "") {
-    return <div className={cn([baseTextClass])}>
-      <span>{profile.nickname}</span>
-      <span className={className}> ({patp})</span>
-    </div>
-  }
-
-
-  return <div className={className}> {patp} </div>
-}
+import { ResponsiveContent } from "@/components/responsive-content";
+import { AnimatedButtons } from "@/components/animated-buttons";
+import { cn } from "@/lib/utils";
+import { formatEventDateShort, shiftTzDateInUTCToTimezone } from "@/lib/time";
 
 const EventDetails: React.FC = () => {
+  const globalCtx = useContext(GlobalContext)
+
+  if (!globalCtx) {
+    throw Error("globalContext is null")
+  }
+
   const ctx = useContext(EventContext)
 
   if (!ctx) {
     throw Error("context is null")
   }
 
-  const {
-    event: {
-      details: { id: { ship }, title, group, startDate, endDate, location, description }, ...rest
-    },
-  } = ctx
-
-
-  const hostProfile = ctx.profiles
-    .find((profile) => profile.patp === stripPatpSig(ship))
-
 
   return (
-    <div className="space-y-6 pt-10 text-center">
-      <Card className="mx-6 md:mx-12 lg:mx-96">
-        <CardHeader>
-          <p className="text-xl font-semibold"> {title} </p>
-        </CardHeader>
-        <CardContent
-          className="grid items-justify gap-y-6" >
-          <div className="flex-row md:flex items-center justify-center gap-x-2">
-            <div className={cn([baseTextClass, "pr-2"])}> hosted by </div>
-            <div className="flex justify-center items-center gap-x-4">
-              {(ctx.fetched ? <ProfilePicture avatarUrl={hostProfile?.avatar ?? undefined} size="xs" point={ship} /> : '')}
-              <HostedByText profile={hostProfile} patp={ship} />
-            </div>
-          </div>
-          <p className={cn([baseTextClass])}> starts: {startDate ? formatEventDate(startDate) : "TBD"} </p>
-          <p className={cn([baseTextClass])}> ends: {endDate ? formatEventDate(endDate) : "TBD"} </p>
-          {
-            group
-              ?
-              <div className="flex items-center justify-center">
-                <Link
-                  className={cn([baseTextClass, buttonVariants({ variant: "link" }), "bg-black", "text-accent", "p-3", "h-7"])}
-                  to={`/apps/groups/groups/${group.ship}/${group.name}/channels`}
-                  reloadDocument
-                >
-                  <MessagesSquare className="h-4 w-4 mr-3" />
-                  tlon:
-                  {`${group.ship}/${group.name}`}
+    <ResponsiveContent className="flex justify-center space-y-6 pt-10">
+      {ctx.fetched
+        ? <EventDetailsCard
+          hostProfile={globalCtx.profile}
+          details={ctx.event.details}
+          secret={ctx.event.secret}
+          className="w-full"
+          buttons={
+            <div className="flex flex-col space-y-4">
+              <div className="flex justify-between">
+                <Link to="attendees" >
+                  <Button className="w-fit-content"> guest list </Button>
+                </Link>
+                <Link to="schedule" >
+                  <Button className="w-fit-content"> schedule </Button>
                 </Link>
               </div>
 
-              :
-              ''
+              <div>
+                <AnimatedButtons
+                  minWidth={["w-[45px]", "sm:w-[100px]"]}
+                  maxWidth={["w-[160px]", "sm:w-[300px]"]}
+                  classNames={[
+                    "bg-stone-300",
+                    "bg-stone-300",
+                    "bg-stone-300",
+                  ]}
+                  labels={[
+                    <div className="text-xs md:text-lg" > status </div>,
+                    <div className="text-xs md:text-lg" > latch </div>,
+                    <div className="text-xs md:text-lg" > kind </div>,
+                  ]}
+                  items={[
+                    <div className={cn([
+                      "flex flex-col w-full rounded-md",
+                      "text-xs text-center",
+                      "sm:text-base"
+                    ])}>
+                      <span>{ctx.event.status}</span>
+                      <span className="text-[10px] font-bold truncate">
+                        {formatEventDateShort(
+                          shiftTzDateInUTCToTimezone(
+                            ctx.event.lastChanged,
+                            ctx.event.details.timezone,
+                          )
+                        )}
+                      </span>
+                    </div>,
+                    <div className="text-xs sm:text-base truncate"> event is currently {ctx.event.details.latch} </div>,
+                    <div className="text-xs sm:text-base truncate">this event is {ctx.event.details.kind} </div>,
+                  ]}
+                />
+              </div>
+
+            </div>
           }
-          <p className={cn([baseTextClass, "text-justify"])}> {description} </p>
-          <div className="flex justify-around">
-            <Link to="attendees" >
-              <Button className="w-fit-content">guest list</Button>
-            </Link>
-            <Link to="schedule" >
-              <Button className="w-fit-content">
-                schedule </Button>
-            </Link>
-          </div>
-        </CardContent>
-        <CardFooter className="justify-center">
-          location: {location}
-        </CardFooter>
-      </Card>
-      <div >
-      </div>
-    </div>
+        />
+        : ''
+      }
+    </ResponsiveContent>
   )
 }
 

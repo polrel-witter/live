@@ -1,13 +1,19 @@
-import { Backend, diffProfiles, Profile } from "@/backend";
-import EventList from "@/components/event-list";
-import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
+import { Link, Outlet, useNavigate, useSearchParams } from "react-router-dom";
 import { useContext, useEffect, useState } from "react";
-import { User } from "lucide-react";
+import { Plus, User } from "lucide-react";
+
+import { GlobalContext } from "@/globalContext";
+
+import { useOnMobile } from "@/hooks/use-mobile";
+import { Backend } from "@/lib/backend";
+import { flipBoolean } from "@/lib/utils";
+
+import { AppFrame } from "@/components/frame";
+import { NavbarWithSlots } from "@/components/frame/navbar";
+import { FooterWithSlots } from "@/components/frame/footer";
+import { ConnectionStatusBar } from "@/components/connection-status";
 import { Button } from "@/components/ui/button";
 import { ProfileDialog } from "@/components/profile-dialog";
-import { flipBoolean } from "@/lib/utils";
-import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
-import { GlobalContext } from "@/globalContext";
 
 const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
   const globalContext = useContext(GlobalContext)
@@ -16,56 +22,78 @@ const Index: React.FC<{ backend: Backend }> = ({ backend }) => {
     console.error("globalContext is not set")
     return
   }
+  const basePath = import.meta.env.BASE_URL
 
   const [openProfile, setOpenProfile] = useState(false)
 
-  return (
-    <div>
-      <NavigationMenu className="fixed border-b-2 w-full bg-white">
-        <NavigationMenuList>
-          <NavigationMenuItem className="fixed left-0">
+  const onMobile = useOnMobile()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
+  useEffect(() => {
+    if (!globalContext.fetched) { return }
+
+    if (searchParams.has("reloadEvents")) {
+      globalContext.refreshEventsAsHost()
+      navigate(basePath)
+    }
+
+    if (searchParams.has("reloadRecords")) {
+      globalContext.refreshEventsAsGuest()
+      navigate(basePath)
+    }
+  }, [searchParams])
+
+  const navBar =
+    <NavbarWithSlots
+      left={
+        <div>
+          <Button
+            onClick={() => { setOpenProfile(flipBoolean) }}
+            className="p-3 m-1 rounded-3xl"
+          >
+            <User className="w-4 h-4 mr-2 text-white" /> profile
+          </Button>
+          <ProfileDialog
+            onOpenChange={setOpenProfile}
+            open={openProfile}
+            profile={globalContext.profile}
+            editProfileField={backend.editProfileField}
+            setAddPals={backend.setAddPals}
+          />
+        </div>
+      }
+      right={
+        <div className="font-medium text-xl">
+          <Link to="create">
             <Button
-              onClick={() => { setOpenProfile(flipBoolean) }}
-              className="p-3 m-1 rounded-3xl"
+              className="p-3 m-1 rounded-3xl shadow-sm border bg-white hover:bg-primary/20"
             >
-              <User
-                className="w-4 h-4 mr-2 text-white"
-              /> profile
+              <Plus className="w-4 h-4 mr-1 text-primary" />
+              <p className="text-primary">{onMobile ? "create" : "create event"} </p>
             </Button>
-            <ProfileDialog
-              onOpenChange={setOpenProfile}
-              open={openProfile}
-              profile={globalContext.profile}
-              editProfileField={backend.editProfileField}
-            />
-          </NavigationMenuItem>
-          <NavigationMenuItem className="font-medium text-xl"> %live </NavigationMenuItem>
-        </NavigationMenuList>
-      </NavigationMenu>
+          </Link>
+        </div>
+      }
+    >
+      <div className="font-medium text-xl"> %live </div>
+    </NavbarWithSlots>
 
-      <div className="grid justify-center w-full space-y-6 py-20 text-center">
-        <h1 className="text-3xl italic">events</h1>
-        <Tabs defaultValue="eventsAsGuest">
-          <TabsList>
-            <TabsTrigger value="eventsAsHost">you're hosting</TabsTrigger>
-            <TabsTrigger value="eventsAsGuest">you can participate</TabsTrigger>
-          </TabsList>
-          <TabsContent value="eventsAsHost">
-            <EventList
-              details={globalContext.eventsAsHost.map((evt) => evt.details)}
-            />
-          </TabsContent>
-          <TabsContent value="eventsAsGuest">
-            <EventList
-              details={globalContext.eventsAsGuest.map((evt) => evt.details)}
-            />
-          </TabsContent>
-        </Tabs>
+  const footer = <FooterWithSlots
+    left={<div> </div>}
+    right={<ConnectionStatusBar status={globalContext.connectionStatus} />}
+  />
 
+  return (
+    <AppFrame
+      top={navBar}
+      bottom={footer}
+    >
+      <div className="pt-12">
+        <Outlet />
       </div>
-    </div>
+    </AppFrame>
   )
-
 }
 
 export { Index };

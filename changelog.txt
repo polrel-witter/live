@@ -1,0 +1,7 @@
+%live
+
+v2.0.2, ~2024.10.22
+- PWA frontend, written in Typescript and built with Vite
+- New UX/UI flow
+- Session support so event hosts can build out multi-day schedules
+- Matching functionality which enables guest networking during/after events, implemented with a new agent called %matcher

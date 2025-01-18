@@ -29,8 +29,12 @@ const toastVariants = cva(
     variants: {
       variant: {
         default: "border bg-background text-foreground",
+        success:
+          "success group border-success bg-success text-success-foreground",
         destructive:
           "destructive group border-destructive bg-destructive text-destructive-foreground",
+        warning:
+          "warning group border-warning bg-warning text-warning-foreground",
       },
     },
     defaultVariants: {
@@ -79,12 +83,14 @@ const ToastClose = React.forwardRef<
       "absolute right-1 top-3.5 rounded-md p-1 text-foreground/50  hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
       className,
       buttonVariants({ variant: "ghost", size: "default" }),
+      // variant ghost's hover:bg-accent makes the button all white
+      "hover:bg-transparent",
       "p-1 px-3 font-black",
     )}
     toast-close=""
     {...props}
   >
-   close
+    close
   </ToastPrimitives.Close>
 ))
 ToastClose.displayName = ToastPrimitives.Close.displayName
@@ -107,7 +113,9 @@ const ToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Description
     ref={ref}
-    className={cn("text-sm opacity-90", className)}
+    // max-w-80 here so for toasts without a title the close button
+    // doesn't overlap with content
+    className={cn("text-sm opacity-90 max-w-80", className)}
     {...props}
   />
 ))

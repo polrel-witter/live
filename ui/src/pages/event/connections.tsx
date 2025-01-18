@@ -1,20 +1,22 @@
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel"
 import { useContext, useEffect, useState } from "react"
-import { EventContext } from "./context"
-import ProfilePicture from "@/components/profile-picture"
-import { Attendee, Backend, Profile } from "@/backend"
-import ProfileCard from "@/components/profile-card"
-import { SpinningButton } from "@/components/spinning-button"
-import { type CarouselApi } from "@/components/ui/carousel"
 import { Check, ChevronUp, Ellipsis, FileQuestion, IterationCw, Plus, X } from "lucide-react"
+
+import { EventContext } from "./context"
+
+import { Attendee } from "@/lib/types"
 import { cn, flipBoolean } from "@/lib/utils"
+import { Patp } from "@/lib/types"
+import { Backend } from "@/lib/backend"
+
+import { ProfilePicture } from "@/components/profile-picture"
+import { ProfileCard } from "@/components/cards/profile"
+import { SpinningButton } from "@/components/spinning-button"
+import { CarouselApi } from "@/components/ui/carousel"
 import { Button } from "@/components/ui/button"
 import { SlideDownAndReveal, SlideRightAndReveal } from "@/components/sliders"
 import { Card } from "@/components/ui/card"
+import { nickNameOrPatp } from "@/components/util"
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel"
 
 
 // TODO: these should stop spinning once the event from matcher comes in
@@ -28,8 +30,10 @@ const ConnectionsButton: React.FC<{
   const baseClass = "bg-white hover:bg-primary/40 rounded-full w-12 h-12"
   // const baseClass = "w-7 h-7 p-0 border rounded-full bg-transparent"
 
+
   useEffect(() => {
     setSpin(false)
+    if (reveal) {setReveal(false)}
   }, [status])
 
   switch (status) {
@@ -39,8 +43,8 @@ const ConnectionsButton: React.FC<{
           onClick={() => { setSpin(true); fns.match().then() }}
           className={cn([
             baseClass,
-            `hover:bg-sky-200 transition-all`,
-            `md:bg-transparent md:hover:bg-sky-200`,
+            "hover:bg-sky-200 transition-all",
+            "md:bg-transparent md:text-sky-200 md:hover:bg-sky-200 md:hover:text-white",
             { "bg-sky-200": spin }
           ])}
           spin={spin}
@@ -65,12 +69,12 @@ const ConnectionsButton: React.FC<{
           </Button>
           <SlideRightAndReveal show={reveal}>
             <SpinningButton
-              onClick={() => { setSpin(true); fns.unmatch().then(() => { setReveal(false) }) }}
+              onClick={() => { setSpin(true); fns.unmatch().then(() => {}) }}
               className={cn([
                 baseClass,
                 "ml-2",
-                `hover:bg-red-200`,
-                `md:bg-transparent md:hover:bg-red-200`
+                "hover:bg-red-200",
+                "md:bg-transparent md:text-red-200 md:hover:bg-red-200 md:hover:text-white"
               ])}
               spin={spin}
             >
@@ -119,7 +123,6 @@ const ConnectionsPage: React.FC<{ backend: Backend }> = ({ backend }) => {
   }
 
   const [api, setApi] = useState<CarouselApi>()
-  const [width, setWidth] = useState<number>(window.innerWidth);
   const [spinButton1, setSpinButton1] = useState<boolean>(false);
 
   useEffect(() => {
@@ -132,25 +135,12 @@ const ConnectionsPage: React.FC<{ backend: Backend }> = ({ backend }) => {
     })
   }, [api])
 
-
-
-  const handleWindowSizeChange = () => { setWidth(window.innerWidth); }
-
-  useEffect(() => {
-    window.addEventListener('resize', handleWindowSizeChange);
-    return () => {
-      window.removeEventListener('resize', handleWindowSizeChange);
-    }
-  }, []);
-
-  const isMobile = width <= 768;
-
-  const matchHandler = (patp: string) => async () => {
+  const matchHandler = (patp: Patp) => async () => {
     return backend.match(ctx.event.details.id, patp)
   }
 
 
-  const unMatchHandler = (patp: string) => async () => {
+  const unMatchHandler = (patp: Patp) => async () => {
     return backend.unmatch(ctx.event.details.id, patp)
   }
 
@@ -203,6 +193,7 @@ const ConnectionsPage: React.FC<{ backend: Backend }> = ({ backend }) => {
                         size="xl"
                         point={attendee.patp} />
                     </div>
+                    <p className="text-center mt-4"> {nickNameOrPatp(profile, attendee.patp)} </p>
                     <div className="w-full flex justify-around pt-3">
                       <ConnectionsButton
                         status={attendee.status}

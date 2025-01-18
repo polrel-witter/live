@@ -8,14 +8,12 @@ import Urbit from '@urbit/http-api';
 
 
 // backend
-import { newBackend } from '@/backend'
+import { newBackend } from "@/lib/backend"
 
 // this component wraps its children with the global state
 import RootComponent from './root';
 // this component returns the router
 import AppRouter from './router';
-import { ConnectionStatusBar } from './components/connection-status';
-import { GlobalContext } from './globalContext';
 
 window.urbit = new Urbit('');
 window.urbit.ship = window.ship
@@ -32,18 +30,7 @@ if (container) {
     <React.StrictMode>
       <RootComponent backend={backend} >
         <div className='mb-16'>
-          <GlobalContext.Consumer >
-            {ctx => {
-              return (
-                <div className="phantom">
-                  <AppRouter backend={backend} />
-                  <div className='fixed bottom-0 w-full h-16 md:h-6 bg-accent'>
-                    <ConnectionStatusBar status={ctx?.connectionStatus} />
-                  </div>
-                </div>
-              )
-            }}
-          </GlobalContext.Consumer >
+          <AppRouter backend={backend} />
         </div>
       </RootComponent>
     </React.StrictMode>

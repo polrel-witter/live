@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import { Ellipsis, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import { MatchStatus } from "@/backend";
+import { MatchStatus } from "@/lib/types";
 import React from "react";
 
 
@@ -49,7 +49,7 @@ const ProfileActionsMenu = React.forwardRef<React.ElementRef<typeof DropdownMenu
         <DropdownMenuContent onClick={(e) => { e.stopPropagation() }}>
           <DropdownMenuLabel className="font-normal">
             <Link
-              to={`/apps/groups/dm/~${patp}`}
+              to={`/apps/groups/dm/${patp}`}
               reloadDocument
             >
               <div className="flex items-center justify-center">
