@@ -1,4 +1,9 @@
 %live
+v2.0.3, ~2025.1.19
+- Host dashboard
+- Completed grant scopes, as outlined below
+		- https://urbit.org/grants/live-backend
+		- https://urbit.org/grants/live-frontend
 
 v2.0.2, ~2024.10.22
 - PWA frontend, written in Typescript and built with Vite
