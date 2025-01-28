@@ -30,7 +30,7 @@ const EventDetails: React.FC = () => {
   if (!ctx.fetched) {
     return (
       <ResponsiveContent className="flex justify-center space-y-6 pt-10">
-        <EventDetailsCardSkeleton className="w-full"/>
+        <EventDetailsCardSkeleton className="w-full" buttonCount={5}/>
       </ResponsiveContent>
     );
   }
