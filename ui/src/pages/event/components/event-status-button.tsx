@@ -1,14 +1,15 @@
-import { EventStatus } from "@/lib/types"
-import { SpinningButton } from "@/components/spinning-button"
-import { cn } from "@/lib/utils"
-import { useCallback, useMemo, useState } from "react"
+import { EventStatus } from "@/lib/types";
+import { SpinningButton } from "@/components/spinning-button";
+import { cn } from "@/lib/utils";
+import { useCallback, useMemo, useState } from "react";
 
 type EventStatusButtonProps = {
-  fetched: boolean,
-  status: EventStatus
-  register: () => void,
-  unregister: () => void,
-}
+  fetched: boolean;
+  status: EventStatus;
+  register: () => void;
+  unregister: () => void;
+  disabled?: boolean;
+};
 
 // i can't transition the backgroud-color of this component
 // i think it's due to a number of things:
@@ -19,48 +20,50 @@ type EventStatusButtonProps = {
 //   a couple of times, this is because the apparently "status" changes like
 //   6 or 8 times even though the value itself doesn't, i suspect it's because
 //   of that wierd tuple thing i did on EventAsAllGuests
-const EventStatusButton = ({ status, fetched, register, unregister }: EventStatusButtonProps) => {
-  const [sentPoke, setSentPoke] = useState(false)
+const EventStatusButton = (
+  { status, fetched, register, unregister, disabled }: EventStatusButtonProps,
+) => {
+  const [sentPoke, setSentPoke] = useState(false);
 
   const buttonText = useMemo(() => {
     switch (status) {
       case "invited":
       case "unregistered":
-        return "register"
+        return "register";
       case "registered":
-        return "unregister"
+        return "unregister";
       case "attended":
-        return "attended"
+        return "attended";
       case "requested":
-        return "requested"
+        return "requested";
     }
-  }, [status])
+  }, [status]);
 
-  const baseClass = "w-32 h-8 p-0 px-2 transition-[background-color] duration-1000"
-
+  const baseClass =
+    "w-32 h-8 p-0 px-2 transition-[background-color] duration-1000";
 
   const onClick = useCallback((status: EventStatus) => {
     switch (status) {
       case "invited":
       case "unregistered":
         return () => {
-          register()
-          setSentPoke(true)
-        }
+          register();
+          setSentPoke(true);
+        };
       case "registered":
         return () => {
-          unregister()
-          setSentPoke(true)
-        }
+          unregister();
+          setSentPoke(true);
+        };
     }
-  }, [])
+  }, []);
 
   // TODO: this doesn't transition the backgroud-color i think
   // because the entire element is rerendered for some reason
   return (
     <SpinningButton
       type="button"
-      disabled={status === "requested"}
+      disabled={disabled || status === "requested"}
       className={cn([
         baseClass,
         {
@@ -71,15 +74,14 @@ const EventStatusButton = ({ status, fetched, register, unregister }: EventStatu
         },
         {
           "bg-emerald-800 hover:bg-emerald-900": status === "attended",
-        }
-      ])
-      }
+        },
+      ])}
       onClick={onClick(status)}
       spin={sentPoke}
     >
       {buttonText}
     </SpinningButton>
-  )
-}
+  );
+};
 
 export { EventStatusButton };
