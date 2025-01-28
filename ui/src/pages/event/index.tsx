@@ -1,5 +1,11 @@
 import { useContext, useEffect, useState } from "react";
-import { Location, Outlet, useLoaderData, useLocation, useNavigate } from "react-router-dom";
+import {
+  Location,
+  Outlet,
+  useLoaderData,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { LoaderFunctionArgs, Params } from "react-router-dom";
 
 import {
@@ -35,7 +41,12 @@ import { BackButton } from "@/components/back-button";
 import { debounceToast } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { DeleteEventCard } from "@/components/cards/delete-event";
 
 async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
@@ -157,14 +168,15 @@ function makeNavbarAndFooter(
   // helpers
   const getPathForBackButton = (): string => {
     const loc = location.pathname;
-    if (loc.startsWith(eventIndex) && loc.length > eventIndex.length){
+    if (loc.startsWith(eventIndex) && loc.length > eventIndex.length) {
       return eventIndex;
     }
-    return basePath
+    return basePath;
   };
 
-   const StatusButton = () => (
+  const StatusButton = () => (
     <EventStatusButton
+      disabled={!globalContext.fetched}
       fetched={eventContext.fetched}
       status={eventContext.event.status}
       register={() => {
@@ -222,7 +234,34 @@ function makeNavbarAndFooter(
     />
   );
 
-  const DesktopMenu = () => <MenuItemWithLinks linkItems={eventRoutingLinks} />;
+  const DesktopMenu = () => (
+    <MenuItemWithLinks
+      disabled={!globalContext.fetched}
+      linkItems={eventRoutingLinks}
+    />
+  );
+
+  const NavbarRight = () => {
+    return (
+      <div className="flex">
+        <Button
+          variant="destructive"
+          disabled={!globalContext.fetched}
+          className="rounded-full p-3 m-1"
+          onClick={openDeleteDialog}
+        >
+          <X className="w-4 h-4" />
+        </Button>
+        <ProfileButton
+          profile={hostProfile}
+          disabled={!globalContext.fetched}
+          editProfileField={backend.editProfileField}
+          setAddPals={backend.setAddPals}
+        />
+        {!onMobile && <DesktopMenu />}
+      </div>
+    );
+  };
 
   const navbar = (
     <NavbarWithSlots
@@ -232,23 +271,7 @@ function makeNavbarAndFooter(
           {!onMobile && <StatusButton />}
         </div>
       }
-      right={
-        <div className="flex">
-          <Button
-            variant="destructive"
-            className="rounded-full p-3 m-1"
-            onClick={openDeleteDialog}
-          >
-            <X className="w-4 h-4" />
-          </Button>
-          <ProfileButton
-            profile={hostProfile}
-            editProfileField={backend.editProfileField}
-            setAddPals={backend.setAddPals}
-          />
-          {!onMobile && <DesktopMenu />}
-        </div>
-      }
+      right={<NavbarRight />}
     >
       {eventContext.event.details.title}
     </NavbarWithSlots>
@@ -263,7 +286,11 @@ function makeNavbarAndFooter(
       }
       right={
         <div>
-          {onMobile && <MobileMenu links={eventRoutingLinks} />}
+          {globalContext.fetched && onMobile && (
+            <MobileMenu
+              links={eventRoutingLinks}
+            />
+          )}
           <ConnectionStatusBar status={connectionStatus} />
         </div>
       }
@@ -339,12 +366,13 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
     };
   }, [globalContext]);
 
-
   const basePath = import.meta.env.BASE_URL;
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const [navbar, footer] = makeNavbarAndFooter(
-    () => { setOpenDeleteDialog(true)},
+    () => {
+      setOpenDeleteDialog(true);
+    },
     basePath,
     useOnMobile(),
     useLocation(),
@@ -368,16 +396,19 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
               onOpenChange={setOpenDeleteDialog}
               open={openDeleteDialog}
             >
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle> delete event </DialogTitle>
+              <DialogContent className="p-0 rounded-sm">
+                <DialogHeader className="pb-4">
+                  <DialogTitle className="text-center">delete event</DialogTitle>
                 </DialogHeader>
                 <DeleteEventCard
                   title={eventContext.event.details.title}
                   eventId={eventContext.event.details.id}
-                  closeDialog={() => { setOpenDeleteDialog(false) }}
+                  closeDialog={() => {
+                    setOpenDeleteDialog(false);
+                  }}
                   deleteEvent={backend.deleteEvent}
-                  navigateToTimeline={() => navigate(basePath + "?reloadRecords")}
+                  navigateToTimeline={() =>
+                    navigate(basePath + "?reloadRecords")}
                 />
               </DialogContent>
             </Dialog>
