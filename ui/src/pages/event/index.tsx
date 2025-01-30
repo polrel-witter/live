@@ -176,7 +176,7 @@ function makeNavbarAndFooter(
 
   const StatusButton = () => (
     <EventStatusButton
-      disabled={!globalContext.fetched}
+      disabled={!eventContext.fetched}
       fetched={eventContext.fetched}
       status={eventContext.event.status}
       register={() => {
@@ -236,7 +236,7 @@ function makeNavbarAndFooter(
 
   const DesktopMenu = () => (
     <MenuItemWithLinks
-      disabled={!globalContext.fetched}
+      disabled={!eventContext.fetched}
       linkItems={eventRoutingLinks}
     />
   );
@@ -246,7 +246,7 @@ function makeNavbarAndFooter(
       <div className="flex">
         <Button
           variant="destructive"
-          disabled={!globalContext.fetched}
+          disabled={!eventContext.fetched}
           className="rounded-full p-3 m-1"
           onClick={openDeleteDialog}
         >
@@ -254,7 +254,7 @@ function makeNavbarAndFooter(
         </Button>
         <ProfileButton
           profile={hostProfile}
-          disabled={!globalContext.fetched}
+          disabled={!eventContext.fetched}
           editProfileField={backend.editProfileField}
           setAddPals={backend.setAddPals}
         />
@@ -286,7 +286,7 @@ function makeNavbarAndFooter(
       }
       right={
         <div>
-          {globalContext.fetched && onMobile && (
+          {eventContext.fetched && onMobile && (
             <MobileMenu
               links={eventRoutingLinks}
             />
