@@ -103,7 +103,7 @@ const EventDetailsCardSkeleton: React.FC<
           {/* Buttons Placeholder */}
           <div className="flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-5 h-9 sm:h-10 md:h-11 lg:h-12 w-[288px] sm:w-[336px] md:w-[384px] lg:w-[432px]">
             {new Array(buttonCount).fill(null).map((_, i) => (
-              <SkeletonLine key={i} className="h-full w-1/3" />
+              <SkeletonLine key={i} className="h-full w-full" />
             ))}
           </div>
         </div>
