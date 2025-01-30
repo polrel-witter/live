@@ -11,7 +11,7 @@ The core data structure is an `$event` which consists of the following:
 
 Once an event is written to state, the host can begin building a guest list which are stored as `$record`s. This can be done in one of two ways: either by inviting ships directly or sharing the event link so that others can find it.
 
-Event discoverability functions differently based on its `$kind`. `%public and `%private` events are searchable; `%secret` ones are hidden, leaving the host to invite ships directly.
+Event discoverability functions differently based on its `$kind`. `%public` and `%private` events are searchable; `%secret` ones are hidden, leaving the host to invite ships directly.
 
 Additionally, `$record` status changes will behave differently according to these types:
 - `%public`: anyone can send a `%register` poke and get a `%registered` status.
