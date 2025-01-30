@@ -37,7 +37,7 @@ const AnimatedButtons = ({
   }
 
   return (
-    <div className="flex justify-center space-x-1">
+    <div className="flex justify-between space-x-1">
       {
         items.map((item, index) => {
           return (
