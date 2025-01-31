@@ -48,6 +48,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DeleteEventCard } from "@/components/cards/delete-event";
+import { ScrollToTop } from "@/components/scroll-to-top";
 
 async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
   return Promise.all(a
@@ -389,6 +390,7 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
         top={navbar}
         bottom={footer}
       >
+      <ScrollToTop>
         <div className="grid size-full">
           <div className="pt-12">
             <Outlet />
@@ -414,6 +416,7 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
             </Dialog>
           </div>
         </div>
+        </ScrollToTop>
       </AppFrame>
     </EventContext.Provider>
   );
