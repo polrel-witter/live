@@ -421,7 +421,7 @@ const EventTimelinePage = ({ backend }: { backend: Backend }) => {
           <Card className="w-full sm:w-5/12 p-4">
             Need event ideas? Check out events happening around the ecosystem at
             <div className="inline-block relative w-24 ml-2 font-bold">
-              <span className="text-xs absolute left-0 bottom-[-3px]">↗</span>
+              <span className="text-xs absolute left-0 -bottom-1 pr-1">↗</span>
               <a href="http://urbit.org/events">urbit.org </a>
             </div>
           </Card>
