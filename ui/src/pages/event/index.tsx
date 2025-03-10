@@ -48,6 +48,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DeleteEventCard } from "@/components/cards/delete-event";
+import { ScrollToTop } from "@/components/scroll-to-top";
 
 async function fetchProfiles(b: Backend, a: Attendee[]): Promise<Profile[]> {
   return Promise.all(a
@@ -176,7 +177,7 @@ function makeNavbarAndFooter(
 
   const StatusButton = () => (
     <EventStatusButton
-      disabled={!globalContext.fetched}
+      disabled={!eventContext.fetched}
       fetched={eventContext.fetched}
       status={eventContext.event.status}
       register={() => {
@@ -236,7 +237,7 @@ function makeNavbarAndFooter(
 
   const DesktopMenu = () => (
     <MenuItemWithLinks
-      disabled={!globalContext.fetched}
+      disabled={!eventContext.fetched}
       linkItems={eventRoutingLinks}
     />
   );
@@ -246,7 +247,7 @@ function makeNavbarAndFooter(
       <div className="flex">
         <Button
           variant="destructive"
-          disabled={!globalContext.fetched}
+          disabled={!eventContext.fetched}
           className="rounded-full p-3 m-1"
           onClick={openDeleteDialog}
         >
@@ -254,7 +255,7 @@ function makeNavbarAndFooter(
         </Button>
         <ProfileButton
           profile={hostProfile}
-          disabled={!globalContext.fetched}
+          disabled={!eventContext.fetched}
           editProfileField={backend.editProfileField}
           setAddPals={backend.setAddPals}
         />
@@ -286,7 +287,7 @@ function makeNavbarAndFooter(
       }
       right={
         <div>
-          {globalContext.fetched && onMobile && (
+          {eventContext.fetched && onMobile && (
             <MobileMenu
               links={eventRoutingLinks}
             />
@@ -389,6 +390,7 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
         top={navbar}
         bottom={footer}
       >
+      <ScrollToTop>
         <div className="grid size-full">
           <div className="pt-12">
             <Outlet />
@@ -414,6 +416,7 @@ const EventIndex: React.FC<{ backend: Backend }> = ({ backend }) => {
             </Dialog>
           </div>
         </div>
+        </ScrollToTop>
       </AppFrame>
     </EventContext.Provider>
   );

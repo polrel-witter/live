@@ -66,6 +66,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DeleteEventCard } from "@/components/cards/delete-event";
 import { EventDetailsCardSkeleton } from "@/components/cards/event-details-card-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollToTop } from "@/components/scroll-to-top";
 
 async function ManageParamsLoader(
   params: LoaderFunctionArgs<any>,
@@ -752,22 +753,24 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
   if (!fetched) {
     return (
       <AppFrame top={navbar} bottom={footer}>
-        <ResponsiveContent className="flex flex-col items-center space-y-2 pt-16 pb-8">
-          <div className="space-y-2">
-            <EventDetailsCardSkeleton buttonCount={2} className="w-full" />
-            <Card className="space-y-4 p-4 w-full">
-              <Skeleton className="h-4" />
-              <Skeleton className="h-4" />
-              <Skeleton className="h-4" />
-            </Card>
-          </div>
-        </ResponsiveContent>
+        <ScrollToTop>
+          <ResponsiveContent className="flex flex-col items-center space-y-2 pt-16 pb-8">
+            <div className="space-y-2">
+              <EventDetailsCardSkeleton buttonCount={2} className="w-full" />
+              <Card className="space-y-4 p-4 w-full">
+                <Skeleton className="h-4" />
+                <Skeleton className="h-4" />
+                <Skeleton className="h-4" />
+              </Card>
+            </div>
+          </ResponsiveContent>
+        </ScrollToTop>
       </AppFrame>
     );
   }
 
   return (
-    <div>
+    <ScrollToTop>
       <AppFrame top={navbar} bottom={footer}>
         <div>
           <ResponsiveContent className="flex flex-col items-center space-y-2 pt-16 pb-8">
@@ -872,7 +875,7 @@ const ManageIndex: React.FC<Props> = ({ backend }) => {
           />
         </DialogContent>
       </Dialog>
-    </div>
+    </ScrollToTop>
   );
 };
 

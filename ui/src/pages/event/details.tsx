@@ -1,4 +1,4 @@
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, useState } from "react";
 import { EventContext } from "./context";
 import { EventDetailsCard } from "@/components/cards/event-details";
 import { GlobalContext } from "@/globalContext";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { formatEventDateShort, shiftTzDateInUTCToTimezone } from "@/lib/time";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EventDetailsCardSkeleton } from "@/components/cards/event-details-card-skeleton";
+import { emptyProfile } from "@/lib/types";
 
 const EventDetails: React.FC = () => {
   const globalCtx = useContext(GlobalContext);
@@ -24,13 +25,19 @@ const EventDetails: React.FC = () => {
     throw Error("context is null");
   }
 
-  const fetched = useMemo(() => {
-  }, [ctx.fetched]);
+  const hostProfile = useMemo(() => {
+    const profile = ctx.profiles
+      .find((profile) => profile.patp === ctx.event.details.id.ship);
+    if (!profile) {
+      return emptyProfile;
+    }
+    return profile;
+  }, [ctx]);
 
   if (!ctx.fetched) {
     return (
       <ResponsiveContent className="flex justify-center space-y-6 pt-10">
-        <EventDetailsCardSkeleton className="w-full" buttonCount={5}/>
+        <EventDetailsCardSkeleton className="w-full" buttonCount={3} />
       </ResponsiveContent>
     );
   }
@@ -38,7 +45,7 @@ const EventDetails: React.FC = () => {
   return (
     <ResponsiveContent className="flex justify-center space-y-6 pt-10">
       <EventDetailsCard
-        hostProfile={globalCtx.profile}
+        hostProfile={hostProfile}
         details={ctx.event.details}
         secret={ctx.event.secret}
         className="w-full"
